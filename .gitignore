@@ -1,0 +1,6 @@
+build*
+.vscode
+externals
+.project
+.cproject
+CMakeLists.txt.user*

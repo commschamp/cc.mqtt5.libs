@@ -6,23 +6,34 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "##NAME##client.h"
+#include "ClientCreator.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif // #ifdef __cplusplus
+namespace
+{
+
+cc_mqtt5_client::ClientCreator& getClientCreator()
+{
+    static cc_mqtt5_client::ClientCreator Creator;
+    return Creator;
+}
+
+inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle client)
+{
+    return reinterpret_cast<cc_mqtt5_client::Client*>(client.m_ptr);
+}
+
+} // namespace
 
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new()
 {
-    // TODO
-    return CC_Mqtt5ClientHandle();
+    auto client = getClientCreator().alloc();
+    CC_Mqtt5ClientHandle result;
+    result.m_ptr = client.release();
+    return result;    
 }
 
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client)
 {
-    // TODO
-    static_cast<void>(client);
+    getClientCreator().free(clientFromHandle(client));
 }
 
-#ifdef __cplusplus
-}
-#endif

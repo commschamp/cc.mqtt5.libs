@@ -25,8 +25,60 @@ CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new();
 
 /// @brief Free previously allocated client.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @post The client handler becomes invalid and cannot be used any longer.
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client);
 
+/// @brief (Re)Initialize client.
+/// @details Re-initializes all internal data structures into their default variables
+///     and checks that all the required callbacks have been set. If there are old
+///     outstanding operations they are all aborted.
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client);
+
+// --------------------- Callbacks ---------------------
+
+/// @brief Set callback to call when time measurement is required.
+/// @details The MQTT5 client may require to measure time. When such 
+///     measurement is required, the provided callback will be invoked with
+///     the timeout duration in milliseconds. After requested time expires,
+///     the @ref cc_mqtt5_##NAME##client_tick() function must be invoked.
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] fn Callback function.
+/// @param[in] data Pointer to any user data structure. It will passed as one 
+///     of the parameters in callback invocation. May be NULL.
+void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5NextTickProgramFn fn,
+    void* data);
+    
+/// @brief Set callback to terminate current time measurement.
+/// @details The client may request termination of currently running time 
+///     measurement, previously requested via callback, which was set using
+///     @ref cc_mqtt5_##NAME##client_set_next_tick_program_callback() function. This function
+///     sets appropriate callback. When invoked, it must return number of
+///     elapsed milliseconds since previoius time measurement request.
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] fn Callback function.
+/// @param[in] data Pointer to any user data structure. It will passed as one 
+///     of the parameters in callback invocation. May be NULL.
+void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5CancelNextTickWaitFn fn,
+    void* data);
+    
+/// @brief Set callback to send raw data over I/O link.
+/// @details The callback is invoked when there is a need to send data
+///     to the gateway. The callback is invoked for every single message
+///     that need to be sent as a single datagram. 
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] fn Callback function.
+/// @param[in] data Pointer to any user data structure. It will passed as one 
+///     of the parameters in callback invocation. May be NULL.
+void cc_mqtt5_##NAME##client_set_send_output_data_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5SendOutputDataFn fn,
+    void* data);
+    
 
 #ifdef __cplusplus
 }

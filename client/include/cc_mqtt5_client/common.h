@@ -33,9 +33,60 @@ extern "C" {
 /// @brief Version of the library as single numeric value
 #define CC_MQTT5_CLIENT_VERSION CC_MQTT5_CLIENT_MAKE_VERSION(CC_MQTT5_CLIENT_MAJOR_VERSION, CC_MQTT5_CLIENT_MINOR_VERSION, CC_MQTT5_CLIENT_PATCH_VERSION)
 
+/// @brief Quality of Service
+typedef enum
+{
+    CC_Mqtt5QoS_AtMostOnceDelivery, ///< QoS=0. At most once delivery.
+    CC_Mqtt5QoS_AtLeastOnceDelivery, ///< QoS=1. At least once delivery.
+    CC_Mqtt5QoS_ExactlyOnceDelivery ///< QoS=2. Exactly once delivery.
+} CC_Mqtt5QoS;
+
+/// @brief Error code returned by various API functions.
+typedef enum
+{
+    CC_Mqtt5ErrorCode_Success, ///< The requested operation was successfully started.
+    CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
+    CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
+    CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
+    CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
+} CC_Mqtt5ErrorCode;
+
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by @b cc_mqtt5_client_new() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
+
+/// @brief Callback used to request time measurement.
+/// @details The callback is set using
+///     cc_mqtt5_client_set_next_tick_program_callback() function.
+/// @param[in] data Pointer to user data object, passed as last parameter to
+///     cc_mqtt5_client_set_next_tick_program_callback() function.
+/// @param[in] duration Time duration in @b milliseconds. After the requested
+///     time expires, the cc_mqtt5_client_tick() function is expected to be invoked.
+typedef void (*CC_Mqtt5NextTickProgramFn)(void* data, unsigned duration);
+
+/// @brief Callback used to request termination of existing time measurement.
+/// @details The callback is set using
+///     cc_mqtt5_client_set_cancel_next_tick_wait_callback() function.
+/// @param[in] data Pointer to user data object, passed as last parameter to
+///     cc_mqtt5_client_set_cancel_next_tick_wait_callback() function.
+/// @return Number of elapsed milliseconds since last time measurement request.
+typedef unsigned (*CC_Mqtt5CancelNextTickWaitFn)(void* data);
+
+/// @brief Callback used to request to send data to the broker.
+/// @details The callback is set using
+///     cc_mqtt5_client_set_send_output_data_callback() function. The reported
+///     data resides in internal data structures of the client library, and
+///     it can be updated right after the callback function returns. It means
+///     the data may need to be copied into some other buffer which will be
+///     held intact until the send over I/O link operation is complete.
+/// @param[in] data Pointer to user data object, passed as last parameter to
+///     cc_mqtt5_client_set_send_output_data_callback() function.
+/// @param[in] buf Pointer to the buffer containing data to send
+/// @param[in] bufLen Number of bytes to send
+/// @param[in] broadcast Indication whether data needs to be broadcasted or
+///     sent directly to the broker.
+typedef void (*CC_Mqtt5SendOutputDataFn)(void* data, const unsigned char* buf, unsigned bufLen, bool broadcast);
+
 
 #ifdef __cplusplus
 }

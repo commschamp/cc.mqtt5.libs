@@ -37,3 +37,32 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client)
     getClientCreator().free(clientFromHandle(client));
 }
 
+CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client)
+{
+    return clientFromHandle(client)->init();
+}
+
+void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5NextTickProgramFn fn,
+    void* data)
+{
+    clientFromHandle(client)->setNextTickProgramCallback(fn, data);
+}
+
+void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5CancelNextTickWaitFn fn,
+    void* data)
+{
+    clientFromHandle(client)->setCancelNextTickWaitCallback(fn, data);
+}
+
+void cc_mqtt5_##NAME##client_set_send_output_data_callback(
+    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5SendOutputDataFn fn,
+    void* data)
+{
+    clientFromHandle(client)->setSendOutputDataCallback(fn, data);
+}
+

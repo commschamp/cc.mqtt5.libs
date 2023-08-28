@@ -8,6 +8,7 @@
 #pragma once
 
 #include "State.h"
+#include "TimerMgr.h"
 
 #include "cc_mqtt5_client/common.h"
 
@@ -55,6 +56,7 @@ private:
     void* m_sendOutputDataData = nullptr;
 
     State m_state;
+    TimerMgr m_timerMgr;
 };
 
 } // namespace cc_mqtt5_client

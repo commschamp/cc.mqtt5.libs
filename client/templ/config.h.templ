@@ -5,7 +5,10 @@ namespace cc_mqtt5_client
 
 struct Config
 {
+    static constexpr bool HasDynMemAlloc = ##CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC##;
     static constexpr unsigned AllocLimit = ##CC_MQTT5_CLIENT_ALLOC_LIMIT##;    
+
+    static_assert(HasDynMemAlloc || (AllocLimit > 0U), "Must use CC_MQTT5_CLIENT_ALLOC_LIMIT in configuration to limit number of clients");
 };
 
 } // namespace cc_mqtt5_client

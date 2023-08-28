@@ -7,13 +7,19 @@
 
 #pragma once
 
+#include "Config.h"
+
+#include <vector>
+
 namespace cc_mqtt5_client
 {
 
-struct State
+struct ExtConfig : public Config
 {
-    bool m_initialized = false;
-    bool m_connected = false;
+
+    static constexpr unsigned TimersLimit = 0U; // TODO:
+
+    static_assert(HasDynMemAlloc || (TimersLimit > 0U), "Must calculate timers limit");
 };
 
 } // namespace cc_mqtt5_client

@@ -20,6 +20,7 @@ class Client
 public:
 
     CC_Mqtt5ErrorCode init();
+    void tick(unsigned ms);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramFn cb, void* data)
     {
@@ -46,6 +47,34 @@ public:
     }
     
 private:
+
+    class ApiEnterGuard
+    {
+    public:
+        ApiEnterGuard(Client& client) : m_client(client)
+        {
+            m_client.doApiEnter();
+        }
+
+        ~ApiEnterGuard() noexcept
+        {
+            m_client.doApiExit();
+        }
+
+    private:
+        Client& m_client;
+    };
+
+    friend class ApiEnterGuard;
+
+    ApiEnterGuard apiEnter()
+    {
+        return ApiEnterGuard(*this);
+    }
+
+    void doApiEnter();
+    void doApiExit();
+
     CC_Mqtt5NextTickProgramFn m_nextTickProgramFn = nullptr;
     void* m_nextTickProgramData = nullptr;
 
@@ -57,6 +86,7 @@ private:
 
     State m_state;
     TimerMgr m_timerMgr;
+    unsigned m_apiEnterCount = 0U;
 };
 
 } // namespace cc_mqtt5_client

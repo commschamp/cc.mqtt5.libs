@@ -35,6 +35,20 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client);
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client);
 
+/// @brief Notify client about requested time expiry.
+/// @details The reported amount of milliseconds needs to be from the 
+///     last request to program timer via callback (set by
+///     cc_mqtt5_##NAME##client_set_next_tick_program_callback()).
+///     It can be less than actually requested via the callback. If this
+///     function is called, the library assumes that previously requested
+///     timeout measurement is not in progress any more, and will request
+///     new measurement if needed.
+///     This call may cause invocation of some other callbacks, such as a request
+///     to send new data to the broker.
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] ms Number of elapsed @b milliseconds.
+void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms);
+
 // --------------------- Callbacks ---------------------
 
 /// @brief Set callback to call when time measurement is required.

@@ -42,6 +42,11 @@ CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client)
     return clientFromHandle(client)->init();
 }
 
+void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms)
+{
+    clientFromHandle(client)->tick(ms);
+}
+
 void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
     CC_Mqtt5ClientHandle client,
     CC_Mqtt5NextTickProgramFn fn,

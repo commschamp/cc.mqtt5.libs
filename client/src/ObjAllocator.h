@@ -7,27 +7,25 @@
 
 #pragma once
 
-#include "Client.h"
-#include "Config.h"
-
 #include "comms/util/alloc.h"
 #include "comms/util/type_traits.h"
 
 namespace cc_mqtt5_client
 {
 
-class ClientCreator
+template <typename TObj, unsigned TLimit>
+class ObjAllocator
 {
     template <typename ...>
-    using DynMemoryAlloc = comms::util::alloc::DynMemory<Client>;
+    using DynMemoryAlloc = comms::util::alloc::DynMemory<TObj>;
 
     template <typename ...>
-    using InPlaceAlloc = comms::util::alloc::InPlacePool<Client, Config::AllocLimit>;
+    using InPlaceAlloc = comms::util::alloc::InPlacePool<TObj, TLimit>;
 
     template <typename... TParams>
     using Alloc = 
         typename comms::util::LazyShallowConditional<
-            Config::AllocLimit == 0U
+            TLimit == 0U
         >::template Type<
             DynMemoryAlloc,
             InPlaceAlloc
@@ -36,14 +34,14 @@ class ClientCreator
     using AllocType = Alloc<>;
         
 public:
-    using ClientPtr = typename AllocType::Ptr;
+    using Ptr = typename AllocType::Ptr;
 
-    ClientPtr alloc()
+    Ptr alloc()
     {
-        return m_alloc.template alloc<Client>();
+        return m_alloc.template alloc<TObj>();
     }
 
-    void free(Client* client) {
+    void free(TObj* client) {
         auto ptr = m_alloc.wrap(client);
         static_cast<void>(ptr);
     }

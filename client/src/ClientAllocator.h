@@ -7,19 +7,13 @@
 
 #pragma once
 
+#include "Client.h"
 #include "Config.h"
-
-#include <vector>
+#include "ObjAllocator.h"
 
 namespace cc_mqtt5_client
 {
 
-struct ExtConfig : public Config
-{
-    static constexpr unsigned ConnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
-    static constexpr unsigned TimersLimit = 0U; // TODO:
-
-    static_assert(HasDynMemAlloc || (TimersLimit > 0U), "Must calculate timers limit");
-};
+using ClientAllocator = ObjAllocator<Client, Config::AllocLimit>;
 
 } // namespace cc_mqtt5_client

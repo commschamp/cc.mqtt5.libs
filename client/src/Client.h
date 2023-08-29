@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include "ConnectOp.h"
+#include "ExtConfig.h"
+#include "ObjAllocator.h"
+#include "ObjListType.h"
 #include "State.h"
 #include "TimerMgr.h"
 
@@ -48,6 +52,9 @@ public:
     
 private:
 
+    using ConnectOpAlloc = ObjAllocator<ConnectOp, ExtConfig::ConnectOpsLimit>;
+    using ConnectOpsList = ObjListType<ConnectOpAlloc::Ptr, ExtConfig::ConnectOpsLimit>;
+
     class ApiEnterGuard
     {
     public:
@@ -87,6 +94,9 @@ private:
     State m_state;
     TimerMgr m_timerMgr;
     unsigned m_apiEnterCount = 0U;
+
+    ConnectOpAlloc m_connectOpAlloc;
+    ConnectOpsList m_connectOps;
 };
 
 } // namespace cc_mqtt5_client

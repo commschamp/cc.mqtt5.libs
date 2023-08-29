@@ -7,6 +7,7 @@
 
 #include "##NAME##client.h"
 #include "ClientAllocator.h"
+#include "ConnectOp.h"
 
 namespace
 {
@@ -22,14 +23,24 @@ inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle client)
     return reinterpret_cast<cc_mqtt5_client::Client*>(client.m_ptr);
 }
 
+inline cc_mqtt5_client::ConnectOp* connectOpFromHandle(CC_Mqtt5ConnectHandle connectOp)
+{
+    return reinterpret_cast<cc_mqtt5_client::ConnectOp*>(connectOp.m_ptr);
+}
+
 } // namespace
 
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new()
 {
     auto client = getClientAllocator().alloc();
-    CC_Mqtt5ClientHandle result;
+    auto result = CC_Mqtt5ClientHandle();
     result.m_ptr = client.release();
     return result;    
+}
+
+bool cc_mqtt5_##NAME##client_handle_is_valid(CC_Mqtt5ClientHandle client)
+{
+    return client.m_ptr != nullptr;
 }
 
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client)
@@ -46,6 +57,27 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms)
 {
     clientFromHandle(client)->tick(ms);
 }
+
+CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client)
+{
+    return clientFromHandle(client)->connectPrepare();
+}
+
+bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle connect)
+{
+    return connect.m_ptr != nullptr;
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_apply(CC_Mqtt5ConnectHandle connect)
+{
+    if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    return connectOpFromHandle(connect)->apply();
+}
+
+// --------------------- Callbacks ---------------------
 
 void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
     CC_Mqtt5ClientHandle client,

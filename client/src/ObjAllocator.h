@@ -36,9 +36,10 @@ class ObjAllocator
 public:
     using Ptr = typename AllocType::Ptr;
 
-    Ptr alloc()
+    template <typename... TArgs>
+    Ptr alloc(TArgs&&... args)
     {
-        return m_alloc.template alloc<TObj>();
+        return m_alloc.template alloc<TObj>(std::forward<TArgs>(args)...);
     }
 
     void free(TObj* client) {

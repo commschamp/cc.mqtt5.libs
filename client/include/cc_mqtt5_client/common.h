@@ -55,6 +55,8 @@ typedef enum
 /// @details Returned by @b cc_mqtt5_client_new() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
 
+typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.

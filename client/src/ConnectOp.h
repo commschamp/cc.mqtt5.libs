@@ -7,12 +7,17 @@
 
 #pragma once
 
+#include "cc_mqtt5_client/common.h"
+
 namespace cc_mqtt5_client
 {
 
 struct ConnectOp
 {
     int m_dummy = 0;
+
+    // TODO
+    CC_Mqtt5ErrorCode apply() { return CC_Mqtt5ErrorCode_Success; }
 };
 
 } // namespace cc_mqtt5_client

@@ -26,6 +26,8 @@ public:
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
 
+    CC_Mqtt5ConnectHandle connectPrepare();
+
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramFn cb, void* data)
     {
         if (cb != nullptr) {

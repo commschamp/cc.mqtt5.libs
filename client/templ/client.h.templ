@@ -23,6 +23,11 @@ extern "C" {
 ///     as first parameter to all other API functions.
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new();
 
+/// @brief Check client allocation is successful.
+/// @details Check the handle returned by the @ref cc_mqtt5_##NAME##client_new() function.
+/// @return @b true in case the allocation is successful, @b false otherwise
+bool cc_mqtt5_##NAME##client_handle_is_valid(CC_Mqtt5ClientHandle client);
+
 /// @brief Free previously allocated client.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @post The client handler becomes invalid and cannot be used any longer.
@@ -48,6 +53,10 @@ CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client);
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] ms Number of elapsed @b milliseconds.
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms);
+
+CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##_client_connect_prepare(CC_Mqtt5ClientHandle client);
+bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle connect);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_apply(CC_Mqtt5ConnectHandle connect);
 
 // --------------------- Callbacks ---------------------
 

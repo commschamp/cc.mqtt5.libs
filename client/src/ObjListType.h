@@ -43,6 +43,6 @@ public:
 } // namespace details
 
 template <typename TObj, unsigned TLimit>
-using ObjListType = details::ObjListTypeHelper<TObj, TLimit>;
+using ObjListType = typename details::ObjListTypeHelper<TObj, TLimit>::VectorType;
 
 } // namespace cc_mqtt5_client

@@ -46,6 +46,36 @@ void Client::tick(unsigned ms)
     doApiExit();
 }
 
+CC_Mqtt5ConnectHandle Client::connectPrepare()
+{
+    auto handle = CC_Mqtt5ConnectHandle();
+    COMMS_ASSERT(handle.m_ptr == nullptr);
+    do {
+        if (!m_connectOps.empty()) {
+            // Already allocated
+            break;
+        }
+
+        if (!m_state.m_initialized) {
+            break;
+        }
+
+        auto ptr = m_connectOpAlloc.alloc();
+        if (!ptr) {
+            m_connectOps.pop_back();
+            break;
+        }
+
+        // TODO
+        
+        m_connectOps.push_back(std::move(ptr));
+
+        handle.m_ptr = m_connectOps.back().get();
+    } while (false);
+
+    return handle;
+}
+
 void Client::doApiEnter()
 {
     ++m_apiEnterCount;

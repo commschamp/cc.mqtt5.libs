@@ -1,0 +1,46 @@
+#pragma once
+
+#include "cc_mqtt5/options/ClientDefaultOptions.h"
+#include "cc_mqtt5/Version.h"
+
+#include <tuple>
+
+static_assert(COMMS_MAKE_VERSION(2, 4, 0) <= CC_MQTT5_VERSION, "The version of cc_mqtt5 protocol definition is too old");
+
+namespace cc_mqtt5_client
+{
+
+class ProtocolOptions : public cc_mqtt5::options::ClientDefaultOptions
+{
+    using BaseImpl = cc_mqtt5::options::ClientDefaultOptions
+
+public:
+    struct field : public BaseImpl::field
+    {
+        using BinData = 
+            std::tuple<
+                ##FIELD_BIN_DATA##,
+                BaseImpl::field::BinData
+            >;
+
+        using PropertiesList = 
+            std::tuple<
+                ##FIELD_PROPERTIES_LIST##,
+                BaseImpl::field::PropertiesList
+            >;
+
+        using ProtocolName = 
+            std::tuple<
+                ##FIELD_PROTOCOL_NAME##,
+                BaseImpl::field::ProtocolName
+            >;
+
+        using String = 
+            std::tuple<
+                ##FIELD_STRING##,
+                BaseImpl::field::String
+            >;
+    }; // struct field    
+};
+
+} // namespace cc_mqtt5_client

@@ -12,12 +12,17 @@
 namespace cc_mqtt5_client
 {
 
-struct ConnectOp
+class Client;
+class ConnectOp
 {
-    int m_dummy = 0;
+public:
+    explicit ConnectOp(Client& client) : m_client(client) {static_cast<void>(m_client);}
 
     // TODO
     CC_Mqtt5ErrorCode apply() { return CC_Mqtt5ErrorCode_Success; }
+
+private:
+    Client& m_client;    
 };
 
 } // namespace cc_mqtt5_client

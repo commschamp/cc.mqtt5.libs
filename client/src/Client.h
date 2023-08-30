@@ -26,29 +26,37 @@ public:
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
 
-    CC_Mqtt5ConnectHandle connectPrepare();
+    CC_Mqtt5ConnectHandle connectPrepare(CC_Mqtt5ErrorCode* ec);
 
-    void setNextTickProgramCallback(CC_Mqtt5NextTickProgramFn cb, void* data)
+    void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
         if (cb != nullptr) {
-            m_nextTickProgramFn = cb;
+            m_nextTickProgramCb = cb;
             m_nextTickProgramData = data;
         }
     }
 
-    void setCancelNextTickWaitCallback(CC_Mqtt5CancelNextTickWaitFn cb, void* data)
+    void setCancelNextTickWaitCallback(CC_Mqtt5CancelNextTickWaitCb cb, void* data)
     {
         if (cb != nullptr) {
-            m_cancelNextTickWaitFn = cb;
+            m_cancelNextTickWaitCb = cb;
             m_cancelNextTickWaitData = data;
         }
     }
 
-    void setSendOutputDataCallback(CC_Mqtt5SendOutputDataFn cb, void* data)
+    void setSendOutputDataCallback(CC_Mqtt5SendOutputDataCb cb, void* data)
     {
         if (cb != nullptr) {
-            m_sendOutputDataFn = cb;
+            m_sendOutputDataCb = cb;
             m_sendOutputDataData = data;
+        }
+    }
+
+    void setBrokerDisconnectReportCallback(CC_Mqtt5BrokerDisconnectReportCb cb, void* data)
+    {
+        if (cb != nullptr) {
+            m_brokerDisconnectReportCb = cb;
+            m_brokerDisconnectReportData = data;
         }
     }
     
@@ -84,14 +92,17 @@ private:
     void doApiEnter();
     void doApiExit();
 
-    CC_Mqtt5NextTickProgramFn m_nextTickProgramFn = nullptr;
+    CC_Mqtt5NextTickProgramCb m_nextTickProgramCb = nullptr;
     void* m_nextTickProgramData = nullptr;
 
-    CC_Mqtt5CancelNextTickWaitFn m_cancelNextTickWaitFn = nullptr;
+    CC_Mqtt5CancelNextTickWaitCb m_cancelNextTickWaitCb = nullptr;
     void* m_cancelNextTickWaitData = nullptr;
 
-    CC_Mqtt5SendOutputDataFn m_sendOutputDataFn = nullptr;
+    CC_Mqtt5SendOutputDataCb m_sendOutputDataCb = nullptr;
     void* m_sendOutputDataData = nullptr;
+
+    CC_Mqtt5BrokerDisconnectReportCb m_brokerDisconnectReportCb = nullptr;
+    void* m_brokerDisconnectReportData = nullptr;
 
     State m_state;
     TimerMgr m_timerMgr;

@@ -13,14 +13,17 @@ set (PROT_OPTS_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/templ/ProtocolOptions.h.templ)
 set (TEMPL_PROCESS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/ProcessTemplate.cmake)
 set (WRITE_CONFIG_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/WriteConfigHeader.cmake)
 set (WRITE_PROT_OPTS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/WriteProtocolOptions.cmake)
-set (DEFAULT_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/script/DefaultConfig.cmake)
+set (DEFAULT_CONFIG_VARS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/DefineDefaultConfigVars.cmake)
 set (DEFAULT_CLIENT_DIR_NAME "default")
 set (COMMON_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 ######################################################################
 
 function (gen_lib_mqtt5_client config_file)
-    include (${config_file})
+    if (NOT "${config_file}" STREQUAL "")
+        include (${config_file})
+    endif()
+
     set (name "${CC_MQTT5_CLIENT_CUSTOM_NAME}")
     if ("${CC_MQTT5_CLIENT_CUSTOM_NAME}" STREQUAL "")
         set (dir ${DEFAULT_CLIENT_DIR_NAME})
@@ -91,6 +94,7 @@ function (gen_lib_mqtt5_client config_file)
         OUTPUT "${config_output}"
         COMMAND ${CMAKE_COMMAND} 
             -DCMAKE_CONFIG_FILE="${config_file}"
+            -DCMAKE_DEFAULT_CONFIG_VARS="${DEFAULT_CONFIG_VARS_SCRIPT}"
             -DCONFIG_HEADER_TEMPL="${CONFIG_TEMPL}"
             -DOUT_FILE="${config_output}"
             -P ${WRITE_CONFIG_SCRIPT}
@@ -114,6 +118,7 @@ function (gen_lib_mqtt5_client config_file)
         OUTPUT "${prot_opts_output}"
         COMMAND ${CMAKE_COMMAND} 
             -DCMAKE_CONFIG_FILE="${config_file}"
+            -DCMAKE_DEFAULT_CONFIG_VARS="${DEFAULT_CONFIG_VARS_SCRIPT}"
             -DPROT_OPTS_HEADER_TEMPL="${PROT_OPTS_TEMPL}"
             -DOUT_FILE="${prot_opts_output}"
             -P ${WRITE_PROT_OPTS_SCRIPT}
@@ -189,5 +194,5 @@ install (
 )
 
 if (CC_MQTT5_CLIENT_DEFAULT_LIB) 
-    gen_lib_mqtt5_client("${DEFAULT_CONFIG}")
+    gen_lib_mqtt5_client("")
 endif ()

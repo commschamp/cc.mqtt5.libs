@@ -14,6 +14,6 @@
 namespace cc_mqtt5_client
 {
 
-using ClientAllocator = ObjAllocator<Client, Config::AllocLimit>;
+using ClientAllocator = ObjAllocator<Client, Config::ClientAllocLimit>;
 
 } // namespace cc_mqtt5_client

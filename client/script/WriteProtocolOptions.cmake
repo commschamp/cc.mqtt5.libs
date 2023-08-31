@@ -1,33 +1,33 @@
 # CMAKE_CONFIG_FILE - input cmake file
+# CMAKE_DEFAULT_CONFIG_VARS - input cmake file setting default variables
 # PROT_OPTS_HEADER_TEMPL - protocol options template file
 # OUT_FILE - output header file
 
-if (NOT EXISTS "${CMAKE_CONFIG_FILE}")
+if ((NOT "${CMAKE_CONFIG_FILE}" STREQUAL "") AND (NOT EXISTS "${CMAKE_CONFIG_FILE}"))
     message (FATAL_ERROR "Input file \"${CMAKE_CONFIG_FILE}\" doesn't exist!")
+endif ()
+
+if (NOT EXISTS "${CMAKE_DEFAULT_CONFIG_VARS}")
+    message (FATAL_ERROR "Input file \"${CMAKE_DEFAULT_CONFIG_VARS}\" doesn't exist!")
 endif ()
 
 if (NOT EXISTS "${PROT_OPTS_HEADER_TEMPL}")
     message (FATAL_ERROR "Input file \"${PROT_OPTS_HEADER_TEMPL}\" doesn't exist!")
 endif ()
 
-include (${CMAKE_CONFIG_FILE})
+if (NOT "${CMAKE_CONFIG_FILE}" STREQUAL "")
+    include (${CMAKE_CONFIG_FILE})
+endif ()
+
 file (READ ${PROT_OPTS_HEADER_TEMPL} text)
 
-cmake_policy(SET CMP0012 NEW)
+include (${CMAKE_DEFAULT_CONFIG_VARS} NO_POLICY_SCOPE)
 
 #########################################
-
-function (verify_variable_set name)
-    if ("${${name}}" STREQUAL "")
-        message (FATAL_ERROR "Variable \"${name}\" is not set, refer to the configuration documentation.")
-    endif ()
-endfunction()
 
 macro (set_default_opt name)
     set (${name} "comms::option::EmptyOption")
 endmacro()
-
-verify_variable_set("CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC")
 
 #########################################
 
@@ -38,7 +38,23 @@ set_default_opt (FIELD_STRING)
 
 #########################################
 
-# TODO: update options
+# Update options
+
+if (NOT ${CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN} EQUAL 0)
+    set (FIELD_BIN_DATA "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN}>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_PROPERTIES_LIST_FIELD_FIXED_LEN} EQUAL 0)
+    set (FIELD_PROPERTIES_LIST "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_PROPERTIES_LIST_FIELD_FIXED_LEN}>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC})
+    set (FIELD_PROTOCOL_NAME "comms::option::app::FixedSizeStorage<4>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN} EQUAL 0)
+    set (FIELD_STRING "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN}>")
+endif ()
 
 #########################################
 

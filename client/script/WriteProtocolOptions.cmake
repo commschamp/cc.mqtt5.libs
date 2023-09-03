@@ -36,9 +36,17 @@ set_default_opt (FIELD_PROPERTIES_LIST)
 set_default_opt (FIELD_PROTOCOL_NAME)
 set_default_opt (FIELD_STRING)
 
+set_default_opt (MAX_PACKET_SIZE)
+set_default_opt (MSG_ALLOC_OPT)
+
 #########################################
 
 # Update options
+
+if (NOT ${CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC})
+    set (FIELD_PROTOCOL_NAME "comms::option::app::FixedSizeStorage<4>")
+    set (MSG_ALLOC_OPT "comms::option::app::InPlaceAllocation")
+endif ()
 
 if (NOT ${CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN} EQUAL 0)
     set (FIELD_BIN_DATA "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN}>")
@@ -48,20 +56,28 @@ if (NOT ${CC_MQTT5_CLIENT_PROPERTIES_LIST_FIELD_FIXED_LEN} EQUAL 0)
     set (FIELD_PROPERTIES_LIST "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_PROPERTIES_LIST_FIELD_FIXED_LEN}>")
 endif ()
 
-if (NOT ${CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC})
-    set (FIELD_PROTOCOL_NAME "comms::option::app::FixedSizeStorage<4>")
-endif ()
-
 if (NOT ${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN} EQUAL 0)
     set (FIELD_STRING "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN}>")
 endif ()
 
+if (NOT ${CC_MQTT5_CLIENT_MAX_PACKET_SIZE} EQUAL 0)
+    set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_MAX_PACKET_SIZE}>")
+endif ()
+
 #########################################
 
-string (REPLACE "##FIELD_BIN_DATA##" "${FIELD_BIN_DATA}" text "${text}")
-string (REPLACE "##FIELD_PROPERTIES_LIST##" "${FIELD_PROPERTIES_LIST}" text "${text}")
-string (REPLACE "##FIELD_PROTOCOL_NAME##" "${FIELD_PROTOCOL_NAME}" text "${text}")
-string (REPLACE "##FIELD_STRING##" "${FIELD_STRING}" text "${text}")
+replace_in_text (FIELD_BIN_DATA)
+replace_in_text (FIELD_PROPERTIES_LIST)
+replace_in_text (FIELD_PROTOCOL_NAME)
+replace_in_text (FIELD_STRING)
+
+replace_in_text (MAX_PACKET_SIZE)
+replace_in_text (MSG_ALLOC_OPT)
+
+#string (REPLACE "##FIELD_BIN_DATA##" "${FIELD_BIN_DATA}" text "${text}")
+#string (REPLACE "##FIELD_PROPERTIES_LIST##" "${FIELD_PROPERTIES_LIST}" text "${text}")
+#string (REPLACE "##FIELD_PROTOCOL_NAME##" "${FIELD_PROTOCOL_NAME}" text "${text}")
+#string (REPLACE "##FIELD_STRING##" "${FIELD_STRING}" text "${text}")
 
 file (WRITE "${OUT_FILE}.tmp" "${text}")
 

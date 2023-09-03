@@ -47,6 +47,38 @@ void Client::tick(unsigned ms)
     doApiExit();
 }
 
+unsigned Client::processData(const std::uint8_t* iter, unsigned len)
+{
+    auto guard = apiEnter();
+
+    std::size_t consumed = 0;
+    while (true) {
+        auto iterTmp = iter;
+        ProtMsgPtr msg;
+        auto es = m_frame.read(msg, iterTmp, len - consumed);
+        if (es == comms::ErrorStatus::NotEnoughData) {
+            break;
+        }
+
+        if (es == comms::ErrorStatus::ProtocolError) {
+            ++iter;
+            continue;
+        }
+
+        if (es == comms::ErrorStatus::Success) {
+            COMMS_ASSERT(msg);
+            // TODO: handle
+            //m_lastRecvMsgTimestamp = m_timestamp;
+            //msg->dispatch(*this);
+        }
+
+        consumed += static_cast<std::size_t>(std::distance(iter, iterTmp));
+        iter = iterTmp;
+    }
+
+    return static_cast<unsigned>(consumed);    
+}
+
 CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     auto updateEc = 

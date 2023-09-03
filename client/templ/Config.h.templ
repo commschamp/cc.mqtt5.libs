@@ -5,12 +5,14 @@ namespace cc_mqtt5_client
 
 struct Config
 {
-    static constexpr bool HasDynMemAlloc = ##CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC##;
+    static constexpr bool HasDynMemAlloc = ##CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC_CPP##;
     static constexpr unsigned ClientAllocLimit = ##CC_MQTT5_CLIENT_ALLOC_LIMIT##;    
     static constexpr unsigned StringFieldFixedLen = ##CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN##;
+    static constexpr unsigned MaxPacketSize = ##CC_MQTT5_CLIENT_MAX_PACKET_SIZE##;
 
     static_assert(HasDynMemAlloc || (ClientAllocLimit > 0U), "Must use CC_MQTT5_CLIENT_ALLOC_LIMIT in configuration to limit number of clients");
     static_assert(HasDynMemAlloc || (StringFieldFixedLen > 0U), "Must use CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN in configuration to limit string field length");
+    static_assert(HasDynMemAlloc || (MaxPacketSize > 0U), "Must use CC_MQTT5_CLIENT_MAX_PACKET_SIZE in configuration to limit packet size");
 };
 
 } // namespace cc_mqtt5_client

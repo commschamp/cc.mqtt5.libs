@@ -12,7 +12,7 @@ namespace cc_mqtt5_client
 
 class ProtocolOptions : public cc_mqtt5::options::ClientDefaultOptions
 {
-    using BaseImpl = cc_mqtt5::options::ClientDefaultOptions
+    using BaseImpl = cc_mqtt5::options::ClientDefaultOptions;
 
 public:
     struct field : public BaseImpl::field
@@ -40,7 +40,25 @@ public:
                 ##FIELD_STRING##,
                 BaseImpl::field::String
             >;
-    }; // struct field    
+    }; // struct field   
+    
+    struct frame : public BaseImpl::frame
+    {
+        struct FrameLayers : public BaseImpl::frame::FrameLayers
+        {
+            using Data =
+                std::tuple<
+                    ##MAX_PACKET_SIZE##,
+                    BaseImpl::frame::FrameLayers::Data
+                >;
+
+            using IdAndFlags =
+                std::tuple<
+                    ##MSG_ALLOC_OPT##,
+                    BaseImpl::frame::FrameLayers::IdAndFlags
+                >;
+        }; // struct FrameLayers
+    }; // struct frame     
 };
 
 } // namespace cc_mqtt5_client

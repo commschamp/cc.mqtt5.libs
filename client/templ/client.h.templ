@@ -54,6 +54,19 @@ CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client);
 /// @param[in] ms Number of elapsed @b milliseconds.
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms);
 
+/// @brief Provide data, received over I/O link, to the library for processing.
+/// @details This call may cause invocation of some callbacks, such as 
+///     request to cancel the currently running time measurement, send some messages to
+///     the broker, report incoming application message, and (re)start time
+///     measurement.
+/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] buf Pointer to the buffer of data to process.
+/// @param[in] bufLen Number of bytes in the data buffer.
+/// @return Number of processed bytes.
+/// @note The function returns number of bytes that were actually consumed, and
+///     can be removed from the holding buffer.
+unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle client, const unsigned char* buf, unsigned bufLen);
+
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec);
 bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle connect);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_apply(CC_Mqtt5ConnectHandle connect);

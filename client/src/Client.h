@@ -11,6 +11,7 @@
 #include "ExtConfig.h"
 #include "ObjAllocator.h"
 #include "ObjListType.h"
+#include "ProtocolDefs.h"
 #include "State.h"
 #include "TimerMgr.h"
 
@@ -25,6 +26,7 @@ public:
 
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
+    unsigned processData(const std::uint8_t* iter, unsigned len);
 
     CC_Mqtt5ConnectHandle connectPrepare(CC_Mqtt5ErrorCode* ec);
 
@@ -110,6 +112,8 @@ private:
 
     ConnectOpAlloc m_connectOpAlloc;
     ConnectOpsList m_connectOps;
+
+    ProtFrame m_frame;
 };
 
 } // namespace cc_mqtt5_client

@@ -14,21 +14,33 @@
 #include "cc_mqtt5/input/AllMessages.h"
 #include "cc_mqtt5/input/ClientInputMessages.h"
 
+#include "comms/GenericHandler.h"
+
 #include <cstdint>
 
 namespace cc_mqtt5_client
 {
 
+class ProtMsgHandler;
+
 using ProtMessage = cc_mqtt5::Message<
     comms::option::app::ReadIterator<const std::uint8_t*>,
     comms::option::app::WriteIterator<std::uint8_t*>,
     comms::option::app::LengthInfoInterface,
-    comms::option::app::IdInfoInterface
+    comms::option::app::IdInfoInterface,
+    comms::option::app::Handler<ProtMsgHandler>
 >;
 
 CC_MQTT5_ALIASES_FOR_ALL_MESSAGES(, Msg, ProtMessage, ProtocolOptions)
 
 using ProtFrame = cc_mqtt5::frame::Frame<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage>, ProtocolOptions>;
 using ProtMsgPtr = ProtFrame::MsgPtr;
+
+class ProtMsgHandler : public comms::GenericHandler<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage> >
+{
+protected:
+    ProtMsgHandler() = default;
+    ~ProtMsgHandler() noexcept = default;
+};
 
 } // namespace cc_mqtt5_client

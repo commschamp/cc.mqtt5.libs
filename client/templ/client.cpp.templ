@@ -7,7 +7,8 @@
 
 #include "##NAME##client.h"
 #include "ClientAllocator.h"
-#include "ConnectOp.h"
+
+#include "op/ConnectOp.h"
 
 namespace
 {
@@ -23,9 +24,9 @@ inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle client)
     return reinterpret_cast<cc_mqtt5_client::Client*>(client.m_ptr);
 }
 
-inline cc_mqtt5_client::ConnectOp* connectOpFromHandle(CC_Mqtt5ConnectHandle connectOp)
+inline cc_mqtt5_client::op::ConnectOp* connectOpFromHandle(CC_Mqtt5ConnectHandle connectOp)
 {
-    return reinterpret_cast<cc_mqtt5_client::ConnectOp*>(connectOp.m_ptr);
+    return reinterpret_cast<cc_mqtt5_client::op::ConnectOp*>(connectOp.m_ptr);
 }
 
 } // namespace

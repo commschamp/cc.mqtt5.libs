@@ -5,24 +5,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#pragma once
-
-#include "cc_mqtt5_client/common.h"
+#include "op/ConnectOp.h"
 
 namespace cc_mqtt5_client
 {
 
-class Client;
-class ConnectOp
+namespace op
 {
-public:
-    explicit ConnectOp(Client& client) : m_client(client) {static_cast<void>(m_client);}
 
-    // TODO
-    CC_Mqtt5ErrorCode apply() { return CC_Mqtt5ErrorCode_Success; }
+Op::Type ConnectOp::typeImpl() const
+{
+    return Type_Connect;
+}
 
-private:
-    Client& m_client;    
-};
+} // namespace op
 
 } // namespace cc_mqtt5_client

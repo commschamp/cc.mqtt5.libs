@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "ConnectOp.h"
 #include "ExtConfig.h"
 #include "ObjAllocator.h"
 #include "ObjListType.h"
@@ -15,15 +14,19 @@
 #include "State.h"
 #include "TimerMgr.h"
 
+#include "op/ConnectOp.h"
+#include "op/Op.h"
+
 #include "cc_mqtt5_client/common.h"
 
 namespace cc_mqtt5_client
 {
 
-class Client
+class Client final : public ProtMsgHandler
 {
-public:
+    using Base = ProtMsgHandler;
 
+public:
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
@@ -61,11 +64,17 @@ public:
             m_brokerDisconnectReportData = data;
         }
     }
+
+    using Base::handle;
+    void handle(ProtMessage& msg);
+
+    void sendMessage(const ProtMessage& msg);
+    void opComplete(const op::Op* op);
     
 private:
-
-    using ConnectOpAlloc = ObjAllocator<ConnectOp, ExtConfig::ConnectOpsLimit>;
+    using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;
     using ConnectOpsList = ObjListType<ConnectOpAlloc::Ptr, ExtConfig::ConnectOpsLimit>;
+    using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
 
     class ApiEnterGuard
     {
@@ -94,6 +103,8 @@ private:
     void doApiEnter();
     void doApiExit();
 
+    void opComplete_Connect(const op::Op* op);
+
     CC_Mqtt5NextTickProgramCb m_nextTickProgramCb = nullptr;
     void* m_nextTickProgramData = nullptr;
 
@@ -112,6 +123,8 @@ private:
 
     ConnectOpAlloc m_connectOpAlloc;
     ConnectOpsList m_connectOps;
+
+    OpPtrsList m_ops;
 
     ProtFrame m_frame;
 };

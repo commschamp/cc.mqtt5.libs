@@ -74,13 +74,22 @@ bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle conne
     return connect.m_ptr != nullptr;
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_apply(CC_Mqtt5ConnectHandle connect)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectBasicConfig* config)
+{
+    if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect) || (config == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    return connectOpFromHandle(connect)->configBasic(*config);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect)
 {
     if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return connectOpFromHandle(connect)->apply();
+    return connectOpFromHandle(connect)->send();
 }
 
 // --------------------- Callbacks ---------------------

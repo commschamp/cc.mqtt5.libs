@@ -60,6 +60,17 @@ typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
 /// @details Returned by @b cc_mqtt5_client_connect_prepare() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
 
+
+struct CC_Mqtt5ConnectBasicConfig
+{
+    const char* m_clientId;
+    const char* m_username;
+    const unsigned char* m_password;
+    unsigned m_passwordLen;
+    unsigned m_keepAlive;
+    bool m_cleanStart;
+};
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.

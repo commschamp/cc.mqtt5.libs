@@ -8,6 +8,7 @@
 #pragma once
 
 #include "op/Op.h"
+#include "ProtocolDefs.h"
 
 #include "cc_mqtt5_client/common.h"
 
@@ -23,12 +24,15 @@ class ConnectOp final : public Op
 public:
     explicit ConnectOp(Client& client) : Base(client) {}
 
+    CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
 
-    // TODO
-    CC_Mqtt5ErrorCode apply() { return CC_Mqtt5ErrorCode_Success; }
+    CC_Mqtt5ErrorCode send();
 
 protected:
     virtual Type typeImpl() const override;    
+
+private:
+    ConnectMsg m_connectMsg;    
 };
 
 } // namespace op

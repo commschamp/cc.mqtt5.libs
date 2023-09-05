@@ -68,7 +68,7 @@ public:
     using Base::handle;
     void handle(ProtMessage& msg);
 
-    void sendMessage(const ProtMessage& msg);
+    CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
     
 private:
@@ -121,12 +121,12 @@ private:
     TimerMgr m_timerMgr;
     unsigned m_apiEnterCount = 0U;
 
+    ProtFrame m_frame;
+
     ConnectOpAlloc m_connectOpAlloc;
     ConnectOpsList m_connectOps;
 
     OpPtrsList m_ops;
-
-    ProtFrame m_frame;
 };
 
 } // namespace cc_mqtt5_client

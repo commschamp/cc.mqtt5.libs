@@ -8,6 +8,7 @@
 #include "Client.h"
 
 #include "comms/Assert.h"
+#include "comms/process.h"
 
 #include <algorithm>
 #include <type_traits>
@@ -78,32 +79,7 @@ void Client::tick(unsigned ms)
 unsigned Client::processData(const std::uint8_t* iter, unsigned len)
 {
     auto guard = apiEnter();
-
-    std::size_t consumed = 0;
-    while (true) {
-        auto iterTmp = iter;
-        ProtMsgPtr msg;
-        auto es = m_frame.read(msg, iterTmp, len - consumed);
-        if (es == comms::ErrorStatus::NotEnoughData) {
-            break;
-        }
-
-        if (es == comms::ErrorStatus::ProtocolError) {
-            ++iter;
-            continue;
-        }
-
-        if (es == comms::ErrorStatus::Success) {
-            COMMS_ASSERT(msg);
-            //m_lastRecvMsgTimestamp = m_timestamp;
-            msg->dispatch(*this);
-        }
-
-        consumed += static_cast<std::size_t>(std::distance(iter, iterTmp));
-        iter = iterTmp;
-    }
-
-    return static_cast<unsigned>(consumed);    
+    return static_cast<unsigned>(comms::processAllWithDispatch(iter, len, m_frame, *this));
 }
 
 CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
@@ -155,10 +131,11 @@ void Client::handle(ProtMessage& msg)
     }
 }
 
-void Client::sendMessage(const ProtMessage& msg)
+CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
 {
     // TODO: send
     static_cast<void>(msg);
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 void Client::opComplete(const op::Op* op)

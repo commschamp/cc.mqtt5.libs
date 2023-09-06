@@ -60,8 +60,8 @@ if (NOT ${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN} EQUAL 0)
     set (FIELD_STRING "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN}>")
 endif ()
 
-if (NOT ${CC_MQTT5_CLIENT_MAX_PACKET_SIZE} EQUAL 0)
-    set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_MAX_PACKET_SIZE}>")
+if (NOT ${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE} EQUAL 0)
+    set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE}>")
 endif ()
 
 #########################################

@@ -83,6 +83,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHa
     return connectOpFromHandle(connect)->configBasic(*config);
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectWillConfig* config)
+{
+    if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect) || (config == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return connectOpFromHandle(connect)->configWill(*config);
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect)
 {
     if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {

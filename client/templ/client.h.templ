@@ -70,6 +70,7 @@ unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle client, const
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec);
 bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle connect);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectBasicConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectWillConfig* config);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect);
 
 // --------------------- Callbacks ---------------------

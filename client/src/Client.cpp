@@ -133,8 +133,20 @@ void Client::handle(ProtMessage& msg)
 
 CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
 {
-    // TODO: send
-    static_cast<void>(msg);
+    auto len = m_frame.length(msg);
+    if (m_buf.capacity() < len) {
+        return CC_Mqtt5ErrorCode_BufferOverflow;
+    }
+
+    m_buf.resize(len);
+    auto writeIter = comms::writeIteratorFor<ProtMessage>(&m_buf[0]);
+    auto es = m_frame.write(msg, writeIter, len);
+    COMMS_ASSERT(es == comms::ErrorStatus::Success);
+    if (es != comms::ErrorStatus::Success) {
+        return CC_Mqtt5ErrorCode_InternalError;
+    }
+
+    m_sendOutputDataCb(m_sendOutputDataData, &m_buf[0], static_cast<unsigned>(len));
     return CC_Mqtt5ErrorCode_Success;
 }
 

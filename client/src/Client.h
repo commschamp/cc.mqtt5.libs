@@ -75,6 +75,7 @@ private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;
     using ConnectOpsList = ObjListType<ConnectOpAlloc::Ptr, ExtConfig::ConnectOpsLimit>;
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
+    using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
     class ApiEnterGuard
     {
@@ -120,6 +121,8 @@ private:
     State m_state;
     TimerMgr m_timerMgr;
     unsigned m_apiEnterCount = 0U;
+
+    OutputBuf m_buf;
 
     ProtFrame m_frame;
 

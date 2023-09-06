@@ -38,7 +38,8 @@ typedef enum
 {
     CC_Mqtt5QoS_AtMostOnceDelivery, ///< QoS=0. At most once delivery.
     CC_Mqtt5QoS_AtLeastOnceDelivery, ///< QoS=1. At least once delivery.
-    CC_Mqtt5QoS_ExactlyOnceDelivery ///< QoS=2. Exactly once delivery.
+    CC_Mqtt5QoS_ExactlyOnceDelivery, ///< QoS=2. Exactly once delivery.
+    CC_Mqtt5QoS_ValuesLimit ///< Limit for the values
 } CC_Mqtt5QoS;
 
 /// @brief Error code returned by various API functions.
@@ -50,14 +51,25 @@ typedef enum
     CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
     CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
     CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.
+    CC_Mqtt5ErrorCode_BufferOverflow, ///< Output buffer is too short
+    CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report
+    CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 
+/// @brief Payload format indicator
+typedef enum
+{
+    CC_Mqtt5PayloadFromat_Unspecified = 0, ///< Unspecified format
+    CC_Mqtt5PayloadFromat_Utf8 = 1, ///< UTF-8 string
+    CC_Mqtt5PayloadFromat_ValuesLimit ///< Limit of the values
+} CC_Mqtt5PayloadFromat;
+
 /// @brief Handle used to access client specific data structures.
-/// @details Returned by @b cc_mqtt5_client_new() function.
+/// @details Returned by cc_mqtt5_client_new() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
 
 /// @brief Handle for connection operation.
-/// @details Returned by @b cc_mqtt5_client_connect_prepare() function.
+/// @details Returned by cc_mqtt5_client_connect_prepare() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
 
 
@@ -69,6 +81,18 @@ struct CC_Mqtt5ConnectBasicConfig
     unsigned m_passwordLen;
     unsigned m_keepAlive;
     bool m_cleanStart;
+};
+
+struct CC_Mqtt5ConnectWillConfig
+{
+    const char* m_topic;
+    const unsigned char* m_data;
+    unsigned m_dataLen;
+    unsigned m_delayInterval;
+    unsigned m_expiryInterval;
+    CC_Mqtt5QoS m_qos;
+    CC_Mqtt5PayloadFromat m_format;
+    bool m_retain;
 };
 
 /// @brief Callback used to request time measurement.

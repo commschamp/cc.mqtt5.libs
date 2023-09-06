@@ -9,6 +9,7 @@
 #include "Client.h"
 
 #include "comms/util/assign.h"
+#include "comms/units.h"
 
 #include <algorithm>
 #include <limits>
@@ -57,7 +58,80 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
 
     static constexpr auto MaxKeepAlive = 
         std::numeric_limits<ConnectMsg::Field_keepAlive::ValueType>::max();
-    m_connectMsg.field_keepAlive().setValue(std::min(config.m_keepAlive, static_cast<decltype(config.m_keepAlive)>(MaxKeepAlive)));
+
+    if (MaxKeepAlive < config.m_keepAlive) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+    
+    //comms::units::setSeconds(m_connectMsg.field_keepAlive(), config.m_keepAlive);
+    m_connectMsg.field_keepAlive().setValue(config.m_keepAlive);
+    m_connectMsg.doRefresh();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
+CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
+{
+    if ((config.m_dataLen > 0U) && (config.m_data == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    if (config.m_topic == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    m_connectMsg.field_willTopic().field().value() = config.m_topic;
+    if (config.m_dataLen > 0U) {
+        comms::util::assign(m_connectMsg.field_willMessage().field().value(), config.m_data, config.m_data + config.m_dataLen);
+    }
+
+    m_connectMsg.field_flags().field_willQos().setValue(config.m_qos);
+    m_connectMsg.field_flags().field_high().setBitValue_willRetain(config.m_retain);
+    m_connectMsg.field_flags().field_low().setBitValue_willFlag(true);
+
+    auto addProp = 
+        [this]() -> decltype(auto)
+        {
+            auto& vec = m_connectMsg.field_willProperties().field().value();
+            vec.resize(vec.size() + 1U);
+            return vec.back();
+        };
+
+    if (config.m_format != CC_Mqtt5PayloadFromat_Unspecified) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_payloadFormatIndicator();
+        propBundle.field_value().setValue(config.m_format);
+    }
+
+    if (config.m_delayInterval > 0U) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_willDelayInterval();
+        auto& valueField = propBundle.field_value();
+
+        using ValueField = std::decay_t<decltype(valueField)>;
+        static constexpr auto MaxValue = std::numeric_limits<ValueField::ValueType>::max();
+
+        if (MaxValue < config.m_delayInterval) {
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        comms::units::setSeconds(valueField, config.m_delayInterval);
+    }
+
+    if (config.m_expiryInterval > 0U) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_messageExpiryInterval();
+        auto& valueField = propBundle.field_value();
+
+        using ValueField = std::decay_t<decltype(valueField)>;
+        static constexpr auto MaxValue = std::numeric_limits<ValueField::ValueType>::max();
+
+        if (MaxValue < config.m_expiryInterval) {
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        comms::units::setSeconds(valueField, config.m_expiryInterval);
+    }
+
     m_connectMsg.doRefresh();
     return CC_Mqtt5ErrorCode_Success;
 }

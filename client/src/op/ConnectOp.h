@@ -25,6 +25,7 @@ public:
     explicit ConnectOp(Client& client) : Base(client) {}
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
+    CC_Mqtt5ErrorCode configWill(const CC_Mqtt5ConnectWillConfig& config);
 
     CC_Mqtt5ErrorCode send();
 

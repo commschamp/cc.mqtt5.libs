@@ -20,6 +20,13 @@ namespace cc_mqtt5_client
 namespace op
 {
 
+ConnectOp::ConnectOp(Client& client) : 
+    Base(client),
+    m_timer(client.timerMgr().allocTimer())
+{
+
+}    
+
 Op::Type ConnectOp::typeImpl() const
 {
     return Type_Connect;
@@ -132,14 +139,64 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         comms::units::setSeconds(valueField, config.m_expiryInterval);
     }
 
+    if (config.m_contentType != nullptr) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_contentType();
+        auto& valueField = propBundle.field_value();
+        valueField.value() = config.m_contentType;
+    }
+
+    if (config.m_responseTopic != nullptr) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_responseTopic();
+        auto& valueField = propBundle.field_value();
+        valueField.value() = config.m_responseTopic;        
+    }
+
+    if ((config.m_correlationDataLen > 0U) && (config.m_correlationData == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    if (config.m_correlationData != nullptr) {
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_correlationData();
+        auto& valueField = propBundle.field_value();        
+
+        comms::util::assign(valueField.value(), config.m_correlationData, config.m_correlationData + config.m_correlationDataLen);
+    }
+
     m_connectMsg.doRefresh();
     return CC_Mqtt5ErrorCode_Success;
 }
 
-CC_Mqtt5ErrorCode ConnectOp::send() 
+CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData) 
 {
-    // TODO: callback
-    return client().sendMessage(m_connectMsg); 
+    auto completeOnError = 
+        comms::util::makeScopeGuard(
+            [this]()
+            {
+                opComplete();
+            });
+
+    if (cb == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    m_cb = cb;
+    m_cbData = cbData;
+    
+    auto result = client().sendMessage(m_connectMsg); 
+    if (result != CC_Mqtt5ErrorCode_Success) {
+        return result;
+    }
+
+    if (!m_timer.isValid()) {
+        return CC_Mqtt5ErrorCode_OutOfMemory;
+    }
+
+    // TODO: response timeout
+    completeOnError.release(); // don't complete op yet
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 } // namespace op

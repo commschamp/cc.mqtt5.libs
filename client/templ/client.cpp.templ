@@ -7,6 +7,7 @@
 
 #include "##NAME##client.h"
 #include "ClientAllocator.h"
+#include "ExtConfig.h"
 
 #include "op/ConnectOp.h"
 
@@ -74,6 +75,17 @@ bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle conne
     return connect.m_ptr != nullptr;
 }
 
+void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfig* config)
+{
+    *config = CC_Mqtt5ConnectBasicConfig();
+    config->m_keepAlive = cc_mqtt5_client::ExtConfig::DefaultKeepAlive;
+}
+
+void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config)
+{
+    *config = CC_Mqtt5ConnectWillConfig();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectBasicConfig* config)
 {
     if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect) || (config == nullptr)) {
@@ -92,13 +104,13 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHan
     return connectOpFromHandle(connect)->configWill(*config);
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* data)
 {
     if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return connectOpFromHandle(connect)->send();
+    return connectOpFromHandle(connect)->send(cb, data);
 }
 
 // --------------------- Callbacks ---------------------

@@ -70,6 +70,11 @@ public:
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
+
+    TimerMgr& timerMgr()
+    {
+        return m_timerMgr;
+    }
     
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;

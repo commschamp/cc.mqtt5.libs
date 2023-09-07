@@ -11,6 +11,7 @@
 #include "ProtocolDefs.h"
 
 #include "cc_mqtt5_client/common.h"
+#include "TimerMgr.h"
 
 namespace cc_mqtt5_client
 {
@@ -22,18 +23,21 @@ class ConnectOp final : public Op
 {
     using Base = Op;
 public:
-    explicit ConnectOp(Client& client) : Base(client) {}
+    explicit ConnectOp(Client& client);
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
     CC_Mqtt5ErrorCode configWill(const CC_Mqtt5ConnectWillConfig& config);
 
-    CC_Mqtt5ErrorCode send();
+    CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
 protected:
     virtual Type typeImpl() const override;    
 
 private:
-    ConnectMsg m_connectMsg;    
+    ConnectMsg m_connectMsg;  
+    TimerMgr::Timer m_timer;  
+    CC_Mqtt5ConnectCompleteCb m_cb = nullptr;
+    void* m_cbData = nullptr;
 };
 
 } // namespace op

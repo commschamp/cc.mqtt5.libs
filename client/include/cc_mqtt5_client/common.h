@@ -64,6 +64,55 @@ typedef enum
     CC_Mqtt5PayloadFromat_ValuesLimit ///< Limit of the values
 } CC_Mqtt5PayloadFromat;
 
+typedef enum
+{
+    CC_Mqtt5ReasonCode_Success = 0, ///< value @b Success. 
+    CC_Mqtt5ReasonCode_NormalDisconnection = 0, ///< value <b>Normal Disconnection</b>. 
+    CC_Mqtt5ReasonCode_GrantedQos0 = 0, ///< value <b>Granted QoS0</b>. 
+    CC_Mqtt5ReasonCode_GrantedQos1 = 1, ///< value <b>Granted QoS1</b>. 
+    CC_Mqtt5ReasonCode_GrantedQos2 = 2, ///< value <b>Granted QoS2</b>. 
+    CC_Mqtt5ReasonCode_DisconnectWithWill = 4, ///< value <b>Disconnect w/ Will</b>. 
+    CC_Mqtt5ReasonCode_NoMatchingSubscribers = 16, ///< value <b>No Matching Subscribers</b>. 
+    CC_Mqtt5ReasonCode_NoSubscriptionExisted = 17, ///< value <b>No Subscription Existed</b>. 
+    CC_Mqtt5ReasonCode_ContinueAuth = 24, ///< value <b>Continue authentication</b>. 
+    CC_Mqtt5ReasonCode_ReAuth = 25, ///< value <b>Re-authenticate</b>. 
+    CC_Mqtt5ReasonCode_UnspecifiedError = 128, ///< value <b>Unspecified error</b>. 
+    CC_Mqtt5ReasonCode_MalformedPacket = 129, ///< value <b>Malformed Packet</b>. 
+    CC_Mqtt5ReasonCode_ProtocolError = 130, ///< value <b>Protocol Error</b>. 
+    CC_Mqtt5ReasonCode_ImplSpecificError = 131, ///< value <b>Impl. Specific Error</b>. 
+    CC_Mqtt5ReasonCode_UnsupportedVersion = 132, ///< value <b>Unsupported Version</b>. 
+    CC_Mqtt5ReasonCode_ClientIdInvalid = 133, ///< value <b>Client ID Invalid</b>. 
+    CC_Mqtt5ReasonCode_BadUserPassword = 134, ///< value <b>Bad Username/Password</b>. 
+    CC_Mqtt5ReasonCode_NotAuthorized = 135, ///< value <b>Not authorized</b>. 
+    CC_Mqtt5ReasonCode_ServerUnavailable = 136, ///< value <b>Server unavailable</b>. 
+    CC_Mqtt5ReasonCode_ServerBusy = 137, ///< value <b>Server busy</b>. 
+    CC_Mqtt5ReasonCode_Banned = 138, ///< value @b Banned. 
+    CC_Mqtt5ReasonCode_ServerShuttingDown = 139, ///< value <b>Server shutting down</b>. 
+    CC_Mqtt5ReasonCode_BadAuthMethod = 140, ///< value <b>Bad auth method</b>. 
+    CC_Mqtt5ReasonCode_KeepAliveTimeout = 141, ///< value <b>Keep Alive timeout</b>. 
+    CC_Mqtt5ReasonCode_SessionTakenOver = 142, ///< value <b>Session taken over</b>. 
+    CC_Mqtt5ReasonCode_TopicFilterInvalid = 143, ///< value <b>Topic Filter invalid</b>. 
+    CC_Mqtt5ReasonCode_TopicNameInvalid = 144, ///< value <b>Topic Name invalid</b>. 
+    CC_Mqtt5ReasonCode_PacketIdInUse = 145, ///< value <b>Packet ID in use</b>. 
+    CC_Mqtt5ReasonCode_PacketIdNotFound = 146, ///< value <b>Packet ID not found</b>. 
+    CC_Mqtt5ReasonCode_ReceiveMaxExceeded = 147, ///< value <b>Receive Max exceeded</b>. 
+    CC_Mqtt5ReasonCode_TopicAliasInvalid = 148, ///< value <b>Topic Alias invalid</b>. 
+    CC_Mqtt5ReasonCode_PacketTooLarge = 149, ///< value <b>Packet too large</b>. 
+    CC_Mqtt5ReasonCode_MsgRateTooHigh = 150, ///< value <b>Message rate too high</b>. 
+    CC_Mqtt5ReasonCode_QuotaExceeded = 151, ///< value <b>Quota exceeded</b>. 
+    CC_Mqtt5ReasonCode_AdministrativeAction = 152, ///< value <b>Administrative action</b>. 
+    CC_Mqtt5ReasonCode_PayloadFormatInvalid = 153, ///< value <b>Payload format invalid</b>. 
+    CC_Mqtt5ReasonCode_RetainNotSupported = 154, ///< value <b>Retain not supported</b>. 
+    CC_Mqtt5ReasonCode_QosNotSupported = 155, ///< value <b>QoS not supported</b>. 
+    CC_Mqtt5ReasonCode_UseAnotherServer = 156, ///< value <b>Use another server</b>. 
+    CC_Mqtt5ReasonCode_ServerMoved = 157, ///< value <b>Server moved</b>. 
+    CC_Mqtt5ReasonCode_SharedSubNotSuppored = 158, ///< value <b>Shared Sub not supported</b>. 
+    CC_Mqtt5ReasonCode_ConnectionRateExceeded = 159, ///< value <b>Connection rate exceeded</b>. 
+    CC_Mqtt5ReasonCode_MaxConnectTime = 160, ///< value <b>Maximum connect time</b>. 
+    CC_Mqtt5ReasonCode_SubIdsNotSupported = 161, ///< value <b>Sub IDs not supported</b>. 
+    CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
+} CC_Mqtt5ReasonCode;
+
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by cc_mqtt5_client_new() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
@@ -88,11 +137,35 @@ struct CC_Mqtt5ConnectWillConfig
     const char* m_topic;
     const unsigned char* m_data;
     unsigned m_dataLen;
+    const char* m_contentType;
+    const char* m_responseTopic;
+    const unsigned char* m_correlationData;
+    unsigned m_correlationDataLen;
     unsigned m_delayInterval;
     unsigned m_expiryInterval;
     CC_Mqtt5QoS m_qos;
     CC_Mqtt5PayloadFromat m_format;
     bool m_retain;
+};
+
+struct CC_Mqtt5ConnectResponse
+{
+    CC_Mqtt5ReasonCode m_reasonCode;
+    const char* m_clientId;
+    const char* m_responseInfo;
+    const char* m_serverRef;
+    const char* m_authMethod;
+    const unsigned char* m_authData;
+    unsigned m_authDataLen;
+    unsigned m_expiryInterval;
+    unsigned m_maxPacketSize;
+    unsigned m_topicAliaxMax;
+    CC_Mqtt5QoS m_maxQos;
+    bool m_sessionPresent;
+    bool m_retianAvailable;
+    bool m_wildcardSubAvailable;
+    bool m_subIdsAvailalbe;
+    bool m_sharedSubsAvailable;
 };
 
 /// @brief Callback used to request time measurement.
@@ -130,6 +203,7 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 ///     the request call.
 typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data);
 
+typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, const CC_Mqtt5ConnectResponse* response);
 
 #ifdef __cplusplus
 }

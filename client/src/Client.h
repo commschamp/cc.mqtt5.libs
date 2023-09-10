@@ -75,6 +75,11 @@ public:
     {
         return m_timerMgr;
     }
+
+    State& state()
+    {
+        return m_state;
+    }
     
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;

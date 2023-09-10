@@ -34,7 +34,7 @@ public:
     }
 
 protected:
-    explicit Op(Client& client) : m_client(client) {}
+    explicit Op(Client& client);
 
     virtual Type typeImpl() const = 0;
 
@@ -46,8 +46,19 @@ protected:
         return m_client;
     }
 
+    unsigned getOpTimeout() const
+    {
+        return m_opTimeoutMs;
+    }
+
+    void setOpTimeout(unsigned ms)
+    {
+        m_opTimeoutMs = ms;
+    }
+
 private:
     Client& m_client;    
+    unsigned m_opTimeoutMs = 0U;
 };
 
 } // namespace op

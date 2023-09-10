@@ -12,6 +12,9 @@ namespace cc_mqtt5_client
 
 struct State
 {
+    static constexpr unsigned DefaultOpTimeoutMs = 2000;
+
+    unsigned m_opTimeoutMs = DefaultOpTimeoutMs;
     bool m_initialized = false;
     bool m_connected = false;
 };

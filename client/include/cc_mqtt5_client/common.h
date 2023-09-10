@@ -59,10 +59,18 @@ typedef enum
 /// @brief Payload format indicator
 typedef enum
 {
-    CC_Mqtt5PayloadFromat_Unspecified = 0, ///< Unspecified format
-    CC_Mqtt5PayloadFromat_Utf8 = 1, ///< UTF-8 string
-    CC_Mqtt5PayloadFromat_ValuesLimit ///< Limit of the values
-} CC_Mqtt5PayloadFromat;
+    CC_Mqtt5PayloadFormat_Unspecified = 0, ///< Unspecified format
+    CC_Mqtt5PayloadFormat_Utf8 = 1, ///< UTF-8 string
+    CC_Mqtt5PayloadFormat_ValuesLimit ///< Limit of the values
+} CC_Mqtt5PayloadFormat;
+
+typedef enum
+{
+    CC_Mqtt5AsyncOpStatus_Success,
+    CC_Mqtt5AsyncOpStatus_InternalError,
+    CC_Mqtt5AsyncOpStatus_Timeout,
+    CC_Mqtt5AsyncOpStatus_ValuesLimit
+} CC_Mqtt5AsyncOpStatus;
 
 typedef enum
 {
@@ -144,7 +152,7 @@ struct CC_Mqtt5ConnectWillConfig
     unsigned m_delayInterval;
     unsigned m_expiryInterval;
     CC_Mqtt5QoS m_qos;
-    CC_Mqtt5PayloadFromat m_format;
+    CC_Mqtt5PayloadFormat m_format;
     bool m_retain;
 };
 
@@ -203,7 +211,7 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 ///     the request call.
 typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data);
 
-typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, const CC_Mqtt5ConnectResponse* response);
+typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 #ifdef __cplusplus
 }

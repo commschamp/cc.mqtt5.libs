@@ -15,6 +15,12 @@ namespace cc_mqtt5_client
 namespace op
 {
 
+Op::Op(Client& client) : 
+    m_client(client),
+    m_opTimeoutMs(client.state().m_opTimeoutMs)
+{
+}    
+
 void Op::sendMessage(const ProtMessage& msg)
 {
     m_client.sendMessage(msg);
@@ -22,7 +28,7 @@ void Op::sendMessage(const ProtMessage& msg)
 
 void Op::opComplete()
 {
-    // TODO
+    m_client.opComplete(this);
 }
 
 } // namespace op

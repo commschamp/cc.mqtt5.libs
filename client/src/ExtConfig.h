@@ -18,7 +18,8 @@ struct ExtConfig : public Config
 {
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned ConnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
-    static constexpr unsigned TimersLimit = 0U; // TODO:
+    static constexpr unsigned TimersLimit = // TODO: complete
+        ConnectOpsLimit;
 
     static const unsigned OpsLimit = // TODO: complete
         ConnectOpsLimit;

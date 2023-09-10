@@ -65,6 +65,25 @@ unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle client, const
     return clientFromHandle(client)->processData(buf, bufLen);
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_op_timeout(CC_Mqtt5ClientHandle client, unsigned ms)
+{
+    if (!cc_mqtt5_##NAME##client_handle_is_valid(client) || (ms = 0U)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    clientFromHandle(client)->state().m_opTimeoutMs = ms;
+    return CC_Mqtt5ErrorCode_Success;
+}
+
+unsigned cc_mqtt5_##NAME##client_get_default_op_timeout(CC_Mqtt5ClientHandle client)
+{
+    if (!cc_mqtt5_##NAME##client_handle_is_valid(client)) {
+        return 0U;
+    }
+
+    return clientFromHandle(client)->state().m_opTimeoutMs;
+}
+
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec)
 {
     return clientFromHandle(client)->connectPrepare(ec);

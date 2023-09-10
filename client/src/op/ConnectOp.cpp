@@ -20,6 +20,17 @@ namespace cc_mqtt5_client
 namespace op
 {
 
+namespace 
+{
+
+inline ConnectOp* asConnectOp(void* data)
+{
+    return reinterpret_cast<ConnectOp*>(data);
+}
+
+} // namespace 
+    
+
 ConnectOp::ConnectOp(Client& client) : 
     Base(client),
     m_timer(client.timerMgr().allocTimer())
@@ -103,7 +114,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return vec.back();
         };
 
-    if (config.m_format != CC_Mqtt5PayloadFromat_Unspecified) {
+    if (config.m_format != CC_Mqtt5PayloadFormat_Unspecified) {
         auto& propVar = addProp();
         auto& propBundle = propVar.initField_payloadFormatIndicator();
         propBundle.field_value().setValue(config.m_format);
@@ -194,9 +205,28 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return CC_Mqtt5ErrorCode_OutOfMemory;
     }
 
-    // TODO: response timeout
     completeOnError.release(); // don't complete op yet
+    m_timer.wait(getOpTimeout(), &ConnectOp::opTimeoutCb, this);
     return CC_Mqtt5ErrorCode_Success;
+}
+
+void ConnectOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+{
+    COMMS_ASSERT(m_cb != nullptr);
+    auto cb = m_cb;
+    auto* cbData = m_cbData;
+    opComplete(); // mustn't access data members after destruction
+    cb(cbData, status, response);    
+}
+
+void ConnectOp::opTimeoutInternal()
+{
+    completeOpInternal(CC_Mqtt5AsyncOpStatus_Timeout);
+}
+
+void ConnectOp::opTimeoutCb(void* data)
+{
+    asConnectOp(data)->opTimeoutInternal();
 }
 
 } // namespace op

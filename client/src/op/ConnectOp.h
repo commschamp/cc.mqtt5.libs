@@ -34,6 +34,11 @@ protected:
     virtual Type typeImpl() const override;    
 
 private:
+    void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
+    void opTimeoutInternal();
+
+    static void opTimeoutCb(void* data);
+
     ConnectMsg m_connectMsg;  
     TimerMgr::Timer m_timer;  
     CC_Mqtt5ConnectCompleteCb m_cb = nullptr;

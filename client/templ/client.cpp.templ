@@ -123,13 +123,31 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHan
     return connectOpFromHandle(connect)->configWill(*config);
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* data)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5AuthInfo* info, CC_Mqtt5AuthCb cb, void* cbData)
+{
+    if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }        
+
+    return connectOpFromHandle(connect)->configAuth(info, cb, cbData);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5UserProp* prop)
+{
+    if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect) || (prop == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }        
+
+    return connectOpFromHandle(connect)->addUserProp(*prop);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* cbData)
 {
     if (!cc_mqtt5_##NAME##client_connect_handle_is_valid(connect)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return connectOpFromHandle(connect)->send(cb, data);
+    return connectOpFromHandle(connect)->send(cb, cbData);
 }
 
 // --------------------- Callbacks ---------------------

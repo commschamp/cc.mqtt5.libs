@@ -46,13 +46,14 @@ typedef enum
 typedef enum
 {
     CC_Mqtt5ErrorCode_Success, ///< The requested operation was successfully started.
+    CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report    
     CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
     CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
     CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
     CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
     CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.
     CC_Mqtt5ErrorCode_BufferOverflow, ///< Output buffer is too short
-    CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report
+    CC_Mqtt5ErrorCode_NotSupported, ///< Feature is not supported
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 
@@ -71,6 +72,14 @@ typedef enum
     CC_Mqtt5AsyncOpStatus_Timeout,
     CC_Mqtt5AsyncOpStatus_ValuesLimit
 } CC_Mqtt5AsyncOpStatus;
+
+
+typedef enum
+{
+    CC_Mqtt5AuthErrorCode_Continue,
+    CC_Mqtt5AuthErrorCode_Disconnect,
+    CC_Mqtt5AuthErrorCode_ValuesLimit
+} CC_Mqtt5AuthErrorCode;
 
 typedef enum
 {
@@ -129,8 +138,13 @@ typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
 
+typedef struct
+{
+    const char* m_key;
+    const char* m_value;
+} CC_Mqtt5UserProp;
 
-struct CC_Mqtt5ConnectBasicConfig
+typedef struct
 {
     const char* m_clientId;
     const char* m_username;
@@ -138,9 +152,9 @@ struct CC_Mqtt5ConnectBasicConfig
     unsigned m_passwordLen;
     unsigned m_keepAlive;
     bool m_cleanStart;
-};
+} CC_Mqtt5ConnectBasicConfig;
 
-struct CC_Mqtt5ConnectWillConfig
+typedef struct
 {
     const char* m_topic;
     const unsigned char* m_data;
@@ -154,9 +168,9 @@ struct CC_Mqtt5ConnectWillConfig
     CC_Mqtt5QoS m_qos;
     CC_Mqtt5PayloadFormat m_format;
     bool m_retain;
-};
+} CC_Mqtt5ConnectWillConfig;
 
-struct CC_Mqtt5ConnectResponse
+typedef struct 
 {
     CC_Mqtt5ReasonCode m_reasonCode;
     const char* m_clientId;
@@ -165,16 +179,26 @@ struct CC_Mqtt5ConnectResponse
     const char* m_authMethod;
     const unsigned char* m_authData;
     unsigned m_authDataLen;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;
     unsigned m_expiryInterval;
     unsigned m_maxPacketSize;
-    unsigned m_topicAliaxMax;
+    unsigned m_topicAliasMax;
     CC_Mqtt5QoS m_maxQos;
     bool m_sessionPresent;
     bool m_retianAvailable;
     bool m_wildcardSubAvailable;
     bool m_subIdsAvailalbe;
     bool m_sharedSubsAvailable;
-};
+} CC_Mqtt5ConnectResponse;
+
+typedef struct
+{
+    const char* m_authMethod;
+    const unsigned char* m_authData;
+    unsigned m_authDataLen;
+    const char* m_reasonStr;
+} CC_Mqtt5AuthInfo;
 
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
@@ -212,6 +236,8 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data);
 
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+
+typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 
 #ifdef __cplusplus
 }

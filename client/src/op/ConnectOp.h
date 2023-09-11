@@ -27,7 +27,8 @@ public:
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
     CC_Mqtt5ErrorCode configWill(const CC_Mqtt5ConnectWillConfig& config);
-
+    CC_Mqtt5ErrorCode configAuth(const CC_Mqtt5AuthInfo* info, CC_Mqtt5AuthCb cb, void* cbData);
+    CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
 protected:
@@ -36,6 +37,7 @@ protected:
 private:
     void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
     void opTimeoutInternal();
+    bool canAddProp() const;
 
     static void opTimeoutCb(void* data);
 
@@ -43,6 +45,8 @@ private:
     TimerMgr::Timer m_timer;  
     CC_Mqtt5ConnectCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;
+    CC_Mqtt5AuthCb m_authCb = nullptr;
+    void* m_authCbData = nullptr;
 };
 
 } // namespace op

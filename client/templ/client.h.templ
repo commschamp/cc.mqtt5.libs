@@ -76,7 +76,9 @@ void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfi
 void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectBasicConfig* config);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectWillConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* data);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5AuthInfo* info, CC_Mqtt5AuthCb cb, void* cbData);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5UserProp* prop);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
 // --------------------- Callbacks ---------------------
 

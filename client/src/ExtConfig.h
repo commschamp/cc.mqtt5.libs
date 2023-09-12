@@ -24,9 +24,12 @@ struct ExtConfig : public Config
     static const unsigned OpsLimit = // TODO: complete
         ConnectOpsLimit;
 
-    static_assert(HasDynMemAlloc || (TimersLimit > 0U), "Must calculate timers limit");
-    static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U), "ConnectOpsLimit");
-    static_assert(HasDynMemAlloc || (OpsLimit > 0U), "OpsLimit");
+    static const unsigned ReceiveOpsLimit = (ReceiveMaxLimit == 0U) ? 0U : (ReceiveMaxLimit + 1U);
+
+    static_assert(HasDynMemAlloc || (TimersLimit > 0U));
+    static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U));
+    static_assert(HasDynMemAlloc || (OpsLimit > 0U));
+    static_assert(HasDynMemAlloc || (ReceiveOpsLimit > 0U));
 };
 
 } // namespace cc_mqtt5_client

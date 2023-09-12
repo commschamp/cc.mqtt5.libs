@@ -35,6 +35,7 @@ endmacro ()
 
 adjust_bool_value ("CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC" "CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC_CPP")
 adjust_bool_value ("CC_MQTT5_CLIENT_HAS_USER_PROPS" "CC_MQTT5_CLIENT_HAS_USER_PROPS_CPP")
+adjust_bool_value ("CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES" "CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP")
 
 #########################################
 
@@ -46,6 +47,10 @@ replace_in_text (CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN)
 replace_in_text (CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE)
 replace_in_text (CC_MQTT5_CLIENT_HAS_USER_PROPS_CPP)
 replace_in_text (CC_MQTT5_CLIENT_USER_PROPS_LIMIT)
+replace_in_text (CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT)
+replace_in_text (CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP)
+replace_in_text (CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT)
+
 
 file (WRITE "${OUT_FILE}.tmp" "${text}")
 

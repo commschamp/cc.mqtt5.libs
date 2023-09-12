@@ -113,7 +113,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return vec.size() < vec.capacity();
         };
 
-    auto addProp = 
+    auto addWillProp = 
         [this]() -> decltype(auto)
         {
             auto& vec = m_connectMsg.field_willProperties().field().value();
@@ -126,7 +126,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_payloadFormatIndicator();
         propBundle.field_value().setValue(config.m_format);
     }
@@ -136,7 +136,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_willDelayInterval();
         auto& valueField = propBundle.field_value();
 
@@ -155,7 +155,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_messageExpiryInterval();
         auto& valueField = propBundle.field_value();
 
@@ -174,7 +174,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_contentType();
         auto& valueField = propBundle.field_value();
         valueField.value() = config.m_contentType;
@@ -184,7 +184,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         if (!canAddWillProp()) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }        
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_responseTopic();
         auto& valueField = propBundle.field_value();
         valueField.value() = config.m_responseTopic;        
@@ -199,7 +199,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addProp();
+        auto& propVar = addWillProp();
         auto& propBundle = propVar.initField_correlationData();
         auto& valueField = propBundle.field_value();        
 
@@ -210,27 +210,99 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
     return CC_Mqtt5ErrorCode_Success;
 }
 
-CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthInfo* info, CC_Mqtt5AuthCb cb, void* cbData)
+CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& config)
 {
-    if (cb == nullptr) {
+    if (config.m_expiryInterval > 0U) {
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_messageExpiryInterval();
+        auto& valueField = propBundle.field_value();        
+        comms::units::setSeconds(valueField, config.m_expiryInterval);                
+    }
+
+    if (config.m_receiveMaximum > 0U) {
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_receiveMax();
+        auto& valueField = propBundle.field_value();          
+        valueField.setValue(config.m_receiveMaximum);
+    }
+
+    if (config.m_maxPacketSize > 0U) {
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_maxPacketSize();
+        auto& valueField = propBundle.field_value();          
+        valueField.setValue(config.m_maxPacketSize);
+    }
+
+    if (config.m_topicAliasMaximum > 0U) {
+        if constexpr (!ExtConfig::HasTopicAliases) {
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        if (config.m_topicAliasMaximum > CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT) {
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        using ValueType = ConnectMsg::Field_properties::ValueType::value_type::Field_topicAliasMax::Field_value::ValueType;
+        static constexpr auto MaxSupportedVal = std::numeric_limits<ValueType>::max();
+        static_assert(MaxSupportedVal <= CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT);
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_topicAliasMax();
+        auto& valueField = propBundle.field_value();          
+        valueField.setValue(config.m_topicAliasMaximum);        
+    }
+
+    if (config.m_requestResposnseInfo) {
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_requestResponseInfo();
+        auto& valueField = propBundle.field_value();          
+        valueField.setValue(config.m_requestResposnseInfo);   
+    }
+
+    if (config.m_requestProblemInfo) {
+        if (!canAddProp()) {
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto& propVar = addProp();
+        auto& propBundle = propVar.initField_requestProblemInfo();
+        auto& valueField = propBundle.field_value();          
+        valueField.setValue(config.m_requestProblemInfo);   
+    }    
+
+    return CC_Mqtt5ErrorCode_Success;
+}
+
+CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
+{
+    if (config.m_authCb == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    m_authCb = cb;
-    m_authCbData = cbData;
-    if (info == nullptr) {
-        return CC_Mqtt5ErrorCode_Success;
-    }
+    m_authCb = config.m_authCb;
+    m_authCbData = config.m_authCbData;
 
-    auto addProp = 
-        [this]() -> decltype(auto)
-        {
-            auto& vec = m_connectMsg.field_properties().value();
-            vec.resize(vec.size() + 1U);
-            return vec.back();
-        };    
-
-    if (info->m_authMethod != nullptr) {
+    if (config.m_authMethod != nullptr) {
         if (!canAddProp()) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
@@ -238,11 +310,11 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthInfo* info, CC_Mqtt5Au
         auto& propVar = addProp();
         auto& propBundle = propVar.initField_authMethod();
         auto& valueField = propBundle.field_value();        
-        valueField.value() = info->m_authMethod;
+        valueField.value() = config.m_authMethod;
     }
 
-    if (info->m_authDataLen > 0U) {
-        if (info->m_authData == nullptr) {
+    if (config.m_authDataLen > 0U) {
+        if (config.m_authData == nullptr) {
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
@@ -253,7 +325,7 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthInfo* info, CC_Mqtt5Au
         auto& propVar = addProp();
         auto& propBundle = propVar.initField_authData();
         auto& valueField = propBundle.field_value();        
-        comms::util::assign(valueField.value(), info->m_authData, info->m_authData + info->m_authDataLen); 
+        comms::util::assign(valueField.value(), config.m_authData, config.m_authData + config.m_authDataLen); 
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -270,9 +342,7 @@ CC_Mqtt5ErrorCode ConnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propsVec = m_connectMsg.field_properties().value();
-        propsVec.resize(propsVec.size() + 1U);
-        auto& propVar = propsVec.back();    
+        auto& propVar = addProp();    
         auto& propBundle = propVar.initField_userProperty();
         auto& valueField = propBundle.field_value();
         valueField.field_first().value() = prop.m_key;
@@ -327,16 +397,24 @@ void ConnectOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5C
     cb(cbData, status, response);    
 }
 
+void ConnectOp::opTimeoutInternal()
+{
+    completeOpInternal(CC_Mqtt5AsyncOpStatus_Timeout);
+}
+
 bool ConnectOp::canAddProp() const
 {
     auto& vec = m_connectMsg.field_properties().value();
     return vec.size() < vec.capacity();
 }
 
-void ConnectOp::opTimeoutInternal()
+ConnectMsg::Field_properties::ValueType::reference ConnectOp::addProp()
 {
-    completeOpInternal(CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& vec = m_connectMsg.field_properties().value();
+    vec.resize(vec.size() + 1U);
+    return vec.back();    
 }
+
 
 void ConnectOp::opTimeoutCb(void* data)
 {

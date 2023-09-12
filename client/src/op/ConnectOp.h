@@ -27,7 +27,8 @@ public:
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
     CC_Mqtt5ErrorCode configWill(const CC_Mqtt5ConnectWillConfig& config);
-    CC_Mqtt5ErrorCode configAuth(const CC_Mqtt5AuthInfo* info, CC_Mqtt5AuthCb cb, void* cbData);
+    CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5ConnectExtraConfig& config);
+    CC_Mqtt5ErrorCode configAuth(const CC_Mqtt5ConnectAuthConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
@@ -38,6 +39,8 @@ private:
     void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
     void opTimeoutInternal();
     bool canAddProp() const;
+    ConnectMsg::Field_properties::ValueType::reference addProp();
+
 
     static void opTimeoutCb(void* data);
 

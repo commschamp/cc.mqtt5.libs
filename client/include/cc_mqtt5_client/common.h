@@ -33,6 +33,9 @@ extern "C" {
 /// @brief Version of the library as single numeric value
 #define CC_MQTT5_CLIENT_VERSION CC_MQTT5_CLIENT_MAKE_VERSION(CC_MQTT5_CLIENT_MAJOR_VERSION, CC_MQTT5_CLIENT_MINOR_VERSION, CC_MQTT5_CLIENT_PATCH_VERSION)
 
+#define CC_MQTT5_SESSION_NEVER_EXPIRES 0xffffffff
+#define CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT 0xffff
+
 /// @brief Quality of Service
 typedef enum
 {
@@ -67,7 +70,7 @@ typedef enum
 
 typedef enum
 {
-    CC_Mqtt5AsyncOpStatus_Success,
+    CC_Mqtt5AsyncOpStatus_Complete,
     CC_Mqtt5AsyncOpStatus_InternalError,
     CC_Mqtt5AsyncOpStatus_Timeout,
     CC_Mqtt5AsyncOpStatus_ValuesLimit
@@ -170,6 +173,16 @@ typedef struct
     bool m_retain;
 } CC_Mqtt5ConnectWillConfig;
 
+typedef struct
+{
+    unsigned m_expiryInterval;
+    unsigned m_receiveMaximum;
+    unsigned m_maxPacketSize;
+    unsigned m_topicAliasMaximum;
+    bool m_requestResposnseInfo;
+    bool m_requestProblemInfo;
+} CC_Mqtt5ConnectExtraConfig;
+
 typedef struct 
 {
     CC_Mqtt5ReasonCode m_reasonCode;
@@ -186,7 +199,7 @@ typedef struct
     unsigned m_topicAliasMax;
     CC_Mqtt5QoS m_maxQos;
     bool m_sessionPresent;
-    bool m_retianAvailable;
+    bool m_retainAvailable;
     bool m_wildcardSubAvailable;
     bool m_subIdsAvailalbe;
     bool m_sharedSubsAvailable;
@@ -198,6 +211,8 @@ typedef struct
     const unsigned char* m_authData;
     unsigned m_authDataLen;
     const char* m_reasonStr;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;    
 } CC_Mqtt5AuthInfo;
 
 /// @brief Callback used to request time measurement.
@@ -238,6 +253,15 @@ typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data);
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
+
+typedef struct
+{
+    const char* m_authMethod;
+    const unsigned char* m_authData;
+    unsigned m_authDataLen;
+    CC_Mqtt5AuthCb m_authCb;
+    void* m_authCbData;
+} CC_Mqtt5ConnectAuthConfig;
 
 #ifdef __cplusplus
 }

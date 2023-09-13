@@ -66,7 +66,7 @@ public:
     }
 
     using Base::handle;
-    void handle(ProtMessage& msg);
+    virtual void handle(ProtMessage& msg) override;
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);

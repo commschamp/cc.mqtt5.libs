@@ -33,10 +33,10 @@ using ProtMessage = cc_mqtt5::Message<
 
 CC_MQTT5_ALIASES_FOR_ALL_MESSAGES(, Msg, ProtMessage, ProtocolOptions)
 
-using ProtFrame = cc_mqtt5::frame::Frame<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage>, ProtocolOptions>;
+using ProtFrame = cc_mqtt5::frame::Frame<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions>, ProtocolOptions>;
 using ProtMsgPtr = ProtFrame::MsgPtr;
 
-class ProtMsgHandler : public comms::GenericHandler<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage> >
+class ProtMsgHandler : public comms::GenericHandler<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions> >
 {
 protected:
     ProtMsgHandler() = default;

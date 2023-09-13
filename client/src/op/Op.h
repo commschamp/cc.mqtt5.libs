@@ -56,6 +56,8 @@ protected:
         m_opTimeoutMs = ms;
     }
 
+    void sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
+
 private:
     Client& m_client;    
     unsigned m_opTimeoutMs = 0U;

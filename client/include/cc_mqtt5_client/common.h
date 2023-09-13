@@ -73,6 +73,10 @@ typedef enum
     CC_Mqtt5AsyncOpStatus_Complete,
     CC_Mqtt5AsyncOpStatus_InternalError,
     CC_Mqtt5AsyncOpStatus_Timeout,
+    CC_Mqtt5AsyncOpStatus_ProtocolError,
+    CC_Mqtt5AsyncOpStatus_Aborted,
+    CC_Mqtt5AsyncOpStatus_OutOfMemory,
+    CC_Mqtt5AsyncOpStatus_BadParam,
     CC_Mqtt5AsyncOpStatus_ValuesLimit
 } CC_Mqtt5AsyncOpStatus;
 

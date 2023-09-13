@@ -32,14 +32,18 @@ public:
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
+    using Base::handle;
+    virtual void handle(AuthMsg& msg) override;
+
 protected:
     virtual Type typeImpl() const override;    
 
 private:
     void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
     void opTimeoutInternal();
+    void restartTimer();
     bool canAddProp() const;
-    ConnectMsg::Field_properties::ValueType::reference addProp();
+    ConnectMsg::Field_properties::ValueType::reference addConnectMsgProp();
 
 
     static void opTimeoutCb(void* data);

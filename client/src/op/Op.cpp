@@ -31,6 +31,15 @@ void Op::opComplete()
     m_client.opComplete(this);
 }
 
+void Op::sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason)
+{
+    DisconnectMsg disconnectMsg;
+    disconnectMsg.field_reasonCode().setExists();
+    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_reasonCode().field().setValue(reason);
+    m_client.sendMessage(disconnectMsg);
+}
+
 } // namespace op
 
 } // namespace cc_mqtt5_client

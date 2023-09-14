@@ -8,6 +8,7 @@
 #pragma once
 
 #include "op/Op.h"
+#include "PropsHandler.h"
 #include "ProtocolDefs.h"
 
 #include "cc_mqtt5_client/common.h"

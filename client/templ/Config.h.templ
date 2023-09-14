@@ -21,6 +21,8 @@ struct Config
     static_assert(HasDynMemAlloc || (!HasUserProps) || (UserPropsLimit > 0U), "Must use CC_MQTT5_CLIENT_USER_PROPS_LIMIT in configuration to limit amount of user properties");    
     static_assert(HasDynMemAlloc || (ReceiveMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (!HasTopicAliases) || (TopicAliasesLimit > 0U), "Must use CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT in configuration to limit amount of user properties");        
+
+    static_assert(HasUserProps || (UserPropsLimit == 0), "CC_MQTT5_CLIENT_USER_PROPS_LIMIT is expected to be 0 when user props are disabled");
 };
 
 } // namespace cc_mqtt5_client

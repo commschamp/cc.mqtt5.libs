@@ -48,33 +48,34 @@ ConnectOp::ConnectOp(Client& client) :
 void ConnectOp::handle(AuthMsg& msg)
 {
     m_timer.cancel();
-    auto restartTimerOnExit = 
-        comms::util::makeScopeGuard(
-            [this]()
-            {
-                restartTimer();
-            });
 
     if (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth) {
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        restartTimerOnExit.release();
         completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
         return;
     }
 
-    static_cast<void>(msg);
-    // TODO: dispatch props
+    PropsHandler propsHandler;
+    for (auto& p : msg.field_propertiesList().value()) {
+        p.currentFieldExec(propsHandler);
+    }
 
-    CC_Mqtt5AuthInfo inInfo;
+    if (propsHandler.isProtocolError()) {
+        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
+        return;
+    }
 
+    auto inInfo = CC_Mqtt5AuthInfo();
     // TODO: populate inInfo
-    CC_Mqtt5AuthInfo outInfo;
+    // TODO: authMethod must be the same for all auth packets
+    
+    auto outInfo = CC_Mqtt5AuthInfo();
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc != CC_Mqtt5AuthErrorCode_Continue) {
         COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::UnspecifiedError);
         // TODO: report network disconnect request
-        restartTimerOnExit.release();
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         return;
     }
@@ -173,6 +174,7 @@ void ConnectOp::handle(AuthMsg& msg)
     }
 
     termConnectOnExit.release();
+    restartTimer();
     client().sendMessage(respMsg);
 }
 

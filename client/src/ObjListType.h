@@ -18,7 +18,7 @@ namespace cc_mqtt5_client
 namespace details
 {
 
-template <typename TObj, unsigned TLimit>
+template <typename TObj, unsigned TLimit, bool THasFeature>
 class ObjListTypeHelper
 {
     template <typename ...>
@@ -30,7 +30,7 @@ class ObjListTypeHelper
     template <typename... TParams>
     using Vector = 
         typename comms::util::LazyShallowConditional<
-            TLimit == 0U
+            (TLimit == 0U) && THasFeature
         >::template Type<
             DynVector,
             StaticVector
@@ -42,7 +42,7 @@ public:
 
 } // namespace details
 
-template <typename TObj, unsigned TLimit>
-using ObjListType = typename details::ObjListTypeHelper<TObj, TLimit>::VectorType;
+template <typename TObj, unsigned TLimit, bool THasFeature = true>
+using ObjListType = typename details::ObjListTypeHelper<TObj, TLimit, THasFeature>::VectorType;
 
 } // namespace cc_mqtt5_client

@@ -147,6 +147,11 @@ CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
     }
 
     m_sendOutputDataCb(m_sendOutputDataData, &m_buf[0], static_cast<unsigned>(len));
+
+    for (auto& opPtr : m_keepAliveOps) {
+        opPtr->messageSent();
+    }
+
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -163,6 +168,7 @@ void Client::opComplete(const op::Op* op)
     using ExtraCompleteFunc = void (Client::*)(const op::Op*);
     static const ExtraCompleteFunc Map[] = {
         /* Type_Connect */ &Client::opComplete_Connect,
+        /* Type_KeepAlive */ &Client::opComplete_KeepAlive,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -179,7 +185,15 @@ void Client::opComplete(const op::Op* op)
 
 void Client::notifyConnected()
 {
-    // TODO: start keep alive
+    m_state.m_connected = true;
+    createKeepAliveOpIfNeeded();
+}
+
+void Client::notifyDisconnected()
+{
+    m_state.m_connected = false;
+    // TODO: terminate other ops    
+    // TODO: report disconnected
 }
 
 void Client::doApiEnter()
@@ -209,9 +223,30 @@ void Client::doApiExit()
     m_nextTickProgramCb(m_nextTickProgramData, nextWait);
 }
 
+void Client::createKeepAliveOpIfNeeded()
+{
+    if (!m_keepAliveOps.empty()) {
+        return;
+    }
+
+    auto ptr = m_keepAliveOpsAlloc.alloc(*this);
+    if (!ptr) {
+        COMMS_ASSERT(false); // Should not happen
+        return;
+    }    
+
+    m_ops.push_back(ptr.get());
+    m_keepAliveOps.push_back(std::move(ptr));
+}
+
 void Client::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
+}
+
+void Client::opComplete_KeepAlive(const op::Op* op)
+{
+    eraseFromList(op, m_keepAliveOps);
 }
 
 } // namespace cc_mqtt5_client

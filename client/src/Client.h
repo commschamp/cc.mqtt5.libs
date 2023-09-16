@@ -15,6 +15,7 @@
 #include "TimerMgr.h"
 
 #include "op/ConnectOp.h"
+#include "op/KeepAliveOp.h"
 #include "op/Op.h"
 
 #include "cc_mqtt5_client/common.h"
@@ -71,6 +72,7 @@ public:
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
     void notifyConnected();
+    void notifyDisconnected();
 
     TimerMgr& timerMgr()
     {
@@ -85,6 +87,10 @@ public:
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;
     using ConnectOpsList = ObjListType<ConnectOpAlloc::Ptr, ExtConfig::ConnectOpsLimit>;
+
+    using KeepAliveOpAlloc = ObjAllocator<op::KeepAliveOp, ExtConfig::KeepAliveOpsLimit>;
+    using KeepAliveOpsList = ObjListType<KeepAliveOpAlloc::Ptr, ExtConfig::KeepAliveOpsLimit>;
+
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
@@ -114,8 +120,10 @@ private:
 
     void doApiEnter();
     void doApiExit();
+    void createKeepAliveOpIfNeeded();
 
     void opComplete_Connect(const op::Op* op);
+    void opComplete_KeepAlive(const op::Op* op);
 
     CC_Mqtt5NextTickProgramCb m_nextTickProgramCb = nullptr;
     void* m_nextTickProgramData = nullptr;
@@ -139,6 +147,9 @@ private:
 
     ConnectOpAlloc m_connectOpAlloc;
     ConnectOpsList m_connectOps;
+
+    KeepAliveOpAlloc m_keepAliveOpsAlloc;
+    KeepAliveOpsList m_keepAliveOps;
 
     OpPtrsList m_ops;
 };

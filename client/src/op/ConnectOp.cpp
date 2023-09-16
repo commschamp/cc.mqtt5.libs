@@ -185,12 +185,13 @@ void ConnectOp::handle(ConnackMsg& msg)
     status = CC_Mqtt5AsyncOpStatus_Complete; // Reported in op completion callback
     bool connected = (response.m_reasonCode == CC_Mqtt5ReasonCode_Success);
     auto& state = client().state();
-    state.m_connected = connected;
     if (!connected) {
+        state.m_keepAliveMs = 0U;
+        state.m_sendLimit = 0U;
         return;
     }
 
-    state.m_keepAliveSec = keepAlive;
+    state.m_keepAliveMs = keepAlive * 1000;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
 
     if constexpr (Config::SendMaxLimit > 0U) {

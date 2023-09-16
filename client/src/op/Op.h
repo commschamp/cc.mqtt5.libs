@@ -28,6 +28,7 @@ public:
     enum Type
     {
         Type_Connect,
+        Type_KeepAlive,
         Type_NumOfValues // Must be last
     };
 

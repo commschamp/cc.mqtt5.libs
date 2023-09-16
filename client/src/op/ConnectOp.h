@@ -8,6 +8,7 @@
 #pragma once
 
 #include "op/Op.h"
+#include "ExtConfig.h"
 #include "PropsHandler.h"
 #include "ProtocolDefs.h"
 
@@ -59,6 +60,8 @@ private:
     void* m_authCbData = nullptr;
     AuthMethodStorageType m_authMethod;
     unsigned m_expiryInterval = 0U;
+
+    static_assert(ExtConfig::ConnectOpTimers == 1U);
 };
 
 } // namespace op

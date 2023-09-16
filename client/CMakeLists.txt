@@ -141,6 +141,7 @@ function (gen_lib_mqtt5_client config_file)
     message (STATUS "Defining library ${lib_name}") 
     set (src
         src/op/ConnectOp.cpp
+        src/op/KeepAliveOp.cpp
         src/op/Op.cpp
         src/Client.cpp
         src/TimerMgr.cpp

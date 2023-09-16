@@ -137,4 +137,17 @@ void TimerMgr::timerCancel(unsigned idx)
     info.m_timeoutData = nullptr;
 }
 
+bool TimerMgr::timerIsActive(unsigned idx) const
+{
+    COMMS_ASSERT(idx < m_timers.size()); 
+    if (idx < m_timers.size()) {
+        return false;
+    }
+
+    auto& info = m_timers[idx];
+    COMMS_ASSERT(info.m_allocated);
+    COMMS_ASSERT(info.m_timeoutCb != nullptr || (info.m_timeoutMs == 0U));
+    return (info.m_timeoutCb == nullptr);
+}
+
 } // namespace cc_mqtt5_client

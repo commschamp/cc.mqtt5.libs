@@ -45,6 +45,11 @@ public:
             m_timerMgr.timerCancel(m_idx);
         }
 
+        bool isActive() const
+        {
+            return m_timerMgr.timerIsActive(m_idx);
+        }
+
     private:
         Timer (TimerMgr& timerMgr, unsigned idx) :
             m_timerMgr(timerMgr),
@@ -100,6 +105,7 @@ private:
     void freeTimer(unsigned idx);
     void timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* data);
     void timerCancel(unsigned idx);
+    bool timerIsActive(unsigned idx) const;
 
     StorageType m_timers;
     unsigned m_allocatedTimers = 0U;

@@ -17,14 +17,20 @@ namespace cc_mqtt5_client
 struct ExtConfig : public Config
 {
     static constexpr unsigned ConnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
+    static constexpr unsigned KeepAliveOpsLimit = HasDynMemAlloc ? 0 : 1U;
+    static constexpr unsigned ConnectOpTimers = 1U;
+    static constexpr unsigned KeepAliveOpTimers = 3U;
     static constexpr unsigned TimersLimit = // TODO: complete
-        ConnectOpsLimit;
+        (ConnectOpsLimit * ConnectOpTimers) + 
+        (KeepAliveOpsLimit * KeepAliveOpTimers);
 
     static const unsigned OpsLimit = // TODO: complete
-        ConnectOpsLimit;
+        ConnectOpsLimit + 
+        KeepAliveOpsLimit;
 
     static_assert(HasDynMemAlloc || (TimersLimit > 0U));
     static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U));
+    static_assert(HasDynMemAlloc || (KeepAliveOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (OpsLimit > 0U));
 };
 

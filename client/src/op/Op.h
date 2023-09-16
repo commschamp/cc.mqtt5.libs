@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include "ExtConfig.h"
+#include "ObjListType.h"
 #include "ProtocolDefs.h"
+
+#include "cc_mqtt5_client/common.h"
 
 namespace cc_mqtt5_client
 {
@@ -34,6 +38,8 @@ public:
     }
 
 protected:
+    using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
+
     explicit Op(Client& client);
 
     virtual Type typeImpl() const = 0;

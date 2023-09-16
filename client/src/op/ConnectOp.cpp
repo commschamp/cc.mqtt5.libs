@@ -49,9 +49,16 @@ void ConnectOp::handle(AuthMsg& msg)
 {
     m_timer.cancel();
 
-    if (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto protocolErrorCompletion = 
+        [this]()
+        {
+            sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+            completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
+        };
+
+    if ((m_authMethod.empty()) || 
+        (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth)) {
+        protocolErrorCompletion();
         return;
     }
 
@@ -61,21 +68,49 @@ void ConnectOp::handle(AuthMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
+        protocolErrorCompletion();
         return;
     }
 
+    if ((propsHandler.m_authMethod == nullptr) || 
+        (m_authMethod != propsHandler.m_authMethod->field_value().value().c_str())) {
+        protocolErrorCompletion();
+        return;        
+    }
+
     auto inInfo = CC_Mqtt5AuthInfo();
-    // TODO: populate inInfo
-    // TODO: authMethod must be the same for all auth packets
-    
+
+    if (propsHandler.m_authData != nullptr) {
+        auto& vec = propsHandler.m_authData->field_value().value();
+        comms::cast_assign(inInfo.m_authDataLen) = vec.size();
+        if (inInfo.m_authDataLen > 0U) {
+            inInfo.m_authData = &vec[0];
+        }
+    }
+
+    if (propsHandler.m_reasonStr != nullptr) {
+        inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+    }
+
+    if (!propsHandler.m_userProps.empty()) {
+        UserPropsList userProps;
+        userProps.reserve(propsHandler.m_userProps.size());
+        std::transform(
+            propsHandler.m_userProps.begin(), propsHandler.m_userProps.end(), std::back_inserter(userProps),
+            [](auto* field)
+            {
+                return UserPropsList::value_type{field->field_value().field_first().value().c_str(), field->field_value().field_second().value().c_str()};
+            });
+
+        inInfo.m_userProps = &userProps[0];
+        comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
+    }
+
     auto outInfo = CC_Mqtt5AuthInfo();
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc != CC_Mqtt5AuthErrorCode_Continue) {
         COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::UnspecifiedError);
-        // TODO: report network disconnect request
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         return;
     }
@@ -104,9 +139,9 @@ void ConnectOp::handle(AuthMsg& msg)
             auto& vec = respMsg.field_propertiesList().value();
             vec.resize(vec.size() + 1U);
             return vec.back();
-        };        
+        };     
 
-    if (outInfo.m_authMethod != nullptr) {
+    {
         if (!canAddAuthProps()) {
             return;
         }
@@ -114,7 +149,7 @@ void ConnectOp::handle(AuthMsg& msg)
         auto& propVar = addAuthProp();
         auto& propBundle = propVar.initField_authMethod();
         auto& valueField = propBundle.field_value();        
-        valueField.value() = outInfo.m_authMethod;
+        valueField.value() = m_authMethod.c_str();
     }
 
     if (outInfo.m_authDataLen > 0U) {
@@ -452,6 +487,8 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
         auto& propBundle = propVar.initField_authMethod();
         auto& valueField = propBundle.field_value();        
         valueField.value() = config.m_authMethod;
+
+        m_authMethod = config.m_authMethod;
     }
 
     if (config.m_authDataLen > 0U) {

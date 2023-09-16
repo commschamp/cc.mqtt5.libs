@@ -11,7 +11,6 @@
 #include "PropsHandler.h"
 #include "ProtocolDefs.h"
 
-#include "cc_mqtt5_client/common.h"
 #include "TimerMgr.h"
 
 namespace cc_mqtt5_client
@@ -40,6 +39,8 @@ protected:
     virtual Type typeImpl() const override;    
 
 private:
+    using AuthMethodStorageType = ConnectMsg::Field_properties::ValueType::value_type::Field_authMethod::Field_value::ValueType;
+
     void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
     void opTimeoutInternal();
     void restartTimer();
@@ -55,6 +56,7 @@ private:
     void* m_cbData = nullptr;
     CC_Mqtt5AuthCb m_authCb = nullptr;
     void* m_authCbData = nullptr;
+    AuthMethodStorageType m_authMethod;
 };
 
 } // namespace op

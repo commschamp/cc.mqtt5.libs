@@ -211,7 +211,6 @@ typedef struct
 
 typedef struct
 {
-    const char* m_authMethod;
     const unsigned char* m_authData;
     unsigned m_authDataLen;
     const char* m_reasonStr;

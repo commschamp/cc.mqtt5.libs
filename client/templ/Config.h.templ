@@ -12,6 +12,7 @@ struct Config
     static constexpr bool HasUserProps = ##CC_MQTT5_CLIENT_HAS_USER_PROPS_CPP##;
     static constexpr unsigned UserPropsLimit = ##CC_MQTT5_CLIENT_USER_PROPS_LIMIT##;
     static constexpr unsigned ReceiveMaxLimit = ##CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT##;
+    static constexpr unsigned SendMaxLimit = ##CC_MQTT5_CLIENT_SEND_MAX_LIMIT##;
     static constexpr bool HasTopicAliases = ##CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP##;
     static constexpr unsigned TopicAliasesLimit = ##CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT##;
 
@@ -20,6 +21,7 @@ struct Config
     static_assert(HasDynMemAlloc || (MaxOutputPacketSize > 0U), "Must use CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE in configuration to limit packet size");
     static_assert(HasDynMemAlloc || (!HasUserProps) || (UserPropsLimit > 0U), "Must use CC_MQTT5_CLIENT_USER_PROPS_LIMIT in configuration to limit amount of user properties");    
     static_assert(HasDynMemAlloc || (ReceiveMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT in configuration to limit amount of messages to receive");    
+    static_assert(HasDynMemAlloc || (SendMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_SEND_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (!HasTopicAliases) || (TopicAliasesLimit > 0U), "Must use CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT in configuration to limit amount of user properties");        
 
     static_assert(HasUserProps || (UserPropsLimit == 0), "CC_MQTT5_CLIENT_USER_PROPS_LIMIT is expected to be 0 when user props are disabled");

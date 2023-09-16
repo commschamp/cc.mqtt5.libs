@@ -9,6 +9,7 @@
 
 #include "ExtConfig.h"
 #include "ObjListType.h"
+#include "PropsHandler.h"
 #include "ProtocolDefs.h"
 
 #include "cc_mqtt5_client/common.h"
@@ -63,6 +64,8 @@ protected:
     }
 
     void sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
+
+    static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 
 private:
     Client& m_client;    

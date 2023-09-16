@@ -45,6 +45,161 @@ ConnectOp::ConnectOp(Client& client) :
 {
 }    
 
+void ConnectOp::handle(ConnackMsg& msg)
+{
+    m_timer.cancel();
+
+    auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
+    auto response = CC_Mqtt5ConnectResponse();
+    response.m_expiryInterval = m_expiryInterval;
+    response.m_highQosPubLimit = std::numeric_limits<std::uint16_t>::max();
+    response.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    response.m_retainAvailable = true;
+    response.m_wildcardSubAvailable = true;
+    response.m_subIdsAvailalbe = true;
+    response.m_sharedSubsAvailable = true;
+
+    if constexpr (Config::SendMaxLimit > 0U) {
+        response.m_highQosPubLimit = std::min(response.m_highQosPubLimit, Config::SendMaxLimit);
+    }
+
+    if constexpr (Config::MaxOutputPacketSize > 0U) {
+        response.m_maxPacketSize = Config::MaxOutputPacketSize;
+    }    
+
+    auto completeOpOnExit = 
+        comms::util::makeScopeGuard(
+            [this, &status, &response]()
+            {
+                completeOpInternal(status, &response);
+            });
+
+    comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().value();
+    response.m_sessionPresent = msg.field_flags().getBitValue_sp();
+
+    PropsHandler propsHandler;
+    for (auto& p : msg.field_propertiesList().value()) {
+        p.currentFieldExec(propsHandler);
+    }
+
+    if (propsHandler.isProtocolError()) {
+        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        return;
+    }    
+    
+    if (propsHandler.m_assignedClientId != nullptr) {
+        response.m_assignedClientId = propsHandler.m_assignedClientId->field_value().value().c_str();
+    }
+
+    if (propsHandler.m_responseInfo != nullptr) {
+        response.m_responseInfo = propsHandler.m_responseInfo->field_value().value().c_str();
+    }    
+
+    if (propsHandler.m_reasonStr != nullptr) {
+        response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+    }
+
+    if (propsHandler.m_serverRef != nullptr) {
+        response.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
+    }
+
+    if (propsHandler.m_authMethod != nullptr) {
+        response.m_authMethod = propsHandler.m_authMethod->field_value().value().c_str();
+    }    
+
+    if (propsHandler.m_authData != nullptr) {
+        auto& vec = propsHandler.m_authData->field_value().value();
+        comms::cast_assign(response.m_authDataLen) = vec.size();
+        if (response.m_authDataLen > 0U) {
+            response.m_authData = &vec[0];
+        }
+    }
+
+    if (!propsHandler.m_userProps.empty()) {
+        UserPropsList userProps;
+        fillUserProps(propsHandler, userProps);
+        response.m_userProps = &userProps[0];
+        comms::cast_assign(response.m_userPropsCount) = userProps.size();
+    }
+
+    if (propsHandler.m_sessionExpiryInterval != nullptr) {
+        response.m_expiryInterval = 
+            comms::units::getSeconds<decltype(response.m_expiryInterval)>(propsHandler.m_sessionExpiryInterval->field_value());
+    }
+
+    if (propsHandler.m_receiveMax != nullptr) {
+        response.m_highQosPubLimit = propsHandler.m_receiveMax->field_value().value();
+
+        if constexpr (Config::SendMaxLimit > 0U) {
+            response.m_highQosPubLimit = std::min(response.m_highQosPubLimit, Config::SendMaxLimit);
+        }
+    }
+
+    if (propsHandler.m_maxPacketSize != nullptr) {
+        response.m_maxPacketSize = propsHandler.m_maxPacketSize->field_value().value();
+        
+        if constexpr (Config::MaxOutputPacketSize > 0U) {
+            response.m_maxPacketSize = std::min(response.m_maxPacketSize, Config::MaxOutputPacketSize);
+        }          
+    }
+
+    if (propsHandler.m_topicAliasMax != nullptr) {
+        if constexpr (Config::HasTopicAliases) {
+            response.m_topicAliasMax = propsHandler.m_topicAliasMax->field_value().value();
+        }
+
+        if constexpr (Config::TopicAliasesLimit > 0U) {
+            response.m_topicAliasMax = std::min(response.m_topicAliasMax, Config::TopicAliasesLimit);
+        }
+    }
+
+    if (propsHandler.m_maxQos != nullptr) {
+        comms::cast_assign(response.m_maxQos) = propsHandler.m_maxQos->field_value().value();
+    }
+
+    if (propsHandler.m_retainAvailable != nullptr) {
+        response.m_retainAvailable = 
+            (propsHandler.m_retainAvailable->field_value().value() == PropsHandler::RetainAvailable::Field_value::ValueType::Enabled);
+    }
+
+    if (propsHandler.m_wildcardSubAvail != nullptr) {
+        response.m_wildcardSubAvailable = 
+            (propsHandler.m_wildcardSubAvail->field_value().value() == PropsHandler::WildcardSubAvail::Field_value::ValueType::Enabled);
+    }
+
+    if (propsHandler.m_subIdAvail != nullptr) {
+        response.m_subIdsAvailalbe = 
+            (propsHandler.m_subIdAvail->field_value().value() == PropsHandler::SubIdAvail::Field_value::ValueType::Enabled);
+    }    
+
+    if (propsHandler.m_sharedSubAvail != nullptr) {
+        response.m_sharedSubsAvailable = 
+            (propsHandler.m_sharedSubAvail->field_value().value() == PropsHandler::SharedSubAvail::Field_value::ValueType::Enabled);        
+    }
+
+    auto keepAlive = m_connectMsg.field_keepAlive().value();
+    if (propsHandler.m_serverKeepAlive != nullptr) {
+        keepAlive = propsHandler.m_serverKeepAlive->field_value().value();
+    }
+
+    status = CC_Mqtt5AsyncOpStatus_Complete; // Reported in op completion callback
+    bool connected = (response.m_reasonCode == CC_Mqtt5ReasonCode_Success);
+    auto& state = client().state();
+    state.m_connected = connected;
+    if (!connected) {
+        return;
+    }
+
+    state.m_keepAliveSec = keepAlive;
+    state.m_sendLimit = response.m_highQosPubLimit + 1U;
+
+    if constexpr (Config::SendMaxLimit > 0U) {
+        state.m_sendLimit = std::min(state.m_sendLimit, Config::SendMaxLimit);
+    }
+
+    client().notifyConnected();
+}
+
 void ConnectOp::handle(AuthMsg& msg)
 {
     m_timer.cancel();
@@ -94,14 +249,7 @@ void ConnectOp::handle(AuthMsg& msg)
 
     if (!propsHandler.m_userProps.empty()) {
         UserPropsList userProps;
-        userProps.reserve(propsHandler.m_userProps.size());
-        std::transform(
-            propsHandler.m_userProps.begin(), propsHandler.m_userProps.end(), std::back_inserter(userProps),
-            [](auto* field)
-            {
-                return UserPropsList::value_type{field->field_value().field_first().value().c_str(), field->field_value().field_second().value().c_str()};
-            });
-
+        fillUserProps(propsHandler, userProps);
         inInfo.m_userProps = &userProps[0];
         comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
     }
@@ -342,6 +490,8 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         }
 
         comms::units::setSeconds(valueField, config.m_expiryInterval);
+
+        m_expiryInterval = config.m_expiryInterval;
     }
 
     if (config.m_contentType != nullptr) {

@@ -33,6 +33,7 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
     using Base::handle;
+    virtual void handle(ConnackMsg& msg) override;
     virtual void handle(AuthMsg& msg) override;
 
 protected:
@@ -57,6 +58,7 @@ private:
     CC_Mqtt5AuthCb m_authCb = nullptr;
     void* m_authCbData = nullptr;
     AuthMethodStorageType m_authMethod;
+    unsigned m_expiryInterval = 0U;
 };
 
 } // namespace op

@@ -177,6 +177,11 @@ void Client::opComplete(const op::Op* op)
     (this->*func)(op);
 }
 
+void Client::notifyConnected()
+{
+    // TODO: start keep alive
+}
+
 void Client::doApiEnter()
 {
     ++m_apiEnterCount;

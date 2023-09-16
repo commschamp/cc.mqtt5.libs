@@ -164,6 +164,9 @@ public:
     void operator()(const ReceiveMax& field)
     {
         storeProp(field, m_receiveMax);
+        if (field.field_value().value() == 0U) {
+            m_protocolError = true;
+        }
     }     
 
     using TopicAliasMax = Property::Field_topicAliasMax;
@@ -188,6 +191,9 @@ public:
     void operator()(const MaxQos& field)
     {
         storeProp(field, m_maxQos);
+        if (field.field_value().value() >= MaxQos::Field_value::ValueType::ExactlyOnceDelivery) {
+            m_protocolError = true;
+        }
     }          
 
     using RetainAvailable = Property::Field_retainAvailable;
@@ -196,6 +202,9 @@ public:
     void operator()(const RetainAvailable& field)
     {
         storeProp(field, m_retainAvailable);
+        if (!field.field_value().valid()) {
+            m_protocolError = true;
+        }
     }      
 
     using UserProperty = Property::Field_userProperty;
@@ -219,6 +228,9 @@ public:
     void operator()(const MaxPacketSize& field)
     {
         storeProp(field, m_maxPacketSize);
+        if (field.field_value().value() == 0U) {
+            m_protocolError = true;
+        }
     }      
 
     using WildcardSubAvail = Property::Field_wildcardSubAvail;
@@ -227,6 +239,9 @@ public:
     void operator()(const WildcardSubAvail& field)
     {
         storeProp(field, m_wildcardSubAvail);
+        if (!field.field_value().valid()) {
+            m_protocolError = true;
+        }        
     }        
 
     using SubIdAvail = Property::Field_subIdAvail;
@@ -235,6 +250,9 @@ public:
     void operator()(const SubIdAvail& field)
     {
         storeProp(field, m_subIdAvail);
+        if (!field.field_value().valid()) {
+            m_protocolError = true;
+        }           
     }   
 
     using SharedSubAvail = Property::Field_sharedSubAvail;
@@ -243,6 +261,9 @@ public:
     void operator()(const SharedSubAvail& field)
     {
         storeProp(field, m_sharedSubAvail);
+        if (!field.field_value().valid()) {
+            m_protocolError = true;
+        }             
     }      
 
     bool isProtocolError() const

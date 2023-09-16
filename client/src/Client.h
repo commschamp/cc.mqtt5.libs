@@ -70,6 +70,7 @@ public:
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
+    void notifyConnected();
 
     TimerMgr& timerMgr()
     {

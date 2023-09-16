@@ -16,7 +16,6 @@ namespace cc_mqtt5_client
 
 struct ExtConfig : public Config
 {
-    static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned ConnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned TimersLimit = // TODO: complete
         ConnectOpsLimit;
@@ -24,12 +23,9 @@ struct ExtConfig : public Config
     static const unsigned OpsLimit = // TODO: complete
         ConnectOpsLimit;
 
-    static const unsigned ReceiveOpsLimit = (ReceiveMaxLimit == 0U) ? 0U : (ReceiveMaxLimit + 1U);
-
     static_assert(HasDynMemAlloc || (TimersLimit > 0U));
     static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (OpsLimit > 0U));
-    static_assert(HasDynMemAlloc || (ReceiveOpsLimit > 0U));
 };
 
 } // namespace cc_mqtt5_client

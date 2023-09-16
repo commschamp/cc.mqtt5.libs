@@ -190,8 +190,9 @@ typedef struct
 typedef struct 
 {
     CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_clientId;
+    const char* m_assignedClientId;
     const char* m_responseInfo;
+    const char* m_reasonStr;
     const char* m_serverRef;
     const char* m_authMethod;
     const unsigned char* m_authData;
@@ -199,6 +200,7 @@ typedef struct
     const CC_Mqtt5UserProp* m_userProps;
     unsigned m_userPropsCount;
     unsigned m_expiryInterval;
+    unsigned m_highQosPubLimit;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMax;
     CC_Mqtt5QoS m_maxQos;

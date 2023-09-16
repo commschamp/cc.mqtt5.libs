@@ -9,6 +9,8 @@
 
 #include "Client.h"
 
+#include <algorithm>
+
 namespace cc_mqtt5_client
 {
 
@@ -38,6 +40,24 @@ void Op::sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueT
     disconnectMsg.field_propertiesList().setExists();
     disconnectMsg.field_reasonCode().field().setValue(reason);
     m_client.sendMessage(disconnectMsg);
+}
+
+void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps)
+{
+    if constexpr (Config::HasUserProps) {    
+        userProps.reserve(std::min(propsHandler.m_userProps.size(), userProps.capacity()));
+        auto endIter = propsHandler.m_userProps.end();
+        if constexpr (Config::UserPropsLimit > 0U) {
+            endIter = propsHandler.m_userProps.begin() + std::min(propsHandler.m_userProps.size(), std::size_t(Config::UserPropsLimit));
+        }
+
+        std::transform(
+            propsHandler.m_userProps.begin(), endIter, std::back_inserter(userProps),
+            [](auto* field)
+            {
+                return UserPropsList::value_type{field->field_value().field_first().value().c_str(), field->field_value().field_second().value().c_str()};
+            });
+    }
 }
 
 } // namespace op

@@ -29,6 +29,7 @@ public:
     {
         Type_Connect,
         Type_KeepAlive,
+        Type_Disconnect,
         Type_NumOfValues // Must be last
     };
 
@@ -39,12 +40,18 @@ public:
         return typeImpl();
     }
 
+    void terminateOp(CC_Mqtt5AsyncOpStatus status)
+    {
+        terminateOpImpl(status);
+    }
+
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
 
     explicit Op(Client& client);
 
     virtual Type typeImpl() const = 0;
+    virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status);
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();

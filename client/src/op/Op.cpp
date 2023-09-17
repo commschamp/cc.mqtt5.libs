@@ -28,6 +28,11 @@ void Op::sendMessage(const ProtMessage& msg)
     m_client.sendMessage(msg);
 }
 
+void Op::terminateOpImpl([[maybe_unused]] CC_Mqtt5AsyncOpStatus status)
+{
+    opComplete();
+}
+
 void Op::opComplete()
 {
     m_client.opComplete(this);

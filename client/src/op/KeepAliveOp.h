@@ -29,6 +29,7 @@ public:
 
     using Base::handle;
     virtual void handle(PingrespMsg& msg) override;
+    virtual void handle(DisconnectMsg& msg) override;
     virtual void handle(ProtMessage& msg) override;
 
 protected:

@@ -39,6 +39,7 @@ public:
 
 protected:
     virtual Type typeImpl() const override;    
+    virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
 
 private:
     using AuthMethodStorageType = ConnectMsg::Field_properties::ValueType::value_type::Field_authMethod::Field_value::ValueType;

@@ -15,6 +15,7 @@
 #include "TimerMgr.h"
 
 #include "op/ConnectOp.h"
+#include "op/DisconnectOp.h"
 #include "op/KeepAliveOp.h"
 #include "op/Op.h"
 
@@ -33,6 +34,7 @@ public:
     unsigned processData(const std::uint8_t* iter, unsigned len);
 
     CC_Mqtt5ConnectHandle connectPrepare(CC_Mqtt5ErrorCode* ec);
+    CC_Mqtt5DisconnectHandle disconnectPrepare(CC_Mqtt5ErrorCode* ec);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
@@ -72,7 +74,7 @@ public:
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
     void notifyConnected();
-    void notifyDisconnected();
+    void notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info = nullptr);
 
     TimerMgr& timerMgr()
     {
@@ -90,6 +92,10 @@ private:
 
     using KeepAliveOpAlloc = ObjAllocator<op::KeepAliveOp, ExtConfig::KeepAliveOpsLimit>;
     using KeepAliveOpsList = ObjListType<KeepAliveOpAlloc::Ptr, ExtConfig::KeepAliveOpsLimit>;
+
+    using DisconnectOpAlloc = ObjAllocator<op::DisconnectOp, ExtConfig::DisconnectOpsLimit>;
+    using DisconnectOpsList = ObjListType<DisconnectOpAlloc::Ptr, ExtConfig::DisconnectOpsLimit>;
+
 
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
@@ -121,9 +127,11 @@ private:
     void doApiEnter();
     void doApiExit();
     void createKeepAliveOpIfNeeded();
+    void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
+    void opComplete_Disconnect(const op::Op* op);
 
     CC_Mqtt5NextTickProgramCb m_nextTickProgramCb = nullptr;
     void* m_nextTickProgramData = nullptr;
@@ -150,6 +158,9 @@ private:
 
     KeepAliveOpAlloc m_keepAliveOpsAlloc;
     KeepAliveOpsList m_keepAliveOps;
+
+    DisconnectOpAlloc m_disconnectOpsAlloc;
+    DisconnectOpsList m_disconnectOps;
 
     OpPtrsList m_ops;
 };

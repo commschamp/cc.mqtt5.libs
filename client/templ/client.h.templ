@@ -86,6 +86,13 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHan
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5UserProp* prop);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
+CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec);
+bool cc_mqtt5_##NAME##client_disconnect_handle_is_valid(CC_Mqtt5DisconnectHandle disconnect);
+void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5DisconnectConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_add_user_prop(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5UserProp* prop);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHandle disconnect);
+
 // --------------------- Callbacks ---------------------
 
 /// @brief Set callback to call when time measurement is required.

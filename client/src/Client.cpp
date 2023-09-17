@@ -43,7 +43,6 @@ void eraseFromList(const op::Op* op, TList& list)
 
 CC_Mqtt5ErrorCode Client::init()
 {
-    // TODO: more callbacks
     if ((m_sendOutputDataCb == nullptr) ||
         (m_brokerDisconnectReportCb == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
@@ -63,7 +62,7 @@ CC_Mqtt5ErrorCode Client::init()
         }
     }
 
-    // TODO: abort pending ops
+    terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
     m_state = State();
     m_state.m_initialized = true;
     return CC_Mqtt5ErrorCode_Success;
@@ -92,7 +91,6 @@ CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
             }
         };
 
-
     auto handle = CC_Mqtt5ConnectHandle();
     COMMS_ASSERT(handle.m_ptr == nullptr);
     do {
@@ -107,14 +105,17 @@ CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (!m_connectOps.empty()) {
+            updateEc(CC_Mqtt5ErrorCode_Busy);
+            break;
+        }
+
         auto ptr = m_connectOpAlloc.alloc(*this);
         if (!ptr) {
             updateEc(CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
 
-        // TODO
-        
         m_ops.push_back(ptr.get());
         m_connectOps.push_back(std::move(ptr));
         handle.m_ptr = m_ops.back();
@@ -124,10 +125,62 @@ CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
     return handle;
 }
 
+CC_Mqtt5DisconnectHandle Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
+{
+    auto updateEc = 
+        [&ec](CC_Mqtt5ErrorCode val)
+        {
+            if (ec != nullptr) {
+                *ec = val;
+            }
+        };
+
+    auto handle = CC_Mqtt5DisconnectHandle();
+    do {
+        if (!m_state.m_initialized) {
+            updateEc(CC_Mqtt5ErrorCode_NotIntitialized);
+            break;
+        }
+
+        if (!m_state.m_connected) {
+            updateEc(CC_Mqtt5ErrorCode_NotConnected);
+            break;
+        }
+
+        if (!m_disconnectOps.empty()) {
+            updateEc(CC_Mqtt5ErrorCode_Busy);
+            break;
+        }        
+
+        auto ptr = m_disconnectOpsAlloc.alloc(*this);
+        if (!ptr) {
+            updateEc(CC_Mqtt5ErrorCode_OutOfMemory);
+            break;
+        }
+
+        m_ops.push_back(ptr.get());
+        m_disconnectOps.push_back(std::move(ptr));
+        handle.m_ptr = m_ops.back();
+        updateEc(CC_Mqtt5ErrorCode_Success);
+    } while (false);
+
+    return handle;
+}
+
 void Client::handle(ProtMessage& msg)
 {
+    if (m_state.m_terminating) {
+        return;
+    }
+
     for (auto* op : m_ops) {
         msg.dispatch(*op);
+
+        // After message dispatching the whole session may be in terminating state
+        // Don't continue iteration
+        if (m_state.m_terminating) {
+            break;
+        }    
     }
 }
 
@@ -169,6 +222,7 @@ void Client::opComplete(const op::Op* op)
     static const ExtraCompleteFunc Map[] = {
         /* Type_Connect */ &Client::opComplete_Connect,
         /* Type_KeepAlive */ &Client::opComplete_KeepAlive,
+        /* Type_Disconnect */ &Client::opComplete_Disconnect,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -189,11 +243,19 @@ void Client::notifyConnected()
     createKeepAliveOpIfNeeded();
 }
 
-void Client::notifyDisconnected()
+void Client::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info)
 {
+    COMMS_ASSERT(reportDisconnection || (info == nullptr));
+    m_state.m_initialized = false; // Require re-initialization
     m_state.m_connected = false;
-    // TODO: terminate other ops    
-    // TODO: report disconnected
+    m_state.m_terminating = true;
+
+    terminateAllOps(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+
+    if (reportDisconnection) {
+        COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);
+        m_brokerDisconnectReportCb(m_brokerDisconnectReportData, info);
+    }
 }
 
 void Client::doApiEnter()
@@ -239,6 +301,14 @@ void Client::createKeepAliveOpIfNeeded()
     m_keepAliveOps.push_back(std::move(ptr));
 }
 
+void Client::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
+{
+    while (!m_ops.empty()) {
+        m_ops.front()->terminateOp(status);
+        // The terminated op is expected to invoke opCompleted() and remove itself from the list
+    }
+}
+
 void Client::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
@@ -247,6 +317,11 @@ void Client::opComplete_Connect(const op::Op* op)
 void Client::opComplete_KeepAlive(const op::Op* op)
 {
     eraseFromList(op, m_keepAliveOps);
+}
+
+void Client::opComplete_Disconnect(const op::Op* op)
+{
+    eraseFromList(op, m_disconnectOps);
 }
 
 } // namespace cc_mqtt5_client

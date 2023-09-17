@@ -10,6 +10,7 @@
 #include "ExtConfig.h"
 
 #include "op/ConnectOp.h"
+#include "op/DisconnectOp.h"
 
 namespace
 {
@@ -20,14 +21,19 @@ cc_mqtt5_client::ClientAllocator& getClientAllocator()
     return Allocator;
 }
 
-inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle client)
+inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle handle)
 {
-    return reinterpret_cast<cc_mqtt5_client::Client*>(client.m_ptr);
+    return reinterpret_cast<cc_mqtt5_client::Client*>(handle.m_ptr);
 }
 
-inline cc_mqtt5_client::op::ConnectOp* connectOpFromHandle(CC_Mqtt5ConnectHandle connectOp)
+inline cc_mqtt5_client::op::ConnectOp* connectOpFromHandle(CC_Mqtt5ConnectHandle handle)
 {
-    return reinterpret_cast<cc_mqtt5_client::op::ConnectOp*>(connectOp.m_ptr);
+    return reinterpret_cast<cc_mqtt5_client::op::ConnectOp*>(handle.m_ptr);
+}
+
+inline cc_mqtt5_client::op::DisconnectOp* disconnectOpFromHandle(CC_Mqtt5DisconnectHandle handle)
+{
+    return reinterpret_cast<cc_mqtt5_client::op::DisconnectOp*>(handle.m_ptr);
 }
 
 } // namespace
@@ -91,6 +97,13 @@ void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop)
 
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec)
 {
+    if (cc_mqtt5_##NAME##client_handle_is_valid(client)) {
+        if (ec != nullptr) {
+            *ec = CC_Mqtt5ErrorCode_BadParam;
+        }        
+        return CC_Mqtt5ConnectHandle();
+    }
+
     return clientFromHandle(client)->connectPrepare(ec);
 }
 
@@ -185,6 +198,55 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle con
     }
 
     return connectOpFromHandle(connect)->send(cb, cbData);
+}
+
+CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec)
+{
+    if (cc_mqtt5_##NAME##client_handle_is_valid(client)) {
+        if (ec != nullptr) {
+            *ec = CC_Mqtt5ErrorCode_BadParam;
+        }        
+        return CC_Mqtt5DisconnectHandle();
+    }
+
+    return clientFromHandle(client)->disconnectPrepare(ec);    
+}
+
+bool cc_mqtt5_##NAME##client_disconnect_handle_is_valid(CC_Mqtt5DisconnectHandle disconnect)
+{
+    return disconnect.m_ptr != nullptr;
+}
+
+void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* config)
+{
+    *config = CC_Mqtt5DisconnectConfig();
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5DisconnectConfig* config)
+{
+    if ((!cc_mqtt5_##NAME##client_disconnect_handle_is_valid(disconnect)) || (config == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return disconnectOpFromHandle(disconnect)->configBasic(*config);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_add_user_prop(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5UserProp* prop)
+{
+    if ((!cc_mqtt5_##NAME##client_disconnect_handle_is_valid(disconnect)) || (prop == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }        
+
+    return disconnectOpFromHandle(disconnect)->addUserProp(*prop);    
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHandle disconnect)
+{
+    if (!cc_mqtt5_##NAME##client_disconnect_handle_is_valid(disconnect)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }  
+
+    return disconnectOpFromHandle(disconnect)->send();
 }
 
 // --------------------- Callbacks ---------------------

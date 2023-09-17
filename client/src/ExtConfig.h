@@ -20,13 +20,17 @@ struct ExtConfig : public Config
     static constexpr unsigned KeepAliveOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned ConnectOpTimers = 1U;
     static constexpr unsigned KeepAliveOpTimers = 3U;
+    static constexpr unsigned DisconnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
+    static constexpr unsigned DisconnectOpTimers = 0U;
     static constexpr unsigned TimersLimit = // TODO: complete
         (ConnectOpsLimit * ConnectOpTimers) + 
-        (KeepAliveOpsLimit * KeepAliveOpTimers);
+        (KeepAliveOpsLimit * KeepAliveOpTimers) + 
+        (DisconnectOpsLimit * DisconnectOpTimers);
 
     static const unsigned OpsLimit = // TODO: complete
         ConnectOpsLimit + 
-        KeepAliveOpsLimit;
+        KeepAliveOpsLimit + 
+        DisconnectOpsLimit;
 
     static_assert(HasDynMemAlloc || (TimersLimit > 0U));
     static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U));

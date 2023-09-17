@@ -215,6 +215,7 @@ void ConnectOp::handle(AuthMsg& msg)
     if ((m_authMethod.empty()) || 
         (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth)) {
         protocolErrorCompletion();
+        // No members access after this point, the op will be deleted
         return;
     }
 
@@ -225,12 +226,14 @@ void ConnectOp::handle(AuthMsg& msg)
 
     if (propsHandler.isProtocolError()) {
         protocolErrorCompletion();
+        // No members access after this point, the op will be deleted
         return;
     }
 
     if ((propsHandler.m_authMethod == nullptr) || 
         (m_authMethod != propsHandler.m_authMethod->field_value().value().c_str())) {
         protocolErrorCompletion();
+        // No members access after this point, the op will be deleted
         return;        
     }
 
@@ -261,6 +264,7 @@ void ConnectOp::handle(AuthMsg& msg)
         COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::UnspecifiedError);
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
+        // No members access after this point, the op will be deleted
         return;
     }
 
@@ -365,6 +369,11 @@ void ConnectOp::handle(AuthMsg& msg)
 Op::Type ConnectOp::typeImpl() const
 {
     return Type_Connect;
+}
+
+void ConnectOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
+{
+    completeOpInternal(status);
 }
 
 CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& config)
@@ -544,7 +553,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         }
 
         auto& propVar = addConnectMsgProp();
-        auto& propBundle = propVar.initField_messageExpiryInterval();
+        auto& propBundle = propVar.initField_sessionExpiryInterval();
         auto& valueField = propBundle.field_value();        
         comms::units::setSeconds(valueField, config.m_expiryInterval);                
     }

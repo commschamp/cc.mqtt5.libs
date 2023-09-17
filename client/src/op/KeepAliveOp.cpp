@@ -49,6 +49,44 @@ void KeepAliveOp::handle([[maybe_unused]] PingrespMsg& msg)
     restartRecvTimer();
 }
 
+void KeepAliveOp::handle(DisconnectMsg& msg)
+{
+    m_pingTimer.cancel();
+    m_recvTimer.cancel();  
+    m_respTimer.cancel();
+
+    auto info = CC_Mqtt5DisconnectInfo();
+    
+    if (msg.field_reasonCode().doesExist()) {
+        comms::cast_assign(info.m_reasonCode) = msg.field_reasonCode().field().value();
+    }
+
+    if (msg.field_propertiesList().doesExist()) {
+        PropsHandler propsHandler;
+        for (auto& p : msg.field_propertiesList().field().value()) {
+            p.currentFieldExec(propsHandler);
+        } 
+
+        if (propsHandler.m_reasonStr != nullptr) {
+            info.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+        }     
+
+        if (propsHandler.m_serverRef != nullptr) {
+            info.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
+        }
+
+        if (!propsHandler.m_userProps.empty()) {
+            UserPropsList userProps;
+            fillUserProps(propsHandler, userProps);
+            info.m_userProps = &userProps[0];
+            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+        }        
+    }
+
+    client().notifyDisconnected(true, &info);
+    // No members access after this point, the op will be deleted    
+}
+
 void KeepAliveOp::handle([[maybe_unused]] ProtMessage& msg)
 {
     restartRecvTimer();
@@ -94,7 +132,7 @@ void KeepAliveOp::sendPing()
 void KeepAliveOp::pingTimeoutInternal()
 {
     COMMS_ASSERT(!m_respTimer.isActive());
-    clent().notifyDisconnected();
+    client().notifyDisconnected(true);
 }
 
 void KeepAliveOp::sendPingCb(void* data)

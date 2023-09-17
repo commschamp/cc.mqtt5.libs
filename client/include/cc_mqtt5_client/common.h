@@ -75,9 +75,10 @@ typedef enum
     CC_Mqtt5AsyncOpStatus_Timeout,
     CC_Mqtt5AsyncOpStatus_ProtocolError,
     CC_Mqtt5AsyncOpStatus_Aborted,
+    CC_Mqtt5AsyncOpStatus_BrokerDisconnected,
     CC_Mqtt5AsyncOpStatus_OutOfMemory,
     CC_Mqtt5AsyncOpStatus_BadParam,
-    CC_Mqtt5AsyncOpStatus_ValuesLimit
+    CC_Mqtt5AsyncOpStatus_ValuesLimit ///< Must be last
 } CC_Mqtt5AsyncOpStatus;
 
 
@@ -144,6 +145,10 @@ typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
 /// @brief Handle for connection operation.
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
 typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
+
+/// @brief Handle for disconnection operation.
+/// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
+typedef struct { void* m_ptr; } CC_Mqtt5DisconnectHandle;
 
 typedef struct
 {
@@ -220,6 +225,22 @@ typedef struct
     unsigned m_userPropsCount;    
 } CC_Mqtt5AuthInfo;
 
+typedef struct
+{
+    CC_Mqtt5ReasonCode m_reasonCode;
+    const char* m_reasonStr;
+    const char* m_serverRef;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;      
+} CC_Mqtt5DisconnectInfo;
+
+typedef struct
+{
+    CC_Mqtt5ReasonCode m_reasonCode;
+    const char* m_reasonStr;
+    unsigned* m_expiryInterval;
+} CC_Mqtt5DisconnectConfig;
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.
@@ -253,7 +274,7 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 /// @brief Callback used to report unsolicited disconnection of the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
-typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data);
+typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5DisconnectInfo* info);
 
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 

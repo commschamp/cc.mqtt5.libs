@@ -20,6 +20,7 @@ struct State
     unsigned m_sendLimit = 0U;
     bool m_initialized = false;
     bool m_connected = false;
+    bool m_terminating = false;
 };
 
 } // namespace cc_mqtt5_client

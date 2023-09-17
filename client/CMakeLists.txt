@@ -200,3 +200,5 @@ install (
 if (CC_MQTT5_CLIENT_DEFAULT_LIB) 
     gen_lib_mqtt5_client("")
 endif ()
+
+add_subdirectory(test)

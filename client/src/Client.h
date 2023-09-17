@@ -33,8 +33,8 @@ public:
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
 
-    CC_Mqtt5ConnectHandle connectPrepare(CC_Mqtt5ErrorCode* ec);
-    CC_Mqtt5DisconnectHandle disconnectPrepare(CC_Mqtt5ErrorCode* ec);
+    op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
+    op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {

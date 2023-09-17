@@ -81,7 +81,7 @@ unsigned Client::processData(const std::uint8_t* iter, unsigned len)
     return static_cast<unsigned>(comms::processAllWithDispatch(iter, len, m_frame, *this));
 }
 
-CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
+op::ConnectOp* Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     auto updateEc = 
         [&ec](CC_Mqtt5ErrorCode val)
@@ -91,8 +91,7 @@ CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
             }
         };
 
-    auto handle = CC_Mqtt5ConnectHandle();
-    COMMS_ASSERT(handle.m_ptr == nullptr);
+    op::ConnectOp* connectOp = nullptr;
     do {
         if (!m_connectOps.empty()) {
             // Already allocated
@@ -118,14 +117,14 @@ CC_Mqtt5ConnectHandle Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
 
         m_ops.push_back(ptr.get());
         m_connectOps.push_back(std::move(ptr));
-        handle.m_ptr = m_ops.back();
+        connectOp = m_connectOps.back().get();
         updateEc(CC_Mqtt5ErrorCode_Success);
     } while (false);
 
-    return handle;
+    return connectOp;
 }
 
-CC_Mqtt5DisconnectHandle Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
+op::DisconnectOp* Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     auto updateEc = 
         [&ec](CC_Mqtt5ErrorCode val)
@@ -135,7 +134,7 @@ CC_Mqtt5DisconnectHandle Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             }
         };
 
-    auto handle = CC_Mqtt5DisconnectHandle();
+    op::DisconnectOp* disconnectOp = nullptr;
     do {
         if (!m_state.m_initialized) {
             updateEc(CC_Mqtt5ErrorCode_NotIntitialized);
@@ -160,11 +159,11 @@ CC_Mqtt5DisconnectHandle Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 
         m_ops.push_back(ptr.get());
         m_disconnectOps.push_back(std::move(ptr));
-        handle.m_ptr = m_ops.back();
+        disconnectOp = m_disconnectOps.back().get();
         updateEc(CC_Mqtt5ErrorCode_Success);
     } while (false);
 
-    return handle;
+    return disconnectOp;
 }
 
 void Client::handle(ProtMessage& msg)

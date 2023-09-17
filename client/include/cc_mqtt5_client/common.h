@@ -138,17 +138,21 @@ typedef enum
     CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
 } CC_Mqtt5ReasonCode;
 
+struct CC_Mqtt5Client;
+
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by cc_mqtt5_client_new() function.
-typedef struct { void* m_ptr; } CC_Mqtt5ClientHandle;
+typedef CC_Mqtt5Client* CC_Mqtt5ClientHandle;
 
+struct CC_Mqtt5Connect;
 /// @brief Handle for connection operation.
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
-typedef struct { void* m_ptr; } CC_Mqtt5ConnectHandle;
+typedef CC_Mqtt5Connect* CC_Mqtt5ConnectHandle;
 
+struct CC_Mqtt5Disconnect;
 /// @brief Handle for disconnection operation.
 /// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
-typedef struct { void* m_ptr; } CC_Mqtt5DisconnectHandle;
+typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
 
 typedef struct
 {

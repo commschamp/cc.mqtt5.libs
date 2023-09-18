@@ -12,4 +12,5 @@ endfunction ()
 
 ##################################
 
+cc_mqtt5_client_add_test(ClientUnitTest)
 cc_mqtt5_client_add_test(ConnectUnitTest)

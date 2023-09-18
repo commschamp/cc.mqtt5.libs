@@ -73,7 +73,7 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client)
     getClientAllocator().free(clientFromHandle(client));
 }
 
-CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle client)
 {
     return clientFromHandle(client)->init();
 }
@@ -292,7 +292,7 @@ void cc_mqtt5_##NAME##client_set_send_output_data_callback(
     clientFromHandle(client)->setSendOutputDataCallback(cb, data);
 }
 
-void cc_mqtt5_##NAME##client_set_gw_disconnect_report_callback(
+void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     CC_Mqtt5ClientHandle client,
     CC_Mqtt5BrokerDisconnectReportCb cb,
     void* data)

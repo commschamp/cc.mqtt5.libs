@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cc_mqtt5_client/client.h"
+#include "client.h"
 
 #include <memory>
 

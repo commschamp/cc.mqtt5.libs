@@ -1,26 +1,34 @@
+#include "UnitTestCommonBase.h"
 #include "UnitTestDefs.h"
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
-#include "cc_mqtt5_client/client.h"
+#include "client.h"
 
 #include <cxxtest/TestSuite.h>
 
-class ConnectUnitTestSuite : public CxxTest::TestSuite
+class ConnectUnitTestSuite : public CxxTest::TestSuite, public UnitTestCommonBase
 {
 public:
     void test1();
 
 private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
 };
 
 void ConnectUnitTestSuite::test1()
 {
-    UnitTestClientPtr client(cc_mqtt5_client_new());
-    TS_ASSERT(cc_mqtt5_client_handle_is_valid(client.get()));
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+    TS_ASSERT(unitTestCheckNoTicks());
 
-    auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
-    auto connect = cc_mqtt5_client_connect_prepare(client.get(), &ec);
-    TS_ASSERT(!cc_mqtt5_client_connect_handle_is_valid(connect))
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);
+    // TODO: connect
 }

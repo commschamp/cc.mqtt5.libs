@@ -38,7 +38,7 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client);
 ///     and checks that all the required callbacks have been set. If there are old
 ///     outstanding operations they are all aborted.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
-CC_Mqtt5ErrorCode cc_mqtt4_##NAME##client_init(CC_Mqtt5ClientHandle client);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle client);
 
 /// @brief Notify client about requested time expiry.
 /// @details The reported amount of milliseconds needs to be from the 
@@ -142,7 +142,7 @@ void cc_mqtt5_##NAME##client_set_send_output_data_callback(
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
-void cc_mqtt5_##NAME##client_set_gw_disconnect_report_callback(
+void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     CC_Mqtt5ClientHandle client,
     CC_Mqtt5BrokerDisconnectReportCb cb,
     void* data);

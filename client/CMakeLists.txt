@@ -155,8 +155,8 @@ function (gen_lib_mqtt5_client config_file)
                 PUBLIC
                     $<INSTALL_INTERFACE:include>
                     $<BUILD_INTERFACE:${COMMON_INC_DIR}>
+                    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/${dir}>
                 PRIVATE 
-                    ${CMAKE_CURRENT_BINARY_DIR}/${dir}
                     ${CMAKE_CURRENT_SOURCE_DIR}/src)    
 
     set_target_properties(

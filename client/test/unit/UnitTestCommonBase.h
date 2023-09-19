@@ -215,7 +215,6 @@ private:
 
     static void unitTestProgramNextTickCb(void* obj, unsigned duration)
     {
-        std::cout << "!!! Next tick: " << duration << std::endl;
         auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
         assert(realObj->m_tickReq.empty());
         realObj->m_tickReq.push_back({duration, 0U});

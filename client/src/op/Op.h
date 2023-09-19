@@ -55,6 +55,7 @@ protected:
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();
+    void doApiGuard();
 
     Client& client()
     {

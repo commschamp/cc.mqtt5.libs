@@ -70,6 +70,7 @@ CC_Mqtt5ErrorCode Client::init()
 
 void Client::tick(unsigned ms)
 {
+    COMMS_ASSERT(m_apiEnterCount == 0U);
     ++m_apiEnterCount;
     m_timerMgr.tick(ms);
     doApiExit();
@@ -236,6 +237,11 @@ void Client::opComplete(const op::Op* op)
     (this->*func)(op);
 }
 
+void Client::doApiGuard()
+{
+    auto guard = apiEnter();
+}
+
 void Client::notifyConnected()
 {
     m_state.m_connected = true;
@@ -261,6 +267,11 @@ void Client::doApiEnter()
 {
     ++m_apiEnterCount;
     if ((m_apiEnterCount > 1U) || (m_cancelNextTickWaitCb == nullptr)) {
+        return;
+    }
+
+    auto prevWait = m_timerMgr.getMinWait();
+    if (prevWait == 0U) {
         return;
     }
 

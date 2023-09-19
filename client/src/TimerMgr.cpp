@@ -98,7 +98,7 @@ unsigned TimerMgr::getMinWait() const
 void TimerMgr::freeTimer(unsigned idx)
 {
     COMMS_ASSERT(idx < m_timers.size()); 
-    if (idx < m_timers.size()) {
+    if (m_timers.size() <= idx) {
         return;
     }
 
@@ -112,7 +112,7 @@ void TimerMgr::freeTimer(unsigned idx)
 void TimerMgr::timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* data)
 {
     COMMS_ASSERT(idx < m_timers.size()); 
-    if (idx < m_timers.size()) {
+    if (m_timers.size() <= idx) {
         return;
     }
 
@@ -126,7 +126,7 @@ void TimerMgr::timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* d
 void TimerMgr::timerCancel(unsigned idx)
 {
     COMMS_ASSERT(idx < m_timers.size()); 
-    if (idx < m_timers.size()) {
+    if (m_timers.size() <= idx) {
         return;
     }
 
@@ -140,7 +140,7 @@ void TimerMgr::timerCancel(unsigned idx)
 bool TimerMgr::timerIsActive(unsigned idx) const
 {
     COMMS_ASSERT(idx < m_timers.size()); 
-    if (idx < m_timers.size()) {
+    if (m_timers.size() <= idx) {
         return false;
     }
 

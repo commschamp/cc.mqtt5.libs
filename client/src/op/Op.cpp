@@ -38,6 +38,11 @@ void Op::opComplete()
     m_client.opComplete(this);
 }
 
+void Op::doApiGuard()
+{
+    m_client.doApiGuard();
+}
+
 void Op::sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason)
 {
     DisconnectMsg disconnectMsg;

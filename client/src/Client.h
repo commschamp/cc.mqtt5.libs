@@ -29,6 +29,28 @@ class Client final : public ProtMsgHandler
     using Base = ProtMsgHandler;
 
 public:
+    class ApiEnterGuard
+    {
+    public:
+        ApiEnterGuard(Client& client) : m_client(client)
+        {
+            m_client.doApiEnter();
+        }
+
+        ~ApiEnterGuard() noexcept
+        {
+            m_client.doApiExit();
+        }
+
+    private:
+        Client& m_client;
+    };
+
+    ApiEnterGuard apiEnter()
+    {
+        return ApiEnterGuard(*this);
+    }
+
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
@@ -73,6 +95,7 @@ public:
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
+    void doApiGuard();
     void notifyConnected();
     void notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info = nullptr);
 
@@ -100,30 +123,6 @@ private:
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
-    class ApiEnterGuard
-    {
-    public:
-        ApiEnterGuard(Client& client) : m_client(client)
-        {
-            m_client.doApiEnter();
-        }
-
-        ~ApiEnterGuard() noexcept
-        {
-            m_client.doApiExit();
-        }
-
-    private:
-        Client& m_client;
-    };
-
-    friend class ApiEnterGuard;
-
-    ApiEnterGuard apiEnter()
-    {
-        return ApiEnterGuard(*this);
-    }
-
     void doApiEnter();
     void doApiExit();
     void createKeepAliveOpIfNeeded();
@@ -132,6 +131,8 @@ private:
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
     void opComplete_Disconnect(const op::Op* op);
+
+    friend class ApiEnterGuard;
 
     CC_Mqtt5NextTickProgramCb m_nextTickProgramCb = nullptr;
     void* m_nextTickProgramData = nullptr;

@@ -709,6 +709,10 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if (!m_timer.isValid()) {
+        return CC_Mqtt5ErrorCode_OutOfMemory;
+    }    
+
     m_cb = cb;
     m_cbData = cbData;
     
@@ -717,11 +721,8 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return result;
     }
 
-    if (!m_timer.isValid()) {
-        return CC_Mqtt5ErrorCode_OutOfMemory;
-    }
-
     completeOnError.release(); // don't complete op yet
+    auto guard = client().apiEnter();
     restartTimer();
     return CC_Mqtt5ErrorCode_Success;
 }

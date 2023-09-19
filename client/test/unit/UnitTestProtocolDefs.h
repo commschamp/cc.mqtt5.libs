@@ -14,9 +14,6 @@
 
 #include <cstdint>
 
-namespace cc_mqtt5_client
-{
-
 class UnitTestMsgHandler;
 
 using UnitTestMessage = cc_mqtt5::Message<
@@ -27,7 +24,7 @@ using UnitTestMessage = cc_mqtt5::Message<
     comms::option::app::Handler<UnitTestMsgHandler>
 >;
 
-CC_MQTT5_ALIASES_FOR_ALL_MESSAGES_DEFAULT_OPTIONS(UnitTests, Msg, UnitTestMessage)
+CC_MQTT5_ALIASES_FOR_ALL_MESSAGES_DEFAULT_OPTIONS(UnitTest, Msg, UnitTestMessage)
 
 using UnitTestsFrame = cc_mqtt5::frame::Frame<UnitTestMessage>;
 using UniTestsMsgPtr = UnitTestsFrame::MsgPtr;
@@ -39,4 +36,3 @@ protected:
     ~UnitTestMsgHandler() noexcept = default;
 };
 
-} // namespace cc_mqtt5_client

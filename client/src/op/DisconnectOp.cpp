@@ -101,7 +101,7 @@ Op::Type DisconnectOp::typeImpl() const
 bool DisconnectOp::canAddProp() const
 {
     auto& vec = m_disconnectMsg.field_propertiesList().field().value();
-    return vec.size() < vec.capacity();
+    return vec.size() < vec.max_size();
 }
 
 DisconnectMsg::Field_propertiesList::Field::ValueType::reference DisconnectOp::addDisconnectMsgProp()

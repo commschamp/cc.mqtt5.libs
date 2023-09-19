@@ -214,7 +214,7 @@ public:
     void operator()(const UserProperty& field)
     {
         if constexpr (Config::HasUserProps) {
-            if (m_userProps.capacity() <= m_userProps.size()) {
+            if (m_userProps.max_size() <= m_userProps.size()) {
                 return;
             }
 

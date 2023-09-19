@@ -33,7 +33,7 @@ template <typename TField>
 bool canAddPropToField(const TField& field)
 {
     auto& vec = field.value();
-    return vec.size() < vec.capacity();
+    return vec.size() < vec.max_size();
 }
 
 } // namespace 
@@ -51,12 +51,12 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     auto response = CC_Mqtt5ConnectResponse();
-    response.m_expiryInterval = m_expiryInterval;
+    response.m_sessionExpiryInterval = m_sessionExpiryInterval;
     response.m_highQosPubLimit = std::numeric_limits<std::uint16_t>::max();
     response.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     response.m_retainAvailable = true;
     response.m_wildcardSubAvailable = true;
-    response.m_subIdsAvailalbe = true;
+    response.m_subIdsAvailable = true;
     response.m_sharedSubsAvailable = true;
 
     if constexpr (Config::SendMaxLimit > 0U) {
@@ -123,8 +123,8 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (propsHandler.m_sessionExpiryInterval != nullptr) {
-        response.m_expiryInterval = 
-            comms::units::getSeconds<decltype(response.m_expiryInterval)>(propsHandler.m_sessionExpiryInterval->field_value());
+        response.m_sessionExpiryInterval = 
+            comms::units::getSeconds<decltype(response.m_sessionExpiryInterval)>(propsHandler.m_sessionExpiryInterval->field_value());
     }
 
     if (propsHandler.m_receiveMax != nullptr) {
@@ -168,7 +168,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (propsHandler.m_subIdAvail != nullptr) {
-        response.m_subIdsAvailalbe = 
+        response.m_subIdsAvailable = 
             (propsHandler.m_subIdAvail->field_value().value() == PropsHandler::SubIdAvail::Field_value::ValueType::Enabled);
     }    
 
@@ -443,7 +443,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         [this]()
         {
             auto& vec = m_connectMsg.field_willProperties().field().value();
-            return vec.size() < vec.capacity();
+            return vec.size() < vec.max_size();
         };
 
     auto addWillProp = 
@@ -483,7 +483,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         comms::units::setSeconds(valueField, config.m_delayInterval);
     }
 
-    if (config.m_expiryInterval > 0U) {
+    if (config.m_messageExpiryInterval > 0U) {
         if (!canAddWillProp()) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
@@ -495,13 +495,11 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         using ValueField = std::decay_t<decltype(valueField)>;
         static constexpr auto MaxValue = std::numeric_limits<ValueField::ValueType>::max();
 
-        if (MaxValue < config.m_expiryInterval) {
+        if (MaxValue < config.m_messageExpiryInterval) {
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        comms::units::setSeconds(valueField, config.m_expiryInterval);
-
-        m_expiryInterval = config.m_expiryInterval;
+        comms::units::setSeconds(valueField, config.m_messageExpiryInterval);
     }
 
     if (config.m_contentType != nullptr) {
@@ -547,7 +545,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
 CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& config)
 {
-    if (config.m_expiryInterval > 0U) {
+    if (config.m_sessionExpiryInterval > 0U) {
         if (!canAddProp()) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
@@ -555,7 +553,9 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propVar = addConnectMsgProp();
         auto& propBundle = propVar.initField_sessionExpiryInterval();
         auto& valueField = propBundle.field_value();        
-        comms::units::setSeconds(valueField, config.m_expiryInterval);                
+        comms::units::setSeconds(valueField, config.m_sessionExpiryInterval);                
+
+        m_sessionExpiryInterval = config.m_sessionExpiryInterval;
     }
 
     if (config.m_receiveMaximum > 0U) {

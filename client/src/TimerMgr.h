@@ -32,7 +32,9 @@ public:
 
         ~Timer()
         {
-            m_timerMgr.freeTimer(m_idx);
+            if (isValid()) {
+                m_timerMgr.freeTimer(m_idx);
+            }
         }
 
         void wait(unsigned timeoutMs, TimeoutCb cb, void* data)

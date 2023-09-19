@@ -42,7 +42,7 @@ TimerMgr::Timer TimerMgr::allocTimer()
         COMMS_ASSERT(Should_not_happen);
     } 
 
-    if (m_timers.capacity() <= m_timers.size()) {
+    if (m_timers.max_size() <= m_timers.size()) {
         return Timer(*this);
     }      
 

@@ -186,7 +186,7 @@ void Client::handle(ProtMessage& msg)
 CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
 {
     auto len = m_frame.length(msg);
-    if (m_buf.capacity() < len) {
+    if (m_buf.max_size() < len) {
         return CC_Mqtt5ErrorCode_BufferOverflow;
     }
 

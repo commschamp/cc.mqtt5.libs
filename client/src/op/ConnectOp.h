@@ -60,7 +60,7 @@ private:
     CC_Mqtt5AuthCb m_authCb = nullptr;
     void* m_authCbData = nullptr;
     AuthMethodStorageType m_authMethod;
-    unsigned m_expiryInterval = 0U;
+    unsigned m_sessionExpiryInterval = 0U;
 
     static_assert(ExtConfig::ConnectOpTimers == 1U);
 };

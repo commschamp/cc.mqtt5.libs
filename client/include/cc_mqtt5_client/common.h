@@ -180,7 +180,7 @@ typedef struct
     const unsigned char* m_correlationData;
     unsigned m_correlationDataLen;
     unsigned m_delayInterval;
-    unsigned m_expiryInterval;
+    unsigned m_messageExpiryInterval;
     CC_Mqtt5QoS m_qos;
     CC_Mqtt5PayloadFormat m_format;
     bool m_retain;
@@ -188,7 +188,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned m_expiryInterval;
+    unsigned m_sessionExpiryInterval;
     unsigned m_receiveMaximum;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMaximum;
@@ -208,7 +208,7 @@ typedef struct
     unsigned m_authDataLen;
     const CC_Mqtt5UserProp* m_userProps;
     unsigned m_userPropsCount;
-    unsigned m_expiryInterval;
+    unsigned m_sessionExpiryInterval;
     unsigned m_highQosPubLimit;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMax;
@@ -216,7 +216,7 @@ typedef struct
     bool m_sessionPresent;
     bool m_retainAvailable;
     bool m_wildcardSubAvailable;
-    bool m_subIdsAvailalbe;
+    bool m_subIdsAvailable;
     bool m_sharedSubsAvailable;
 } CC_Mqtt5ConnectResponse;
 

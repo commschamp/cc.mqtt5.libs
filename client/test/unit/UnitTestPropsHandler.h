@@ -9,10 +9,7 @@
 
 #include "cc_mqtt5/field/Property.h"
 
-namespace cc_mqtt5_client
-{
-
-class PropsHandler
+class UnitTestPropsHandler
 {
     using Property = cc_mqtt5::field::Property<>;
 
@@ -273,4 +270,3 @@ private:
     bool m_protocolError = false;
 };
 
-} // namespace cc_mqtt5_client

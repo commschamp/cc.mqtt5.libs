@@ -228,7 +228,7 @@ void Client::opComplete(const op::Op* op)
     static_assert(MapSize == op::Op::Type_NumOfValues);
 
     auto idx = static_cast<unsigned>(op->type());
-    COMMS_ASSERT(MapSize <= idx);
+    COMMS_ASSERT(idx < MapSize);
     if (MapSize <= idx) {
         return;
     }

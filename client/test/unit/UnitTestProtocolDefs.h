@@ -13,12 +13,13 @@
 #include "comms/GenericHandler.h"
 
 #include <cstdint>
+#include <iterator>
 
 class UnitTestMsgHandler;
 
 using UnitTestMessage = cc_mqtt5::Message<
     comms::option::app::ReadIterator<const std::uint8_t*>,
-    comms::option::app::WriteIterator<std::uint8_t*>,
+    comms::option::app::WriteIterator<std::back_insert_iterator<std::vector<std::uint8_t> > >,
     comms::option::app::LengthInfoInterface,
     comms::option::app::IdInfoInterface,
     comms::option::app::Handler<UnitTestMsgHandler>

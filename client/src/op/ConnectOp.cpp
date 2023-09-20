@@ -50,6 +50,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     m_timer.cancel();
 
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
+    UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5ConnectResponse();
     response.m_sessionExpiryInterval = m_sessionExpiryInterval;
     response.m_highQosPubLimit = std::numeric_limits<std::uint16_t>::max();
@@ -116,7 +117,6 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (!propsHandler.m_userProps.empty()) {
-        UserPropsList userProps;
         fillUserProps(propsHandler, userProps);
         response.m_userProps = &userProps[0];
         comms::cast_assign(response.m_userPropsCount) = userProps.size();
@@ -603,7 +603,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         valueField.setValue(config.m_topicAliasMaximum);        
     }
 
-    if (config.m_requestResposnseInfo) {
+    if (config.m_requestResponseInfo) {
         if (!canAddProp()) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
@@ -611,7 +611,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propVar = addConnectMsgProp();
         auto& propBundle = propVar.initField_requestResponseInfo();
         auto& valueField = propBundle.field_value();          
-        valueField.setValue(config.m_requestResposnseInfo);   
+        valueField.setValue(config.m_requestResponseInfo);   
     }
 
     if (config.m_requestProblemInfo) {

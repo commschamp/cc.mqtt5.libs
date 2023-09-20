@@ -29,9 +29,9 @@ protected:
             *this = other;
         }
 
-        UnitTestUserProp operator=(const CC_Mqtt5UserProp& other)
+        UnitTestUserProp& operator=(const CC_Mqtt5UserProp& other)
         {
-            std::tie(m_key, m_value) = std::tie(other.m_key, m_value);
+            std::tie(m_key, m_value) = std::make_tuple(other.m_key, other.m_value);
             return *this;
         }
     };
@@ -57,24 +57,37 @@ protected:
         bool m_subIdsAvailable = false;
         bool m_sharedSubsAvailable = false;
 
-        UnitTestConnectResponse operator=(const CC_Mqtt5ConnectResponse& response)
+        UnitTestConnectResponse& operator=(const CC_Mqtt5ConnectResponse& response)
         {
+            auto assignString = 
+                [](std::string& dest, const char* source)
+                {
+                    dest.clear();
+                    if (source != nullptr)
+                    {
+                        dest = source;
+                    }
+                };
+
             auto thisTie = 
                 std::tie(
-                    m_reasonCode, m_assignedClientId, m_reasonStr, m_serverRef, m_authMethod,
-                    m_sessionExpiryInterval, m_highQosPubLimit, m_maxPacketSize, m_topicAliasMax,
+                    m_reasonCode, m_sessionExpiryInterval, m_highQosPubLimit, m_maxPacketSize, m_topicAliasMax,
                     m_maxQos, m_sessionPresent, m_retainAvailable, m_wildcardSubAvailable, m_subIdsAvailable, 
                     m_sharedSubsAvailable);
 
             auto responseTie = 
-                std::tie(
-                    response.m_reasonCode, response.m_assignedClientId, response.m_reasonStr, response.m_serverRef, response.m_authMethod,
-                    response.m_sessionExpiryInterval, response.m_highQosPubLimit, response.m_maxPacketSize, response.m_topicAliasMax,
+                std::forward_as_tuple(
+                    response.m_reasonCode, response.m_sessionExpiryInterval, response.m_highQosPubLimit, response.m_maxPacketSize, response.m_topicAliasMax,
                     response.m_maxQos, response.m_sessionPresent, response.m_retainAvailable, response.m_wildcardSubAvailable, response.m_subIdsAvailable, 
                     response.m_sharedSubsAvailable);            
 
             thisTie = responseTie;
 
+            assignString(m_assignedClientId, response.m_assignedClientId);
+            assignString(m_responseInfo, response.m_responseInfo);
+            assignString(m_reasonStr, response.m_reasonStr);
+            assignString(m_serverRef, response.m_serverRef);
+            assignString(m_authMethod, response.m_authMethod);
             
             if (response.m_authDataLen > 0) {
                 m_authData.assign(response.m_authData, response.m_authData + response.m_authDataLen);
@@ -105,11 +118,18 @@ protected:
 
     using UnitTestConnectResponseInfoPtr = std::unique_ptr<UnitTestConnectResponseInfo>;
 
+    struct TickInfo
+    {
+        unsigned m_requested = 0U;
+        unsigned m_elapsed = 0U;
+    };    
+
     void unitTestSetUp()
     {
         assert(!m_client);
         m_tickReq.clear();
         m_sentData.clear();
+        m_connectResp.clear();
     }
 
     void unitTestTearDown()
@@ -134,10 +154,10 @@ protected:
         return m_sentData;
     }
 
-    decltype(auto) unitTestTickReq()
+    const TickInfo* unitTestTickReq()
     {
         assert(!m_tickReq.empty());
-        return m_tickReq.front();
+        return &m_tickReq.front();
     }
 
     bool unitTestCheckNoTicks()
@@ -190,15 +210,43 @@ protected:
 
     bool unitTestIsConnectComplete()
     {
-        return (!m_connectResp.empty());
+        return (!m_connectResp.empty()) && (m_connectResp.front());
+    }
+
+    const UnitTestConnectResponseInfo& unitTestConnectResponseInfo()
+    {
+        assert(unitTestIsConnectComplete());
+        return *m_connectResp.front();
+    }
+
+    void unitTestPopConnectResponseInfo()
+    {
+        assert(!m_connectResp.empty());
+        m_connectResp.erase(m_connectResp.begin());
+    }
+
+    void unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData = true)
+    {
+        UnitTestsFrame frame;
+        auto prevSize = m_receivedData.size();
+        m_receivedData.reserve(prevSize + frame.length(msg));
+        auto writeIter = std::back_inserter(m_receivedData);
+        auto es = frame.write(msg, writeIter, m_receivedData.max_size());
+        if (es == comms::ErrorStatus::UpdateRequired) {
+            auto* updateIter = &m_receivedData[prevSize];
+            es = frame.update(msg, updateIter, m_receivedData.size() - prevSize);
+        }
+        assert(es == comms::ErrorStatus::Success);
+
+        if (!reportReceivedData) {
+            return;
+        }
+
+        auto consumed = cc_mqtt5_client_process_data(m_client.get(), &m_receivedData[0], static_cast<unsigned>(m_receivedData.size()));
+        m_receivedData.erase(m_receivedData.begin(), m_receivedData.begin() + consumed);
     }
 
 private:
-    struct TickInfo
-    {
-        unsigned m_requested = 0U;
-        unsigned m_elapsed = 0U;
-    };
 
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
     {
@@ -236,11 +284,14 @@ private:
         auto& ptr = realObj->m_connectResp.back();
         ptr = std::make_unique<UnitTestConnectResponseInfo>();
         ptr->m_status = status;
-        ptr->m_response = *response;
+        if (response != nullptr) {
+            ptr->m_response = *response;
+        }
     }
 
     UnitTestClientPtr m_client;
     std::vector<TickInfo> m_tickReq;
     std::vector<std::uint8_t> m_sentData;
+    std::vector<std::uint8_t> m_receivedData;
     std::vector<UnitTestConnectResponseInfoPtr> m_connectResp;
 };

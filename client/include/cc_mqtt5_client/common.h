@@ -192,7 +192,7 @@ typedef struct
     unsigned m_receiveMaximum;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMaximum;
-    bool m_requestResposnseInfo;
+    bool m_requestResponseInfo;
     bool m_requestProblemInfo;
 } CC_Mqtt5ConnectExtraConfig;
 

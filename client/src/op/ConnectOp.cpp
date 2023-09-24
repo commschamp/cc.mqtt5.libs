@@ -237,6 +237,7 @@ void ConnectOp::handle(AuthMsg& msg)
         return;        
     }
 
+    UserPropsList userProps; // Will be referenced in inInfo
     auto inInfo = CC_Mqtt5AuthInfo();
 
     if (propsHandler.m_authData != nullptr) {
@@ -252,7 +253,6 @@ void ConnectOp::handle(AuthMsg& msg)
     }
 
     if (!propsHandler.m_userProps.empty()) {
-        UserPropsList userProps;
         fillUserProps(propsHandler, userProps);
         inInfo.m_userProps = &userProps[0];
         comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();

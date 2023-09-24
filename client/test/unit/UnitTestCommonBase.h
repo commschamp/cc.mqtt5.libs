@@ -15,6 +15,8 @@ class UnitTestCommonBase
 protected:
     static constexpr unsigned UnitTestDefaultOpTimeoutMs = 2000;
 
+    using UnitTestData = std::vector<std::uint8_t>;
+
     struct UnitTestUserProp
     {
         std::string m_key;
@@ -22,7 +24,7 @@ protected:
 
         UnitTestUserProp() = default;
         UnitTestUserProp(const UnitTestUserProp&) = default;
-        UnitTestUserProp(UnitTestUserProp&&) = default;
+        UnitTestUserProp(const std::string& key, const std::string& value) : m_key(key), m_value(value) {}
 
         explicit UnitTestUserProp(const CC_Mqtt5UserProp& other)
         {
@@ -32,6 +34,52 @@ protected:
         UnitTestUserProp& operator=(const CC_Mqtt5UserProp& other)
         {
             std::tie(m_key, m_value) = std::make_tuple(other.m_key, other.m_value);
+            return *this;
+        }
+
+        UnitTestUserProp& operator=(const UnitTestUserProp&) = default;
+
+        using List = std::vector<UnitTestUserProp>;
+        static void copyProps(const CC_Mqtt5UserProp* userProps, unsigned userPropsCount, List& list)
+        {
+            list.clear();
+            if (userPropsCount > 0) {
+                std::transform(userProps, userProps + userPropsCount, std::back_inserter(list),
+                [](auto& prop)
+                {
+                    return UnitTestUserProp{prop};
+                });   
+            }         
+        }
+    };
+
+    struct UnitTestAuthInfo
+    {
+        UnitTestData m_authData;
+        std::string m_reasonStr;
+        UnitTestUserProp::List m_userProps;
+
+        UnitTestAuthInfo() = default;
+        UnitTestAuthInfo(const UnitTestAuthInfo&) = default;
+        explicit UnitTestAuthInfo(const CC_Mqtt5AuthInfo& other)
+        {
+            *this = other;
+        }
+
+        UnitTestAuthInfo& operator=(const UnitTestAuthInfo&) = default;
+        UnitTestAuthInfo& operator=(const CC_Mqtt5AuthInfo& other)
+        {
+            m_authData.clear();
+            if (other.m_authDataLen > 0U) {
+                std::copy_n(other.m_authData, other.m_authDataLen, std::back_inserter(m_authData));
+            }
+
+            m_reasonStr.clear();
+            if (other.m_reasonStr != nullptr) {
+                m_reasonStr = other.m_reasonStr;
+            }
+
+            UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
             return *this;
         }
     };
@@ -97,15 +145,7 @@ protected:
                 m_authData.clear();
             }
 
-            m_userProps.clear();
-            if (response.m_userPropsCount > 0) {
-                std::transform(response.m_userProps, response.m_userProps + response.m_userPropsCount, std::back_inserter(m_userProps),
-                [](auto& prop)
-                {
-                    return UnitTestUserProp{prop};
-                });
-            }
-
+            UnitTestUserProp::copyProps(response.m_userProps, response.m_userPropsCount, m_userProps);
             return *this;
         }
     };
@@ -130,6 +170,8 @@ protected:
         m_tickReq.clear();
         m_sentData.clear();
         m_connectResp.clear();
+        m_inAuthInfo.clear();
+        m_outAuthInfo.clear();
     }
 
     void unitTestTearDown()
@@ -246,12 +288,52 @@ protected:
         m_receivedData.erase(m_receivedData.begin(), m_receivedData.begin() + consumed);
     }
 
+    CC_Mqtt5ErrorCode unitTestConfigAuth(CC_Mqtt5ConnectHandle handle, const std::string& method, const std::vector<std::uint8_t>& data)
+    {
+        auto config = CC_Mqtt5ConnectAuthConfig();
+        cc_mqtt5_client_connect_init_config_auth(&config);
+
+        config.m_authMethod = method.c_str();
+        comms::cast_assign(config.m_authDataLen) = data.size();
+        if (!data.empty()) {
+            config.m_authData = &data[0];
+        }
+
+        config.m_authCb = &UnitTestCommonBase::unitTestAuthCb;
+        config.m_authCbData = this;
+        return cc_mqtt5_client_connect_config_auth(handle, &config);
+    }
+
+    void unitTestAddOutAuth(const UnitTestAuthInfo& info)
+    {
+        m_outAuthInfo.push_back(info);
+    }
+
+    void unitTestClearAuth()
+    {
+        m_inAuthInfo.clear();
+        m_outAuthInfo.clear();
+    }
+
+    const UnitTestAuthInfo& unitTestInAuthInfo() const
+    {
+        assert(!m_inAuthInfo.empty());
+        return m_inAuthInfo.front();
+    }
+
+    void unitTestPopInAuthInfo()
+    {
+        assert(!m_inAuthInfo.empty());
+        m_inAuthInfo.erase(m_inAuthInfo.begin());
+    }
+
 private:
 
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
     {
         static_cast<void>(obj);
         static_cast<void>(info);
+        assert(false); // NYI
         // TODO:
     }
 
@@ -289,9 +371,49 @@ private:
         }
     }
 
+    static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)
+    {
+        assert(authInfoIn != nullptr);
+        auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+  
+        auto idx = realObj->m_inAuthInfo.size();
+        realObj->m_inAuthInfo.push_back(UnitTestAuthInfo{*authInfoIn});
+        if (realObj->m_outAuthInfo.size() <= idx) {
+            return CC_Mqtt5AuthErrorCode_Disconnect;
+        }
+
+        assert(authInfoOut != nullptr);
+        auto& outInfo = realObj->m_outAuthInfo[idx];
+        comms::cast_assign(authInfoOut->m_authDataLen) = outInfo.m_authData.size();
+        if (!outInfo.m_authData.empty()) {
+            authInfoOut->m_authData = &outInfo.m_authData[0];
+        }
+
+        if (!outInfo.m_reasonStr.empty()) {
+            authInfoOut->m_reasonStr = outInfo.m_reasonStr.c_str();
+        }
+
+        realObj->m_userPropsTmp.clear();
+        comms::cast_assign(authInfoOut->m_userPropsCount) = outInfo.m_userProps.size();
+        if (!outInfo.m_userProps.empty()) {
+            std::transform(
+                outInfo.m_userProps.begin(), outInfo.m_userProps.end(), std::back_inserter(realObj->m_userPropsTmp),
+                [](auto& p)
+                {
+                    return CC_Mqtt5UserProp{p.m_key.c_str(), p.m_value.c_str()};
+                });
+            authInfoOut->m_userProps = &realObj->m_userPropsTmp[0];
+        }
+
+        return CC_Mqtt5AuthErrorCode_Continue;
+    }
+
     UnitTestClientPtr m_client;
     std::vector<TickInfo> m_tickReq;
     std::vector<std::uint8_t> m_sentData;
     std::vector<std::uint8_t> m_receivedData;
     std::vector<UnitTestConnectResponseInfoPtr> m_connectResp;
+    std::vector<UnitTestAuthInfo> m_inAuthInfo;
+    std::vector<UnitTestAuthInfo> m_outAuthInfo;
+    std::vector<CC_Mqtt5UserProp> m_userPropsTmp;
 };

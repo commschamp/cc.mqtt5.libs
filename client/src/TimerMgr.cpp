@@ -53,6 +53,15 @@ TimerMgr::Timer TimerMgr::allocTimer()
 
 void TimerMgr::tick(unsigned ms)
 {
+    struct CbInfo
+    {
+        TimeoutCb m_timeoutCb = nullptr;
+        void* m_timeoutData = nullptr;
+    };
+
+    using CbList = ObjListType<CbInfo, ExtConfig::TimersLimit>;
+    CbList cbList;
+
     for (auto idx = 0U; idx < m_timers.size(); ++idx) {
         auto& info = m_timers[idx];
         if (info.m_timeoutCb == nullptr) {
@@ -60,14 +69,16 @@ void TimerMgr::tick(unsigned ms)
         }
 
         if (info.m_timeoutMs <= ms) {
-            auto cb = info.m_timeoutCb;
-            auto* data = info.m_timeoutData;
+            cbList.push_back({info.m_timeoutCb, info.m_timeoutData});
             timerCancel(idx);
-            cb(data);
             continue;
         }
 
         info.m_timeoutMs -= ms;
+    }
+
+    for (auto& info : cbList) {
+        info.m_timeoutCb(info.m_timeoutData);
     }
 }
 
@@ -147,7 +158,7 @@ bool TimerMgr::timerIsActive(unsigned idx) const
     auto& info = m_timers[idx];
     COMMS_ASSERT(info.m_allocated);
     COMMS_ASSERT(info.m_timeoutCb != nullptr || (info.m_timeoutMs == 0U));
-    return (info.m_timeoutCb == nullptr);
+    return (info.m_timeoutCb != nullptr);
 }
 
 } // namespace cc_mqtt5_client

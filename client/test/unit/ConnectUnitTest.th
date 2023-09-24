@@ -14,6 +14,7 @@ public:
     void test2();
     void test3();
     void test4();
+    void test5();
 
 private:
     virtual void setUp() override
@@ -632,4 +633,83 @@ void ConnectUnitTestSuite::test4()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);
     auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
     TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+}
+
+void ConnectUnitTestSuite::test5()
+{
+    // Keep alive test
+    auto* client = unitTestAllocClient();
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+
+    const std::string ClientId("bla");
+    const unsigned KeepAlive = 30;
+    connectBasicConfig.m_clientId = ClientId.c_str();
+    connectBasicConfig.m_keepAlive = KeepAlive;
+    connectBasicConfig.m_cleanStart = true;
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
+    unitTestPopConnectResponseInfo();
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
+
+    TS_ASSERT(!unitTestIsDisconnected());
+
+    unitTestTick();
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
+    TS_ASSERT(!unitTestIsDisconnected());
+
+    const unsigned PingDelay = 1000;
+    unitTestTick(PingDelay);
+    UnitTestPingrespMsg pingrespMsg;
+    unitTestReceiveMessage(pingrespMsg);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000 - PingDelay);
+
+    // New ping is expected
+    unitTestTick();
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
+    TS_ASSERT(!unitTestIsDisconnected());
+
+    // No ping response
+    unitTestTick(); // 1000
+    TS_ASSERT(!unitTestHasSentMessage());
+    unitTestTick();
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(!unitTestHasDisconnectInfo());
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);
+    auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
+    TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::KeepAliveTimeout);
 }

@@ -86,7 +86,7 @@ protected:
 
     struct UnitTestConnectResponse
     {
-        CC_Mqtt5ReasonCode m_reasonCode;
+        CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_UnspecifiedError;
         std::string m_assignedClientId;
         std::string m_responseInfo;
         std::string m_reasonStr;
@@ -158,6 +158,30 @@ protected:
 
     using UnitTestConnectResponseInfoPtr = std::unique_ptr<UnitTestConnectResponseInfo>;
 
+    struct UnitTestDisconnectInfo
+    {
+        CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_UnspecifiedError;
+        std::string m_reasonStr;
+        std::string m_serverRef;
+        UnitTestUserProp::List m_userProps;
+
+        UnitTestDisconnectInfo() = default;
+        UnitTestDisconnectInfo(const UnitTestDisconnectInfo&) = default;
+
+        UnitTestDisconnectInfo(const CC_Mqtt5DisconnectInfo& other)
+        {
+            *this = other;
+        }
+
+        UnitTestDisconnectInfo& operator=(const UnitTestDisconnectInfo&) = default;
+        UnitTestDisconnectInfo& operator=(const CC_Mqtt5DisconnectInfo& other)
+        {
+            std::tie(m_reasonCode, m_reasonStr, m_serverRef) = std::make_tuple(other.m_reasonCode, other.m_reasonStr, other.m_serverRef);
+            UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
+            return *this;
+        }
+    };    
+
     struct TickInfo
     {
         unsigned m_requested = 0U;
@@ -172,6 +196,8 @@ protected:
         m_connectResp.clear();
         m_inAuthInfo.clear();
         m_outAuthInfo.clear();
+        m_disconnectInfo.clear();
+        m_disconnected = false;
     }
 
     void unitTestTearDown()
@@ -248,6 +274,11 @@ protected:
         auto consumed = std::distance(begIter, readIter);
         m_sentData.erase(m_sentData.begin(), m_sentData.begin() + consumed);
         return msg;
+    }
+
+    bool unitTestHasSentMessage() const
+    {
+        return !m_sentData.empty();
     }
 
     bool unitTestIsConnectComplete()
@@ -327,14 +358,39 @@ protected:
         m_inAuthInfo.erase(m_inAuthInfo.begin());
     }
 
+    bool unitTestIsDisconnected() const
+    {
+        return m_disconnected;
+    }
+
+    bool unitTestHasDisconnectInfo() const
+    {
+        return (!m_disconnectInfo.empty());
+    }
+
+    const UnitTestDisconnectInfo& unitTestDisconnectInfo() const
+    {
+        assert(!m_disconnectInfo.empty());
+        return m_disconnectInfo.front();
+    }
+
+    void unitTestPopDisconnectInfo()
+    {
+        assert(!m_disconnectInfo.empty());
+        m_disconnectInfo.erase(m_disconnectInfo.begin());
+    }
+
 private:
 
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
     {
-        static_cast<void>(obj);
-        static_cast<void>(info);
-        assert(false); // NYI
-        // TODO:
+        auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+        assert(!realObj->m_disconnected);
+        realObj->m_disconnected = true;
+        if (info != nullptr) {
+            assert(realObj->m_disconnectInfo.empty());
+            realObj->m_disconnectInfo.emplace_back(*info);
+        }
     }
 
     static void unitTestSendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen)
@@ -416,4 +472,6 @@ private:
     std::vector<UnitTestAuthInfo> m_inAuthInfo;
     std::vector<UnitTestAuthInfo> m_outAuthInfo;
     std::vector<CC_Mqtt5UserProp> m_userPropsTmp;
+    std::vector<UnitTestDisconnectInfo> m_disconnectInfo;
+    bool m_disconnected = false;
 };

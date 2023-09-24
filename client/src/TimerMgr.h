@@ -8,6 +8,7 @@
 #pragma once
 
 #include "ExtConfig.h"
+#include "ObjListType.h"
 
 #include "comms/util/StaticVector.h"
 #include "comms/util/type_traits.h"
@@ -85,22 +86,7 @@ private:
         bool m_allocated = false;
     };
 
-    template <typename ...>
-    using DynMemoryStorage = std::vector<TimerInfo>;
-
-    template <typename ...>
-    using StaticStorage = comms::util::StaticVector<TimerInfo, ExtConfig::TimersLimit>;
-
-    template <typename... TParams>
-    using Storage = 
-        typename comms::util::LazyShallowConditional<
-            ExtConfig::TimersLimit == 0U
-        >::template Type<
-            DynMemoryStorage,
-            StaticStorage
-        >;
-
-    using StorageType = Storage<>;
+    using StorageType = ObjListType<TimerInfo, ExtConfig::TimersLimit>;
 
     friend class Timer;
 

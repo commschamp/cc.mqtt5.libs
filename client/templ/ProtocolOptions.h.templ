@@ -41,6 +41,18 @@ public:
                 BaseImpl::field::String
             >;
     }; // struct field   
+
+    struct message : public BaseImpl::message
+    {
+        struct SubscribeFields : public BaseImpl::message::SubscribeFields
+        {
+            using List =
+                std::tuple<
+                    ##MESSAGE_SUBSCRIBE_FIELDS_LIST##,
+                    BaseImpl::message::SubscribeFields::List
+                >;
+        };
+    }; // struct message
     
     struct frame : public BaseImpl::frame
     {

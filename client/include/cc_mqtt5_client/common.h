@@ -39,9 +39,9 @@ extern "C" {
 /// @brief Quality of Service
 typedef enum
 {
-    CC_Mqtt5QoS_AtMostOnceDelivery, ///< QoS=0. At most once delivery.
-    CC_Mqtt5QoS_AtLeastOnceDelivery, ///< QoS=1. At least once delivery.
-    CC_Mqtt5QoS_ExactlyOnceDelivery, ///< QoS=2. Exactly once delivery.
+    CC_Mqtt5QoS_AtMostOnceDelivery = 0, ///< QoS=0. At most once delivery.
+    CC_Mqtt5QoS_AtLeastOnceDelivery = 1, ///< QoS=1. At least once delivery.
+    CC_Mqtt5QoS_ExactlyOnceDelivery = 2, ///< QoS=2. Exactly once delivery.
     CC_Mqtt5QoS_ValuesLimit ///< Limit for the values
 } CC_Mqtt5QoS;
 
@@ -54,6 +54,7 @@ typedef enum
     CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
     CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
     CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
+    CC_Mqtt5ErrorCode_InsufficientConfig, ///< The required configuration hasn't been performed.
     CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.
     CC_Mqtt5ErrorCode_BufferOverflow, ///< Output buffer is too short
     CC_Mqtt5ErrorCode_NotSupported, ///< Feature is not supported
@@ -138,6 +139,14 @@ typedef enum
     CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
 } CC_Mqtt5ReasonCode;
 
+typedef enum
+{
+    CC_Mqtt5RetainHandling_Send = 0,
+    CC_Mqtt5RetainHandling_SendIfDoesNotExist = 1,
+    CC_Mqtt5AuthErrorCode_DoNotSend = 2,
+    CC_Mqtt5RetainHandling_ValuesLimit
+} CC_Mqtt5RetainHandling;
+
 struct CC_Mqtt5Client;
 
 /// @brief Handle used to access client specific data structures.
@@ -153,6 +162,9 @@ struct CC_Mqtt5Disconnect;
 /// @brief Handle for disconnection operation.
 /// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
 typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
+
+struct CC_Mqtt5Subscribe;
+typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
 typedef struct
 {
@@ -245,6 +257,30 @@ typedef struct
     unsigned* m_expiryInterval;
 } CC_Mqtt5DisconnectConfig;
 
+typedef struct
+{
+    const char* m_topic;
+    CC_Mqtt5QoS m_maxQos;
+    CC_Mqtt5RetainHandling m_retainHandling;
+    bool m_noLocal; 
+    bool m_retainAsPublished;
+} CC_Mqtt5SubscribeTopicConfig;
+
+typedef struct
+{
+    unsigned m_subId;
+} CC_Mqtt5SubscribeExtraConfig;
+
+
+typedef struct 
+{
+    const CC_Mqtt5ReasonCode* m_reasonCodes;
+    unsigned m_reasonCodesCount;
+    const char* m_reasonStr;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;
+} CC_Mqtt5SubscribeResponse;
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.
@@ -283,6 +319,8 @@ typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5Disco
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
+
+typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 typedef struct
 {

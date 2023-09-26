@@ -30,6 +30,7 @@ public:
         Type_Connect,
         Type_KeepAlive,
         Type_Disconnect,
+        Type_Subscribe,
         Type_NumOfValues // Must be last
     };
 
@@ -45,6 +46,16 @@ public:
         terminateOpImpl(status);
     }
 
+    unsigned getResponseTimeout() const
+    {
+        return m_responseTimeoutMs;
+    }
+
+    void setResponseTimeout(unsigned ms)
+    {
+        m_responseTimeoutMs = ms;
+    }    
+
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
 
@@ -56,29 +67,62 @@ protected:
     void sendMessage(const ProtMessage& msg);
     void opComplete();
     void doApiGuard();
+    unsigned allocPacketId();
 
     Client& client()
     {
         return m_client;
     }
 
-    unsigned getOpTimeout() const
-    {
-        return m_opTimeoutMs;
-    }
-
-    void setOpTimeout(unsigned ms)
-    {
-        m_opTimeoutMs = ms;
-    }
-
     void sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
 
     static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 
+    template <typename TField>
+    static bool canAddProp(const TField& field)
+    {
+        return field.value().size() < field.value().max_size();
+    }
+
+    template <typename TField>
+    static decltype(auto) addProp(TField& field)
+    {
+        auto& vec = field.value();
+        vec.resize(vec.size() + 1U);
+        return vec.back();    
+    }
+
+    template <typename TField>
+    static CC_Mqtt5ErrorCode addUserPropToList(TField& field, const CC_Mqtt5UserProp& prop)
+    {
+        if constexpr (ExtConfig::HasUserProps) {
+            if (prop.m_key == nullptr) {
+                return CC_Mqtt5ErrorCode_BadParam;
+            }
+
+            if (!canAddProp(field)) {
+                return CC_Mqtt5ErrorCode_OutOfMemory;
+            }
+
+            auto& propVar = addProp(field);
+            auto& propBundle = propVar.initField_userProperty();
+            auto& valueField = propBundle.field_value();
+            valueField.field_first().value() = prop.m_key;
+
+            if (prop.m_value != nullptr) {
+                valueField.field_second().value() = prop.m_value;
+            }
+
+            return CC_Mqtt5ErrorCode_Success;
+        }
+        else {
+            return CC_Mqtt5ErrorCode_NotSupported;
+        }        
+    }    
+
 private:
     Client& m_client;    
-    unsigned m_opTimeoutMs = 0U;
+    unsigned m_responseTimeoutMs = 0U;
 };
 
 } // namespace op

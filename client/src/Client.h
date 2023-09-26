@@ -18,6 +18,7 @@
 #include "op/DisconnectOp.h"
 #include "op/KeepAliveOp.h"
 #include "op/Op.h"
+#include "op/SubscribeOp.h"
 
 #include "cc_mqtt5_client/common.h"
 
@@ -57,6 +58,7 @@ public:
 
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);
+    op::SubscribeOp* subscribePrepare(CC_Mqtt5ErrorCode* ec);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
@@ -119,6 +121,8 @@ private:
     using DisconnectOpAlloc = ObjAllocator<op::DisconnectOp, ExtConfig::DisconnectOpsLimit>;
     using DisconnectOpsList = ObjListType<DisconnectOpAlloc::Ptr, ExtConfig::DisconnectOpsLimit>;
 
+    using SubscribeOpAlloc = ObjAllocator<op::SubscribeOp, ExtConfig::SubscribeOpsLimit>;
+    using SubscribeOpsList = ObjListType<SubscribeOpAlloc::Ptr, ExtConfig::SubscribeOpsLimit>;
 
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
@@ -131,6 +135,7 @@ private:
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
     void opComplete_Disconnect(const op::Op* op);
+    void opComplete_Subscribe(const op::Op* op);
 
     friend class ApiEnterGuard;
 
@@ -162,6 +167,9 @@ private:
 
     DisconnectOpAlloc m_disconnectOpsAlloc;
     DisconnectOpsList m_disconnectOps;
+
+    SubscribeOpAlloc m_subscribeOpsAlloc;
+    SubscribeOpsList m_subscribeOps;
 
     OpPtrsList m_ops;
 };

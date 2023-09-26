@@ -144,6 +144,7 @@ function (gen_lib_mqtt5_client config_file)
         src/op/DisconnectOp.cpp
         src/op/KeepAliveOp.cpp
         src/op/Op.cpp
+        src/op/SubscribeOp.cpp
         src/Client.cpp
         src/TimerMgr.cpp
     )

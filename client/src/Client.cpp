@@ -38,6 +38,13 @@ void eraseFromList(const op::Op* op, TList& list)
     list.erase(iter);
 }
 
+void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
+{
+    if (ec != nullptr) {
+        *ec = val;
+    }
+}
+
 } // namespace 
     
 
@@ -84,42 +91,34 @@ unsigned Client::processData(const std::uint8_t* iter, unsigned len)
 
 op::ConnectOp* Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
-    auto updateEc = 
-        [&ec](CC_Mqtt5ErrorCode val)
-        {
-            if (ec != nullptr) {
-                *ec = val;
-            }
-        };
-
     op::ConnectOp* connectOp = nullptr;
     do {
         if (!m_connectOps.empty()) {
             // Already allocated
-            updateEc(CC_Mqtt5ErrorCode_Busy);
+            updateEc(ec, CC_Mqtt5ErrorCode_Busy);
             break;
         }
 
         if (!m_state.m_initialized) {
-            updateEc(CC_Mqtt5ErrorCode_NotIntitialized);
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (!m_connectOps.empty()) {
-            updateEc(CC_Mqtt5ErrorCode_Busy);
+            updateEc(ec, CC_Mqtt5ErrorCode_Busy);
             break;
         }
 
         auto ptr = m_connectOpAlloc.alloc(*this);
         if (!ptr) {
-            updateEc(CC_Mqtt5ErrorCode_OutOfMemory);
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
 
         m_ops.push_back(ptr.get());
         m_connectOps.push_back(std::move(ptr));
         connectOp = m_connectOps.back().get();
-        updateEc(CC_Mqtt5ErrorCode_Success);
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
     } while (false);
 
     return connectOp;
@@ -127,44 +126,65 @@ op::ConnectOp* Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
 
 op::DisconnectOp* Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 {
-    auto updateEc = 
-        [&ec](CC_Mqtt5ErrorCode val)
-        {
-            if (ec != nullptr) {
-                *ec = val;
-            }
-        };
-
     op::DisconnectOp* disconnectOp = nullptr;
     do {
         if (!m_state.m_initialized) {
-            updateEc(CC_Mqtt5ErrorCode_NotIntitialized);
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (!m_state.m_connected) {
-            updateEc(CC_Mqtt5ErrorCode_NotConnected);
+            updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
         if (!m_disconnectOps.empty()) {
-            updateEc(CC_Mqtt5ErrorCode_Busy);
+            updateEc(ec, CC_Mqtt5ErrorCode_Busy);
             break;
         }        
 
         auto ptr = m_disconnectOpsAlloc.alloc(*this);
         if (!ptr) {
-            updateEc(CC_Mqtt5ErrorCode_OutOfMemory);
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
 
         m_ops.push_back(ptr.get());
         m_disconnectOps.push_back(std::move(ptr));
         disconnectOp = m_disconnectOps.back().get();
-        updateEc(CC_Mqtt5ErrorCode_Success);
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
     } while (false);
 
     return disconnectOp;
+}
+
+op::SubscribeOp* Client::subscribePrepare(CC_Mqtt5ErrorCode* ec)
+{
+    op::SubscribeOp* subOp = nullptr;
+    do {
+        if (!m_state.m_initialized) {
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
+            break;
+        }
+
+        if (!m_state.m_connected) {
+            updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
+            break;
+        }
+
+        auto ptr = m_subscribeOpsAlloc.alloc(*this);
+        if (!ptr) {
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
+            break;
+        }
+
+        m_ops.push_back(ptr.get());
+        m_subscribeOps.push_back(std::move(ptr));
+        subOp = m_subscribeOps.back().get();
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
+    } while (false);
+
+    return subOp;
 }
 
 void Client::handle(ProtMessage& msg)
@@ -223,6 +243,7 @@ void Client::opComplete(const op::Op* op)
         /* Type_Connect */ &Client::opComplete_Connect,
         /* Type_KeepAlive */ &Client::opComplete_KeepAlive,
         /* Type_Disconnect */ &Client::opComplete_Disconnect,
+        /* Type_Subscribe */ &Client::opComplete_Subscribe,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -332,6 +353,11 @@ void Client::opComplete_KeepAlive(const op::Op* op)
 void Client::opComplete_Disconnect(const op::Op* op)
 {
     eraseFromList(op, m_disconnectOps);
+}
+
+void Client::opComplete_Subscribe(const op::Op* op)
+{
+    eraseFromList(op, m_subscribeOps);
 }
 
 } // namespace cc_mqtt5_client

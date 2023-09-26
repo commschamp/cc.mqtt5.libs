@@ -51,6 +51,7 @@ replace_in_text (CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT)
 replace_in_text (CC_MQTT5_CLIENT_SEND_MAX_LIMIT)
 replace_in_text (CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP)
 replace_in_text (CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT)
+replace_in_text (CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT)
 
 
 file (WRITE "${OUT_FILE}.tmp" "${text}")

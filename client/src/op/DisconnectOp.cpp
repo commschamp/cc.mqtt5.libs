@@ -26,23 +26,24 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
     // Don't update existance of the optional fields right away, do it during send.
     comms::cast_assign(m_disconnectMsg.field_reasonCode().field().value()) = config.m_reasonCode;
 
+    auto& propsField = m_disconnectMsg.field_propertiesList().field();
     if (config.m_expiryInterval != nullptr) {
-        if (!canAddProp()) {
+        if (!canAddProp(propsField)) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addDisconnectMsgProp();
+        auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_sessionExpiryInterval();
         auto& valueField = propBundle.field_value();        
         comms::units::setSeconds(valueField, *config.m_expiryInterval);                
     }
 
     if (config.m_reasonStr != nullptr) {
-        if (!canAddProp()) {
+        if (!canAddProp(propsField)) {
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
-        auto& propVar = addDisconnectMsgProp();
+        auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_reasonStr();
         auto& valueField = propBundle.field_value();        
         valueField.value() = config.m_reasonStr;
@@ -53,29 +54,8 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
 CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    if constexpr (ExtConfig::HasUserProps) {
-        if (prop.m_key == nullptr) {
-            return CC_Mqtt5ErrorCode_BadParam;
-        }
-
-        if (!canAddProp()) {
-            return CC_Mqtt5ErrorCode_OutOfMemory;
-        }
-
-        auto& propVar = addDisconnectMsgProp();    
-        auto& propBundle = propVar.initField_userProperty();
-        auto& valueField = propBundle.field_value();
-        valueField.field_first().value() = prop.m_key;
-
-        if (prop.m_value != nullptr) {
-            valueField.field_second().value() = prop.m_value;
-        }
-
-        return CC_Mqtt5ErrorCode_Success;
-    }
-    else {
-        return CC_Mqtt5ErrorCode_NotSupported;
-    }
+    auto& propsField = m_disconnectMsg.field_propertiesList().field();
+    return addUserPropToList(propsField, prop);
 }
 
 CC_Mqtt5ErrorCode DisconnectOp::send()
@@ -98,18 +78,6 @@ Op::Type DisconnectOp::typeImpl() const
     return Type_Disconnect;
 }
 
-bool DisconnectOp::canAddProp() const
-{
-    auto& vec = m_disconnectMsg.field_propertiesList().field().value();
-    return vec.size() < vec.max_size();
-}
-
-DisconnectMsg::Field_propertiesList::Field::ValueType::reference DisconnectOp::addDisconnectMsgProp()
-{
-    auto& vec = m_disconnectMsg.field_propertiesList().field().value();
-    vec.resize(vec.size() + 1U);
-    return vec.back();
-}
 
 } // namespace op
 

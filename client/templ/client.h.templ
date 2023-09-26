@@ -23,22 +23,17 @@ extern "C" {
 ///     as first parameter to all other API functions.
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new();
 
-/// @brief Check client allocation is successful.
-/// @details Check the handle returned by the @ref cc_mqtt5_##NAME##client_new() function.
-/// @return @b true in case the allocation is successful, @b false otherwise
-bool cc_mqtt5_##NAME##client_handle_is_valid(CC_Mqtt5ClientHandle client);
-
 /// @brief Free previously allocated client.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @post The client handler becomes invalid and cannot be used any longer.
-void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle client);
+void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 
 /// @brief (Re)Initialize client.
 /// @details Re-initializes all internal data structures into their default variables
 ///     and checks that all the required callbacks have been set. If there are old
 ///     outstanding operations they are all aborted.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle client);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
 
 /// @brief Notify client about requested time expiry.
 /// @details The reported amount of milliseconds needs to be from the 
@@ -52,7 +47,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle client);
 ///     to send new data to the broker.
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] ms Number of elapsed @b milliseconds.
-void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms);
+void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 
 /// @brief Provide data, received over I/O link, to the library for processing.
 /// @details This call may cause invocation of some callbacks, such as 
@@ -65,33 +60,41 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle client, unsigned ms);
 /// @return Number of processed bytes.
 /// @note The function returns number of bytes that were actually consumed, and
 ///     can be removed from the holding buffer.
-unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle client, const unsigned char* buf, unsigned bufLen);
+unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const unsigned char* buf, unsigned bufLen);
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_op_timeout(CC_Mqtt5ClientHandle client, unsigned ms);
-unsigned cc_mqtt5_##NAME##client_get_default_op_timeout(CC_Mqtt5ClientHandle client);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms);
+unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHandle handle);
 
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
-CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec);
-bool cc_mqtt5_##NAME##client_connect_handle_is_valid(CC_Mqtt5ConnectHandle connect);
+CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
 void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfig* config);
 void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config);
 void cc_mqtt5_##NAME##client_connect_init_config_extra(CC_Mqtt5ConnectExtraConfig* config);
 void cc_mqtt5_##NAME##client_connect_init_config_auth(CC_Mqtt5ConnectAuthConfig* config);
 void cc_mqtt5_##NAME##client_connect_init_auth_info(CC_Mqtt5AuthInfo* info);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectBasicConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectWillConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_extra(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectExtraConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5ConnectAuthConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle connect, const CC_Mqtt5UserProp* prop);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle connect, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_set_response_timeout(CC_Mqtt5ConnectHandle handle, unsigned ms);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectBasicConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectWillConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_extra(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectExtraConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectAuthConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle handle, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
-CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle client, CC_Mqtt5ErrorCode* ec);
-bool cc_mqtt5_##NAME##client_disconnect_handle_is_valid(CC_Mqtt5DisconnectHandle disconnect);
+CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
 void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5DisconnectConfig* config);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_add_user_prop(CC_Mqtt5DisconnectHandle disconnect, const CC_Mqtt5UserProp* prop);
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHandle disconnect);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_add_user_prop(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5UserProp* prop);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHandle handle);
+
+CC_Mqtt5SubscribeHandle cc_mqtt5_##NAME##client_subscribe_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_set_response_timeout(CC_Mqtt5SubscribeHandle handle, unsigned ms);
+void cc_mqtt5_##NAME##client_subscribe_init_config_topic(CC_Mqtt5SubscribeTopicConfig* config);
+void cc_mqtt5_##NAME##client_subscribe_init_config_extra(CC_Mqtt5SubscribeExtraConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_config_topic(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeTopicConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_config_extra(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeExtraConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_add_user_prop(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5UserProp* prop);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5SubscribeCompleteCb cb, void* cbData);
 
 // --------------------- Callbacks ---------------------
 
@@ -105,7 +108,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHand
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
-    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5ClientHandle handle,
     CC_Mqtt5NextTickProgramCb cb,
     void* data);
     
@@ -120,7 +123,7 @@ void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
-    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5ClientHandle handle,
     CC_Mqtt5CancelNextTickWaitCb cb,
     void* data);
     
@@ -133,7 +136,7 @@ void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_send_output_data_callback(
-    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5ClientHandle handle,
     CC_Mqtt5SendOutputDataCb cb,
     void* data);
 
@@ -143,7 +146,7 @@ void cc_mqtt5_##NAME##client_set_send_output_data_callback(
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
-    CC_Mqtt5ClientHandle client,
+    CC_Mqtt5ClientHandle handle,
     CC_Mqtt5BrokerDisconnectReportCb cb,
     void* data);
 

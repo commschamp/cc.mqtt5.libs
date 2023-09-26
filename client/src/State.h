@@ -15,12 +15,14 @@ struct State
     static constexpr unsigned DefaultOpTimeoutMs = 2000;
     static constexpr unsigned DefaultKeepAlive = 60;
 
-    unsigned m_opTimeoutMs = DefaultOpTimeoutMs;
+    unsigned m_responseTimeoutMs = DefaultOpTimeoutMs;
     unsigned m_keepAliveMs = 0U;
     unsigned m_sendLimit = 0U;
+    unsigned m_packetId = 0U;
     bool m_initialized = false;
     bool m_connected = false;
     bool m_terminating = false;
+    bool m_subIdsAvailable = false;
 };
 
 } // namespace cc_mqtt5_client

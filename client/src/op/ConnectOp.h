@@ -47,9 +47,6 @@ private:
     void completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response = nullptr);
     void opTimeoutInternal();
     void restartTimer();
-    bool canAddProp() const;
-    ConnectMsg::Field_properties::ValueType::reference addConnectMsgProp();
-
 
     static void opTimeoutCb(void* data);
 

@@ -19,7 +19,7 @@ namespace op
 
 Op::Op(Client& client) : 
     m_client(client),
-    m_opTimeoutMs(client.state().m_opTimeoutMs)
+    m_responseTimeoutMs(client.state().m_responseTimeoutMs)
 {
 }    
 
@@ -41,6 +41,18 @@ void Op::opComplete()
 void Op::doApiGuard()
 {
     m_client.doApiGuard();
+}
+
+unsigned Op::allocPacketId()
+{
+    auto& packetId = m_client.state().m_packetId;
+    ++packetId;
+    static constexpr auto MaxPacketId = std::numeric_limits<std::uint16_t>::max();
+    if (MaxPacketId <= packetId) {
+        packetId = 1U;
+    }
+
+    return packetId;
 }
 
 void Op::sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason)

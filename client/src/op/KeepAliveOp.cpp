@@ -126,7 +126,7 @@ void KeepAliveOp::sendPing()
     PingreqMsg msg;
     client().sendMessage(msg);
     auto& state = client().state();
-    m_respTimer.wait(state.m_opTimeoutMs, &KeepAliveOp::pingTimeoutCb, this);
+    m_respTimer.wait(state.m_responseTimeoutMs, &KeepAliveOp::pingTimeoutCb, this);
 }
 
 void KeepAliveOp::pingTimeoutInternal()

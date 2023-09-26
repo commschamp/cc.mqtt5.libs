@@ -30,8 +30,6 @@ protected:
     virtual Type typeImpl() const override;    
 
 private:
-    bool canAddProp() const;
-    DisconnectMsg::Field_propertiesList::Field::ValueType::reference addDisconnectMsgProp();
 
     DisconnectMsg m_disconnectMsg;
 };

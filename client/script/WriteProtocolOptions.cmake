@@ -36,6 +36,8 @@ set_default_opt (FIELD_PROPERTIES_LIST)
 set_default_opt (FIELD_PROTOCOL_NAME)
 set_default_opt (FIELD_STRING)
 
+set_default_opt (MESSAGE_SUBSCRIBE_FIELDS_LIST)
+
 set_default_opt (MAX_PACKET_SIZE)
 set_default_opt (MSG_ALLOC_OPT)
 
@@ -64,12 +66,18 @@ if (NOT ${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE} EQUAL 0)
     set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE}>")
 endif ()
 
+if (NOT ${CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT} EQUAL 0)
+    set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT}>")
+endif ()
+
 #########################################
 
 replace_in_text (FIELD_BIN_DATA)
 replace_in_text (FIELD_PROPERTIES_LIST)
 replace_in_text (FIELD_PROTOCOL_NAME)
 replace_in_text (FIELD_STRING)
+
+replace_in_text (MESSAGE_SUBSCRIBE_FIELDS_LIST)
 
 replace_in_text (MAX_PACKET_SIZE)
 replace_in_text (MSG_ALLOC_OPT)

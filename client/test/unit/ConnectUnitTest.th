@@ -378,7 +378,6 @@ void ConnectUnitTestSuite::test2()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_responseInfo, BrokerResponseInfo);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonStr, BrokerReason);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_serverRef, BrokerServerRef);
-    TS_ASSERT(connectInfo.m_response.m_authMethod.empty());
     TS_ASSERT(connectInfo.m_response.m_authData.empty());
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps.size(), 2U);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[0].m_key, BrokerPropKey1);
@@ -562,7 +561,6 @@ void ConnectUnitTestSuite::test3()
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
-    TS_ASSERT_EQUALS(connectInfo.m_response.m_authMethod, ConnectAuthMethod);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_authData, ConnackAuthData);
     unitTestPopConnectResponseInfo();    
 }

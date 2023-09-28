@@ -91,7 +91,6 @@ protected:
         std::string m_responseInfo;
         std::string m_reasonStr;
         std::string m_serverRef;
-        std::string m_authMethod;
         std::vector<std::uint8_t> m_authData;
         std::vector<UnitTestUserProp> m_userProps;
         unsigned m_sessionExpiryInterval = 0;
@@ -135,7 +134,6 @@ protected:
             assignString(m_responseInfo, response.m_responseInfo);
             assignString(m_reasonStr, response.m_reasonStr);
             assignString(m_serverRef, response.m_serverRef);
-            assignString(m_authMethod, response.m_authMethod);
             
             if (response.m_authDataLen > 0) {
                 m_authData.assign(response.m_authData, response.m_authData + response.m_authDataLen);

@@ -401,6 +401,18 @@ void ConnectOp::handle(ConnackMsg& msg)
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }    
+
+    // Auth method needs to be the same
+    if ((propsHandler.m_authMethod != nullptr) && (m_authMethod != propsHandler.m_authMethod->field_value().value())) {
+        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        return;
+    }      
+    
+    // Auth method needs to be the same
+    if ((propsHandler.m_authMethod == nullptr) && (!m_authMethod.empty())) {
+        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        return;
+    }
     
     if (propsHandler.m_assignedClientId != nullptr) {
         response.m_assignedClientId = propsHandler.m_assignedClientId->field_value().value().c_str();
@@ -417,10 +429,6 @@ void ConnectOp::handle(ConnackMsg& msg)
     if (propsHandler.m_serverRef != nullptr) {
         response.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
     }
-
-    if (propsHandler.m_authMethod != nullptr) {
-        response.m_authMethod = propsHandler.m_authMethod->field_value().value().c_str();
-    }    
 
     if (propsHandler.m_authData != nullptr) {
         auto& vec = propsHandler.m_authData->field_value().value();

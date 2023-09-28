@@ -215,7 +215,6 @@ typedef struct
     const char* m_responseInfo;
     const char* m_reasonStr;
     const char* m_serverRef;
-    const char* m_authMethod;
     const unsigned char* m_authData;
     unsigned m_authDataLen;
     const CC_Mqtt5UserProp* m_userProps;

@@ -18,7 +18,7 @@ target_include_directories(
 function (cc_mqtt5_client_add_integration_test name)
     set (src ${CMAKE_CURRENT_SOURCE_DIR}/${name}.cpp)
     add_executable(integration.${name} ${src})
-    target_link_libraries(integration.${name} PRIVATE cc::cc_mqtt5_client ${COMMON_BASE_LIB_NAME})
+    target_link_libraries(integration.${name} PRIVATE  ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_client)
     add_test(
         NAME integration.${name} 
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/integration.${name})

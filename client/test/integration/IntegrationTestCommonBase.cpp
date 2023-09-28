@@ -20,7 +20,8 @@ IntegrationTestCommonBase* asObj(void* data)
 IntegrationTestCommonBase::IntegrationTestCommonBase(boost::asio::io_context& io) :
     m_io(io),
     m_socket(io),
-    m_timer(io),
+    m_tickTimer(io),
+    m_timeoutTimer(io),
     m_client(::cc_mqtt5_client_new()),
     m_host(DefaultHost),
     m_port(DefaultPort)
@@ -53,10 +54,93 @@ bool IntegrationTestCommonBase::integrationTestStart()
     }
 
     assert(m_socket.is_open());
+    std::cout << "INFO: Connected to broker" << std::endl;
+    integrationTestDoReadInternal();
+    integrationTestDoTestTimeoutInternal();
     return true;
 }
 
-void IntegrationTestCommonBase::integrationTestBrokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info)
+CC_Mqtt5ErrorCode IntegrationTestCommonBase::integrationTestSendConnect(CC_Mqtt5ConnectHandle handle)
+{
+    return ::cc_mqtt5_client_connect_send(handle, &IntegrationTestCommonBase::integrationTestConnectCompleteCb, this);
+}
+
+void IntegrationTestCommonBase::integrationTestDoReadInternal()
+{
+    assert(m_socket.is_open());
+    m_socket.async_read_some(
+        boost::asio::buffer(m_inBuf),
+        [this](const boost::system::error_code& ec, std::size_t bytesCount)
+        {
+            if (ec == boost::asio::error::operation_aborted) {
+                return;
+            }
+
+            if (ec) {
+                std::cerr << "ERROR: Failed to read: " << ec.message() << std::endl;
+                return;
+            }
+
+            // std::cout << "DEBUG: Received " << bytesCount << " bytes" << std::endl;
+            auto* buf = &m_inBuf[0];
+            auto bufLen = static_cast<unsigned>(bytesCount);
+            bool useVector = !m_inData.empty();
+            if (useVector) {
+                m_inData.insert(m_inData.end(), buf, buf + bufLen);
+                buf = &m_inData[0];
+                bufLen = static_cast<decltype(bufLen)>(m_inData.size());
+            }
+
+            auto consumed = ::cc_mqtt5_client_process_data(m_client.get(), buf, bufLen);
+            if (useVector) {
+                m_inData.erase(m_inData.begin(), m_inData.begin() + consumed);
+            }
+            else {
+                auto begIter = buf + consumed;
+                auto endIter = begIter + (bufLen - consumed);
+                m_inData.assign(begIter, endIter);
+            }
+
+            integrationTestDoReadInternal();
+        });
+}
+
+void IntegrationTestCommonBase::integrationTestDoTestTimeoutInternal()
+{
+    m_timeoutTimer.expires_after(std::chrono::seconds(integrationTestGetTimeoutSecImpl()));
+    m_timeoutTimer.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
+            if (ec == boost::asio::error::operation_aborted) {
+                return;
+            }
+
+            integrationTestTimeoutImpl();
+        });
+}
+
+unsigned IntegrationTestCommonBase::integrationTestGetTimeoutSecImpl()
+{
+    return 5U;
+}
+
+void IntegrationTestCommonBase::integrationTestTimeoutImpl()
+{
+    m_io.stop();
+    exit(-1);
+}
+
+void IntegrationTestCommonBase::integrationTestBrokerDisconnectedImpl([[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
+{
+}
+
+void IntegrationTestCommonBase::integrationTestConnectCompleteImpl(
+    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] const CC_Mqtt5ConnectResponse* response)
+{
+}
+
+void IntegrationTestCommonBase::integrationTestBrokerDisconnectedInternal(const CC_Mqtt5DisconnectInfo* info)
 {
     std::cout << "INFO: Disconnected ";
     if (info == nullptr) {
@@ -64,12 +148,23 @@ void IntegrationTestCommonBase::integrationTestBrokerDisconnectedImpl(const CC_M
         return;
     }
 
-    std::cout << "by the proker with reason: " << info->m_reasonCode << std::endl;
+    std::cout << "by the broker with reason: " << info->m_reasonCode << std::endl;
+    integrationTestBrokerDisconnectedImpl(info);
+}
+
+void IntegrationTestCommonBase::integrationTestConnectCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+{
+    std::cout << "INFO: Connect complete with status=" << status;
+    if (response != nullptr) {
+        std::cout << " and reasonCode=" << response->m_reasonCode;
+    }
+    std::cout << std::endl;
+    integrationTestConnectCompleteImpl(status, response);
 }
 
 void IntegrationTestCommonBase::integrationTestTickProgramCb(void* data, unsigned ms)
 {
-    auto& timer = asObj(data)->m_timer;
+    auto& timer = asObj(data)->m_tickTimer;
     asObj(data)->m_tickReqTs = TimestampClock::now();
     timer.expires_after(std::chrono::milliseconds(ms));
     timer.async_wait(
@@ -92,7 +187,7 @@ unsigned IntegrationTestCommonBase::integrationTestCancelTickWaitCb(void* data)
     auto elapsed = static_cast<unsigned>(std::chrono::duration_cast<std::chrono::milliseconds>(now - ts).count());
     ts = Timestamp();
     boost::system::error_code ec;
-    auto& timer = asObj(data)->m_timer;
+    auto& timer = asObj(data)->m_tickTimer;
     timer.cancel(ec);
     return elapsed;
 }
@@ -104,6 +199,8 @@ void IntegrationTestCommonBase::integrationTestSendDataCb(void* data, const unsi
         std::cerr << "ERROR: socket is not open, cannot send" << std::endl;
         return;
     }
+
+    //std::cout << "DEBUG: Sending " << bufLen << " bytes." << std::endl;
 
     auto written = 0U;
     while (written < bufLen) {
@@ -118,5 +215,10 @@ void IntegrationTestCommonBase::integrationTestSendDataCb(void* data, const unsi
 
 void IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info)
 {
-    asObj(data)->integrationTestBrokerDisconnectedImpl(info);
+    asObj(data)->integrationTestBrokerDisconnectedInternal(info);
+}
+
+void IntegrationTestCommonBase::integrationTestConnectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+{
+    asObj(data)->integrationTestConnectCompleteInternal(status, response);
 }

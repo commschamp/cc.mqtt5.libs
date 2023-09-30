@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "op/SubscribeOp.h"
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include "comms/util/ScopeGuard.h"
 
@@ -44,7 +44,7 @@ constexpr unsigned reasonCodesLength()
 
 } // namespace     
 
-SubscribeOp::SubscribeOp(Client& client) : 
+SubscribeOp::SubscribeOp(ClientImpl& client) : 
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {

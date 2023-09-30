@@ -26,7 +26,7 @@
 namespace cc_mqtt5_client
 {
 
-class Client final : public ProtMsgHandler
+class ClientImpl final : public ProtMsgHandler
 {
     using Base = ProtMsgHandler;
 
@@ -34,7 +34,7 @@ public:
     class ApiEnterGuard
     {
     public:
-        ApiEnterGuard(Client& client) : m_client(client)
+        ApiEnterGuard(ClientImpl& client) : m_client(client)
         {
             m_client.doApiEnter();
         }
@@ -45,7 +45,7 @@ public:
         }
 
     private:
-        Client& m_client;
+        ClientImpl& m_client;
     };
 
     ApiEnterGuard apiEnter()

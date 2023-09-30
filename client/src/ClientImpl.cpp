@@ -5,7 +5,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include "comms/Assert.h"
 #include "comms/process.h"
@@ -48,7 +48,7 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 } // namespace 
     
 
-CC_Mqtt5ErrorCode Client::init()
+CC_Mqtt5ErrorCode ClientImpl::init()
 {
     if ((m_sendOutputDataCb == nullptr) ||
         (m_brokerDisconnectReportCb == nullptr)) {
@@ -75,7 +75,7 @@ CC_Mqtt5ErrorCode Client::init()
     return CC_Mqtt5ErrorCode_Success;
 }
 
-void Client::tick(unsigned ms)
+void ClientImpl::tick(unsigned ms)
 {
     COMMS_ASSERT(m_apiEnterCount == 0U);
     ++m_apiEnterCount;
@@ -83,13 +83,13 @@ void Client::tick(unsigned ms)
     doApiExit();
 }
 
-unsigned Client::processData(const std::uint8_t* iter, unsigned len)
+unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 {
     auto guard = apiEnter();
     return static_cast<unsigned>(comms::processAllWithDispatch(iter, len, m_frame, *this));
 }
 
-op::ConnectOp* Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
+op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::ConnectOp* connectOp = nullptr;
     do {
@@ -124,7 +124,7 @@ op::ConnectOp* Client::connectPrepare(CC_Mqtt5ErrorCode* ec)
     return connectOp;
 }
 
-op::DisconnectOp* Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
+op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::DisconnectOp* disconnectOp = nullptr;
     do {
@@ -158,7 +158,7 @@ op::DisconnectOp* Client::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
     return disconnectOp;
 }
 
-op::SubscribeOp* Client::subscribePrepare(CC_Mqtt5ErrorCode* ec)
+op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::SubscribeOp* subOp = nullptr;
     do {
@@ -187,7 +187,7 @@ op::SubscribeOp* Client::subscribePrepare(CC_Mqtt5ErrorCode* ec)
     return subOp;
 }
 
-op::UnsubscribeOp* Client::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
+op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::UnsubscribeOp* unsubOp = nullptr;
     do {
@@ -216,7 +216,7 @@ op::UnsubscribeOp* Client::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
     return unsubOp;
 }
 
-void Client::handle(ProtMessage& msg)
+void ClientImpl::handle(ProtMessage& msg)
 {
     if (m_state.m_terminating) {
         return;
@@ -233,7 +233,7 @@ void Client::handle(ProtMessage& msg)
     }
 }
 
-CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
+CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
 {
     auto len = m_frame.length(msg);
     if (m_buf.max_size() < len) {
@@ -257,7 +257,7 @@ CC_Mqtt5ErrorCode Client::sendMessage(const ProtMessage& msg)
     return CC_Mqtt5ErrorCode_Success;
 }
 
-void Client::opComplete(const op::Op* op)
+void ClientImpl::opComplete(const op::Op* op)
 {
     auto iter = std::find(m_ops.begin(), m_ops.end(), op);
     COMMS_ASSERT(iter != m_ops.end());
@@ -267,13 +267,13 @@ void Client::opComplete(const op::Op* op)
 
     m_ops.erase(iter);
 
-    using ExtraCompleteFunc = void (Client::*)(const op::Op*);
+    using ExtraCompleteFunc = void (ClientImpl::*)(const op::Op*);
     static const ExtraCompleteFunc Map[] = {
-        /* Type_Connect */ &Client::opComplete_Connect,
-        /* Type_KeepAlive */ &Client::opComplete_KeepAlive,
-        /* Type_Disconnect */ &Client::opComplete_Disconnect,
-        /* Type_Subscribe */ &Client::opComplete_Subscribe,
-        /* Type_Unsubscribe */ &Client::opComplete_Unsubscribe,
+        /* Type_Connect */ &ClientImpl::opComplete_Connect,
+        /* Type_KeepAlive */ &ClientImpl::opComplete_KeepAlive,
+        /* Type_Disconnect */ &ClientImpl::opComplete_Disconnect,
+        /* Type_Subscribe */ &ClientImpl::opComplete_Subscribe,
+        /* Type_Unsubscribe */ &ClientImpl::opComplete_Unsubscribe,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -288,18 +288,18 @@ void Client::opComplete(const op::Op* op)
     (this->*func)(op);
 }
 
-void Client::doApiGuard()
+void ClientImpl::doApiGuard()
 {
     auto guard = apiEnter();
 }
 
-void Client::notifyConnected()
+void ClientImpl::notifyConnected()
 {
     m_state.m_connected = true;
     createKeepAliveOpIfNeeded();
 }
 
-void Client::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info)
+void ClientImpl::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info)
 {
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
     m_state.m_initialized = false; // Require re-initialization
@@ -314,7 +314,7 @@ void Client::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5Disconne
     }
 }
 
-void Client::doApiEnter()
+void ClientImpl::doApiEnter()
 {
     ++m_apiEnterCount;
     if ((m_apiEnterCount > 1U) || (m_cancelNextTickWaitCb == nullptr)) {
@@ -330,7 +330,7 @@ void Client::doApiEnter()
     m_timerMgr.tick(elapsed);
 }
 
-void Client::doApiExit()
+void ClientImpl::doApiExit()
 {
     COMMS_ASSERT(m_apiEnterCount > 0U);
     --m_apiEnterCount;
@@ -346,7 +346,7 @@ void Client::doApiExit()
     m_nextTickProgramCb(m_nextTickProgramData, nextWait);
 }
 
-void Client::createKeepAliveOpIfNeeded()
+void ClientImpl::createKeepAliveOpIfNeeded()
 {
     if (!m_keepAliveOps.empty()) {
         return;
@@ -362,7 +362,7 @@ void Client::createKeepAliveOpIfNeeded()
     m_keepAliveOps.push_back(std::move(ptr));
 }
 
-void Client::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
+void ClientImpl::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
 {
     while (!m_ops.empty()) {
         m_ops.front()->terminateOp(status);
@@ -370,27 +370,27 @@ void Client::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
     }
 }
 
-void Client::opComplete_Connect(const op::Op* op)
+void ClientImpl::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
 }
 
-void Client::opComplete_KeepAlive(const op::Op* op)
+void ClientImpl::opComplete_KeepAlive(const op::Op* op)
 {
     eraseFromList(op, m_keepAliveOps);
 }
 
-void Client::opComplete_Disconnect(const op::Op* op)
+void ClientImpl::opComplete_Disconnect(const op::Op* op)
 {
     eraseFromList(op, m_disconnectOps);
 }
 
-void Client::opComplete_Subscribe(const op::Op* op)
+void ClientImpl::opComplete_Subscribe(const op::Op* op)
 {
     eraseFromList(op, m_subscribeOps);
 }
 
-void Client::opComplete_Unsubscribe(const op::Op* op)
+void ClientImpl::opComplete_Unsubscribe(const op::Op* op)
 {
     eraseFromList(op, m_unsubscribeOps);
 }

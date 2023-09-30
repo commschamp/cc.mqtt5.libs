@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "op/UnsubscribeOp.h"
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include "comms/util/ScopeGuard.h"
 
@@ -44,7 +44,7 @@ constexpr unsigned reasonCodesLength()
 
 } // namespace     
 
-UnsubscribeOp::UnsubscribeOp(Client& client) : 
+UnsubscribeOp::UnsubscribeOp(ClientImpl& client) : 
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {

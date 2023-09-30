@@ -27,12 +27,12 @@ cc_mqtt5_client::ClientAllocator& getClientAllocator()
     return Allocator;
 }
 
-inline cc_mqtt5_client::Client* clientFromHandle(CC_Mqtt5ClientHandle handle)
+inline cc_mqtt5_client::ClientImpl* clientFromHandle(CC_Mqtt5ClientHandle handle)
 {
-    return reinterpret_cast<cc_mqtt5_client::Client*>(handle);
+    return reinterpret_cast<cc_mqtt5_client::ClientImpl*>(handle);
 }
 
-inline CC_Mqtt5ClientHandle handleFromClient(cc_mqtt5_client::Client* client)
+inline CC_Mqtt5ClientHandle handleFromClient(cc_mqtt5_client::ClientImpl* client)
 {
     return reinterpret_cast<CC_Mqtt5ClientHandle>(client);
 }

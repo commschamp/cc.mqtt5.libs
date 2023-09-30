@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "op/ConnectOp.h"
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include "comms/util/assign.h"
 #include "comms/util/ScopeGuard.h"
@@ -32,7 +32,7 @@ inline ConnectOp* asConnectOp(void* data)
 } // namespace 
     
 
-ConnectOp::ConnectOp(Client& client) : 
+ConnectOp::ConnectOp(ClientImpl& client) : 
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {

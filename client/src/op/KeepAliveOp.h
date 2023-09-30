@@ -23,7 +23,7 @@ class KeepAliveOp final : public Op
 {
     using Base = Op;
 public:
-    explicit KeepAliveOp(Client& client);
+    explicit KeepAliveOp(ClientImpl& client);
 
     void messageSent();
 

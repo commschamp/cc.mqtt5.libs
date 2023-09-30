@@ -21,7 +21,7 @@ class UnsubscribeOp final : public Op
 {
     using Base = Op;
 public:
-    explicit UnsubscribeOp(Client& client);
+    explicit UnsubscribeOp(ClientImpl& client);
 
     CC_Mqtt5ErrorCode configTopic(const CC_Mqtt5UnsubscribeTopicConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);

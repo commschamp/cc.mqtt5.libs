@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "op/KeepAliveOp.h"
-#include "Client.h"
+#include "ClientImpl.h"
 
 namespace cc_mqtt5_client
 {
@@ -24,7 +24,7 @@ inline KeepAliveOp* asKeepAliveOp(void* data)
 
 } // namespace     
 
-KeepAliveOp::KeepAliveOp(Client& client) : 
+KeepAliveOp::KeepAliveOp(ClientImpl& client) : 
     Base(client),
     m_pingTimer(client.timerMgr().allocTimer()),
     m_recvTimer(client.timerMgr().allocTimer()),

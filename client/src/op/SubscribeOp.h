@@ -21,7 +21,7 @@ class SubscribeOp final : public Op
 {
     using Base = Op;
 public:
-    explicit SubscribeOp(Client& client);
+    explicit SubscribeOp(ClientImpl& client);
 
     CC_Mqtt5ErrorCode configTopic(const CC_Mqtt5SubscribeTopicConfig& config);
     CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5SubscribeExtraConfig& config);

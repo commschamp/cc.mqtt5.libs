@@ -24,7 +24,7 @@ class ConnectOp final : public Op
 {
     using Base = Op;
 public:
-    explicit ConnectOp(Client& client);
+    explicit ConnectOp(ClientImpl& client);
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5ConnectBasicConfig& config);
     CC_Mqtt5ErrorCode configWill(const CC_Mqtt5ConnectWillConfig& config);

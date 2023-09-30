@@ -20,7 +20,7 @@ class DisconnectOp final : public Op
 {
     using Base = Op;
 public:
-    explicit DisconnectOp(Client& client);
+    explicit DisconnectOp(ClientImpl& client);
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5DisconnectConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);

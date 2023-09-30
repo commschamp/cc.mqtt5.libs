@@ -146,7 +146,7 @@ function (gen_lib_mqtt5_client config_file)
         src/op/Op.cpp
         src/op/SubscribeOp.cpp
         src/op/UnsubscribeOp.cpp
-        src/Client.cpp
+        src/ClientImpl.cpp
         src/TimerMgr.cpp
     )
     add_library (${lib_name} STATIC ${src} ${src_output})

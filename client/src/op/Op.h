@@ -17,7 +17,7 @@
 namespace cc_mqtt5_client
 {
 
-class Client;
+class ClientImpl;
 
 namespace op
 {
@@ -60,7 +60,7 @@ public:
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
 
-    explicit Op(Client& client);
+    explicit Op(ClientImpl& client);
 
     virtual Type typeImpl() const = 0;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status);
@@ -70,7 +70,7 @@ protected:
     void doApiGuard();
     unsigned allocPacketId();
 
-    Client& client()
+    ClientImpl& client()
     {
         return m_client;
     }
@@ -122,7 +122,7 @@ protected:
     }    
 
 private:
-    Client& m_client;    
+    ClientImpl& m_client;    
     unsigned m_responseTimeoutMs = 0U;
 };
 

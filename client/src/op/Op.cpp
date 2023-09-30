@@ -7,7 +7,7 @@
 
 #include "op/Op.h"
 
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include <algorithm>
 
@@ -17,7 +17,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-Op::Op(Client& client) : 
+Op::Op(ClientImpl& client) : 
     m_client(client),
     m_responseTimeoutMs(client.state().m_responseTimeoutMs)
 {

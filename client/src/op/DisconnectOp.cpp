@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "op/DisconnectOp.h"
-#include "Client.h"
+#include "ClientImpl.h"
 
 #include "comms/units.h"
 
@@ -16,7 +16,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-DisconnectOp::DisconnectOp(Client& client) : 
+DisconnectOp::DisconnectOp(ClientImpl& client) : 
     Base(client)
 {
 }    

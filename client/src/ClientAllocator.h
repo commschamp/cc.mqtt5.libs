@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include "Client.h"
+#include "ClientImpl.h"
 #include "Config.h"
 #include "ObjAllocator.h"
 
 namespace cc_mqtt5_client
 {
 
-using ClientAllocator = ObjAllocator<Client, Config::ClientAllocLimit>;
+using ClientAllocator = ObjAllocator<ClientImpl, Config::ClientAllocLimit>;
 
 } // namespace cc_mqtt5_client

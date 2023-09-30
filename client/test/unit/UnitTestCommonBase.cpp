@@ -123,6 +123,7 @@ UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient()
 {
     m_client.reset(cc_mqtt5_client_new());
     cc_mqtt5_client_set_broker_disconnect_report_callback(m_client.get(), &UnitTestCommonBase::unitTestBrokerDisconnectedCb, this);
+    cc_mqtt5_client_set_message_received_report_callback(m_client.get(), &UnitTestCommonBase::unitTestMessageReceivedCb, this);
     cc_mqtt5_client_set_send_output_data_callback(m_client.get(), &UnitTestCommonBase::unitTestSendOutputDataCb, this);
     cc_mqtt5_client_set_next_tick_program_callback(m_client.get(), &UnitTestCommonBase::unitTestProgramNextTickCb, this);
     cc_mqtt5_client_set_cancel_next_tick_wait_callback(m_client.get(), &UnitTestCommonBase::unitTestCancelNextTickWaitCb, this);
@@ -320,6 +321,13 @@ void UnitTestCommonBase::unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5D
         assert(realObj->m_disconnectInfo.empty());
         realObj->m_disconnectInfo.emplace_back(*info);
     }
+}
+
+void UnitTestCommonBase::unitTestMessageReceivedCb(void* obj, const CC_Mqtt5MessageInfo* info)
+{
+    // TODO: 
+    static_cast<void>(obj);
+    static_cast<void>(info);
 }
 
 void UnitTestCommonBase::unitTestSendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen)

@@ -39,6 +39,7 @@ bool IntegrationTestCommonBase::integrationTestStart()
     ::cc_mqtt5_client_set_cancel_next_tick_wait_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestCancelTickWaitCb, this);
     ::cc_mqtt5_client_set_send_output_data_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestSendDataCb, this);
     ::cc_mqtt5_client_set_broker_disconnect_report_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb, this);
+    ::cc_mqtt5_client_set_message_received_report_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestMessageReceivedCb, this);
 
     auto ec = ::cc_mqtt5_client_init(m_client.get());
     if (ec != CC_Mqtt5ErrorCode_Success) {
@@ -152,6 +153,12 @@ void IntegrationTestCommonBase::integrationTestBrokerDisconnectedInternal(const 
     integrationTestBrokerDisconnectedImpl(info);
 }
 
+void IntegrationTestCommonBase::integrationTestMessageReceivedInternal(const CC_Mqtt5MessageInfo* info)
+{
+    // TODO:
+    static_cast<void>(info);
+}
+
 void IntegrationTestCommonBase::integrationTestConnectCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
 {
     std::cout << "INFO: Connect complete with status=" << status;
@@ -216,6 +223,11 @@ void IntegrationTestCommonBase::integrationTestSendDataCb(void* data, const unsi
 void IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info)
 {
     asObj(data)->integrationTestBrokerDisconnectedInternal(info);
+}
+
+void IntegrationTestCommonBase::integrationTestMessageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info)
+{
+    asObj(data)->integrationTestMessageReceivedInternal(info);
 }
 
 void IntegrationTestCommonBase::integrationTestConnectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)

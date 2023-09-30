@@ -158,6 +158,10 @@ void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     CC_Mqtt5BrokerDisconnectReportCb cb,
     void* data);
 
+void cc_mqtt5_##NAME##client_set_message_received_report_callback(
+    CC_Mqtt5ClientHandle handle,
+    CC_Mqtt5MessageReceivedReportCb cb,
+    void* data);
     
 
 #ifdef __cplusplus

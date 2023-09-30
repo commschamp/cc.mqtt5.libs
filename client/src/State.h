@@ -14,6 +14,7 @@ struct State
 {
     static constexpr unsigned DefaultOpTimeoutMs = 2000;
     static constexpr unsigned DefaultKeepAlive = 60;
+    static constexpr unsigned DefaultTopicAliasMax = 10;
 
     unsigned m_responseTimeoutMs = DefaultOpTimeoutMs;
     unsigned m_keepAliveMs = 0U;

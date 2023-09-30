@@ -18,17 +18,16 @@ private:
         m_tickReqs.clear();
     }
 
-    static void brokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
+    static void brokerDisconnectedCb([[maybe_unused]] void* obj, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
     {
-        static_cast<void>(obj);
-        static_cast<void>(info);
     }
 
-    static void sendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen)
+    static void messageReceivedCb([[maybe_unused]] void* obj, [[maybe_unused]] const CC_Mqtt5MessageInfo* info)
     {
-        static_cast<void>(obj);
-        static_cast<void>(buf);
-        static_cast<void>(bufLen);
+    }
+
+    static void sendOutputDataCb([[maybe_unused]] void* obj, [[maybe_unused]] const unsigned char* buf, [[maybe_unused]] unsigned bufLen)
+    {
     }
 
     static void programNextTickCb(void* obj, unsigned duration)
@@ -62,7 +61,11 @@ void UnitTestClient::test1()
 
     cc_mqtt5_client_set_send_output_data_callback(client.get(), &UnitTestClient::sendOutputDataCb, this);
     ec = cc_mqtt5_client_init(client.get());
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    cc_mqtt5_client_set_message_received_report_callback(client.get(), &UnitTestClient::messageReceivedCb, this);
+    ec = cc_mqtt5_client_init(client.get());
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 }
 
 void UnitTestClient::test2()
@@ -71,6 +74,7 @@ void UnitTestClient::test2()
     TS_ASSERT(client);
 
     cc_mqtt5_client_set_broker_disconnect_report_callback(client.get(), &UnitTestClient::brokerDisconnectedCb, this);
+    cc_mqtt5_client_set_message_received_report_callback(client.get(), &UnitTestClient::messageReceivedCb, this);
     cc_mqtt5_client_set_send_output_data_callback(client.get(), &UnitTestClient::sendOutputDataCb, this);
     cc_mqtt5_client_set_next_tick_program_callback(client.get(), &UnitTestClient::programNextTickCb, this);
 

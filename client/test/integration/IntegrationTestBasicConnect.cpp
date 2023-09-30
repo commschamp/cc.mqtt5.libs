@@ -42,6 +42,8 @@ protected:
             return; 
         }
 
+        std::cout << "INFO: m_highQosPubLimit=" << response->m_highQosPubLimit << '\n';
+        std::cout << "INFO: m_topicAliasMax=" << response->m_topicAliasMax << '\n';
         std::cout << "INFO: maxQos=" << response->m_maxQos << '\n';
         std::cout << "INFO: sessionPresent=" << response->m_sessionPresent << '\n';
         std::cout << "INFO: retainAvailable=" << response->m_retainAvailable << '\n';
@@ -79,6 +81,7 @@ protected:
 private:
     void failTestInternal()
     {
+        assert(0);
         m_exitCode = -1;
         io().stop();        
     }

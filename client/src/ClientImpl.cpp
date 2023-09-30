@@ -50,8 +50,10 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 
 CC_Mqtt5ErrorCode ClientImpl::init()
 {
+    auto guard = apiEnter();
     if ((m_sendOutputDataCb == nullptr) ||
-        (m_brokerDisconnectReportCb == nullptr)) {
+        (m_brokerDisconnectReportCb == nullptr) ||
+        (m_messageReceivedReportCb == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -216,6 +218,46 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
     return unsubOp;
 }
 
+void ClientImpl::handle(PublishMsg& msg)
+{
+    if (m_state.m_terminating) {
+        return;
+    }
+
+    do {
+
+        auto createRecvOp = 
+            [this]()
+            {
+                auto ptr = m_recvOpsAlloc.alloc(*this);
+                if (!ptr) {
+                    // TODO: send report exceeding number of available receives
+                    return; 
+                }
+
+                m_ops.push_back(ptr.get());
+                m_recvOps.push_back(std::move(ptr));
+            };
+
+        using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+        if ((msg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) || 
+            (msg.transportField_flags().field_qos().value() == Qos::AtLeastOnceDelivery)) {
+            createRecvOp();
+            break;
+        }
+
+        // TODO: check packet id;
+
+        // TODO: consider duplicate
+
+        // Duplicate, check
+    } while (false);
+
+    // TODO: publish op    
+
+    handle(static_cast<ProtMessage&>(msg));
+}
+
 void ClientImpl::handle(ProtMessage& msg)
 {
     if (m_state.m_terminating) {
@@ -265,7 +307,8 @@ void ClientImpl::opComplete(const op::Op* op)
         return;
     }
 
-    m_ops.erase(iter);
+    *iter = nullptr;
+    m_opsDeleted = true;
 
     using ExtraCompleteFunc = void (ClientImpl::*)(const op::Op*);
     static const ExtraCompleteFunc Map[] = {
@@ -274,6 +317,7 @@ void ClientImpl::opComplete(const op::Op* op)
         /* Type_Disconnect */ &ClientImpl::opComplete_Disconnect,
         /* Type_Subscribe */ &ClientImpl::opComplete_Subscribe,
         /* Type_Unsubscribe */ &ClientImpl::opComplete_Unsubscribe,
+        /* Type_Recv */ &ClientImpl::opComplete_Recv,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -314,6 +358,12 @@ void ClientImpl::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5Disc
     }
 }
 
+void ClientImpl::reportMsgInfo(const CC_Mqtt5MessageInfo& info)
+{
+    COMMS_ASSERT(m_messageReceivedReportCb != nullptr);
+    m_messageReceivedReportCb(m_messageReceivedReportData, &info);
+}
+
 void ClientImpl::doApiEnter()
 {
     ++m_apiEnterCount;
@@ -334,7 +384,13 @@ void ClientImpl::doApiExit()
 {
     COMMS_ASSERT(m_apiEnterCount > 0U);
     --m_apiEnterCount;
-    if ((m_apiEnterCount > 0U) || (m_nextTickProgramCb == nullptr)) {
+    if (m_apiEnterCount > 0U) {
+        return;
+    }
+
+    cleanOps();
+
+    if (m_nextTickProgramCb == nullptr) {
         return;
     }
 
@@ -364,10 +420,27 @@ void ClientImpl::createKeepAliveOpIfNeeded()
 
 void ClientImpl::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
 {
-    while (!m_ops.empty()) {
-        m_ops.front()->terminateOp(status);
-        // The terminated op is expected to invoke opCompleted() and remove itself from the list
+    for (auto* op : m_ops) {
+        if (op != nullptr) {
+            op->terminateOp(status);
+        }
     }
+}
+
+void ClientImpl::cleanOps()
+{
+    if (!m_opsDeleted) {
+        return;
+    }
+
+    m_ops.erase(
+        std::remove_if(
+            m_ops.begin(), m_ops.end(),
+            [](auto* op)
+            {
+                return op == nullptr;
+            }),
+        m_ops.end());
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)
@@ -394,6 +467,12 @@ void ClientImpl::opComplete_Unsubscribe(const op::Op* op)
 {
     eraseFromList(op, m_unsubscribeOps);
 }
+
+void ClientImpl::opComplete_Recv(const op::Op* op)
+{
+    eraseFromList(op, m_recvOps);
+}
+
 
 
 } // namespace cc_mqtt5_client

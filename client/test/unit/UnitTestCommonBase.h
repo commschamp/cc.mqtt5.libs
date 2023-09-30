@@ -160,6 +160,7 @@ protected:
 private:
 
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);
+    static void unitTestMessageReceivedCb(void* obj, const CC_Mqtt5MessageInfo* info);
     static void unitTestSendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen);
     static void unitTestProgramNextTickCb(void* obj, unsigned duration);
     static unsigned unitTestCancelNextTickWaitCb(void* obj);

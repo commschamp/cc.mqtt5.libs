@@ -157,11 +157,16 @@ void cc_mqtt5_##NAME##client_connect_init_config_extra(CC_Mqtt5ConnectExtraConfi
     *config = CC_Mqtt5ConnectExtraConfig();
 
     if constexpr (cc_mqtt5_client::Config::ReceiveMaxLimit > 0U) {
-        config->m_receiveMaximum = (cc_mqtt5_client::Config::ReceiveMaxLimit - 1U);
+        config->m_receiveMaximum = cc_mqtt5_client::Config::ReceiveMaxLimit;
     }
 
     if constexpr (cc_mqtt5_client::Config::HasTopicAliases) {
-        config->m_topicAliasMaximum = cc_mqtt5_client::Config::TopicAliasesLimit;
+        if constexpr (cc_mqtt5_client::Config::TopicAliasesLimit == 0) {
+            config->m_topicAliasMaximum = cc_mqtt5_client::State::DefaultTopicAliasMax;
+        }
+        else {
+            config->m_topicAliasMaximum = cc_mqtt5_client::Config::TopicAliasesLimit;
+        }
     }
 }
 
@@ -438,4 +443,12 @@ void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     void* data)
 {
     clientFromHandle(handle)->setBrokerDisconnectReportCallback(cb, data);
+}
+
+void cc_mqtt5_##NAME##client_set_message_received_report_callback(
+    CC_Mqtt5ClientHandle handle,
+    CC_Mqtt5MessageReceivedReportCb cb,
+    void* data)
+{
+    clientFromHandle(handle)->setMessageReceivedCallback(cb, data);
 }

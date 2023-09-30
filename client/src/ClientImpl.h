@@ -18,6 +18,7 @@
 #include "op/DisconnectOp.h"
 #include "op/KeepAliveOp.h"
 #include "op/Op.h"
+#include "op/RecvOp.h"
 #include "op/SubscribeOp.h"
 #include "op/UnsubscribeOp.h"
 
@@ -94,7 +95,16 @@ public:
         }
     }
 
+    void setMessageReceivedCallback(CC_Mqtt5MessageReceivedReportCb cb, void* data)
+    {
+        if (cb != nullptr) {
+            m_messageReceivedReportCb = cb;
+            m_messageReceivedReportData = data;            
+        }
+    }
+
     using Base::handle;
+    virtual void handle(PublishMsg& msg) override;
     virtual void handle(ProtMessage& msg) override;
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
@@ -102,6 +112,7 @@ public:
     void doApiGuard();
     void notifyConnected();
     void notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info = nullptr);
+    void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
 
     TimerMgr& timerMgr()
     {
@@ -129,19 +140,25 @@ private:
     using UnsubscribeOpAlloc = ObjAllocator<op::UnsubscribeOp, ExtConfig::UnsubscribeOpsLimit>;
     using UnsubscribeOpsList = ObjListType<UnsubscribeOpAlloc::Ptr, ExtConfig::UnsubscribeOpsLimit>;
 
+    using RecvOpAlloc = ObjAllocator<op::RecvOp, ExtConfig::RecvOpsLimit>;
+    using RecvOpsList = ObjListType<RecvOpAlloc::Ptr, ExtConfig::RecvOpsLimit>;
+
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
+    using OpToDeletePtrsList = ObjListType<const op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
     void doApiEnter();
     void doApiExit();
     void createKeepAliveOpIfNeeded();
     void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
+    void cleanOps();
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
     void opComplete_Disconnect(const op::Op* op);
     void opComplete_Subscribe(const op::Op* op);
     void opComplete_Unsubscribe(const op::Op* op);
+    void opComplete_Recv(const op::Op* op);
 
     friend class ApiEnterGuard;
 
@@ -156,6 +173,9 @@ private:
 
     CC_Mqtt5BrokerDisconnectReportCb m_brokerDisconnectReportCb = nullptr;
     void* m_brokerDisconnectReportData = nullptr;
+
+    CC_Mqtt5MessageReceivedReportCb m_messageReceivedReportCb = nullptr;
+    void* m_messageReceivedReportData = nullptr;      
 
     State m_state;
     TimerMgr m_timerMgr;
@@ -180,7 +200,11 @@ private:
     UnsubscribeOpAlloc m_unsubscribeOpsAlloc;
     UnsubscribeOpsList m_unsubscribeOps;
 
+    RecvOpAlloc m_recvOpsAlloc;
+    RecvOpsList m_recvOps;
+
     OpPtrsList m_ops;
+    bool m_opsDeleted = false;
 };
 
 } // namespace cc_mqtt5_client

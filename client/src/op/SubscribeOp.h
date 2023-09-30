@@ -45,6 +45,8 @@ private:
     TimerMgr::Timer m_timer;
     CC_Mqtt5SubscribeCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;
+
+    static_assert(ExtConfig::SubscribeOpTimers == 1U);
 };
 
 } // namespace op

@@ -31,6 +31,7 @@ public:
         Type_KeepAlive,
         Type_Disconnect,
         Type_Subscribe,
+        Type_Unsubscribe,
         Type_NumOfValues // Must be last
     };
 

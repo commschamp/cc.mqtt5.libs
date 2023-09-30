@@ -19,6 +19,7 @@
 #include "op/KeepAliveOp.h"
 #include "op/Op.h"
 #include "op/SubscribeOp.h"
+#include "op/UnsubscribeOp.h"
 
 #include "cc_mqtt5_client/common.h"
 
@@ -59,6 +60,7 @@ public:
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);
     op::SubscribeOp* subscribePrepare(CC_Mqtt5ErrorCode* ec);
+    op::UnsubscribeOp* unsubscribePrepare(CC_Mqtt5ErrorCode* ec);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
@@ -124,6 +126,9 @@ private:
     using SubscribeOpAlloc = ObjAllocator<op::SubscribeOp, ExtConfig::SubscribeOpsLimit>;
     using SubscribeOpsList = ObjListType<SubscribeOpAlloc::Ptr, ExtConfig::SubscribeOpsLimit>;
 
+    using UnsubscribeOpAlloc = ObjAllocator<op::UnsubscribeOp, ExtConfig::UnsubscribeOpsLimit>;
+    using UnsubscribeOpsList = ObjListType<UnsubscribeOpAlloc::Ptr, ExtConfig::UnsubscribeOpsLimit>;
+
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
@@ -136,6 +141,7 @@ private:
     void opComplete_KeepAlive(const op::Op* op);
     void opComplete_Disconnect(const op::Op* op);
     void opComplete_Subscribe(const op::Op* op);
+    void opComplete_Unsubscribe(const op::Op* op);
 
     friend class ApiEnterGuard;
 
@@ -170,6 +176,9 @@ private:
 
     SubscribeOpAlloc m_subscribeOpsAlloc;
     SubscribeOpsList m_subscribeOps;
+
+    UnsubscribeOpAlloc m_unsubscribeOpsAlloc;
+    UnsubscribeOpsList m_unsubscribeOps;
 
     OpPtrsList m_ops;
 };

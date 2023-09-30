@@ -166,6 +166,9 @@ typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
 struct CC_Mqtt5Subscribe;
 typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
+struct CC_Mqtt5Unsubscribe;
+typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
+
 typedef struct
 {
     const char* m_key;
@@ -280,6 +283,20 @@ typedef struct
     unsigned m_userPropsCount;
 } CC_Mqtt5SubscribeResponse;
 
+typedef struct
+{
+    const char* m_topic;
+} CC_Mqtt5UnsubscribeTopicConfig;
+
+typedef struct 
+{
+    const CC_Mqtt5ReasonCode* m_reasonCodes;
+    unsigned m_reasonCodesCount;
+    const char* m_reasonStr;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;
+} CC_Mqtt5UnsubscribeResponse;
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.
@@ -320,6 +337,8 @@ typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus stat
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+
+typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
 typedef struct
 {

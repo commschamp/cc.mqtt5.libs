@@ -187,6 +187,35 @@ op::SubscribeOp* Client::subscribePrepare(CC_Mqtt5ErrorCode* ec)
     return subOp;
 }
 
+op::UnsubscribeOp* Client::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
+{
+    op::UnsubscribeOp* unsubOp = nullptr;
+    do {
+        if (!m_state.m_initialized) {
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
+            break;
+        }
+
+        if (!m_state.m_connected) {
+            updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
+            break;
+        }
+
+        auto ptr = m_unsubscribeOpsAlloc.alloc(*this);
+        if (!ptr) {
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
+            break;
+        }
+
+        m_ops.push_back(ptr.get());
+        m_unsubscribeOps.push_back(std::move(ptr));
+        unsubOp = m_unsubscribeOps.back().get();
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
+    } while (false);
+
+    return unsubOp;
+}
+
 void Client::handle(ProtMessage& msg)
 {
     if (m_state.m_terminating) {
@@ -244,6 +273,7 @@ void Client::opComplete(const op::Op* op)
         /* Type_KeepAlive */ &Client::opComplete_KeepAlive,
         /* Type_Disconnect */ &Client::opComplete_Disconnect,
         /* Type_Subscribe */ &Client::opComplete_Subscribe,
+        /* Type_Unsubscribe */ &Client::opComplete_Unsubscribe,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -359,5 +389,11 @@ void Client::opComplete_Subscribe(const op::Op* op)
 {
     eraseFromList(op, m_subscribeOps);
 }
+
+void Client::opComplete_Unsubscribe(const op::Op* op)
+{
+    eraseFromList(op, m_unsubscribeOps);
+}
+
 
 } // namespace cc_mqtt5_client

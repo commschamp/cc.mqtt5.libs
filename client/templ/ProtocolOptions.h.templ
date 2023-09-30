@@ -52,6 +52,34 @@ public:
                     BaseImpl::message::SubscribeFields::List
                 >;
         };
+
+        struct SubackFields : public BaseImpl::message::SubackFields
+        {
+            using List =
+                std::tuple<
+                    ##MESSAGE_SUBSCRIBE_FIELDS_LIST##,
+                    BaseImpl::message::SubackFields::List
+                >;
+        };        
+
+        struct UnsubscribeFields : public BaseImpl::message::UnsubscribeFields
+        {
+            using List =
+                std::tuple<
+                    ##MESSAGE_UNSUBSCRIBE_FIELDS_LIST##,
+                    BaseImpl::message::UnsubscribeFields::List
+                >;
+        };
+
+        struct UnsubackFields : public BaseImpl::message::UnsubackFields
+        {
+            using List =
+                std::tuple<
+                    ##MESSAGE_UNSUBSCRIBE_FIELDS_LIST##,
+                    BaseImpl::message::UnsubackFields::List
+                >;
+        };           
+
     }; // struct message
     
     struct frame : public BaseImpl::frame

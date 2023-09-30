@@ -1,5 +1,20 @@
 #include "UnitTestCommonBase.h"
 
+namespace 
+{
+
+void assignStringInternal(std::string& dest, const char* source)
+{
+    dest.clear();
+    if (source != nullptr)
+    {
+        dest = source;
+    }
+}
+
+} // namespace 
+
+
 UnitTestCommonBase::UnitTestUserProp& UnitTestCommonBase::UnitTestUserProp::operator=(const CC_Mqtt5UserProp& other)
 {
     std::tie(m_key, m_value) = std::make_tuple(other.m_key, other.m_value);
@@ -36,16 +51,6 @@ UnitTestCommonBase::UnitTestAuthInfo& UnitTestCommonBase::UnitTestAuthInfo::oper
 
 UnitTestCommonBase::UnitTestConnectResponse& UnitTestCommonBase::UnitTestConnectResponse::operator=(const CC_Mqtt5ConnectResponse& response)
 {
-    auto assignString = 
-        [](std::string& dest, const char* source)
-        {
-            dest.clear();
-            if (source != nullptr)
-            {
-                dest = source;
-            }
-        };
-
     auto thisTie = 
         std::tie(
             m_reasonCode, m_sessionExpiryInterval, m_highQosPubLimit, m_maxPacketSize, m_topicAliasMax,
@@ -60,10 +65,10 @@ UnitTestCommonBase::UnitTestConnectResponse& UnitTestCommonBase::UnitTestConnect
 
     thisTie = responseTie;
 
-    assignString(m_assignedClientId, response.m_assignedClientId);
-    assignString(m_responseInfo, response.m_responseInfo);
-    assignString(m_reasonStr, response.m_reasonStr);
-    assignString(m_serverRef, response.m_serverRef);
+    assignStringInternal(m_assignedClientId, response.m_assignedClientId);
+    assignStringInternal(m_responseInfo, response.m_responseInfo);
+    assignStringInternal(m_reasonStr, response.m_reasonStr);
+    assignStringInternal(m_serverRef, response.m_serverRef);
     
     if (response.m_authDataLen > 0) {
         m_authData.assign(response.m_authData, response.m_authData + response.m_authDataLen);
@@ -73,6 +78,18 @@ UnitTestCommonBase::UnitTestConnectResponse& UnitTestCommonBase::UnitTestConnect
         m_authData.clear();
     }
 
+    UnitTestUserProp::copyProps(response.m_userProps, response.m_userPropsCount, m_userProps);
+    return *this;
+}
+
+UnitTestCommonBase::UnitTestSubscribeResponse& UnitTestCommonBase::UnitTestSubscribeResponse::operator=(const CC_Mqtt5SubscribeResponse& response)
+{
+    m_reasonCodes.clear();
+    if (response.m_reasonCodesCount > 0U) {
+        std::copy_n(response.m_reasonCodes, response.m_reasonCodesCount, std::back_inserter(m_reasonCodes));
+    }
+    
+    assignStringInternal(m_reasonStr, response.m_reasonStr);
     UnitTestUserProp::copyProps(response.m_userProps, response.m_userPropsCount, m_userProps);
     return *this;
 }
@@ -90,6 +107,7 @@ void UnitTestCommonBase::unitTestSetUp()
     m_tickReq.clear();
     m_sentData.clear();
     m_connectResp.clear();
+    m_subscribeResp.clear();
     m_inAuthInfo.clear();
     m_outAuthInfo.clear();
     m_disconnectInfo.clear();
@@ -149,7 +167,12 @@ void UnitTestCommonBase::unitTestTick(unsigned ms, bool forceTick)
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendConnect(CC_Mqtt5ConnectHandle connect)
 {
-    return cc_mqtt5_client_connect_send(connect, &UnitTestCommonBase::unitTestConnectCompleteCb, this);
+    return ::cc_mqtt5_client_connect_send(connect, &UnitTestCommonBase::unitTestConnectCompleteCb, this);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendSubscribe(CC_Mqtt5SubscribeHandle subscribe)
+{
+    return ::cc_mqtt5_client_subscribe_send(subscribe, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
 }
 
 UniTestsMsgPtr UnitTestCommonBase::unitTestGetSentMessage()
@@ -174,19 +197,35 @@ bool UnitTestCommonBase::unitTestHasSentMessage() const
 
 bool UnitTestCommonBase::unitTestIsConnectComplete()
 {
-    return (!m_connectResp.empty()) && (m_connectResp.front());
+    return (!m_connectResp.empty());
 }
 
 const UnitTestCommonBase::UnitTestConnectResponseInfo& UnitTestCommonBase::unitTestConnectResponseInfo()
 {
     assert(unitTestIsConnectComplete());
-    return *m_connectResp.front();
+    return m_connectResp.front();
 }
 
 void UnitTestCommonBase::unitTestPopConnectResponseInfo()
 {
     assert(!m_connectResp.empty());
     m_connectResp.erase(m_connectResp.begin());
+}
+
+bool UnitTestCommonBase::unitTestIsSubscribeComplete()
+{
+    return !m_subscribeResp.empty();
+}
+const UnitTestCommonBase::UnitTestSubscribeResponseInfo& UnitTestCommonBase::unitTestSubscribeResponseInfo()
+{
+    assert(!m_subscribeResp.empty());
+    return m_subscribeResp.front();
+}
+
+void UnitTestCommonBase::unitTestPopSubscribeResponseInfo()
+{
+    assert(!m_subscribeResp.empty());
+    m_subscribeResp.erase(m_subscribeResp.begin());
 }
 
 void UnitTestCommonBase::unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData)
@@ -309,11 +348,22 @@ void UnitTestCommonBase::unitTestConnectCompleteCb(void* obj, CC_Mqtt5AsyncOpSta
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
     assert(realObj->m_connectResp.empty());
     realObj->m_connectResp.resize(realObj->m_connectResp.size() + 1U);
-    auto& ptr = realObj->m_connectResp.back();
-    ptr = std::make_unique<UnitTestConnectResponseInfo>();
-    ptr->m_status = status;
+    auto& info = realObj->m_connectResp.back();
+    info.m_status = status;
     if (response != nullptr) {
-        ptr->m_response = *response;
+        info.m_response = *response;
+    }
+}
+
+void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+{
+    auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+    assert(realObj->m_subscribeResp.empty());
+    realObj->m_subscribeResp.resize(realObj->m_subscribeResp.size() + 1U);
+    auto& info = realObj->m_subscribeResp.back();
+    info.m_status = status;
+    if (response != nullptr) {
+        info.m_response = *response;
     }
 }
 

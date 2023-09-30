@@ -195,6 +195,8 @@ void SubscribeOp::handle(SubackMsg& msg)
         sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }
+
+    status = CC_Mqtt5AsyncOpStatus_Complete;
 }
 
 Op::Type SubscribeOp::typeImpl() const

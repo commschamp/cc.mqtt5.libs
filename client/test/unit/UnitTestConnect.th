@@ -7,7 +7,7 @@
 
 #include <cxxtest/TestSuite.h>
 
-class ConnectUnitTestSuite : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestConnect : public CxxTest::TestSuite, public UnitTestCommonBase
 {
 public:
     void test1();
@@ -28,7 +28,7 @@ private:
     }
 };
 
-void ConnectUnitTestSuite::test1()
+void UnitTestConnect::test1()
 {
     // Simple connect and ack
     auto* client = unitTestAllocClient();
@@ -94,7 +94,7 @@ void ConnectUnitTestSuite::test1()
     TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
 }
 
-void ConnectUnitTestSuite::test2()
+void UnitTestConnect::test2()
 {
     // Testing connect properties
     auto* client = unitTestAllocClient();
@@ -400,7 +400,7 @@ void ConnectUnitTestSuite::test2()
     TS_ASSERT_EQUALS(tickReq->m_requested, BrokerKeepAlive * 1000);
 }
 
-void ConnectUnitTestSuite::test3()
+void UnitTestConnect::test3()
 {
     // Connect with authentication
     auto* client = unitTestAllocClient();
@@ -565,7 +565,7 @@ void ConnectUnitTestSuite::test3()
     unitTestPopConnectResponseInfo();    
 }
 
-void ConnectUnitTestSuite::test4()
+void UnitTestConnect::test4()
 {
     // Testing change of the Auth method, protocol error is expected
     auto* client = unitTestAllocClient();
@@ -633,7 +633,7 @@ void ConnectUnitTestSuite::test4()
     TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
 }
 
-void ConnectUnitTestSuite::test5()
+void UnitTestConnect::test5()
 {
     // Keep alive test
     auto* client = unitTestAllocClient();

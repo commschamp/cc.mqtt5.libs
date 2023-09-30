@@ -1,0 +1,302 @@
+#include "UnitTestCommonBase.h"
+#include "UnitTestDefs.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include "client.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestConnect : public CxxTest::TestSuite, public UnitTestCommonBase
+{
+public:
+    void test1();
+    void test2();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestConnect::test1()
+{
+    // Simple subscribe and ack
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+
+    const std::string ClientId(__FUNCTION__);
+    const unsigned KeepAlive = 60;
+    connectBasicConfig.m_clientId = ClientId.c_str();
+    connectBasicConfig.m_keepAlive = KeepAlive;
+    connectBasicConfig.m_cleanStart = true;
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    TS_ASSERT(!unitTestIsConnectComplete());
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
+    unitTestPopConnectResponseInfo();
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
+
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    const std::string SubTopic1 = "/sub/topic/1";
+    const CC_Mqtt5QoS SubQos1 = CC_Mqtt5QoS_AtLeastOnceDelivery;
+    const CC_Mqtt5RetainHandling SubRetainHandling1 = CC_Mqtt5RetainHandling_SendIfDoesNotExist;
+    const bool SubNoLocal1 = true;
+    const bool SubRetainAsPublish1 = true;
+    auto subscribeConfig1 = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&subscribeConfig1);
+    TS_ASSERT_EQUALS(subscribeConfig1.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    subscribeConfig1.m_topic = SubTopic1.c_str();
+    subscribeConfig1.m_maxQos = SubQos1;
+    subscribeConfig1.m_retainHandling = SubRetainHandling1;
+    subscribeConfig1.m_noLocal = SubNoLocal1;
+    subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    const std::string SubTopic2 = "/sub/topic/2";
+    const CC_Mqtt5QoS SubQos2 = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5AuthErrorCode_DoNotSend;
+    const bool SubNoLocal2 = true;
+    const bool SubRetainAsPublish2 = false;
+    auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&subscribeConfig2);
+    TS_ASSERT_EQUALS(subscribeConfig2.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    subscribeConfig2.m_topic = SubTopic2.c_str();
+    subscribeConfig2.m_maxQos = SubQos2;
+    subscribeConfig2.m_retainHandling = SubRetainHandling2;
+    subscribeConfig2.m_noLocal = SubNoLocal2;
+    subscribeConfig2.m_retainAsPublished = SubRetainAsPublish2;
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendSubscribe(subscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsSubscribeComplete());
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
+    TS_ASSERT(subscribeMsg->field_propertiesList().value().empty());
+    TS_ASSERT_EQUALS(subscribeMsg->field_list().value().size(), 2U);
+    auto& elem0 = subscribeMsg->field_list().value()[0];
+    auto& elem1 = subscribeMsg->field_list().value()[1];
+    TS_ASSERT_EQUALS(elem0.field_topic().value(), SubTopic1);
+    TS_ASSERT_EQUALS(static_cast<decltype(SubQos1)>(elem0.field_options().field_qos().value()), SubQos1);
+    TS_ASSERT_EQUALS(elem0.field_options().field_bits().getBitValue_NL(), SubNoLocal1);
+    TS_ASSERT_EQUALS(elem0.field_options().field_bits().getBitValue_RAP(), SubRetainAsPublish1);
+    TS_ASSERT_EQUALS(static_cast<decltype(SubRetainHandling1)>(elem0.field_options().field_retainHandling().value()), SubRetainHandling1);
+    TS_ASSERT_EQUALS(elem1.field_topic().value(), SubTopic2);
+    TS_ASSERT_EQUALS(static_cast<decltype(SubQos2)>(elem1.field_options().field_qos().value()), SubQos2);
+    TS_ASSERT_EQUALS(elem1.field_options().field_bits().getBitValue_NL(), SubNoLocal2);
+    TS_ASSERT_EQUALS(elem1.field_options().field_bits().getBitValue_RAP(), SubRetainAsPublish2);
+    TS_ASSERT_EQUALS(static_cast<decltype(SubRetainHandling2)>(elem1.field_options().field_retainHandling().value()), SubRetainHandling2);
+
+    unitTestTick(1000);
+    UnitTestSubackMsg subackMsg;
+    subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
+    subackMsg.field_list().value().resize(2);
+    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    subackMsg.field_list().value()[1].setValue(CC_Mqtt5ReasonCode_Success);
+    unitTestReceiveMessage(subackMsg);
+    TS_ASSERT(unitTestIsSubscribeComplete());
+
+    auto& subackInfo = unitTestSubscribeResponseInfo();
+    TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(subackInfo.m_response.m_reasonCodes.size(), 2U);
+    TS_ASSERT(subackInfo.m_response.m_reasonStr.empty());
+    TS_ASSERT(subackInfo.m_response.m_userProps.empty());
+    unitTestPopSubscribeResponseInfo();
+}
+
+void UnitTestConnect::test2()
+{
+    // Parallel subscribe
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+
+    const std::string ClientId(__FUNCTION__);
+    const unsigned KeepAlive = 60;
+    connectBasicConfig.m_clientId = ClientId.c_str();
+    connectBasicConfig.m_keepAlive = KeepAlive;
+    connectBasicConfig.m_cleanStart = true;
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    TS_ASSERT(!unitTestIsConnectComplete());
+    sentMsg.reset();
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
+    unitTestPopConnectResponseInfo();
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
+
+
+    auto subscribe1 = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe1, nullptr);
+
+    const std::string SubTopic1 = "/sub/topic/1";
+    const CC_Mqtt5QoS SubQos1 = CC_Mqtt5QoS_AtLeastOnceDelivery;
+    const CC_Mqtt5RetainHandling SubRetainHandling1 = CC_Mqtt5RetainHandling_SendIfDoesNotExist;
+    const bool SubNoLocal1 = true;
+    const bool SubRetainAsPublish1 = true;
+    const unsigned SubId1 = 100;
+    const std::string SubUserPropKey1 = "Key1";
+    const std::string SubUserPropVal1 = "Val1";
+    auto subscribeConfig1 = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&subscribeConfig1);
+    TS_ASSERT_EQUALS(subscribeConfig1.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    subscribeConfig1.m_topic = SubTopic1.c_str();
+    subscribeConfig1.m_maxQos = SubQos1;
+    subscribeConfig1.m_retainHandling = SubRetainHandling1;
+    subscribeConfig1.m_noLocal = SubNoLocal1;
+    subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe1, &subscribeConfig1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto subcribeExtra1 = CC_Mqtt5SubscribeExtraConfig();
+    ::cc_mqtt5_client_subscribe_init_config_extra(&subcribeExtra1);
+    subcribeExtra1.m_subId = SubId1;
+    ec = ::cc_mqtt5_client_subscribe_config_extra(subscribe1, &subcribeExtra1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto userProp1 = CC_Mqtt5UserProp();
+    userProp1.m_key = SubUserPropKey1.c_str();
+    userProp1.m_value = SubUserPropVal1.c_str();
+    ec = ::cc_mqtt5_client_subscribe_add_user_prop(subscribe1, &userProp1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendSubscribe(subscribe1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsSubscribeComplete());
+
+    auto sentMsg1 = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg1);
+    TS_ASSERT_EQUALS(sentMsg1->getId(), cc_mqtt5::MsgId_Subscribe);    
+    auto* subscribeMsg1 = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg1.get());
+
+    UnitTestPropsHandler propsHandler1;
+    for (auto& p : subscribeMsg1->field_propertiesList().value()) {
+        p.currentFieldExec(propsHandler1);
+    }
+
+    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds.size(), 1U);    
+    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds[0]->field_value().value(), SubId1);    
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps.size(), 1U);    
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_first().value(), SubUserPropKey1);    
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_second().value(), SubUserPropVal1);    
+
+
+    auto subscribe2 = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe2, nullptr);
+
+    const std::string SubTopic2 = "/sub/topic/2";
+    const CC_Mqtt5QoS SubQos2 = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5AuthErrorCode_DoNotSend;
+    const bool SubNoLocal2 = true;
+    const bool SubRetainAsPublish2 = false;
+    auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&subscribeConfig2);
+    TS_ASSERT_EQUALS(subscribeConfig2.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    subscribeConfig2.m_topic = SubTopic2.c_str();
+    subscribeConfig2.m_maxQos = SubQos2;
+    subscribeConfig2.m_retainHandling = SubRetainHandling2;
+    subscribeConfig2.m_noLocal = SubNoLocal2;
+    subscribeConfig2.m_retainAsPublished = SubRetainAsPublish2;
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe2, &subscribeConfig2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendSubscribe(subscribe2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsSubscribeComplete());
+
+    auto sentMsg2 = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg2);
+    TS_ASSERT_EQUALS(sentMsg2->getId(), cc_mqtt5::MsgId_Subscribe);    
+    auto* subscribeMsg2 = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg2.get());
+    TS_ASSERT_DIFFERS(subscribeMsg2, nullptr);
+    TS_ASSERT_DIFFERS(subscribeMsg1->field_packetId().value(), subscribeMsg2->field_packetId().value());
+    
+    unitTestTick(1000);
+    UnitTestSubackMsg subackMsg1;
+    subackMsg1.field_packetId().value() = subscribeMsg1->field_packetId().value();
+    subackMsg1.field_list().value().resize(1);
+    subackMsg1.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_ServerBusy);
+    unitTestReceiveMessage(subackMsg1);
+    TS_ASSERT(unitTestIsSubscribeComplete());
+
+    auto& subackInfo = unitTestSubscribeResponseInfo();
+    TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(subackInfo.m_response.m_reasonCodes.size(), 1U);
+    TS_ASSERT_EQUALS(subackInfo.m_response.m_reasonCodes[0], CC_Mqtt5ReasonCode_ServerBusy);
+    unitTestPopSubscribeResponseInfo();
+
+    TS_ASSERT(!unitTestIsSubscribeComplete());
+    unitTestTick(); // Timeout of the op
+    TS_ASSERT(unitTestIsSubscribeComplete());
+    TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+}

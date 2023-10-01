@@ -55,13 +55,39 @@ unsigned Op::allocPacketId()
     return packetId;
 }
 
-void Op::sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason)
+void Op::sendDisconnectWithReason(ClientImpl& client, DiconnectReason reason)
 {
     DisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
     disconnectMsg.field_propertiesList().setExists();
-    disconnectMsg.field_reasonCode().field().setValue(reason);
-    m_client.sendMessage(disconnectMsg);
+    disconnectMsg.field_reasonCode().field().setValue(reason);    
+    client.sendMessage(disconnectMsg);
+}
+
+void Op::sendDisconnectWithReason(DiconnectReason reason)
+{
+    sendDisconnectWithReason(m_client, reason);
+}
+
+void Op::terminationWithReason(ClientImpl& client, DiconnectReason reason)
+{
+    sendDisconnectWithReason(client, reason);
+    client.notifyDisconnected(true);
+}
+
+void Op::terminationWithReason(DiconnectReason reason)
+{
+    terminationWithReason(m_client, reason);
+}
+
+void Op::protocolErrorTermination(ClientImpl& client)
+{
+    terminationWithReason(client, DiconnectReason::ProtocolError);
+}
+
+void Op::protocolErrorTermination()
+{
+    protocolErrorTermination(m_client);
 }
 
 void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps)

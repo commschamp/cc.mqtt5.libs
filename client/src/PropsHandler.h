@@ -62,12 +62,21 @@ public:
     }    
 
     using SubscriptionId = Property::Field_subscriptionId;
-    const SubscriptionId* m_subscriptionId = nullptr;
+    using SubscriptionIdsList = ObjListType<const SubscriptionId*, Config::SubIdsLimit, Config::HasSubIds>;
+    SubscriptionIdsList m_subscriptionIds;
     template <std::size_t TIdx>
     void operator()(const SubscriptionId& field)
     {
-        // TODO: convert to list
-        m_subscriptionId = &field;
+        if constexpr (Config::HasSubIds) {
+            if (m_subscriptionIds.max_size() <= m_subscriptionIds.size()) {
+                return;
+            }
+
+            m_subscriptionIds.push_back(&field);
+            if (field.field_value().value() == 0U) {
+                m_protocolError = true;
+            }
+        }        
     }        
 
     using SessionExpiryInterval = Property::Field_sessionExpiryInterval;

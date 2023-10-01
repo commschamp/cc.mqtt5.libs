@@ -60,6 +60,7 @@ public:
 
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
+    using DiconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType;
 
     explicit Op(ClientImpl& client);
 
@@ -76,7 +77,13 @@ protected:
         return m_client;
     }
 
-    void sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
+    static void sendDisconnectWithReason(ClientImpl& client, DiconnectReason reason);
+    void sendDisconnectWithReason(DiconnectReason reason);
+    static void terminationWithReason(ClientImpl& client, DiconnectReason reason);
+    void terminationWithReason(DiconnectReason reason);
+    static void protocolErrorTermination(ClientImpl& client);
+    void protocolErrorTermination();
+    
 
     static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 

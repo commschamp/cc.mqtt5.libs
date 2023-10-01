@@ -50,6 +50,8 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 
 CC_Mqtt5ErrorCode ClientImpl::init()
 {
+    // TODO: Cannot re-initiate when iterating
+
     auto guard = apiEnter();
     if ((m_sendOutputDataCb == nullptr) ||
         (m_brokerDisconnectReportCb == nullptr) ||
@@ -106,8 +108,13 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (!m_connectOps.empty()) {
-            updateEc(ec, CC_Mqtt5ErrorCode_Busy);
+        if (m_state.m_terminating) {
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
         }
 
@@ -145,6 +152,16 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }        
 
+        if (m_state.m_terminating) {
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+            break;
+        }        
+
         auto ptr = m_disconnectOpsAlloc.alloc(*this);
         if (!ptr) {
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
@@ -174,6 +191,16 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_state.m_terminating) {
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+            break;
+        }        
+
         auto ptr = m_subscribeOpsAlloc.alloc(*this);
         if (!ptr) {
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
@@ -202,6 +229,16 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
+
+        if (m_state.m_terminating) {
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+            break;
+        }        
 
         auto ptr = m_unsubscribeOpsAlloc.alloc(*this);
         if (!ptr) {
@@ -253,8 +290,6 @@ void ClientImpl::handle(PublishMsg& msg)
         // Duplicate, check
     } while (false);
 
-    // TODO: publish op    
-
     handle(static_cast<ProtMessage&>(msg));
 }
 
@@ -264,7 +299,20 @@ void ClientImpl::handle(ProtMessage& msg)
         return;
     }
 
-    for (auto* op : m_ops) {
+    // During the dispatch to callbacks can be called and new ops issues,
+    // the m_ops vector can be resized and iterators invalidated.
+    // As the result, the iteration needs to be performed using indices 
+    // instead of iterators.
+    // Also do not dispatch the message to new ops.
+    auto count = m_ops.size();
+    for (auto idx = 0U; idx < count; ++idx) {
+        auto* op = m_ops[idx];
+        if (op == nullptr) {
+            // ops can be deleted, but the pointer will be nullified
+            // until last api guard.
+            continue;
+        }
+
         msg.dispatch(*op);
 
         // After message dispatching the whole session may be in terminating state
@@ -348,7 +396,6 @@ void ClientImpl::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5Disc
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
     m_state.m_initialized = false; // Require re-initialization
     m_state.m_connected = false;
-    m_state.m_terminating = true;
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
 
@@ -420,6 +467,7 @@ void ClientImpl::createKeepAliveOpIfNeeded()
 
 void ClientImpl::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
 {
+    m_state.m_terminating = true;
     for (auto* op : m_ops) {
         if (op != nullptr) {
             op->terminateOp(status);
@@ -441,6 +489,8 @@ void ClientImpl::cleanOps()
                 return op == nullptr;
             }),
         m_ops.end());
+
+    m_opsDeleted = false;
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)

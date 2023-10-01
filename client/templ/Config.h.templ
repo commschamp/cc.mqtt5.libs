@@ -15,6 +15,8 @@ struct Config
     static constexpr unsigned SendMaxLimit = ##CC_MQTT5_CLIENT_SEND_MAX_LIMIT##;
     static constexpr bool HasTopicAliases = ##CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP##;
     static constexpr unsigned TopicAliasesLimit = ##CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT##;
+    static constexpr bool HasSubIds = ##CC_MQTT5_CLIENT_HAS_SUB_IDS_CPP##;
+    static constexpr unsigned SubIdsLimit = ##CC_MQTT5_CLIENT_SUB_IDS_LIMIT##;
     static constexpr unsigned SubscribeOpsLimit = ##CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT##;
     static constexpr unsigned UnsubscribeOpsLimit = ##CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT##;
 
@@ -25,6 +27,7 @@ struct Config
     static_assert(HasDynMemAlloc || (ReceiveMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (SendMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_SEND_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (!HasTopicAliases) || (TopicAliasesLimit > 0U), "Must use CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT in configuration to limit amount of user properties");        
+    static_assert(HasDynMemAlloc || (!HasSubIds) || (SubIdsLimit > 0U), "Must use CC_MQTT5_CLIENT_SUB_IDS_LIMIT in configuration to limit amount of sub ids");        
     static_assert(HasDynMemAlloc || (SubscribeOpsLimit > 0U), "Must use CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT in configuration to limit amount of unfinished subscribes.");    
     static_assert(HasDynMemAlloc || (UnsubscribeOpsLimit > 0U), "Must use CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT in configuration to limit amount of unfinished unsubscribes.");    
 

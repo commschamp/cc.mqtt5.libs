@@ -252,6 +252,8 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propBundle = propVar.initField_topicAliasMax();
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_topicAliasMaximum);        
+        client().state().m_maxRecvTopicAlias = config.m_topicAliasMaximum;
+        client().state().m_recvTopicAliases.reserve(config.m_topicAliasMaximum);
     }
 
     if (config.m_requestResponseInfo) {
@@ -398,19 +400,19 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }    
 
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod != nullptr) && (m_authMethod != propsHandler.m_authMethod->field_value().value())) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }      
     
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod == nullptr) && (!m_authMethod.empty())) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }
     
@@ -532,7 +534,7 @@ void ConnectOp::handle(AuthMsg& msg)
     auto protocolErrorCompletion = 
         [this]()
         {
-            sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+            sendDisconnectWithReason(DiconnectReason::ProtocolError);
             completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
         };
 
@@ -586,7 +588,7 @@ void ConnectOp::handle(AuthMsg& msg)
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc != CC_Mqtt5AuthErrorCode_Continue) {
         COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::UnspecifiedError);
+        sendDisconnectWithReason(DiconnectReason::UnspecifiedError);
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         // No members access after this point, the op will be deleted
         return;
@@ -597,7 +599,7 @@ void ConnectOp::handle(AuthMsg& msg)
         comms::util::makeScopeGuard(
             [this, &termStatus]()
             {
-                sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::UnspecifiedError);
+                sendDisconnectWithReason(DiconnectReason::UnspecifiedError);
                 completeOpInternal(termStatus);
             });
 

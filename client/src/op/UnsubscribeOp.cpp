@@ -123,6 +123,14 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5UnsubscribeResponse();
 
+    auto protocolErrorOnExit = 
+        comms::util::makeScopeGuard(
+            [&cl = client()]()
+            {
+                protocolErrorTermination(cl);
+            }
+        );    
+
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
             [this, &status, &response]()
@@ -136,7 +144,6 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }  
 
@@ -161,16 +168,21 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     }    
 
     if (response.m_reasonCodesCount != m_unsubMsg.field_list().value().size()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }
 
+    protocolErrorOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
 
 Op::Type UnsubscribeOp::typeImpl() const
 {
     return Type_Unsubscribe;
+}
+
+void UnsubscribeOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
+{
+    completeOpInternal(status);
 }
 
 void UnsubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)

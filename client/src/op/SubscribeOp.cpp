@@ -154,12 +154,20 @@ void SubscribeOp::handle(SubackMsg& msg)
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5SubscribeResponse();
 
+    auto protocolErrorOnExit = 
+        comms::util::makeScopeGuard(
+            [&cl = client()]()
+            {
+                protocolErrorTermination(cl);
+            }
+        );    
+
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
                 completeOpInternal(status, &response);
-            });
+            });     
 
     PropsHandler propsHandler;
     for (auto& p : msg.field_propertiesList().value()) {
@@ -167,9 +175,9 @@ void SubscribeOp::handle(SubackMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }  
+
 
     reasonCodes.reserve(msg.field_list().value().size());
     for (auto rc : msg.field_list().value()) {
@@ -192,16 +200,21 @@ void SubscribeOp::handle(SubackMsg& msg)
     }    
 
     if (response.m_reasonCodesCount != m_subMsg.field_list().value().size()) {
-        sendDisconnectWithReason(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
         return;
     }
 
+    protocolErrorOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
 
 Op::Type SubscribeOp::typeImpl() const
 {
     return Type_Subscribe;
+}
+
+void SubscribeOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
+{
+    completeOpInternal(status);
 }
 
 void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)

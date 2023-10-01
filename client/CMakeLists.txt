@@ -98,7 +98,7 @@ function (gen_lib_mqtt5_client config_file)
             -DCONFIG_HEADER_TEMPL="${CONFIG_TEMPL}"
             -DOUT_FILE="${config_output}"
             -P ${WRITE_CONFIG_SCRIPT}
-        DEPENDS ${config_file} ${CONFIG_TEMPL} ${WRITE_CONFIG_SCRIPT}
+        DEPENDS ${config_file} ${CONFIG_TEMPL} ${WRITE_CONFIG_SCRIPT} ${DEFAULT_CONFIG_VARS_SCRIPT}
     )
     
     set_source_files_properties(

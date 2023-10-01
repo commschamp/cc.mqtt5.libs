@@ -29,6 +29,7 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
     auto& propsField = m_disconnectMsg.field_propertiesList().field();
     if (config.m_expiryInterval != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add disconnect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -40,6 +41,7 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
     if (config.m_reasonStr != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add disconnect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 

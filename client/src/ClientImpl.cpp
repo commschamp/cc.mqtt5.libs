@@ -56,6 +56,7 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     if ((m_sendOutputDataCb == nullptr) ||
         (m_brokerDisconnectReportCb == nullptr) ||
         (m_messageReceivedReportCb == nullptr)) {
+        errorLog("Hasn't set all must have callbacks");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -69,6 +70,7 @@ CC_Mqtt5ErrorCode ClientImpl::init()
             (m_cancelNextTickWaitCb != nullptr);
 
         if (!hasAllTimerCallbacks) {
+            errorLog("Hasn't set all timer management callbacks callbacks");
             return CC_Mqtt5ErrorCode_BadParam;
         }
     }
@@ -99,27 +101,32 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
     do {
         if (!m_connectOps.empty()) {
             // Already allocated
+            errorLog("Another connect operation is in progress.");
             updateEc(ec, CC_Mqtt5ErrorCode_Busy);
             break;
         }
 
         if (!m_state.m_initialized) {
+            errorLog("Client must be initialized to allow connect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate connection.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
 
         if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start connect operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
         }
 
         auto ptr = m_connectOpAlloc.alloc(*this);
         if (!ptr) {
+            errorLog("Cannot allocate new connect operation.");
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
@@ -138,32 +145,38 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
     op::DisconnectOp* disconnectOp = nullptr;
     do {
         if (!m_state.m_initialized) {
+            errorLog("Client must be initialized to allow disconnect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (!m_state.m_connected) {
+            errorLog("Client must be connected to allow disconnect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
         if (!m_disconnectOps.empty()) {
+            errorLog("Another disconnect operation is in progress.");
             updateEc(ec, CC_Mqtt5ErrorCode_Busy);
             break;
         }        
 
         if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate disconnection.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
 
         if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start disconnect operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
         }        
 
         auto ptr = m_disconnectOpsAlloc.alloc(*this);
         if (!ptr) {
+            errorLog("Cannot allocate new disconnect operation.");
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
@@ -182,27 +195,32 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
     op::SubscribeOp* subOp = nullptr;
     do {
         if (!m_state.m_initialized) {
+            errorLog("Client must be initialized to allow subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (!m_state.m_connected) {
+            errorLog("Client must be connected to allow subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
         if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
 
         if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
         }        
 
         auto ptr = m_subscribeOpsAlloc.alloc(*this);
         if (!ptr) {
+            errorLog("Cannot allocate new subscribe operation.");
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
@@ -221,27 +239,32 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
     op::UnsubscribeOp* unsubOp = nullptr;
     do {
         if (!m_state.m_initialized) {
+            errorLog("Client must be initialized to allow unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
         if (!m_state.m_connected) {
+            errorLog("Client must be connected to allow unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
         if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
 
         if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
         }        
 
         auto ptr = m_unsubscribeOpsAlloc.alloc(*this);
         if (!ptr) {
+            errorLog("Cannot allocate new unsubscribe operation.");
             updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
             break;
         }
@@ -366,6 +389,7 @@ CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
 {
     auto len = m_frame.length(msg);
     if (m_buf.max_size() < len) {
+        errorLog("Output buffer overflow.");
         return CC_Mqtt5ErrorCode_BufferOverflow;
     }
 
@@ -374,6 +398,7 @@ CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
     auto es = m_frame.write(msg, writeIter, len);
     COMMS_ASSERT(es == comms::ErrorStatus::Success);
     if (es != comms::ErrorStatus::Success) {
+        errorLog("Failed to serialize output message.");
         return CC_Mqtt5ErrorCode_InternalError;
     }
 
@@ -530,6 +555,17 @@ void ClientImpl::cleanOps()
         m_ops.end());
 
     m_opsDeleted = false;
+}
+
+void ClientImpl::errorLogInternal(const char* msg)
+{
+    if constexpr (Config::HasErrorLog) {
+        if (m_errorLogCb == nullptr) {
+            return;
+        }
+
+        m_errorLogCb(m_errorLogData, msg);
+    }
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)

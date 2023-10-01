@@ -103,6 +103,12 @@ public:
         }
     }
 
+    void setErrorLogCallback(CC_Mqtt5ErrorLogCb cb, void* data)
+    {
+        m_errorLogCb = cb;
+        m_errorLogData = data;
+    }
+
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
     virtual void handle(PubrelMsg& msg) override;
@@ -123,6 +129,13 @@ public:
     State& state()
     {
         return m_state;
+    }
+
+    inline void errorLog(const char* msg)
+    {
+        if constexpr (Config::HasErrorLog) {
+            errorLogInternal(msg);
+        }
     }
     
 private:
@@ -153,6 +166,7 @@ private:
     void createKeepAliveOpIfNeeded();
     void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
     void cleanOps();
+    void errorLogInternal(const char* msg);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
@@ -177,6 +191,9 @@ private:
 
     CC_Mqtt5MessageReceivedReportCb m_messageReceivedReportCb = nullptr;
     void* m_messageReceivedReportData = nullptr;      
+
+    CC_Mqtt5ErrorLogCb m_errorLogCb = nullptr;
+    void* m_errorLogData = nullptr;
 
     State m_state;
     TimerMgr m_timerMgr;

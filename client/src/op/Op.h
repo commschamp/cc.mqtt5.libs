@@ -83,7 +83,12 @@ protected:
     void terminationWithReason(DiconnectReason reason);
     static void protocolErrorTermination(ClientImpl& client);
     void protocolErrorTermination();
-    
+    void errorLog(const char* msg)
+    {
+        if constexpr (Config::HasErrorLog) {
+            errorLogInternal(msg);
+        }
+    }
 
     static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 
@@ -102,14 +107,16 @@ protected:
     }
 
     template <typename TField>
-    static CC_Mqtt5ErrorCode addUserPropToList(TField& field, const CC_Mqtt5UserProp& prop)
+    CC_Mqtt5ErrorCode addUserPropToList(TField& field, const CC_Mqtt5UserProp& prop)
     {
         if constexpr (ExtConfig::HasUserProps) {
             if (prop.m_key == nullptr) {
+                errorLog("User property key is empty.");
                 return CC_Mqtt5ErrorCode_BadParam;
             }
 
             if (!canAddProp(field)) {
+                errorLog("Cannot add user property, reached available limit.");
                 return CC_Mqtt5ErrorCode_OutOfMemory;
             }
 
@@ -125,11 +132,14 @@ protected:
             return CC_Mqtt5ErrorCode_Success;
         }
         else {
+            errorLog("User properties are note supported.");
             return CC_Mqtt5ErrorCode_NotSupported;
         }        
     }    
 
 private:
+    void errorLogInternal(const char* msg);
+
     ClientImpl& m_client;    
     unsigned m_responseTimeoutMs = 0U;
 };

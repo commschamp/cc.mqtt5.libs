@@ -452,3 +452,11 @@ void cc_mqtt5_##NAME##client_set_message_received_report_callback(
 {
     clientFromHandle(handle)->setMessageReceivedCallback(cb, data);
 }
+
+void cc_mqtt5_##NAME##client_set_error_log_callback(
+    CC_Mqtt5ClientHandle handle,
+    CC_Mqtt5ErrorLogCb cb,
+    void* data)
+{
+    clientFromHandle(handle)->setErrorLogCallback(cb, data);
+}

@@ -37,6 +37,7 @@ adjust_bool_value ("CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC" "CC_MQTT5_CLIENT_HAS_DYN_
 adjust_bool_value ("CC_MQTT5_CLIENT_HAS_USER_PROPS" "CC_MQTT5_CLIENT_HAS_USER_PROPS_CPP")
 adjust_bool_value ("CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES" "CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES_CPP")
 adjust_bool_value ("CC_MQTT5_CLIENT_HAS_SUB_IDS" "CC_MQTT5_CLIENT_HAS_SUB_IDS_CPP")
+adjust_bool_value ("CC_MQTT5_CLIENT_HAS_ERROR_LOG" "CC_MQTT5_CLIENT_HAS_ERROR_LOG_CPP")
 
 #########################################
 
@@ -56,6 +57,7 @@ replace_in_text (CC_MQTT5_CLIENT_HAS_SUB_IDS_CPP)
 replace_in_text (CC_MQTT5_CLIENT_SUB_IDS_LIMIT)
 replace_in_text (CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT)
 replace_in_text (CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT)
+replace_in_text (CC_MQTT5_CLIENT_HAS_ERROR_LOG_CPP)
 
 
 file (WRITE "${OUT_FILE}.tmp" "${text}")

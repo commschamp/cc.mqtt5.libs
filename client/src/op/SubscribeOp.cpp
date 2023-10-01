@@ -53,11 +53,13 @@ SubscribeOp::SubscribeOp(ClientImpl& client) :
 CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& config)
 {
     if (config.m_topic == nullptr) {
+        errorLog("Topic is not provided in subscribe configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     auto& topicVec = m_subMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
+        errorLog("Too many configured topics for subscribe operation.");
         return CC_Mqtt5ErrorCode_OutOfMemory;
     }
 
@@ -77,15 +79,18 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
     if (config.m_subId > 0) {
         static constexpr unsigned MaxSubId = 268435455;
         if (MaxSubId <= config.m_subId) {
+            errorLog("Provided subscribe ID is too high.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
         auto& state = client().state();
         if (!state.m_subIdsAvailable) {
+            errorLog("Usage of subscribe IDs is not supported by broker.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add subscribe property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -114,15 +119,18 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
             });
 
     if (cb == nullptr) {
+        errorLog("Subscribe completion callback is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if (m_subMsg.field_list().value().empty()) {
+        errorLog("No subscribe topic has been configured.");
         return CC_Mqtt5ErrorCode_InsufficientConfig;
     }
 
     if (!m_timer.isValid()) {
-        return CC_Mqtt5ErrorCode_OutOfMemory;
+        errorLog("The library cannot allocate required number of timers.");
+        return CC_Mqtt5ErrorCode_InternalError;
     }    
 
     m_cb = cb;

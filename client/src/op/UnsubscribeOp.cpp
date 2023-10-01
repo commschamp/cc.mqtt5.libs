@@ -53,11 +53,13 @@ UnsubscribeOp::UnsubscribeOp(ClientImpl& client) :
 CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfig& config)
 {
     if (config.m_topic == nullptr) {
+        errorLog("Topic is not provided in unsubscribe configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     auto& topicVec = m_unsubMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
+        errorLog("Too many configured topics for unsubscribe operation.");
         return CC_Mqtt5ErrorCode_OutOfMemory;
     }
 
@@ -83,15 +85,18 @@ CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cb
             });
 
     if (cb == nullptr) {
+        errorLog("Unsubscribe completion callback is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if (m_unsubMsg.field_list().value().empty()) {
+        errorLog("No unsubscribe topic has been configured.");
         return CC_Mqtt5ErrorCode_InsufficientConfig;
     }
 
     if (!m_timer.isValid()) {
-        return CC_Mqtt5ErrorCode_OutOfMemory;
+        errorLog("The library cannot allocate required number of timers.");
+        return CC_Mqtt5ErrorCode_InternalError;
     }    
 
     m_cb = cb;

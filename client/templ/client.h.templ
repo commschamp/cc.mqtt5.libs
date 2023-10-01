@@ -163,6 +163,10 @@ void cc_mqtt5_##NAME##client_set_message_received_report_callback(
     CC_Mqtt5MessageReceivedReportCb cb,
     void* data);
     
+void cc_mqtt5_##NAME##client_set_error_log_callback(
+    CC_Mqtt5ClientHandle handle,
+    CC_Mqtt5ErrorLogCb cb,
+    void* data);
 
 #ifdef __cplusplus
 }

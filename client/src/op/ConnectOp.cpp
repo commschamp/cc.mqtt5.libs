@@ -42,10 +42,12 @@ ConnectOp::ConnectOp(ClientImpl& client) :
 CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& config)
 {
     if ((config.m_passwordLen > 0U) && (config.m_password == nullptr)) {
+        errorLog("Bad password parameter in connect configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if ((config.m_passwordLen > 0U) && (config.m_username == nullptr)) {
+        errorLog("Username is not provided in connect configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -74,6 +76,7 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         std::numeric_limits<ConnectMsg::Field_keepAlive::ValueType>::max();
 
     if (MaxKeepAlive < config.m_keepAlive) {
+        errorLog("Keep alive value is too high in connect configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
     
@@ -86,10 +89,12 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
 CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 {
     if ((config.m_dataLen > 0U) && (config.m_data == nullptr)) {
+        errorLog("Bad data parameter in will configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if (config.m_topic == nullptr) {
+        errorLog("Will topic is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -106,6 +111,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
     if (config.m_format != CC_Mqtt5PayloadFormat_Unspecified) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -116,6 +122,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
     if (config.m_delayInterval > 0U) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -127,6 +134,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         static constexpr auto MaxValue = std::numeric_limits<ValueField::ValueType>::max();
 
         if (MaxValue < config.m_delayInterval) {
+            errorLog("Will delay interval is too high.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
@@ -135,6 +143,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
     if (config.m_messageExpiryInterval > 0U) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -154,6 +163,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
     if (config.m_contentType != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -165,6 +175,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
     if (config.m_responseTopic != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }        
         auto& propVar = addProp(propsField);
@@ -174,11 +185,13 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
     }
 
     if ((config.m_correlationDataLen > 0U) && (config.m_correlationData == nullptr)) {
+        errorLog("Bad correlation data parameter in will configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if (config.m_correlationData != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -198,6 +211,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
     auto& propsField = m_connectMsg.field_properties();
     if (config.m_sessionExpiryInterval > 0U) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -211,6 +225,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
 
     if (config.m_receiveMaximum > 0U) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -222,6 +237,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
 
     if (config.m_maxPacketSize > 0U) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -233,14 +249,17 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
 
     if (config.m_topicAliasMaximum > 0U) {
         if constexpr (!ExtConfig::HasTopicAliases) {
+            errorLog("Cannot add topic alias maximum property, reature is not supported.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
         if (config.m_topicAliasMaximum > CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT) {
+            errorLog("Topic alias maximum value is too high.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -258,6 +277,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
 
     if (config.m_requestResponseInfo) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -269,6 +289,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
 
     if (config.m_requestProblemInfo) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -285,6 +306,7 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
 {
     if ((config.m_authCb == nullptr) ||
         (config.m_authMethod == nullptr)) {
+        errorLog("Required authentication configuration is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -295,6 +317,7 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
 
     if (config.m_authMethod != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect auth property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -308,10 +331,12 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
 
     if (config.m_authDataLen > 0U) {
         if (config.m_authData == nullptr) {
+            errorLog("Bad authentication data parameter.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect auth property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
@@ -340,11 +365,13 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
             });
 
     if (cb == nullptr) {
+        errorLog("Connect completion callback is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
     if (!m_timer.isValid()) {
-        return CC_Mqtt5ErrorCode_OutOfMemory;
+        errorLog("The library cannot allocate required number of timers.");
+        return CC_Mqtt5ErrorCode_InternalError;
     }    
 
     m_cb = cb;

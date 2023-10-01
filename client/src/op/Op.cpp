@@ -108,6 +108,13 @@ void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProp
     }
 }
 
+void Op::errorLogInternal(const char* msg)
+{
+    if constexpr (Config::HasErrorLog) {
+        m_client.errorLog(msg);
+    }    
+}
+
 } // namespace op
 
 } // namespace cc_mqtt5_client

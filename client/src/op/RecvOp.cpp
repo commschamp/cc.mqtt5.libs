@@ -67,6 +67,7 @@ void RecvOp::handle(PublishMsg& msg)
         auto topicAlias = propsHandler.m_topicAlias->field_value().value();
         if ((topicAlias == 0U) ||
             (client().state().m_maxRecvTopicAlias < topicAlias)) {
+            errorLog("Broker used invalid topic alias.");
             terminationWithReason(DiconnectReason::TopicAliasInvalid);
             return;
         }
@@ -81,6 +82,7 @@ void RecvOp::handle(PublishMsg& msg)
 
         if ((recvTopicAliases.size() <= topicAlias) ||
             (recvTopicAliases[topicAlias].empty())) {
+            errorLog("Broker used unknown topic alias.");
             protocolErrorTermination();
             return;
         }
@@ -283,6 +285,7 @@ void RecvOp::recvTimoutInternal()
     // When there is no response from broker, just terminate the reception.
     // The retry will be initiated by the broker.
     COMMS_ASSERT(!m_recvTimer.isActive());
+    errorLog("Timeout on PUBREL reception from broker.");
     opComplete();
 }
 

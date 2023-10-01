@@ -355,6 +355,8 @@ typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5Disco
 
 typedef void (*CC_Mqtt5MessageReceivedReportCb)(void* data, const CC_Mqtt5MessageInfo* info);
 
+typedef void (*CC_Mqtt5ErrorLogCb)(void* data, const char* msg);
+
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
@@ -362,6 +364,7 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
+
 
 typedef struct
 {

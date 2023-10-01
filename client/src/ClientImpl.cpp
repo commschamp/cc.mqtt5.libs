@@ -283,13 +283,52 @@ void ClientImpl::handle(PublishMsg& msg)
             break;
         }
 
-        // TODO: check packet id;
+        auto iter = 
+            std::find_if(
+                m_recvOps.begin(), m_recvOps.end(),
+                [&msg](auto& opPtr)
+                {
+                    return opPtr->packetId() == msg.field_packetId().field().value();
+                });
 
-        // TODO: consider duplicate
+        if (iter == m_recvOps.end()) {
+            createRecvOp();
+            break;            
+        }
 
-        // Duplicate, check
+        if (!msg.transportField_flags().field_dup().getBitValue_bit()) {
+            PubrecMsg pubrecMsg;
+            pubrecMsg.field_packetId().setValue(msg.field_packetId().field().value());
+            pubrecMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::PacketIdInUse;
+            sendMessage(pubrecMsg);
+            return;
+        }
+
+        // Duplicate attempt to deliver 
+        (*iter)->reset();
     } while (false);
 
+    handle(static_cast<ProtMessage&>(msg));
+}
+
+void ClientImpl::handle(PubrelMsg& msg)
+{
+    auto iter = 
+        std::find_if(
+            m_recvOps.begin(), m_recvOps.end(),
+            [&msg](auto& opPtr)
+            {
+                return opPtr->packetId() == msg.field_packetId().value();
+            });
+
+    if (iter == m_recvOps.end()) {
+        PubcompMsg pubcompMsg;
+        pubcompMsg.field_packetId().setValue(msg.field_packetId().value());
+        pubcompMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::PacketIdNotFound;
+        sendMessage(pubcompMsg);
+        return;
+    }
+    
     handle(static_cast<ProtMessage&>(msg));
 }
 

@@ -28,6 +28,14 @@ public:
 
     using Base::handle;
     void handle(PublishMsg& msg) override;
+    void handle(PubrelMsg& msg) override;
+
+    unsigned packetId() const
+    {
+        return m_packetId;
+    }
+
+    void reset();
 
 protected:
     virtual Type typeImpl() const override;    
@@ -39,7 +47,6 @@ private:
     using ResponseTopicStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_responseTopic::Field_value::ValueType;
     using CorrelationDataStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_correlationData::Field_value::ValueType;
     using ContentTypeStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_contentType::Field_value::ValueType;
-    using ReasonStrStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_reasonStr::Field_value::ValueType;
 
     struct UserPropInfo
     {
@@ -63,9 +70,9 @@ private:
     UserPropsStorage m_userPropsCpy;
     UserPropsList m_userProps;
     ContentTypeStorage m_contentType;
-    ReasonStrStorage m_reasonStr;
     SubIdsStorage m_subIds;
     CC_Mqtt5MessageInfo m_info;
+    unsigned m_packetId = 0U;
 
     static_assert(ExtConfig::RecvOpTimers == 1U);
 };

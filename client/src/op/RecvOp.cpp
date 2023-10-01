@@ -88,7 +88,6 @@ void RecvOp::handle(PublishMsg& msg)
         topicPtr = &recvTopicAliases[topicAlias];
     } while (false);
 
-    // TODO: populate info;
     COMMS_ASSERT(topicPtr != nullptr);
     m_info.m_topic = topicPtr->c_str();
     auto& data = msg.field_payload().value();
@@ -121,13 +120,6 @@ void RecvOp::handle(PublishMsg& msg)
             m_info.m_contentType = contentType.c_str();    
         }        
     }
-
-    if (propsHandler.m_reasonStr != nullptr) {
-        auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
-        if (!reasonStr.empty()) {
-            m_info.m_reasonStr = reasonStr.c_str();    
-        }        
-    }    
 
     if (!propsHandler.m_subscriptionIds.empty()) {
         m_subIds.reserve(propsHandler.m_subscriptionIds.size());
@@ -215,19 +207,64 @@ void RecvOp::handle(PublishMsg& msg)
         }
     }    
 
-    if (propsHandler.m_reasonStr != nullptr) {
-        auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
-        if (!reasonStr.empty()) {
-            comms::util::assign(m_reasonStr, reasonStr.begin(), reasonStr.end());
-            m_info.m_reasonStr = m_reasonStr.c_str();
-        }
-    }      
-
+    m_packetId = msg.field_packetId().field().value();
     PubrecMsg pubrecMsg;
-    pubrecMsg.field_packetId().value() = msg.field_packetId().field().value();
+    pubrecMsg.field_packetId().setValue(m_packetId);
     pubrecMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::Success;
     sendMessage(pubrecMsg);
     restartRecvTimer();
+}
+
+void RecvOp::handle(PubrelMsg& msg)
+{
+    if (msg.field_packetId().value() != m_packetId) {
+        return;
+    }
+
+    m_recvTimer.cancel();
+
+    if (!msg.doValid()) {
+        protocolErrorTermination();
+        return;
+    }
+
+    PropsHandler propsHandler;
+    for (auto& p : msg.field_propertiesList().value()) {
+        p.currentFieldExec(propsHandler);
+    }
+
+    if (propsHandler.m_reasonStr != nullptr) {
+        auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
+        if (!reasonStr.empty()) {
+            m_info.m_reasonStr = reasonStr.c_str();    
+        }        
+    }    
+
+    if (!propsHandler.m_userProps.empty()) {
+        fillUserProps(propsHandler, m_userProps);
+        comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+        m_info.m_userProps = &m_userProps[0];
+    }        
+
+    PubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().setValue(m_packetId);
+    pubcompMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::Success;
+    sendMessage(pubcompMsg);
+    reportMsgInfoAndComplete();
+}
+
+void RecvOp::reset()
+{
+    m_recvTimer.cancel();
+    m_topicStr.clear();
+    m_data.clear();
+    m_responseTopic.clear();
+    m_correlationData.clear();
+    m_userPropsCpy.clear();
+    m_userProps.clear();
+    m_contentType.clear();
+    m_subIds.clear();
+    m_info = CC_Mqtt5MessageInfo();
 }
 
 Op::Type RecvOp::typeImpl() const

@@ -93,7 +93,7 @@ void Op::protocolErrorTermination()
 void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps)
 {
     if constexpr (Config::HasUserProps) {    
-        userProps.reserve(std::min(propsHandler.m_userProps.size(), userProps.max_size()));
+        userProps.reserve(std::min(propsHandler.m_userProps.size() + userProps.size(), userProps.max_size()));
         auto endIter = propsHandler.m_userProps.end();
         if constexpr (Config::UserPropsLimit > 0U) {
             endIter = propsHandler.m_userProps.begin() + std::min(propsHandler.m_userProps.size(), std::size_t(Config::UserPropsLimit));

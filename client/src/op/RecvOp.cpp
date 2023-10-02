@@ -156,7 +156,6 @@ void RecvOp::handle(PublishMsg& msg)
     if (qos == Qos::AtLeastOnceDelivery) {
         PubackMsg pubackMsg;
         pubackMsg.field_packetId().value() = msg.field_packetId().field().value();
-        pubackMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::Success;
         sendMessage(pubackMsg);
         reportMsgInfoAndComplete();
         return;
@@ -212,7 +211,6 @@ void RecvOp::handle(PublishMsg& msg)
     m_packetId = msg.field_packetId().field().value();
     PubrecMsg pubrecMsg;
     pubrecMsg.field_packetId().setValue(m_packetId);
-    pubrecMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::Success;
     sendMessage(pubrecMsg);
     restartRecvTimer();
 }
@@ -230,27 +228,35 @@ void RecvOp::handle(PubrelMsg& msg)
         return;
     }
 
-    PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
-        p.currentFieldExec(propsHandler);
+    if ((msg.field_reasonCode().doesExist()) && 
+        (msg.field_reasonCode().field().value() != PubrelMsg::Field_reasonCode::Field::ValueType::Success)) {
+        errorLog("Publish reception terminated due to error reason code in PUBREL message.");
+        opComplete();
+        return;
     }
 
-    if (propsHandler.m_reasonStr != nullptr) {
-        auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
-        if (!reasonStr.empty()) {
-            m_info.m_reasonStr = reasonStr.c_str();    
-        }        
-    }    
+    if (msg.field_propertiesList().doesExist()) {
+        PropsHandler propsHandler;
+        for (auto& p : msg.field_propertiesList().field().value()) {
+            p.currentFieldExec(propsHandler);
+        }
 
-    if (!propsHandler.m_userProps.empty()) {
-        fillUserProps(propsHandler, m_userProps);
-        comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
-        m_info.m_userProps = &m_userProps[0];
-    }        
+        if (propsHandler.m_reasonStr != nullptr) {
+            auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
+            if (!reasonStr.empty()) {
+                m_info.m_reasonStr = reasonStr.c_str();    
+            }        
+        }    
+
+        if (!propsHandler.m_userProps.empty()) {
+            fillUserProps(propsHandler, m_userProps);
+            comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+            m_info.m_userProps = &m_userProps[0];
+        }     
+    }   
 
     PubcompMsg pubcompMsg;
     pubcompMsg.field_packetId().setValue(m_packetId);
-    pubcompMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::Success;
     sendMessage(pubcompMsg);
     reportMsgInfoAndComplete();
 }

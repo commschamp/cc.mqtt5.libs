@@ -425,7 +425,9 @@ void ClientImpl::handle(PublishMsg& msg)
         if (!msg.transportField_flags().field_dup().getBitValue_bit()) {
             PubrecMsg pubrecMsg;
             pubrecMsg.field_packetId().setValue(msg.field_packetId().field().value());
-            pubrecMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::PacketIdInUse;
+            pubrecMsg.field_reasonCode().setExists();
+            pubrecMsg.field_propertiesList().setExists();
+            pubrecMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdInUse;
             sendMessage(pubrecMsg);
             return;
         }
@@ -455,7 +457,9 @@ void ClientImpl::handle(PubrelMsg& msg)
     if (iter == m_recvOps.end()) {
         PubcompMsg pubcompMsg;
         pubcompMsg.field_packetId().setValue(msg.field_packetId().value());
-        pubcompMsg.field_reasonCode().value() = PubackMsg::Field_reasonCode::ValueType::PacketIdNotFound;
+        pubcompMsg.field_reasonCode().setExists();
+        pubcompMsg.field_propertiesList().setExists();        
+        pubcompMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubcompMsg);
         return;
     }

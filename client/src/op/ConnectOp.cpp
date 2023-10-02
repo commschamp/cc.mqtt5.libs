@@ -80,8 +80,7 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
     
-    //comms::units::setSeconds(m_connectMsg.field_keepAlive(), config.m_keepAlive);
-    m_connectMsg.field_keepAlive().setValue(config.m_keepAlive);
+    comms::units::setSeconds(m_connectMsg.field_keepAlive(), config.m_keepAlive);
     m_connectMsg.doRefresh();
     return CC_Mqtt5ErrorCode_Success;
 }

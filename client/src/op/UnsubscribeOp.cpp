@@ -52,7 +52,7 @@ UnsubscribeOp::UnsubscribeOp(ClientImpl& client) :
 
 CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfig& config)
 {
-    if (config.m_topic == nullptr) {
+    if ((config.m_topic == nullptr) || (config.m_topic[0] == '\0')) {
         errorLog("Topic is not provided in unsubscribe configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }

@@ -92,7 +92,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if (config.m_topic == nullptr) {
+    if ((config.m_topic == nullptr) || (config.m_topic[0] == '\0')) {
         errorLog("Will topic is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }

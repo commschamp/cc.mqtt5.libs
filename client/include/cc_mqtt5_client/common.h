@@ -149,6 +149,15 @@ typedef enum
     CC_Mqtt5RetainHandling_ValuesLimit
 } CC_Mqtt5RetainHandling;
 
+typedef enum
+{
+    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable,
+    CC_Mqtt5TopicAliasPreference_ForceAliasOnly,
+    CC_Mqtt5TopicAliasPreference_ForceTopicOnly,
+    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias,
+    CC_Mqtt5TopicAliasPreference_ValuesLimit
+} CC_Mqtt5TopicAliasPreference;
+
 struct CC_Mqtt5Client;
 
 /// @brief Handle used to access client specific data structures.
@@ -170,6 +179,9 @@ typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
 struct CC_Mqtt5Unsubscribe;
 typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
+
+struct CC_Mqtt5Publish;
+typedef CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
 
 typedef struct
 {
@@ -317,6 +329,16 @@ typedef struct
     CC_Mqtt5PayloadFormat m_format;
     bool m_retained;     
 } CC_Mqtt5MessageInfo;
+
+typedef struct
+{
+    const char* m_topic;
+    const unsigned char* m_data;
+    unsigned m_dataLen;    
+    CC_Mqtt5QoS m_qos;
+    CC_Mqtt5TopicAliasPreference m_topicAliasPref;
+    bool m_retain;
+} CC_Mqtt5PublishBasicConfig;
 
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using

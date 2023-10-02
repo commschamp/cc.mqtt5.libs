@@ -106,6 +106,9 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_config_topic(CC_Mqtt5Unsub
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_add_user_prop(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData);
 
+CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5PublishHandle handle, unsigned ms);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_basic(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishBasicConfig* config);
 
 // --------------------- Callbacks ---------------------
 

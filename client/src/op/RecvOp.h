@@ -56,13 +56,13 @@ private:
     using UserPropsStorage = ObjListType<UserPropInfo, Config::UserPropsLimit, Config::HasUserProps>;
     using SubIdsStorage = ObjListType<unsigned, Config::SubIdsLimit, Config::HasSubIds>;
 
-    void restartRecvTimer();
-    void recvTimoutInternal();
+    void restartResponseTimer();
+    void responseTimeoutInternal();
     void reportMsgInfoAndComplete();
 
     static void recvTimeoutCb(void* data);
 
-    TimerMgr::Timer m_recvTimer;  
+    TimerMgr::Timer m_responseTimer;  
     TopicStr m_topicStr;
     DataStorage m_data;
     ResponseTopicStorage m_responseTopic;

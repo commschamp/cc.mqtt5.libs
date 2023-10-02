@@ -33,6 +33,7 @@ public:
         Type_Subscribe,
         Type_Unsubscribe,
         Type_Recv,
+        Type_Send,
         Type_NumOfValues // Must be last
     };
 

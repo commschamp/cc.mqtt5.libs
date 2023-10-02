@@ -52,7 +52,7 @@ SubscribeOp::SubscribeOp(ClientImpl& client) :
 
 CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& config)
 {
-    if (config.m_topic == nullptr) {
+    if ((config.m_topic == nullptr) || (config.m_topic[0] == '\0')) {
         errorLog("Topic is not provided in subscribe configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }

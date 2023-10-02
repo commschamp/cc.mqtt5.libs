@@ -19,6 +19,7 @@
 #include "op/KeepAliveOp.h"
 #include "op/Op.h"
 #include "op/RecvOp.h"
+#include "op/SendOp.h"
 #include "op/SubscribeOp.h"
 #include "op/UnsubscribeOp.h"
 
@@ -62,6 +63,7 @@ public:
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);
     op::SubscribeOp* subscribePrepare(CC_Mqtt5ErrorCode* ec);
     op::UnsubscribeOp* unsubscribePrepare(CC_Mqtt5ErrorCode* ec);
+    op::SendOp* publishPrepare(CC_Mqtt5ErrorCode* ec);
     
     CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
@@ -160,6 +162,9 @@ private:
     using RecvOpAlloc = ObjAllocator<op::RecvOp, ExtConfig::RecvOpsLimit>;
     using RecvOpsList = ObjListType<RecvOpAlloc::Ptr, ExtConfig::RecvOpsLimit>;
 
+    using SendOpAlloc = ObjAllocator<op::SendOp, ExtConfig::SendOpsLimit>;
+    using SendOpsList = ObjListType<SendOpAlloc::Ptr, ExtConfig::SendOpsLimit>;
+
     using OpPtrsList = ObjListType<op::Op*, ExtConfig::OpsLimit>;
     using OpToDeletePtrsList = ObjListType<const op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
@@ -177,6 +182,7 @@ private:
     void opComplete_Subscribe(const op::Op* op);
     void opComplete_Unsubscribe(const op::Op* op);
     void opComplete_Recv(const op::Op* op);
+    void opComplete_Send(const op::Op* op);
 
     friend class ApiEnterGuard;
 
@@ -223,6 +229,9 @@ private:
 
     RecvOpAlloc m_recvOpsAlloc;
     RecvOpsList m_recvOps;
+
+    SendOpAlloc m_sendOpsAlloc;
+    SendOpsList m_sendOps;
 
     OpPtrsList m_ops;
     bool m_opsDeleted = false;

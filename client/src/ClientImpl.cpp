@@ -278,10 +278,54 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
     return unsubOp;
 }
 
+op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
+{
+    op::SendOp* sendOp = nullptr;
+    do {
+        if (!m_state.m_initialized) {
+            errorLog("Client must be initialized to allow publish.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
+            break;
+        }
+
+        if (!m_state.m_connected) {
+            errorLog("Client must be connected to allow publish.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
+            break;
+        }
+
+        if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate publish.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start publish operation, retry in next event loop iteration.");
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+            break;
+        }        
+
+        auto ptr = m_sendOpsAlloc.alloc(*this);
+        if (!ptr) {
+            errorLog("Cannot allocate new publish operation.");
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
+            break;
+        }
+
+        m_ops.push_back(ptr.get());
+        m_sendOps.push_back(std::move(ptr));
+        sendOp = m_sendOps.back().get();
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
+    } while (false);
+
+    return sendOp;
+}
+
 CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount)
 {
     if constexpr (Config::HasTopicAliases) {
-        if (topic == nullptr) {
+        if ((topic == nullptr) || (topic[0] == '\0')) {
             errorLog("Invalid topic in the alias allocation attempt.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
@@ -348,7 +392,7 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
 CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
 {
     if constexpr (Config::HasTopicAliases) {
-        if (topic == nullptr) {
+        if ((topic == nullptr) || (topic[0] == '\0')) {
             errorLog("Invalid topic in the alias free attempt.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
@@ -542,6 +586,7 @@ void ClientImpl::opComplete(const op::Op* op)
         /* Type_Subscribe */ &ClientImpl::opComplete_Subscribe,
         /* Type_Unsubscribe */ &ClientImpl::opComplete_Unsubscribe,
         /* Type_Recv */ &ClientImpl::opComplete_Recv,
+        /* Type_Send */ &ClientImpl::opComplete_Send,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -710,6 +755,9 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
     eraseFromList(op, m_recvOps);
 }
 
-
+void ClientImpl::opComplete_Send(const op::Op* op)
+{
+    eraseFromList(op, m_sendOps);
+}
 
 } // namespace cc_mqtt5_client

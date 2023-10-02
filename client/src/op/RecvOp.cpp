@@ -26,10 +26,10 @@ inline RecvOp* asRecvOp(void* data)
 
 RecvOp::RecvOp(ClientImpl& client) : 
     Base(client),
-    m_recvTimer(client.timerMgr().allocTimer()),
+    m_responseTimer(client.timerMgr().allocTimer()),
     m_info(CC_Mqtt5MessageInfo())
 {
-    COMMS_ASSERT(m_recvTimer.isValid());
+    COMMS_ASSERT(m_responseTimer.isValid());
 }    
 
 void RecvOp::handle(PublishMsg& msg)
@@ -212,7 +212,7 @@ void RecvOp::handle(PublishMsg& msg)
     PubrecMsg pubrecMsg;
     pubrecMsg.field_packetId().setValue(m_packetId);
     sendMessage(pubrecMsg);
-    restartRecvTimer();
+    restartResponseTimer();
 }
 
 void RecvOp::handle(PubrelMsg& msg)
@@ -221,7 +221,7 @@ void RecvOp::handle(PubrelMsg& msg)
         return;
     }
 
-    m_recvTimer.cancel();
+    m_responseTimer.cancel();
 
     if (!msg.doValid()) {
         protocolErrorTermination();
@@ -263,7 +263,7 @@ void RecvOp::handle(PubrelMsg& msg)
 
 void RecvOp::reset()
 {
-    m_recvTimer.cancel();
+    m_responseTimer.cancel();
     m_topicStr.clear();
     m_data.clear();
     m_responseTopic.clear();
@@ -280,24 +280,24 @@ Op::Type RecvOp::typeImpl() const
     return Type_Recv;
 }
 
-void RecvOp::restartRecvTimer()
+void RecvOp::restartResponseTimer()
 {
     auto& state = client().state();
-    m_recvTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
+    m_responseTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
 }
 
-void RecvOp::recvTimoutInternal()
+void RecvOp::responseTimeoutInternal()
 {
     // When there is no response from broker, just terminate the reception.
     // The retry will be initiated by the broker.
-    COMMS_ASSERT(!m_recvTimer.isActive());
+    COMMS_ASSERT(!m_responseTimer.isActive());
     errorLog("Timeout on PUBREL reception from broker.");
     opComplete();
 }
 
 void RecvOp::recvTimeoutCb(void* data)
 {
-    asRecvOp(data)->recvTimoutInternal();
+    asRecvOp(data)->responseTimeoutInternal();
 }
 
 void RecvOp::reportMsgInfoAndComplete()

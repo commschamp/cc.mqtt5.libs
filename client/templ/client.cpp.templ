@@ -17,6 +17,7 @@ struct CC_Mqtt5Connect {};
 struct CC_Mqtt5Disconnect {};
 struct CC_Mqtt5Subscribe {};
 struct CC_Mqtt5Unsubscribe {};
+struct CC_Mqtt5Publish {};
 
 namespace
 {
@@ -75,6 +76,16 @@ inline cc_mqtt5_client::op::UnsubscribeOp* unsubscribeOpFromHandle(CC_Mqtt5Unsub
 inline CC_Mqtt5UnsubscribeHandle handleFromUnsubscribeOp(cc_mqtt5_client::op::UnsubscribeOp* op)
 {
     return reinterpret_cast<CC_Mqtt5UnsubscribeHandle>(op);
+}
+
+inline cc_mqtt5_client::op::SendOp* sendOpFromHandle(CC_Mqtt5PublishHandle handle)
+{
+    return reinterpret_cast<cc_mqtt5_client::op::SendOp*>(handle);
+}
+
+inline CC_Mqtt5PublishHandle handleFromSendOp(cc_mqtt5_client::op::SendOp* op)
+{
+    return reinterpret_cast<CC_Mqtt5PublishHandle>(op);
 }
 
 } // namespace
@@ -427,6 +438,37 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHa
     }
 
     return unsubscribeOpFromHandle(handle)->send(cb, cbData);      
+}
+
+CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
+{
+    if (handle == nullptr) {
+        if (ec != nullptr) {
+            *ec = CC_Mqtt5ErrorCode_BadParam;
+        }        
+        return nullptr;
+    }
+
+    return handleFromSendOp(clientFromHandle(handle)->publishPrepare(ec));     
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5PublishHandle handle, unsigned ms)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    sendOpFromHandle(handle)->setResponseTimeout(ms);
+    return CC_Mqtt5ErrorCode_Success;       
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_basic(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishBasicConfig* config)
+{
+    if ((handle == nullptr) || (config == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+    
+    return sendOpFromHandle(handle)->configBasic(*config);
 }
 
 // --------------------- Callbacks ---------------------

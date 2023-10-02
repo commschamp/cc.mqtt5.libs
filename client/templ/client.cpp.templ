@@ -107,7 +107,7 @@ unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms)
 {
-    if ((handle == nullptr) || (ms = 0U)) {
+    if ((handle == nullptr) || (ms == 0U)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -122,6 +122,24 @@ unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHand
     }
 
     return clientFromHandle(handle)->state().m_responseTimeoutMs;
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return clientFromHandle(handle)->allocPubTopicAlias(topic, qos0RegsCount);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHandle handle, const char* topic)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }        
+
+    return clientFromHandle(handle)->freePubTopicAlias(topic);
 }
 
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop)

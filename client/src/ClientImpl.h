@@ -62,6 +62,9 @@ public:
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);
     op::SubscribeOp* subscribePrepare(CC_Mqtt5ErrorCode* ec);
     op::UnsubscribeOp* unsubscribePrepare(CC_Mqtt5ErrorCode* ec);
+    
+    CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount);
+    CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {

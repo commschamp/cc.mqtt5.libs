@@ -18,4 +18,18 @@ namespace cc_mqtt5_client
 using TopicStr = PublishMsg::Field_topic::ValueType;
 using RecvTopicsMap = ObjListType<TopicStr, Config::TopicAliasesLimit, Config::HasTopicAliases>;
 
+struct TopicAliasInfo
+{
+    static constexpr std::uint8_t DefaultLowQosRegRemCount = 3;
+    static constexpr std::uint8_t DefaultHighQosRegRemCount = 1;
+
+    TopicStr m_topic;
+    unsigned m_alias = 0U;
+    std::uint8_t m_lowQosRegRemCount = DefaultLowQosRegRemCount;
+    std::uint8_t m_highQosRegRemCount = DefaultHighQosRegRemCount;
+};
+
+using SendTopicsMap = ObjListType<TopicAliasInfo, Config::TopicAliasesLimit, Config::HasTopicAliases>;
+using SendTopicsFreeAliasList = ObjListType<unsigned, Config::TopicAliasesLimit, Config::HasTopicAliases>;
+
 } // namespace cc_mqtt5_client

@@ -19,11 +19,14 @@ struct State
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
     RecvTopicsMap m_recvTopicAliases;
+    SendTopicsMap m_sendTopicAliases;
+    SendTopicsFreeAliasList m_sendTopicFreeAliases;
     unsigned m_responseTimeoutMs = DefaultOpTimeoutMs;
     unsigned m_keepAliveMs = 0U;
     unsigned m_sendLimit = 0U;
     unsigned m_packetId = 0U;
     unsigned m_maxRecvTopicAlias = 0U;
+    unsigned m_maxSendTopicAlias = 0U;
     bool m_initialized = false;
     bool m_connected = false;
     bool m_terminating = false;

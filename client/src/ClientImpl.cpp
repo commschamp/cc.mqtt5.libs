@@ -278,6 +278,103 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
     return unsubOp;
 }
 
+CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount)
+{
+    if constexpr (Config::HasTopicAliases) {
+        if (topic == nullptr) {
+            errorLog("Invalid topic in the alias allocation attempt.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        if (!m_state.m_connected) {
+            errorLog("Client must be connected to topic alias allocation.");
+            return CC_Mqtt5ErrorCode_NotConnected;
+        }
+
+        if (m_state.m_terminating) {
+            errorLog("Session termination is in progress, cannot allocate topic alias.");
+            return CC_Mqtt5ErrorCode_Terminating;
+        }    
+
+        if (m_state.m_maxSendTopicAlias <= m_state.m_sendTopicAliases.size()) {
+            errorLog("Broker doesn't support usage of any more aliases.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        if (m_state.m_sendTopicAliases.max_size() <= m_state.m_sendTopicAliases.size()) {
+            errorLog("Amount of topic aliases has reached their maximum allowed memory.");
+            return CC_Mqtt5ErrorCode_OutOfMemory;
+        }
+
+        auto iter = 
+            std::lower_bound(
+                m_state.m_sendTopicAliases.begin(), m_state.m_sendTopicAliases.end(), topic,
+                [](auto& info, const char* topicParam)
+                {
+                    return info.m_topic < topicParam;
+                });
+
+        if ((iter != m_state.m_sendTopicAliases.end()) && 
+            (iter->m_topic == topic)) {
+            iter->m_lowQosRegRemCount = qos0RegsCount;
+            iter->m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
+            return CC_Mqtt5ErrorCode_Success;
+        }
+
+        unsigned alias = 0U;
+        if (!m_state.m_sendTopicFreeAliases.empty()) {
+            alias = m_state.m_sendTopicFreeAliases.back();
+            COMMS_ASSERT(alias > 0U);
+            m_state.m_sendTopicFreeAliases.pop_back();
+        }
+
+        if (alias == 0U) {
+            comms::cast_assign(alias) = m_state.m_sendTopicFreeAliases.size() + 1U;
+        }
+
+        COMMS_ASSERT(alias > 0U);
+        COMMS_ASSERT(alias <= m_state.m_maxSendTopicAlias);
+        auto infoIter = m_state.m_sendTopicAliases.insert(iter, TopicAliasInfo());
+        infoIter->m_topic = topic;
+        infoIter->m_alias = alias;
+        infoIter->m_lowQosRegRemCount = qos0RegsCount;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+    else {
+        return CC_Mqtt5ErrorCode_NotSupported;
+    }
+}
+
+CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
+{
+    if constexpr (Config::HasTopicAliases) {
+        if (topic == nullptr) {
+            errorLog("Invalid topic in the alias free attempt.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+        
+        auto iter = 
+            std::lower_bound(
+                m_state.m_sendTopicAliases.begin(), m_state.m_sendTopicAliases.end(), topic,
+                [](auto& info, const char* topicParam)
+                {
+                    return info.m_topic < topicParam;
+                });
+
+        if ((iter == m_state.m_sendTopicAliases.end()) || (iter->m_topic != topic)) {
+            errorLog("Alias for provided topic hasn't been allocated before.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
+        m_state.m_sendTopicFreeAliases.push_back(iter->m_alias);
+        m_state.m_sendTopicAliases.erase(iter);
+        return CC_Mqtt5ErrorCode_Success;
+    }
+    else {
+        return CC_Mqtt5ErrorCode_NotSupported;
+    }        
+}
+
 void ClientImpl::handle(PublishMsg& msg)
 {
     if (m_state.m_terminating) {
@@ -285,7 +382,6 @@ void ClientImpl::handle(PublishMsg& msg)
     }
 
     do {
-
         auto createRecvOp = 
             [this]()
             {

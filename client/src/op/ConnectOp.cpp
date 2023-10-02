@@ -497,10 +497,12 @@ void ConnectOp::handle(ConnackMsg& msg)
     if (propsHandler.m_topicAliasMax != nullptr) {
         if constexpr (Config::HasTopicAliases) {
             response.m_topicAliasMax = propsHandler.m_topicAliasMax->field_value().value();
-        }
 
-        if constexpr (Config::TopicAliasesLimit > 0U) {
-            response.m_topicAliasMax = std::min(response.m_topicAliasMax, Config::TopicAliasesLimit);
+            if constexpr (Config::TopicAliasesLimit > 0U) {
+                response.m_topicAliasMax = std::min(response.m_topicAliasMax, Config::TopicAliasesLimit);
+            }   
+
+            client().state().m_maxSendTopicAlias = response.m_topicAliasMax;
         }
     }
 

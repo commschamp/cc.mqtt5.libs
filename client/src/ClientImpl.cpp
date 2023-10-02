@@ -381,13 +381,20 @@ void ClientImpl::handle(PublishMsg& msg)
         return;
     }
 
+    bool disconnectSent = false;
     do {
         auto createRecvOp = 
-            [this]()
+            [this, &disconnectSent]()
             {
                 auto ptr = m_recvOpsAlloc.alloc(*this);
                 if (!ptr) {
-                    // TODO: send report exceeding number of available receives
+                    errorLog("Failed to allocate handling op for the incoming PUBLISH message.");
+                    DisconnectMsg disconnectMsg;
+                    disconnectMsg.field_reasonCode().setExists();
+                    disconnectMsg.field_propertiesList().setExists();
+                    disconnectMsg.field_reasonCode().field().setValue(DisconnectMsg::Field_reasonCode::Field::ValueType::ReceiveMaxExceeded);    
+                    sendMessage(disconnectMsg);
+                    disconnectSent = true;
                     return; 
                 }
 
@@ -426,6 +433,11 @@ void ClientImpl::handle(PublishMsg& msg)
         // Duplicate attempt to deliver 
         (*iter)->reset();
     } while (false);
+
+    if (disconnectSent) {
+        notifyDisconnected(true);
+        return;
+    }
 
     handle(static_cast<ProtMessage&>(msg));
 }

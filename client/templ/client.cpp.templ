@@ -452,6 +452,16 @@ CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHand
     return handleFromSendOp(clientFromHandle(handle)->publishPrepare(ec));     
 }
 
+void cc_mqtt5_##NAME##client_publish_init_config_basic(CC_Mqtt5PublishBasicConfig* config)
+{
+    *config = CC_Mqtt5PublishBasicConfig();
+}
+
+void cc_mqtt5_##NAME##client_publish_init_config_extra(CC_Mqtt5PublishExtraConfig* config)
+{
+    *config = CC_Mqtt5PublishExtraConfig();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5PublishHandle handle, unsigned ms)
 {
     if (handle == nullptr) {
@@ -462,6 +472,24 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5P
     return CC_Mqtt5ErrorCode_Success;       
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_resend_attempts(CC_Mqtt5PublishHandle handle, unsigned attempts)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    return sendOpFromHandle(handle)->setResendAttempts(attempts);
+}
+
+unsigned cc_mqtt5_##NAME##client_publish_get_resend_attempts(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return sendOpFromHandle(handle)->getResendAttempts();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_basic(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishBasicConfig* config)
 {
     if ((handle == nullptr) || (config == nullptr)) {
@@ -469,6 +497,33 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_basic(CC_Mqtt5PublishHa
     }
     
     return sendOpFromHandle(handle)->configBasic(*config);
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_extra(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishExtraConfig* config)
+{
+    if ((handle == nullptr) || (config == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+    
+    return sendOpFromHandle(handle)->configExtra(*config);    
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_add_user_prop(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop)
+{
+    if ((handle == nullptr) || (prop == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return sendOpFromHandle(handle)->addUserProp(*prop);       
+}
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle handle, CC_Mqtt5PublishCompleteCb cb, void* cbData)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return sendOpFromHandle(handle)->send(cb, cbData);         
 }
 
 // --------------------- Callbacks ---------------------

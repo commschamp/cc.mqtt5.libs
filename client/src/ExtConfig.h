@@ -35,7 +35,7 @@ struct ExtConfig : public Config
         (SubscribeOpsLimit * SubscribeOpTimers) +
         (UnsubscribeOpsLimit * UnsubscribeOpTimers) + 
         (RecvOpsLimit * RecvOpTimers) + 
-        (SendOpTimers * SendOpTimers);
+        (SendOpsLimit * SendOpTimers);
 
     static const unsigned OpsLimit = 
         ConnectOpsLimit + 

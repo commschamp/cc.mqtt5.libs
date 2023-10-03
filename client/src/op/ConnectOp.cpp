@@ -154,6 +154,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         static constexpr auto MaxValue = std::numeric_limits<ValueField::ValueType>::max();
 
         if (MaxValue < config.m_messageExpiryInterval) {
+            errorLog("Message expiry interval is too high");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 

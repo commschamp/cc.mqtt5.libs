@@ -340,6 +340,24 @@ typedef struct
     bool m_retain;
 } CC_Mqtt5PublishBasicConfig;
 
+typedef struct
+{
+    const char* m_contentType;
+    const char* m_responseTopic;
+    const unsigned char* m_correlationData;
+    unsigned m_correlationDataLen;
+    unsigned m_messageExpiryInterval;
+    CC_Mqtt5PayloadFormat m_format;
+} CC_Mqtt5PublishExtraConfig;
+
+typedef struct 
+{
+    CC_Mqtt5ReasonCode m_reasonCode;
+    const char* m_reasonStr;
+    const CC_Mqtt5UserProp* m_userProps;
+    unsigned m_userPropsCount;
+} CC_Mqtt5PublishResponse;
+
 /// @brief Callback used to request time measurement.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.
@@ -386,6 +404,8 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
+
+typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
 
 typedef struct

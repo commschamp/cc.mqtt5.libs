@@ -27,6 +27,8 @@ public:
     explicit SendOp(ClientImpl& client);
 
     using Base::handle;
+    virtual void handle(PubackMsg& msg) override;
+    virtual void handle(PubrecMsg& msg) override;
 
     unsigned packetId() const
     {
@@ -34,6 +36,11 @@ public:
     }
 
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5PublishBasicConfig& config);
+    CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5PublishExtraConfig& config);
+    CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
+    CC_Mqtt5ErrorCode setResendAttempts(unsigned attempts);
+    unsigned getResendAttempts() const;
+    CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
 
 protected:
     virtual Type typeImpl() const override;    
@@ -41,11 +48,21 @@ protected:
 private:
     void restartResponseTimer();
     void responseTimeoutInternal();
+    void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     static void recvTimeoutCb(void* data);
 
     TimerMgr::Timer m_responseTimer;  
     PublishMsg m_pubMsg;
+    CC_Mqtt5PublishCompleteCb m_cb = nullptr;
+    void* m_cbData = nullptr;    
+    UserPropsList m_userProps; // Will be referenced in response
+    CC_Mqtt5PublishResponse m_response;
+    unsigned m_totalSendAttempts = DefaultSendAttempts;
+    unsigned m_sendAttempts = 0U;
+    bool m_acked = false;
+    bool m_compAcked = false;
 
+    static constexpr unsigned DefaultSendAttempts = 2U;
     static_assert(ExtConfig::SendOpTimers == 1U);
 };
 

@@ -7,7 +7,7 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestConnect : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestSubscribe : public CxxTest::TestSuite, public UnitTestCommonBase
 {
 public:
     void test1();
@@ -25,51 +25,15 @@ private:
     }
 };
 
-void UnitTestConnect::test1()
+void UnitTestSubscribe::test1()
 {
     // Simple subscribe and ack
     auto* client = unitTestAllocClient();
-    TS_ASSERT_DIFFERS(client, nullptr);
-    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
-    TS_ASSERT_DIFFERS(connect, nullptr);
-
-    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
-
-    const std::string ClientId(__FUNCTION__);
-    const unsigned KeepAlive = 60;
-    connectBasicConfig.m_clientId = ClientId.c_str();
-    connectBasicConfig.m_keepAlive = KeepAlive;
-    connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-
-    ec = unitTestSendConnect(connect);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-
-    auto sentMsg = unitTestGetSentMessage();
-    TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
-    TS_ASSERT(!unitTestIsConnectComplete());
-
-    auto* tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
-
-    unitTestTick(1000);
-    UnitTestConnackMsg connackMsg;
-    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    unitTestReceiveMessage(connackMsg);
-    TS_ASSERT(unitTestIsConnectComplete());
-
-    auto& connectInfo = unitTestConnectResponseInfo();
-    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
-    unitTestPopConnectResponseInfo();
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
+    auto tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
 
 
     auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
@@ -88,7 +52,7 @@ void UnitTestConnect::test1()
     subscribeConfig1.m_retainHandling = SubRetainHandling1;
     subscribeConfig1.m_noLocal = SubNoLocal1;
     subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
-    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig1);
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string SubTopic2 = "/sub/topic/2";
@@ -111,7 +75,7 @@ void UnitTestConnect::test1()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
     TS_ASSERT(!unitTestIsSubscribeComplete());
 
-    sentMsg = unitTestGetSentMessage();
+    auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
@@ -148,53 +112,15 @@ void UnitTestConnect::test1()
     unitTestPopSubscribeResponseInfo();
 }
 
-void UnitTestConnect::test2()
+void UnitTestSubscribe::test2()
 {
     // Parallel subscribe
     auto* client = unitTestAllocClient();
-    TS_ASSERT_DIFFERS(client, nullptr);
-    TS_ASSERT(unitTestCheckNoTicks());
-
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
-    TS_ASSERT_DIFFERS(connect, nullptr);
-
-    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
-
-    const std::string ClientId(__FUNCTION__);
-    const unsigned KeepAlive = 60;
-    connectBasicConfig.m_clientId = ClientId.c_str();
-    connectBasicConfig.m_keepAlive = KeepAlive;
-    connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-
-    ec = unitTestSendConnect(connect);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-
-    auto sentMsg = unitTestGetSentMessage();
-    TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
-    TS_ASSERT(!unitTestIsConnectComplete());
-    sentMsg.reset();
-
-    auto* tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
-
-    unitTestTick(1000);
-    UnitTestConnackMsg connackMsg;
-    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    unitTestReceiveMessage(connackMsg);
-    TS_ASSERT(unitTestIsConnectComplete());
-
-    auto& connectInfo = unitTestConnectResponseInfo();
-    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
-    unitTestPopConnectResponseInfo();
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, KeepAlive * 1000);
-
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    
+    auto tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive
 
     auto subscribe1 = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe1, nullptr);
@@ -215,7 +141,7 @@ void UnitTestConnect::test2()
     subscribeConfig1.m_retainHandling = SubRetainHandling1;
     subscribeConfig1.m_noLocal = SubNoLocal1;
     subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
-    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe1, &subscribeConfig1);
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe1, &subscribeConfig1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto subcribeExtra1 = CC_Mqtt5SubscribeExtraConfig();
@@ -249,7 +175,6 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(propsHandler1.m_userProps.size(), 1U);    
     TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_first().value(), SubUserPropKey1);    
     TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_second().value(), SubUserPropVal1);    
-
 
     auto subscribe2 = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe2, nullptr);

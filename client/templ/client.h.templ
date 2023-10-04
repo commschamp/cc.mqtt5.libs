@@ -35,6 +35,10 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 /// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
 
+bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
+
+bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
+
 /// @brief Notify client about requested time expiry.
 /// @details The reported amount of milliseconds needs to be from the 
 ///     last request to program timer via callback (set by

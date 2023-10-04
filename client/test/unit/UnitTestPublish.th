@@ -1,0 +1,57 @@
+#include "UnitTestCommonBase.h"
+#include "UnitTestDefs.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include "client.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestPublish : public CxxTest::TestSuite, public UnitTestCommonBase
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestPublish::test1()
+{
+    // Simple Qos0 publish
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    const bool Retain = true;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+    TS_ASSERT_EQUALS(config.m_topicAliasPref, CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable);
+    config.m_retain = Retain;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+}

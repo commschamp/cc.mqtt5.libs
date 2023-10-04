@@ -136,8 +136,9 @@ protected:
     const TickInfo* unitTestTickReq();
     bool unitTestCheckNoTicks();
     void unitTestTick(unsigned ms = 0, bool forceTick = false);
-    CC_Mqtt5ErrorCode unitTestSendConnect(CC_Mqtt5ConnectHandle connect);
-    CC_Mqtt5ErrorCode unitTestSendSubscribe(CC_Mqtt5SubscribeHandle subscribe);
+    CC_Mqtt5ErrorCode unitTestSendConnect(CC_Mqtt5ConnectHandle& connect);
+    CC_Mqtt5ErrorCode unitTestSendSubscribe(CC_Mqtt5SubscribeHandle& subscribe);
+    CC_Mqtt5ErrorCode unitTestSendPublish(CC_Mqtt5PublishHandle& subscribe);
     UniTestsMsgPtr unitTestGetSentMessage();
     bool unitTestHasSentMessage() const;
     bool unitTestIsConnectComplete();
@@ -156,6 +157,7 @@ protected:
     bool unitTestHasDisconnectInfo() const;
     const UnitTestDisconnectInfo& unitTestDisconnectInfo() const;
     void unitTestPopDisconnectInfo();
+    void unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart = true);
 
 private:
 
@@ -166,6 +168,7 @@ private:
     static unsigned unitTestCancelNextTickWaitCb(void* obj);
     static void unitTestConnectCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     static void unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+    static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
     
     UnitTestClientPtr m_client;

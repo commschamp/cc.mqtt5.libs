@@ -106,6 +106,24 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle)
     return clientFromHandle(handle)->init();
 }
 
+bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return false;
+    }
+
+    return clientFromHandle(handle)->state().m_initialized;
+}
+
+bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return false;
+    }
+
+    return clientFromHandle(handle)->state().m_connected;
+}
+
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms)
 {
     clientFromHandle(handle)->tick(ms);

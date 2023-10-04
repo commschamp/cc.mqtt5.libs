@@ -24,4 +24,5 @@ endfunction ()
 
 cc_mqtt5_client_add_unit_test(UnitTestClient)
 cc_mqtt5_client_add_unit_test(UnitTestConnect)
+cc_mqtt5_client_add_unit_test(UnitTestPublish)
 cc_mqtt5_client_add_unit_test(UnitTestSubscribe)

@@ -88,7 +88,6 @@ void SendOp::handle(PubrecMsg& msg)
     }
 
     m_responseTimer.cancel();
-
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
         errorLog("Unexpected PUBREC for Qos1 message");
         reportPubComplete(CC_Mqtt5AsyncOpStatus_ProtocolError);
@@ -149,6 +148,59 @@ void SendOp::handle(PubrecMsg& msg)
 
     ++m_sendAttempts;
     restartResponseTimer();
+}
+
+void SendOp::handle(PubcompMsg& msg)
+{
+    if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
+        return;
+    }
+
+    m_responseTimer.cancel();
+    if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
+        errorLog("Unexpected PUBCOMP for Qos1 message");
+        reportPubComplete(CC_Mqtt5AsyncOpStatus_ProtocolError);
+        protocolErrorTermination();
+        return;
+    }
+
+    if (!m_acked) {
+        errorLog("Unexpected PUBCOMP without PUBREC");
+        reportPubComplete(CC_Mqtt5AsyncOpStatus_ProtocolError);
+        protocolErrorTermination();
+        return;
+    }    
+
+    if (msg.field_reasonCode().doesExist()) {
+        comms::cast_assign(m_response.m_reasonCode) = msg.field_reasonCode().field().value();
+    }    
+
+    if (msg.field_propertiesList().doesExist()) {
+        PropsHandler propsHandler;
+        for (auto& p : msg.field_propertiesList().field().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+
+        if (propsHandler.isProtocolError()) {
+            errorLog("Invalid properties in PUBREC message");
+            reportPubComplete(CC_Mqtt5AsyncOpStatus_ProtocolError);
+            protocolErrorTermination();
+            return;
+        }    
+
+        if (propsHandler.m_reasonStr != nullptr) {
+            m_response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+        }
+
+        if (!propsHandler.m_userProps.empty()) {
+            fillUserProps(propsHandler, m_userProps);
+            m_response.m_userProps = &m_userProps[0];
+            comms::cast_assign(m_response.m_userPropsCount) = m_userProps.size();
+        }        
+    }
+    
+    reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete, &m_response);
+    opComplete();
 }
 
 CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
@@ -429,21 +481,19 @@ void SendOp::responseTimeoutInternal()
         return;
     }
 
-    if (!m_compAcked) {
-        COMMS_ASSERT(m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery);
-        PubrelMsg pubrelMsg;
-        pubrelMsg.field_packetId().setValue(m_pubMsg.field_packetId().field().value());
-        auto result = client().sendMessage(pubrelMsg); 
-        if (result != CC_Mqtt5ErrorCode_Success) {
-            errorLog("Failed to resend PUBREL message.");
-            reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-            opComplete();
-            return;
-        }
-
-        ++m_sendAttempts;
-        restartResponseTimer();
+    COMMS_ASSERT(m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery);
+    PubrelMsg pubrelMsg;
+    pubrelMsg.field_packetId().setValue(m_pubMsg.field_packetId().field().value());
+    auto result = client().sendMessage(pubrelMsg); 
+    if (result != CC_Mqtt5ErrorCode_Success) {
+        errorLog("Failed to resend PUBREL message.");
+        reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
+        opComplete();
+        return;
     }
+
+    ++m_sendAttempts;
+    restartResponseTimer();
 }
 
 void SendOp::reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)

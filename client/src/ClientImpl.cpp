@@ -433,11 +433,7 @@ void ClientImpl::handle(PublishMsg& msg)
                 auto ptr = m_recvOpsAlloc.alloc(*this);
                 if (!ptr) {
                     errorLog("Failed to allocate handling op for the incoming PUBLISH message.");
-                    DisconnectMsg disconnectMsg;
-                    disconnectMsg.field_reasonCode().setExists();
-                    disconnectMsg.field_propertiesList().setExists();
-                    disconnectMsg.field_reasonCode().field().setValue(DisconnectMsg::Field_reasonCode::Field::ValueType::ReceiveMaxExceeded);    
-                    sendMessage(disconnectMsg);
+                    sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ReceiveMaxExceeded);
                     disconnectSent = true;
                     return; 
                 }
@@ -488,6 +484,56 @@ void ClientImpl::handle(PublishMsg& msg)
     handle(static_cast<ProtMessage&>(msg));
 }
 
+void ClientImpl::handle(PubackMsg& msg)
+{
+    auto iter = 
+        std::find_if(
+            m_sendOps.begin(), m_sendOps.end(),
+            [&msg](auto& opPtr)
+            {
+                return opPtr->packetId() == msg.field_packetId().value();
+            });
+
+    if (iter == m_sendOps.end()) {
+        errorLog("PUBACK with unknown packet id");
+        sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        notifyDisconnected(true);
+        return;
+    }
+
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+    msg.dispatch(**iter);
+}
+
+void ClientImpl::handle(PubrecMsg& msg)
+{
+    auto iter = 
+        std::find_if(
+            m_sendOps.begin(), m_sendOps.end(),
+            [&msg](auto& opPtr)
+            {
+                return opPtr->packetId() == msg.field_packetId().value();
+            });
+
+    if (iter == m_sendOps.end()) {
+        errorLog("PUBREC with unknown packet id");
+        PubrelMsg pubrelMsg;
+        pubrelMsg.field_packetId().setValue(msg.field_packetId().value());
+        pubrelMsg.field_reasonCode().setExists();
+        pubrelMsg.field_propertiesList().setExists();        
+        pubrelMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
+        sendMessage(pubrelMsg);
+        return;
+    }
+
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+    msg.dispatch(**iter);
+}
+
 void ClientImpl::handle(PubrelMsg& msg)
 {
     auto iter = 
@@ -499,6 +545,7 @@ void ClientImpl::handle(PubrelMsg& msg)
             });
 
     if (iter == m_recvOps.end()) {
+        errorLog("PUBREL with unknown packet id");
         PubcompMsg pubcompMsg;
         pubcompMsg.field_packetId().setValue(msg.field_packetId().value());
         pubcompMsg.field_reasonCode().setExists();
@@ -507,8 +554,34 @@ void ClientImpl::handle(PubrelMsg& msg)
         sendMessage(pubcompMsg);
         return;
     }
-    
-    handle(static_cast<ProtMessage&>(msg));
+
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+    msg.dispatch(**iter);
+}
+
+void ClientImpl::handle(PubcompMsg& msg)
+{
+    auto iter = 
+        std::find_if(
+            m_sendOps.begin(), m_sendOps.end(),
+            [&msg](auto& opPtr)
+            {
+                return opPtr->packetId() == msg.field_packetId().value();
+            });
+
+    if (iter == m_sendOps.end()) {
+        errorLog("PUBCOMP with unknown packet id");
+        sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+        notifyDisconnected(true);
+        return;
+    }
+
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+    msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(ProtMessage& msg)
@@ -723,6 +796,15 @@ void ClientImpl::errorLogInternal(const char* msg)
 
         m_errorLogCb(m_errorLogData, msg);
     }
+}
+
+void ClientImpl::sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason)
+{
+    DisconnectMsg disconnectMsg;
+    disconnectMsg.field_reasonCode().setExists();
+    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_reasonCode().field().setValue(reason);    
+    sendMessage(disconnectMsg);
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)

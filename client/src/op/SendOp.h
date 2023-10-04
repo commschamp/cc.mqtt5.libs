@@ -29,6 +29,7 @@ public:
     using Base::handle;
     virtual void handle(PubackMsg& msg) override;
     virtual void handle(PubrecMsg& msg) override;
+    virtual void handle(PubcompMsg& msg) override;
 
     unsigned packetId() const
     {
@@ -60,7 +61,6 @@ private:
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     bool m_acked = false;
-    bool m_compAcked = false;
 
     static constexpr unsigned DefaultSendAttempts = 2U;
     static_assert(ExtConfig::SendOpTimers == 1U);

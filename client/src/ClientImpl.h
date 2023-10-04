@@ -116,7 +116,10 @@ public:
 
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
+    virtual void handle(PubackMsg& msg) override;
+    virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubrelMsg& msg) override;
+    virtual void handle(PubcompMsg& msg) override;
     virtual void handle(ProtMessage& msg) override;
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
@@ -175,6 +178,7 @@ private:
     void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
     void cleanOps();
     void errorLogInternal(const char* msg);
+    void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);

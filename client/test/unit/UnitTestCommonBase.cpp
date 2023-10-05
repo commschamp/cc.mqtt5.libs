@@ -96,7 +96,17 @@ UnitTestCommonBase::UnitTestSubscribeResponse& UnitTestCommonBase::UnitTestSubsc
 
 UnitTestCommonBase::UnitTestDisconnectInfo& UnitTestCommonBase::UnitTestDisconnectInfo::operator=(const CC_Mqtt5DisconnectInfo& other)
 {
-    std::tie(m_reasonCode, m_reasonStr, m_serverRef) = std::make_tuple(other.m_reasonCode, other.m_reasonStr, other.m_serverRef);
+    m_reasonCode = other.m_reasonCode;
+    assignStringInternal(m_reasonStr, other.m_reasonStr);
+    assignStringInternal(m_serverRef, other.m_serverRef);        
+    UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
+    return *this;
+}
+
+UnitTestCommonBase::UnitTestPublishResponse& UnitTestCommonBase::UnitTestPublishResponse::operator=(const CC_Mqtt5PublishResponse& other)
+{
+    m_reasonCode = other.m_reasonCode;
+    assignStringInternal(m_reasonStr, other.m_reasonStr);
     UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
     return *this;
 }
@@ -186,7 +196,6 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle&
     publish = nullptr;
 }
 
-
 UniTestsMsgPtr UnitTestCommonBase::unitTestGetSentMessage()
 {
     UniTestsMsgPtr msg;
@@ -238,6 +247,23 @@ void UnitTestCommonBase::unitTestPopSubscribeResponseInfo()
 {
     assert(!m_subscribeResp.empty());
     m_subscribeResp.erase(m_subscribeResp.begin());
+}
+
+bool UnitTestCommonBase::unitTestIsPublishComplete()
+{
+    return !m_publishResp.empty();
+}
+
+const UnitTestCommonBase::UnitTestPublishResponseInfo& UnitTestCommonBase::unitTestPublishResponseInfo()
+{
+    assert(!m_publishResp.empty());
+    return m_publishResp.front();
+}
+
+void UnitTestCommonBase::unitTestPopPublishResponseInfo()
+{
+    assert(!m_publishResp.empty());
+    m_publishResp.erase(m_publishResp.begin());
 }
 
 void UnitTestCommonBase::unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData)
@@ -423,11 +449,14 @@ void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpS
 
 void UnitTestCommonBase::unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
-    // TODO:
-    //assert(false); // Not yet impelemented
-    static_cast<void>(obj);
-    static_cast<void>(status);
-    static_cast<void>(response);
+    auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+    assert(realObj->m_publishResp.empty());
+    realObj->m_publishResp.resize(realObj->m_publishResp.size() + 1U);
+    auto& info = realObj->m_publishResp.back();
+    info.m_status = status;
+    if (response != nullptr) {
+        info.m_response = *response;
+    }
 }
 
 CC_Mqtt5AuthErrorCode UnitTestCommonBase::unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)

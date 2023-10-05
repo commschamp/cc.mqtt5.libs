@@ -118,6 +118,30 @@ protected:
         UnitTestDisconnectInfo& operator=(const CC_Mqtt5DisconnectInfo& other);
     };    
 
+    struct UnitTestPublishResponse
+    {
+        CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_UnspecifiedError;
+        std::string m_reasonStr;
+        UnitTestUserProp::List m_userProps;
+
+        UnitTestPublishResponse() = default;
+        UnitTestPublishResponse(const UnitTestPublishResponse&) = default;
+
+        UnitTestPublishResponse(const CC_Mqtt5PublishResponse& other)
+        {
+            *this = other;
+        }
+
+        UnitTestPublishResponse& operator=(const UnitTestPublishResponse&) = default;
+        UnitTestPublishResponse& operator=(const CC_Mqtt5PublishResponse& other);
+    };    
+
+    struct UnitTestPublishResponseInfo
+    {
+        CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
+        UnitTestPublishResponse m_response;
+    };          
+
     struct TickInfo
     {
         unsigned m_requested = 0U;
@@ -147,6 +171,9 @@ protected:
     bool unitTestIsSubscribeComplete();
     const UnitTestSubscribeResponseInfo& unitTestSubscribeResponseInfo();
     void unitTestPopSubscribeResponseInfo();
+    bool unitTestIsPublishComplete();
+    const UnitTestPublishResponseInfo& unitTestPublishResponseInfo();
+    void unitTestPopPublishResponseInfo();
     void unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData = true);
     CC_Mqtt5ErrorCode unitTestConfigAuth(CC_Mqtt5ConnectHandle handle, const std::string& method, const std::vector<std::uint8_t>& data);
     void unitTestAddOutAuth(const UnitTestAuthInfo& info);
@@ -177,6 +204,7 @@ private:
     std::vector<std::uint8_t> m_receivedData;
     std::vector<UnitTestConnectResponseInfo> m_connectResp;
     std::vector<UnitTestSubscribeResponseInfo> m_subscribeResp;
+    std::vector<UnitTestPublishResponseInfo> m_publishResp;
     std::vector<UnitTestAuthInfo> m_inAuthInfo;
     std::vector<UnitTestAuthInfo> m_outAuthInfo;
     std::vector<CC_Mqtt5UserProp> m_userPropsTmp;

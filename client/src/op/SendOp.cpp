@@ -274,6 +274,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         }
     } while (false);
 
+    m_pubMsg.transportField_flags().field_retain().setBitValue_bit(config.m_retain);
     m_pubMsg.transportField_flags().field_qos().setValue(config.m_qos);
     
     if (mustAssignTopic) {

@@ -18,6 +18,7 @@ public:
     void test6();
     void test7();
     void test8();
+    void test9();
 
 private:
     virtual void setUp() override
@@ -655,5 +656,125 @@ void UnitTestPublish::test8()
         unitTestReceiveMessage(pubackMsg);
         TS_ASSERT(unitTestIsPublishComplete());
         unitTestPopPublishResponseInfo();      
+    } while (false);    
+}
+
+void UnitTestPublish::test9()
+{
+    // Qos2 publish with topic id
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__, true, 10);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    const std::string Topic("some/topic");
+    auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 3U);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    unsigned alias = 0U;
+    do {
+        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        TS_ASSERT_DIFFERS(publish, nullptr);
+
+        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+        
+        ec = unitTestSendPublish(publish);
+        TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+        TS_ASSERT(!unitTestIsPublishComplete());
+
+        auto sentMsg = unitTestGetSentMessage();
+        TS_ASSERT(sentMsg);
+        TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+        auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+        TS_ASSERT_DIFFERS(publishMsg, nullptr);
+        TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+
+        UnitTestPropsHandler propsHandler;
+        for (auto& p : publishMsg->field_propertiesList().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+        
+        TS_ASSERT_DIFFERS(propsHandler.m_topicAlias, nullptr);
+        alias = propsHandler.m_topicAlias->field_value().value();
+
+        unitTestTick(1000);
+        UnitTestPubrecMsg pubrecMsg;
+        pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+        unitTestReceiveMessage(pubrecMsg);
+
+        sentMsg = unitTestGetSentMessage();
+        TS_ASSERT(sentMsg);
+        TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+        auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+        TS_ASSERT_DIFFERS(pubrelMsg, nullptr);
+        TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), pubrecMsg.field_packetId().value());        
+
+        unitTestTick(1000);
+        UnitTestPubrecMsg pubcompMsg;
+        pubcompMsg.field_packetId().value() = pubrelMsg->field_packetId().value();
+        unitTestReceiveMessage(pubrecMsg);
+
+        TS_ASSERT(unitTestIsPublishComplete());
+        unitTestPopPublishResponseInfo();        
+    } while (false);
+
+    TS_ASSERT_DIFFERS(alias, 0U);
+
+    // Sending second time
+    do {
+        unitTestTick(1000);
+        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        TS_ASSERT_DIFFERS(publish, nullptr);
+
+        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+        
+        ec = unitTestSendPublish(publish);
+        TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+        TS_ASSERT(!unitTestIsPublishComplete());
+
+        auto sentMsg = unitTestGetSentMessage();
+        TS_ASSERT(sentMsg);
+        TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+        auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+        TS_ASSERT_DIFFERS(publishMsg, nullptr);
+        TS_ASSERT(publishMsg->field_topic().value().empty());
+
+        UnitTestPropsHandler propsHandler;
+        for (auto& p : publishMsg->field_propertiesList().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+        
+        TS_ASSERT_DIFFERS(propsHandler.m_topicAlias, nullptr);
+        TS_ASSERT_EQUALS(alias, propsHandler.m_topicAlias->field_value().value());
+
+        unitTestTick(1000);
+        UnitTestPubrecMsg pubrecMsg;
+        pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+        unitTestReceiveMessage(pubrecMsg);
+
+        sentMsg = unitTestGetSentMessage();
+        TS_ASSERT(sentMsg);
+        TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+        auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+        TS_ASSERT_DIFFERS(pubrelMsg, nullptr);
+        TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), pubrecMsg.field_packetId().value());        
+
+        unitTestTick(1000);
+        UnitTestPubrecMsg pubcompMsg;
+        pubcompMsg.field_packetId().value() = pubrelMsg->field_packetId().value();
+        unitTestReceiveMessage(pubrecMsg);
+
+        TS_ASSERT(unitTestIsPublishComplete());
+        unitTestPopPublishResponseInfo();     
     } while (false);    
 }

@@ -53,6 +53,10 @@ void SendOp::handle(PubackMsg& msg)
         comms::cast_assign(m_response.m_reasonCode) = msg.field_reasonCode().field().value();
     }
 
+    if (m_registeredAlias && (m_response.m_reasonCode < CC_Mqtt5ReasonCode_UnspecifiedError)) {
+        confirmRegisteredAlias();
+    }
+
     if (msg.field_propertiesList().doesExist()) {
         PropsHandler propsHandler;
         for (auto& p : msg.field_propertiesList().field().value()) {
@@ -133,6 +137,10 @@ void SendOp::handle(PubrecMsg& msg)
         opComplete();
         return;
     }
+
+    if (m_registeredAlias) {
+        confirmRegisteredAlias();
+    }    
 
     m_acked = true;
     m_sendAttempts = 0U;
@@ -305,6 +313,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         comms::util::assign(m_pubMsg.field_payload().value(), config.m_data, config.m_data + config.m_dataLen);
     }
 
+    m_registeredAlias = (alias > 0) && mustAssignTopic;
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -506,6 +515,30 @@ void SendOp::reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5Publi
     }
 
     m_cb(m_cbData, status, response);
+}
+
+void SendOp::confirmRegisteredAlias()
+{
+    COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
+    COMMS_ASSERT(m_registeredAlias);
+    auto& state = client().state();
+    auto& topic = m_pubMsg.field_topic().value();
+    auto iter = 
+        std::lower_bound(
+            state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), topic,
+            [](auto& info, auto& topicParam)
+            {
+                return info.m_topic < topicParam;
+            });    
+
+    if (iter == state.m_sendTopicAliases.end()) {
+        errorLog("Topic alias freed before it is acknowledged");
+        return;
+    }
+
+    if (iter->m_highQosRegRemCount > 0U) {
+        --(iter->m_highQosRegRemCount);
+    }
 }
 
 void SendOp::recvTimeoutCb(void* data)

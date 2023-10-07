@@ -50,7 +50,10 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 
 CC_Mqtt5ErrorCode ClientImpl::init()
 {
-    // TODO: Cannot re-initiate when iterating
+    if (m_apiEnterCount > 0U) {
+        errorLog("Cannot (re)init from within callback");
+        return CC_Mqtt5ErrorCode_RetryLater;
+    }
 
     auto guard = apiEnter();
     if ((m_sendOutputDataCb == nullptr) ||

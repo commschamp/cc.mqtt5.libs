@@ -171,6 +171,59 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHan
     return clientFromHandle(handle)->freePubTopicAlias(topic);
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }  
+
+    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+        clientFromHandle(handle)->configState().m_verifyOutgoingTopic = enabled;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+    else {
+        return CC_Mqtt5ErrorCode_NotSupported;
+    }
+}
+
+bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic(CC_Mqtt5ClientHandle handle)
+{
+    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+        COMMS_ASSERT(handle != nullptr);
+        return clientFromHandle(handle)->configState().m_verifyOutgoingTopic;
+    }
+    else {
+        return false;
+    }
+}
+
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }  
+
+    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+        clientFromHandle(handle)->configState().m_verifyIncomingTopic = enabled;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+    else {
+        return CC_Mqtt5ErrorCode_NotSupported;
+    }
+}
+
+bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle handle)
+{
+    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+        COMMS_ASSERT(handle != nullptr);
+        return clientFromHandle(handle)->configState().m_verifyIncomingTopic;
+    }
+    else {
+        return false;
+    }
+}
+
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop)
 {
     *prop = CC_Mqtt5UserProp();

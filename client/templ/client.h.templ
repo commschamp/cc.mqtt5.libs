@@ -72,6 +72,12 @@ unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHandle handle, const char* topic);
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled);
+bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic(CC_Mqtt5ClientHandle handle);
+
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled);
+bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle handle);
+
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);

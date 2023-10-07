@@ -20,6 +20,7 @@ struct Config
     static constexpr unsigned SubscribeOpsLimit = ##CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT##;
     static constexpr unsigned UnsubscribeOpsLimit = ##CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT##;
     static constexpr bool HasErrorLog = ##CC_MQTT5_CLIENT_HAS_ERROR_LOG_CPP##;
+    static constexpr bool HasTopicVerification = ##CC_MQTT5_CLIENT_HAS_TOPIC_VERIFICATION_CPP##;
 
     static_assert(HasDynMemAlloc || (ClientAllocLimit > 0U), "Must use CC_MQTT5_CLIENT_ALLOC_LIMIT in configuration to limit number of clients");
     static_assert(HasDynMemAlloc || (StringFieldFixedLen > 0U), "Must use CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN in configuration to limit string field length");

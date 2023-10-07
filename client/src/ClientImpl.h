@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "ConfigState.h"
 #include "ExtConfig.h"
 #include "ObjAllocator.h"
 #include "ObjListType.h"
@@ -134,6 +135,11 @@ public:
         return m_timerMgr;
     }
 
+    ConfigState& configState()
+    {
+        return m_configState;
+    }
+
     State& state()
     {
         return m_state;
@@ -208,6 +214,7 @@ private:
     CC_Mqtt5ErrorLogCb m_errorLogCb = nullptr;
     void* m_errorLogData = nullptr;
 
+    ConfigState m_configState;
     State m_state;
     TimerMgr m_timerMgr;
     unsigned m_apiEnterCount = 0U;

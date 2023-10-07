@@ -12,6 +12,7 @@ class UnitTestSubscribe : public CxxTest::TestSuite, public UnitTestCommonBase
 public:
     void test1();
     void test2();
+    void test3();
 
 private:
     virtual void setUp() override
@@ -224,4 +225,46 @@ void UnitTestSubscribe::test2()
     unitTestTick(); // Timeout of the op
     TS_ASSERT(unitTestIsSubscribeComplete());
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+}
+
+void UnitTestSubscribe::test3()
+{
+    // Invalid subscribe topics
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto config = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&config);
+
+    config.m_topic = "++";
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_topic = "#+";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+
+    config.m_topic = "#/hello";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "hello+/bla";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "#hello";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "+hello";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    ec = unitTestSendSubscribe(subscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);
 }

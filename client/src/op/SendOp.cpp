@@ -218,6 +218,11 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if (!verifyPubTopic(config.m_topic, true)) {
+        errorLog("Bad topic format in publish.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     unsigned alias = 0U;
     bool mustAssignTopic = true;
     do {
@@ -289,6 +294,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
     
     if (mustAssignTopic) {
         m_pubMsg.field_topic().value() = config.m_topic;
+        m_topicConfigured = true;
     }
 
     if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
@@ -306,6 +312,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         auto& propBundle = propVar.initField_topicAlias();
         auto& valueField = propBundle.field_value();
         valueField.setValue(alias);
+        m_topicConfigured = true;
     }
 
     if (config.m_dataLen > 0U) {
@@ -432,6 +439,11 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
         errorLog("The library cannot allocate required number of timers.");
         return CC_Mqtt5ErrorCode_InternalError;
     }    
+
+    if (!m_topicConfigured) {
+        errorLog("Topic hasn't been properly configured, cannot publish");
+        return CC_Mqtt5ErrorCode_InsufficientConfig;
+    }
 
     m_cb = cb;
     m_cbData = cbData;

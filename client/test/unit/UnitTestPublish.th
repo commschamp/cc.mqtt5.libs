@@ -19,6 +19,7 @@ public:
     void test7();
     void test8();
     void test9();
+    void test10();
 
 private:
     virtual void setUp() override
@@ -777,4 +778,34 @@ void UnitTestPublish::test9()
         TS_ASSERT(unitTestIsPublishComplete());
         unitTestPopPublishResponseInfo();     
     } while (false);    
+}
+
+void UnitTestPublish::test10()
+{
+    // Invalid publish topics
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = "hello/+/bla";
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_topic = "hello/#";
+    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+
+    config.m_topic = "$hello";
+    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);   
 }

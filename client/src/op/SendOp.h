@@ -51,7 +51,7 @@ private:
     void responseTimeoutInternal();
     void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     void confirmRegisteredAlias();
-    
+
     static void recvTimeoutCb(void* data);
 
     TimerMgr::Timer m_responseTimer;  
@@ -64,6 +64,7 @@ private:
     unsigned m_sendAttempts = 0U;
     bool m_acked = false;
     bool m_registeredAlias = false;
+    bool m_topicConfigured = false;
 
     static constexpr unsigned DefaultSendAttempts = 2U;
     static_assert(ExtConfig::SendOpTimers == 1U);

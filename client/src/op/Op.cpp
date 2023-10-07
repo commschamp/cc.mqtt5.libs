@@ -9,6 +9,9 @@
 
 #include "ClientImpl.h"
 
+#include "comms/util/ScopeGuard.h"
+#include "comms/cast.h"
+
 #include <algorithm>
 
 namespace cc_mqtt5_client
@@ -16,6 +19,17 @@ namespace cc_mqtt5_client
 
 namespace op
 {
+
+namespace 
+{
+
+static constexpr char TopicSep = '/';
+static constexpr char MultLevelWildcard = '#';
+static constexpr char SingleLevelWildcard = '+';
+
+} // namespace 
+
+
 
 Op::Op(ClientImpl& client) : 
     m_client(client),
@@ -113,6 +127,130 @@ void Op::errorLogInternal(const char* msg)
     if constexpr (Config::HasErrorLog) {
         m_client.errorLog(msg);
     }    
+}
+
+bool Op::verifySubFilterInternal(const char* filter)
+{
+    if (Config::HasTopicVerification) {
+        if (!m_client.configState().m_verifyOutgoingTopic) {
+            return true;
+        }
+
+        COMMS_ASSERT(filter != nullptr);
+        if (filter[0] == '\0') {
+            return false;
+        }
+
+        auto pos = 0U;
+        int lastSep = -1;
+        while (filter[pos] != '\0') {
+            auto incPosGuard = 
+                comms::util::makeScopeGuard(
+                    [&pos]()
+                    {
+                        ++pos;
+                    });
+
+            auto ch = filter[pos];
+
+            if (ch == TopicSep) {
+                comms::cast_assign(lastSep) = pos;
+                continue;
+            }   
+
+            if (ch == MultLevelWildcard) {
+                if (filter[pos + 1] != '\0') {
+                    errorLog("Multi-level wildcard \'#\' must be last.");
+                    return false;
+                }
+
+                if (pos == 0U) {
+                    return true;
+                }
+
+                if ((lastSep < 0) || (static_cast<decltype(lastSep)>(pos - 1U) != lastSep)) {
+                    errorLog("Multi-level wildcard \'#\' must follow separator.");
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (ch != SingleLevelWildcard) {
+                continue;
+            }
+
+            auto nextCh = filter[pos + 1];
+            if ((nextCh != '\0') && (nextCh != TopicSep)) {
+                errorLog("Single-level wildcard \'+\' must be last of followed by /.");
+                return false;                
+            }           
+
+            if (pos == 0U) {
+                continue;
+            }
+
+            if ((lastSep < 0) || (static_cast<decltype(lastSep)>(pos - 1U) != lastSep)) {
+                errorLog("Single-level wildcard \'+\' must follow separator.");
+                return false;
+            }            
+        }
+
+        return true;
+    }
+    else {
+        [[maybe_unused]] static constexpr bool ShouldNotBeCalled = false;
+        COMMS_ASSERT(ShouldNotBeCalled);
+        return false;
+    }
+}
+
+bool Op::verifyPubTopicInternal(const char* topic, bool outgoing)
+{
+    if (Config::HasTopicVerification) {
+        if (outgoing && (!m_client.configState().m_verifyOutgoingTopic)) {
+            return true;
+        }
+
+        if ((!outgoing) && (!m_client.configState().m_verifyIncomingTopic)) {
+            return true;
+        }
+
+        COMMS_ASSERT(topic != nullptr);
+        if (topic[0] == '\0') {
+            return false;
+        }
+
+        if (outgoing && (topic[0] == '$')) {
+            errorLog("Cannot start topic with \'$\'.");
+            return false;
+        }
+
+        auto pos = 0U;
+        while (topic[pos] != '\0') {
+            auto incPosGuard = 
+                comms::util::makeScopeGuard(
+                    [&pos]()
+                    {
+                        ++pos;
+                    });
+
+            auto ch = topic[pos];
+
+            if ((ch == MultLevelWildcard) || 
+                (ch == SingleLevelWildcard)) {
+                errorLog("Wildcards cannot be used in publish topic");
+                return false;
+            }
+        }
+
+        return true;
+    }
+    else {
+        [[maybe_unused]] static constexpr bool ShouldNotBeCalled = false;
+        COMMS_ASSERT(ShouldNotBeCalled);
+        return false;
+    }
 }
 
 } // namespace op

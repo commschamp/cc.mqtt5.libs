@@ -67,23 +67,32 @@ void RecvOp::handle(PublishMsg& msg)
         }
     }
 
+    auto& topic = msg.field_topic().value();
+    if ((!topic.empty()) && (!verifyPubTopic(topic.c_str(), false))) {
+        errorLog("Received PUBLISH with invalid topic format.");
+        protocolErrorTermination();
+        return;
+    }
+
     PropsHandler propsHandler;
     for (auto& p : msg.field_propertiesList().value()) {
         p.currentFieldExec(propsHandler);
     }
 
     if (propsHandler.isProtocolError()) {
+        errorLog("Received PUBLISH with protocol error when parsing properties.");
         protocolErrorTermination();
         return;
     }     
 
-    auto& topic = msg.field_topic().value();
     if (topic.empty() && (propsHandler.m_topicAlias == nullptr)) {
+        errorLog("Received PUBLISH without topic alias.");
         protocolErrorTermination();
         return;        
     }
 
     if (qos > Qos::ExactlyOnceDelivery) {
+        errorLog("Received PUBLISH with unknown Qos value.");
         protocolErrorTermination();
         return;         
     }
@@ -254,6 +263,7 @@ void RecvOp::handle(PubrelMsg& msg)
     m_responseTimer.cancel();
 
     if (!msg.doValid()) {
+        errorLog("Received invalid flags in PUBREL message");
         protocolErrorTermination();
         return;
     }

@@ -73,6 +73,7 @@ protected:
     void doApiGuard();
     unsigned allocPacketId();
 
+
     ClientImpl& client()
     {
         return m_client;
@@ -84,12 +85,32 @@ protected:
     void terminationWithReason(DiconnectReason reason);
     static void protocolErrorTermination(ClientImpl& client);
     void protocolErrorTermination();
-    void errorLog(const char* msg)
+    inline void errorLog(const char* msg)
     {
         if constexpr (Config::HasErrorLog) {
             errorLogInternal(msg);
         }
     }
+
+    inline bool verifySubFilter(const char* filter)
+    {
+        if (Config::HasTopicVerification) {
+            return verifySubFilterInternal(filter);
+        }
+        else {
+            return true;
+        }
+    }    
+
+    inline bool verifyPubTopic(const char* topic, bool outgoing)
+    {
+        if (Config::HasTopicVerification) {
+            return verifyPubTopicInternal(topic, outgoing);
+        }
+        else {
+            return true;
+        }
+    }     
 
     static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 
@@ -140,6 +161,8 @@ protected:
 
 private:
     void errorLogInternal(const char* msg);
+    bool verifySubFilterInternal(const char* filter);
+    bool verifyPubTopicInternal(const char* topic, bool outgoing);
 
     ClientImpl& m_client;    
     unsigned m_responseTimeoutMs = 0U;

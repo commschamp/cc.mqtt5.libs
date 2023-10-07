@@ -57,6 +57,13 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if (!verifySubFilter(config.m_topic)) {
+        errorLog("Bad topic filter format in unsubscribe.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    // TODO: check subscribed before
+
     auto& topicVec = m_unsubMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
         errorLog("Too many configured topics for unsubscribe operation.");

@@ -129,6 +129,7 @@ void TimerMgr::timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* d
 
     auto& info = m_timers[idx];
     COMMS_ASSERT(info.m_allocated);
+    COMMS_ASSERT(cb != nullptr);
     info.m_timeoutMs = timeoutMs;
     info.m_timeoutCb = cb;
     info.m_timeoutData = data;

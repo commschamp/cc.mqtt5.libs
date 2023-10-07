@@ -719,9 +719,9 @@ void UnitTestPublish::test9()
         TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), pubrecMsg.field_packetId().value());        
 
         unitTestTick(1000);
-        UnitTestPubrecMsg pubcompMsg;
+        UnitTestPubcompMsg pubcompMsg;
         pubcompMsg.field_packetId().value() = pubrelMsg->field_packetId().value();
-        unitTestReceiveMessage(pubrecMsg);
+        unitTestReceiveMessage(pubcompMsg);
 
         TS_ASSERT(unitTestIsPublishComplete());
         unitTestPopPublishResponseInfo();        
@@ -770,9 +770,9 @@ void UnitTestPublish::test9()
         TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), pubrecMsg.field_packetId().value());        
 
         unitTestTick(1000);
-        UnitTestPubrecMsg pubcompMsg;
+        UnitTestPubcompMsg pubcompMsg;
         pubcompMsg.field_packetId().value() = pubrelMsg->field_packetId().value();
-        unitTestReceiveMessage(pubrecMsg);
+        unitTestReceiveMessage(pubcompMsg);
 
         TS_ASSERT(unitTestIsPublishComplete());
         unitTestPopPublishResponseInfo();     

@@ -79,8 +79,10 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     }
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+    bool firstConnect = m_sessionState.m_firstConnect;
     m_sessionState = SessionState();
     m_sessionState.m_initialized = true;
+    m_sessionState.m_firstConnect = firstConnect;
     return CC_Mqtt5ErrorCode_Success;
 }
 

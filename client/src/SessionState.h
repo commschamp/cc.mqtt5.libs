@@ -24,6 +24,7 @@ struct SessionState
     bool m_connected = false;
     bool m_terminating = false;
     bool m_subIdsAvailable = false;
+    bool m_firstConnect = true;
 };
 
 } // namespace cc_mqtt5_client

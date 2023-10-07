@@ -117,7 +117,7 @@ void UnitTestConnect::test2()
     connectBasicConfig.m_password = &Password[0];
     connectBasicConfig.m_passwordLen = static_cast<decltype(connectBasicConfig.m_passwordLen)>(Password.size());
     connectBasicConfig.m_keepAlive = KeepAlive;
-    connectBasicConfig.m_cleanStart = false;
+    connectBasicConfig.m_cleanStart = true;
     auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
@@ -197,7 +197,7 @@ void UnitTestConnect::test2()
     auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(connectMsg, nullptr);
     TS_ASSERT_EQUALS(connectMsg->field_clientId().value(), ClientId);
-    TS_ASSERT(!connectMsg->field_flags().field_low().getBitValue_cleanStart());
+    TS_ASSERT(connectMsg->field_flags().field_low().getBitValue_cleanStart());
     TS_ASSERT(connectMsg->field_flags().field_low().getBitValue_willFlag());
     TS_ASSERT_EQUALS(static_cast<decltype(WillQos)>(connectMsg->field_flags().field_willQos().value()), WillQos);
     TS_ASSERT(connectMsg->field_flags().field_high().getBitValue_userNameFlag());
@@ -251,7 +251,7 @@ void UnitTestConnect::test2()
 
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
-    connackMsg.field_flags().setBitValue_sp(true);
+    connackMsg.field_flags().setBitValue_sp(false);
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
     auto& propsVec = connackMsg.field_propertiesList().value();
     using ConnackProperty = UnitTestConnackMsg::Field_propertiesList::ValueType::value_type;
@@ -390,7 +390,7 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_maxPacketSize, BrokerMaxPacketSize);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_topicAliasMax, BrokerTopicAliasMax);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_maxQos, BrokerMaxQos);
-    TS_ASSERT(connectInfo.m_response.m_sessionPresent);
+    TS_ASSERT(!connectInfo.m_response.m_sessionPresent);
     TS_ASSERT(!connectInfo.m_response.m_retainAvailable);
     TS_ASSERT(!connectInfo.m_response.m_wildcardSubAvailable);
     TS_ASSERT(!connectInfo.m_response.m_subIdsAvailable);
@@ -413,6 +413,7 @@ void UnitTestConnect::test3()
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
     cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    connectBasicConfig.m_cleanStart = true;
     auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
@@ -556,6 +557,14 @@ void UnitTestConnect::test3()
         propValue.value() = ConnackAuthData;
     } while (false);        
 
+    do {
+        connackPropsBec.resize(connackPropsBec.size() + 1U);
+        auto& propVar = connackPropsBec.back();
+        auto& propBundle = propVar.initField_assignedClientId();
+        auto& propValue = propBundle.field_value();
+        propValue.value() = __FUNCTION__;
+    } while (false);        
+
     unitTestReceiveMessage(connackMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
@@ -578,6 +587,7 @@ void UnitTestConnect::test4()
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
     cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    connectBasicConfig.m_cleanStart = true;
     auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 

@@ -51,6 +51,11 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if ((!config.m_cleanStart) && (client().sessionState().m_firstConnect)) {
+        errorLog("Clean start flag needs to be set on the first connection attempt");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     if (config.m_clientId != nullptr) {
         m_connectMsg.field_clientId().value() = config.m_clientId;    
     }
@@ -374,6 +379,11 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return CC_Mqtt5ErrorCode_InternalError;
     }    
 
+    if ((!m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) && (client().sessionState().m_firstConnect)) {
+        errorLog("Clean start flag needs to be set on the first connection attempt, perform configuration first.");
+        return CC_Mqtt5ErrorCode_InsufficientConfig;
+    }    
+
     m_cb = cb;
     m_cbData = cbData;
     
@@ -423,7 +433,7 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     if (response.m_sessionPresent && m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) {
         errorLog("Session present when clean session is requested");
-        client().notifyDisconnected(true);
+        sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }
 
@@ -433,24 +443,32 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
+        errorLog("Protocol error in CONNACK properties");
         sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }    
 
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod != nullptr) && (m_authMethod != propsHandler.m_authMethod->field_value().value())) {
+        errorLog("Invalid authentication method in CONNACK.");
         sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }      
     
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod == nullptr) && (!m_authMethod.empty())) {
+        errorLog("No authentication method in CONNACK.");
         sendDisconnectWithReason(DiconnectReason::ProtocolError);
         return;
     }
     
     if (propsHandler.m_assignedClientId != nullptr) {
         response.m_assignedClientId = propsHandler.m_assignedClientId->field_value().value().c_str();
+    }
+    else if ((response.m_reasonCode < CC_Mqtt5ReasonCode_UnspecifiedError) && (m_connectMsg.field_clientId().value().empty())) {
+        errorLog("Client ID hasn't been assigned by the broker");
+        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        return;
     }
 
     if (propsHandler.m_responseInfo != nullptr) {
@@ -562,6 +580,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_keepAliveMs = keepAlive * 1000;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
+    state.m_firstConnect = false;
 
     if constexpr (Config::SendMaxLimit > 0U) {
         state.m_sendLimit = std::min(state.m_sendLimit, Config::SendMaxLimit);

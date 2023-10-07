@@ -7,15 +7,16 @@
 
 #pragma once
 
+#include "TopicAliasDefs.h"
+
 namespace cc_mqtt5_client
 {
 
-struct ConfigState
+struct ReuseState
 {
-    static constexpr unsigned DefaultResponseTimeoutMs = 2000;
-    unsigned m_responseTimeoutMs = DefaultResponseTimeoutMs;
-    bool m_verifyOutgoingTopic = true;
-    bool m_verifyIncomingTopic = true;
+    RecvTopicsMap m_recvTopicAliases;
+    SendTopicsMap m_sendTopicAliases;
+    SendTopicsFreeAliasList m_sendTopicFreeAliases;
 };
 
 } // namespace cc_mqtt5_client

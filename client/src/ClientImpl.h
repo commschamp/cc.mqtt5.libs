@@ -12,7 +12,8 @@
 #include "ObjAllocator.h"
 #include "ObjListType.h"
 #include "ProtocolDefs.h"
-#include "State.h"
+#include "ReuseState.h"
+#include "SessionState.h"
 #include "TimerMgr.h"
 
 #include "op/ConnectOp.h"
@@ -140,10 +141,15 @@ public:
         return m_configState;
     }
 
-    State& state()
+    SessionState& sessionState()
     {
-        return m_state;
+        return m_sessionState;
     }
+
+    ReuseState& reuseState()
+    {
+        return m_reuseState;
+    }    
 
     inline void errorLog(const char* msg)
     {
@@ -215,7 +221,9 @@ private:
     void* m_errorLogData = nullptr;
 
     ConfigState m_configState;
-    State m_state;
+    SessionState m_sessionState;
+    ReuseState m_reuseState;
+
     TimerMgr m_timerMgr;
     unsigned m_apiEnterCount = 0U;
 

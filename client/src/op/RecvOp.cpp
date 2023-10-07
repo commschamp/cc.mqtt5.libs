@@ -37,7 +37,7 @@ void RecvOp::handle(PublishMsg& msg)
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
-    if (!client().state().m_connected) {
+    if (!client().sessionState().m_connected) {
         errorLog("Received PUBLISH when not CONNECTED");
         if (qos == Qos::AtMostOnceDelivery) {
             return;
@@ -105,13 +105,13 @@ void RecvOp::handle(PublishMsg& msg)
 
         auto topicAlias = propsHandler.m_topicAlias->field_value().value();
         if ((topicAlias == 0U) ||
-            (client().state().m_maxRecvTopicAlias < topicAlias)) {
+            (client().sessionState().m_maxRecvTopicAlias < topicAlias)) {
             errorLog("Broker used invalid topic alias.");
             terminationWithReason(DiconnectReason::TopicAliasInvalid);
             return;
         }
 
-        auto& recvTopicAliases = client().state().m_recvTopicAliases;
+        auto& recvTopicAliases = client().reuseState().m_recvTopicAliases;
 
         if (!topic.empty()) {
             recvTopicAliases.resize(std::max(recvTopicAliases.size(), std::size_t(topicAlias + 1U)));
@@ -322,7 +322,7 @@ Op::Type RecvOp::typeImpl() const
 
 void RecvOp::restartResponseTimer()
 {
-    auto& state = client().state();
+    auto& state = client().configState();
     m_responseTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
 }
 

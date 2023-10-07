@@ -7,21 +7,14 @@
 
 #pragma once
 
-#include "TopicAliasDefs.h"
-
 namespace cc_mqtt5_client
 {
 
-struct State
+struct SessionState
 {
-    static constexpr unsigned DefaultOpTimeoutMs = 2000;
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
-    RecvTopicsMap m_recvTopicAliases;
-    SendTopicsMap m_sendTopicAliases;
-    SendTopicsFreeAliasList m_sendTopicFreeAliases;
-    unsigned m_responseTimeoutMs = DefaultOpTimeoutMs;
     unsigned m_keepAliveMs = 0U;
     unsigned m_sendLimit = 0U;
     unsigned m_packetId = 0U;

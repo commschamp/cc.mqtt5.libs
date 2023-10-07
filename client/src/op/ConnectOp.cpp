@@ -271,8 +271,8 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propBundle = propVar.initField_topicAliasMax();
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_topicAliasMaximum);        
-        client().state().m_maxRecvTopicAlias = config.m_topicAliasMaximum;
-        client().state().m_recvTopicAliases.reserve(config.m_topicAliasMaximum);
+        client().sessionState().m_maxRecvTopicAlias = config.m_topicAliasMaximum;
+        client().reuseState().m_recvTopicAliases.reserve(config.m_topicAliasMaximum);
     }
 
     if (config.m_requestResponseInfo) {
@@ -421,6 +421,12 @@ void ConnectOp::handle(ConnackMsg& msg)
     comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().value();
     response.m_sessionPresent = msg.field_flags().getBitValue_sp();
 
+    if (response.m_sessionPresent && m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) {
+        errorLog("Session present when clean session is requested");
+        client().notifyDisconnected(true);
+        return;
+    }
+
     PropsHandler propsHandler;
     for (auto& p : msg.field_propertiesList().value()) {
         p.currentFieldExec(propsHandler);
@@ -502,7 +508,7 @@ void ConnectOp::handle(ConnackMsg& msg)
                 response.m_topicAliasMax = std::min(response.m_topicAliasMax, Config::TopicAliasesLimit);
             }   
 
-            client().state().m_maxSendTopicAlias = response.m_topicAliasMax;
+            client().sessionState().m_maxSendTopicAlias = response.m_topicAliasMax;
         }
     }
 
@@ -537,13 +543,21 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     status = CC_Mqtt5AsyncOpStatus_Complete; // Reported in op completion callback
     bool connected = (response.m_reasonCode == CC_Mqtt5ReasonCode_Success);
-    auto& state = client().state();
+
+    auto& state = client().sessionState();
     if (!connected) {
         state.m_keepAliveMs = 0U;
         state.m_sendLimit = 0U;
         state.m_subIdsAvailable = false;
         return;
     }
+
+    auto& reuseState = client().reuseState();
+    if (!response.m_sessionPresent) {
+        reuseState = ReuseState();
+    }    
+
+    reuseState.m_sendTopicAliases.resize(std::min(reuseState.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
 
     state.m_keepAliveMs = keepAlive * 1000;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;

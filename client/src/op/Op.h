@@ -94,7 +94,7 @@ protected:
 
     inline bool verifySubFilter(const char* filter)
     {
-        if (Config::HasTopicVerification) {
+        if (Config::HasTopicFormatVerification) {
             return verifySubFilterInternal(filter);
         }
         else {
@@ -104,7 +104,7 @@ protected:
 
     inline bool verifyPubTopic(const char* topic, bool outgoing)
     {
-        if (Config::HasTopicVerification) {
+        if (Config::HasTopicFormatVerification) {
             return verifyPubTopicInternal(topic, outgoing);
         }
         else {

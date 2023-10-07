@@ -79,8 +79,8 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     }
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
-    m_state = State();
-    m_state.m_initialized = true;
+    m_sessionState = SessionState();
+    m_sessionState.m_initialized = true;
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -109,13 +109,13 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (!m_state.m_initialized) {
+        if (!m_sessionState.m_initialized) {
             errorLog("Client must be initialized to allow connect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot initiate connection.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
@@ -147,13 +147,13 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::DisconnectOp* disconnectOp = nullptr;
     do {
-        if (!m_state.m_initialized) {
+        if (!m_sessionState.m_initialized) {
             errorLog("Client must be initialized to allow disconnect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
-        if (!m_state.m_connected) {
+        if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow disconnect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
@@ -165,7 +165,7 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }        
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot initiate disconnection.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
@@ -197,19 +197,19 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::SubscribeOp* subOp = nullptr;
     do {
-        if (!m_state.m_initialized) {
+        if (!m_sessionState.m_initialized) {
             errorLog("Client must be initialized to allow subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
-        if (!m_state.m_connected) {
+        if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot initiate subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
@@ -241,19 +241,19 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::UnsubscribeOp* unsubOp = nullptr;
     do {
-        if (!m_state.m_initialized) {
+        if (!m_sessionState.m_initialized) {
             errorLog("Client must be initialized to allow unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
-        if (!m_state.m_connected) {
+        if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot initiate unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
@@ -285,19 +285,19 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::SendOp* sendOp = nullptr;
     do {
-        if (!m_state.m_initialized) {
+        if (!m_sessionState.m_initialized) {
             errorLog("Client must be initialized to allow publish.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
-        if (!m_state.m_connected) {
+        if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow publish.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
             break;
         }
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot initiate publish.");
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
@@ -333,35 +333,35 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        if (!m_state.m_connected) {
+        if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to topic alias allocation.");
             return CC_Mqtt5ErrorCode_NotConnected;
         }
 
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             errorLog("Session termination is in progress, cannot allocate topic alias.");
             return CC_Mqtt5ErrorCode_Terminating;
         }    
 
-        if (m_state.m_maxSendTopicAlias <= m_state.m_sendTopicAliases.size()) {
+        if (m_sessionState.m_maxSendTopicAlias <= m_reuseState.m_sendTopicAliases.size()) {
             errorLog("Broker doesn't support usage of any more aliases.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        if (m_state.m_sendTopicAliases.max_size() <= m_state.m_sendTopicAliases.size()) {
+        if (m_reuseState.m_sendTopicAliases.max_size() <= m_reuseState.m_sendTopicAliases.size()) {
             errorLog("Amount of topic aliases has reached their maximum allowed memory.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
         auto iter = 
             std::lower_bound(
-                m_state.m_sendTopicAliases.begin(), m_state.m_sendTopicAliases.end(), topic,
+                m_reuseState.m_sendTopicAliases.begin(), m_reuseState.m_sendTopicAliases.end(), topic,
                 [](auto& info, const char* topicParam)
                 {
                     return info.m_topic < topicParam;
                 });
 
-        if ((iter != m_state.m_sendTopicAliases.end()) && 
+        if ((iter != m_reuseState.m_sendTopicAliases.end()) && 
             (iter->m_topic == topic)) {
             iter->m_lowQosRegRemCount = qos0RegsCount;
             iter->m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
@@ -369,19 +369,19 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
         }
 
         unsigned alias = 0U;
-        if (!m_state.m_sendTopicFreeAliases.empty()) {
-            alias = m_state.m_sendTopicFreeAliases.back();
+        if (!m_reuseState.m_sendTopicFreeAliases.empty()) {
+            alias = m_reuseState.m_sendTopicFreeAliases.back();
             COMMS_ASSERT(alias > 0U);
-            m_state.m_sendTopicFreeAliases.pop_back();
+            m_reuseState.m_sendTopicFreeAliases.pop_back();
         }
 
         if (alias == 0U) {
-            comms::cast_assign(alias) = m_state.m_sendTopicFreeAliases.size() + 1U;
+            comms::cast_assign(alias) = m_reuseState.m_sendTopicFreeAliases.size() + 1U;
         }
 
         COMMS_ASSERT(alias > 0U);
-        COMMS_ASSERT(alias <= m_state.m_maxSendTopicAlias);
-        auto infoIter = m_state.m_sendTopicAliases.insert(iter, TopicAliasInfo());
+        COMMS_ASSERT(alias <= m_sessionState.m_maxSendTopicAlias);
+        auto infoIter = m_reuseState.m_sendTopicAliases.insert(iter, TopicAliasInfo());
         infoIter->m_topic = topic;
         infoIter->m_alias = alias;
         infoIter->m_lowQosRegRemCount = qos0RegsCount;
@@ -402,19 +402,19 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
         
         auto iter = 
             std::lower_bound(
-                m_state.m_sendTopicAliases.begin(), m_state.m_sendTopicAliases.end(), topic,
+                m_reuseState.m_sendTopicAliases.begin(), m_reuseState.m_sendTopicAliases.end(), topic,
                 [](auto& info, const char* topicParam)
                 {
                     return info.m_topic < topicParam;
                 });
 
-        if ((iter == m_state.m_sendTopicAliases.end()) || (iter->m_topic != topic)) {
+        if ((iter == m_reuseState.m_sendTopicAliases.end()) || (iter->m_topic != topic)) {
             errorLog("Alias for provided topic hasn't been allocated before.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        m_state.m_sendTopicFreeAliases.push_back(iter->m_alias);
-        m_state.m_sendTopicAliases.erase(iter);
+        m_reuseState.m_sendTopicFreeAliases.push_back(iter->m_alias);
+        m_reuseState.m_sendTopicAliases.erase(iter);
         return CC_Mqtt5ErrorCode_Success;
     }
     else {
@@ -424,7 +424,7 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
 
 void ClientImpl::handle(PublishMsg& msg)
 {
-    if (m_state.m_terminating) {
+    if (m_sessionState.m_terminating) {
         return;
     }
 
@@ -589,7 +589,7 @@ void ClientImpl::handle(PubcompMsg& msg)
 
 void ClientImpl::handle(ProtMessage& msg)
 {
-    if (m_state.m_terminating) {
+    if (m_sessionState.m_terminating) {
         return;
     }
 
@@ -611,7 +611,7 @@ void ClientImpl::handle(ProtMessage& msg)
 
         // After message dispatching the whole session may be in terminating state
         // Don't continue iteration
-        if (m_state.m_terminating) {
+        if (m_sessionState.m_terminating) {
             break;
         }    
     }
@@ -684,15 +684,15 @@ void ClientImpl::doApiGuard()
 
 void ClientImpl::notifyConnected()
 {
-    m_state.m_connected = true;
+    m_sessionState.m_connected = true;
     createKeepAliveOpIfNeeded();
 }
 
 void ClientImpl::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info)
 {
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
-    m_state.m_initialized = false; // Require re-initialization
-    m_state.m_connected = false;
+    m_sessionState.m_initialized = false; // Require re-initialization
+    m_sessionState.m_connected = false;
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
 
@@ -764,7 +764,7 @@ void ClientImpl::createKeepAliveOpIfNeeded()
 
 void ClientImpl::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
 {
-    m_state.m_terminating = true;
+    m_sessionState.m_terminating = true;
     for (auto* op : m_ops) {
         if (op != nullptr) {
             op->terminateOp(status);

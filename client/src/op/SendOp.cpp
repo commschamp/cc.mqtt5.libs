@@ -231,7 +231,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-            auto& state = client().state();
+            auto& state = client().reuseState();
             auto iter = 
                 std::lower_bound(
                     state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), config.m_topic,
@@ -475,7 +475,7 @@ Op::Type SendOp::typeImpl() const
 
 void SendOp::restartResponseTimer()
 {
-    auto& state = client().state();
+    auto& state = client().configState();
     m_responseTimer.wait(state.m_responseTimeoutMs, &SendOp::recvTimeoutCb, this);
 }
 
@@ -533,7 +533,7 @@ void SendOp::confirmRegisteredAlias()
 {
     COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
     COMMS_ASSERT(m_registeredAlias);
-    auto& state = client().state();
+    auto& state = client().reuseState();
     auto& topic = m_pubMsg.field_topic().value();
     auto iter = 
         std::lower_bound(

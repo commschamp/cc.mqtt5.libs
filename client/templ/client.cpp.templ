@@ -112,7 +112,7 @@ bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle)
         return false;
     }
 
-    return clientFromHandle(handle)->state().m_initialized;
+    return clientFromHandle(handle)->sessionState().m_initialized;
 }
 
 bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
@@ -121,7 +121,7 @@ bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
         return false;
     }
 
-    return clientFromHandle(handle)->state().m_connected;
+    return clientFromHandle(handle)->sessionState().m_connected;
 }
 
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms)
@@ -140,7 +140,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5C
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    clientFromHandle(handle)->state().m_responseTimeoutMs = ms;
+    clientFromHandle(handle)->configState().m_responseTimeoutMs = ms;
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -150,7 +150,7 @@ unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHand
         return 0U;
     }
 
-    return clientFromHandle(handle)->state().m_responseTimeoutMs;
+    return clientFromHandle(handle)->configState().m_responseTimeoutMs;
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount)
@@ -177,7 +177,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_M
         return CC_Mqtt5ErrorCode_BadParam;
     }  
 
-    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+    if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         clientFromHandle(handle)->configState().m_verifyOutgoingTopic = enabled;
         return CC_Mqtt5ErrorCode_Success;
     }
@@ -188,7 +188,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_M
 
 bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic(CC_Mqtt5ClientHandle handle)
 {
-    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+    if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         COMMS_ASSERT(handle != nullptr);
         return clientFromHandle(handle)->configState().m_verifyOutgoingTopic;
     }
@@ -204,7 +204,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_M
         return CC_Mqtt5ErrorCode_BadParam;
     }  
 
-    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+    if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         clientFromHandle(handle)->configState().m_verifyIncomingTopic = enabled;
         return CC_Mqtt5ErrorCode_Success;
     }
@@ -215,7 +215,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_M
 
 bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle handle)
 {
-    if constexpr (cc_mqtt5_client::Config::HasTopicVerification) {
+    if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         COMMS_ASSERT(handle != nullptr);
         return clientFromHandle(handle)->configState().m_verifyIncomingTopic;
     }
@@ -244,7 +244,7 @@ CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHand
 void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfig* config)
 {
     *config = CC_Mqtt5ConnectBasicConfig();
-    config->m_keepAlive = cc_mqtt5_client::State::DefaultKeepAlive;
+    config->m_keepAlive = cc_mqtt5_client::SessionState::DefaultKeepAlive;
 }
 
 void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config)
@@ -262,7 +262,7 @@ void cc_mqtt5_##NAME##client_connect_init_config_extra(CC_Mqtt5ConnectExtraConfi
 
     if constexpr (cc_mqtt5_client::Config::HasTopicAliases) {
         if constexpr (cc_mqtt5_client::Config::TopicAliasesLimit == 0) {
-            config->m_topicAliasMaximum = cc_mqtt5_client::State::DefaultTopicAliasMax;
+            config->m_topicAliasMaximum = cc_mqtt5_client::SessionState::DefaultTopicAliasMax;
         }
         else {
             config->m_topicAliasMaximum = cc_mqtt5_client::Config::TopicAliasesLimit;

@@ -33,7 +33,7 @@ static constexpr char SingleLevelWildcard = '+';
 
 Op::Op(ClientImpl& client) : 
     m_client(client),
-    m_responseTimeoutMs(client.state().m_responseTimeoutMs)
+    m_responseTimeoutMs(client.configState().m_responseTimeoutMs)
 {
 }    
 
@@ -59,7 +59,7 @@ void Op::doApiGuard()
 
 unsigned Op::allocPacketId()
 {
-    auto& packetId = m_client.state().m_packetId;
+    auto& packetId = m_client.sessionState().m_packetId;
     ++packetId;
     static constexpr auto MaxPacketId = std::numeric_limits<std::uint16_t>::max();
     if (MaxPacketId <= packetId) {
@@ -131,7 +131,7 @@ void Op::errorLogInternal(const char* msg)
 
 bool Op::verifySubFilterInternal(const char* filter)
 {
-    if (Config::HasTopicVerification) {
+    if (Config::HasTopicFormatVerification) {
         if (!m_client.configState().m_verifyOutgoingTopic) {
             return true;
         }
@@ -207,7 +207,7 @@ bool Op::verifySubFilterInternal(const char* filter)
 
 bool Op::verifyPubTopicInternal(const char* topic, bool outgoing)
 {
-    if (Config::HasTopicVerification) {
+    if (Config::HasTopicFormatVerification) {
         if (outgoing && (!m_client.configState().m_verifyOutgoingTopic)) {
             return true;
         }

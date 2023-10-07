@@ -99,7 +99,7 @@ Op::Type KeepAliveOp::typeImpl() const
 
 void KeepAliveOp::restartPingTimer()
 {
-    auto& state = client().state();
+    auto& state = client().sessionState();
     if (state.m_keepAliveMs == 0U) {
         return;
     }
@@ -109,7 +109,7 @@ void KeepAliveOp::restartPingTimer()
 
 void KeepAliveOp::restartRecvTimer()
 {
-    auto& state = client().state();
+    auto& state = client().sessionState();
     if (state.m_keepAliveMs == 0U) {
         return;
     }
@@ -125,7 +125,7 @@ void KeepAliveOp::sendPing()
 
     PingreqMsg msg;
     client().sendMessage(msg);
-    auto& state = client().state();
+    auto& state = client().configState();
     m_respTimer.wait(state.m_responseTimeoutMs, &KeepAliveOp::pingTimeoutCb, this);
 }
 

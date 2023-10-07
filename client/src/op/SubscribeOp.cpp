@@ -88,7 +88,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        auto& state = client().state();
+        auto& state = client().sessionState();
         if (!state.m_subIdsAvailable) {
             errorLog("Usage of subscribe IDs is not supported by broker.");
             return CC_Mqtt5ErrorCode_BadParam;

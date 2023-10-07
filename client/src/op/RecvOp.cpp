@@ -34,6 +34,39 @@ RecvOp::RecvOp(ClientImpl& client) :
 
 void RecvOp::handle(PublishMsg& msg)
 {
+    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+    auto qos = msg.transportField_flags().field_qos().value();
+
+    if (!client().state().m_connected) {
+        errorLog("Received PUBLISH when not CONNECTED");
+        if (qos == Qos::AtMostOnceDelivery) {
+            return;
+        }        
+
+        auto completeNotAuthorized = 
+            [this, &msg](auto& outMsg)
+            {
+                outMsg.field_packetId().value() = msg.field_packetId().field().value();
+                outMsg.field_reasonCode().setExists();
+                outMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized;
+                outMsg.field_propertiesList().setExists();
+                sendMessage(outMsg);
+                opComplete();
+            };
+
+        if (qos == Qos::AtLeastOnceDelivery) {
+            PubackMsg pubackMsg;
+            completeNotAuthorized(pubackMsg);
+            return;
+        }
+
+        if (qos == Qos::AtLeastOnceDelivery) {
+            PubrecMsg pubrecMsg;
+            completeNotAuthorized(pubrecMsg);
+            return;
+        }
+    }
+
     PropsHandler propsHandler;
     for (auto& p : msg.field_propertiesList().value()) {
         p.currentFieldExec(propsHandler);
@@ -49,9 +82,6 @@ void RecvOp::handle(PublishMsg& msg)
         protocolErrorTermination();
         return;        
     }
-
-    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
-    auto qos = msg.transportField_flags().field_qos().value();
 
     if (qos > Qos::ExactlyOnceDelivery) {
         protocolErrorTermination();

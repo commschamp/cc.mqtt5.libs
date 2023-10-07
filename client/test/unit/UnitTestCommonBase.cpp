@@ -1,5 +1,7 @@
 #include "UnitTestCommonBase.h"
 
+#include <iostream>
+
 namespace 
 {
 
@@ -129,10 +131,13 @@ void UnitTestCommonBase::unitTestTearDown()
     m_client.reset();
 }
 
-UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient()
+UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient(bool addLog)
 {
     m_client.reset(cc_mqtt5_client_new());
     assert(!::cc_mqtt5_client_is_initialized(m_client.get()));
+    if (addLog) {
+        cc_mqtt5_client_set_error_log_callback(m_client.get(), &UnitTestCommonBase::unitTestErrorLogCb, nullptr);
+    }
     cc_mqtt5_client_set_broker_disconnect_report_callback(m_client.get(), &UnitTestCommonBase::unitTestBrokerDisconnectedCb, this);
     cc_mqtt5_client_set_message_received_report_callback(m_client.get(), &UnitTestCommonBase::unitTestMessageReceivedCb, this);
     cc_mqtt5_client_set_send_output_data_callback(m_client.get(), &UnitTestCommonBase::unitTestSendOutputDataCb, this);
@@ -348,7 +353,11 @@ void UnitTestCommonBase::unitTestPopDisconnectInfo()
     m_disconnectInfo.erase(m_disconnectInfo.begin());
 }
 
-void UnitTestCommonBase::unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart)
+void UnitTestCommonBase::unitTestPerformBasicConnect(
+    CC_Mqtt5Client* client, 
+    const char* clientId, 
+    bool cleanStart,
+    unsigned topicAliasMax)
 {
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
     assert(connect != nullptr);
@@ -374,6 +383,14 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(CC_Mqtt5Client* client, con
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
+
+    if (topicAliasMax > 0U) {
+        auto& propsVec = connackMsg.field_propertiesList().value();
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_topicAliasMax();
+        field.field_value().setValue(topicAliasMax);
+    }
+
     unitTestReceiveMessage(connackMsg);
     assert(unitTestIsConnectComplete());   
 
@@ -383,6 +400,10 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(CC_Mqtt5Client* client, con
     unitTestPopConnectResponseInfo();
 }
 
+void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)
+{
+    std::cout << "ERROR: " << msg << std::endl;
+}
 
 void UnitTestCommonBase::unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
 {

@@ -150,7 +150,7 @@ protected:
 
     void unitTestSetUp();
     void unitTestTearDown();
-    UnitTestClientPtr::pointer unitTestAllocClient();
+    UnitTestClientPtr::pointer unitTestAllocClient(bool addLog = false);
 
     decltype(auto) unitTestSentData()
     {
@@ -184,10 +184,11 @@ protected:
     bool unitTestHasDisconnectInfo() const;
     const UnitTestDisconnectInfo& unitTestDisconnectInfo() const;
     void unitTestPopDisconnectInfo();
-    void unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart = true);
+    void unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart = true, unsigned topicAliasMax = 0U);
 
 private:
 
+    static void unitTestErrorLogCb(void* obj, const char* msg);
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);
     static void unitTestMessageReceivedCb(void* obj, const CC_Mqtt5MessageInfo* info);
     static void unitTestSendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen);

@@ -264,6 +264,8 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 mustAssignTopic = false;
                 break;
             }
+
+            --iter->m_lowQosRegRemCount;
         }
         else {
             if ((config.m_topicAliasPref != CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable) && 

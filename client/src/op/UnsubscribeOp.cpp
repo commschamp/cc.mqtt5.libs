@@ -73,12 +73,12 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
             auto iter = 
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), config.m_topic,
-                    [](auto& info, const char* topicParam)
+                    [](auto& storedTopic, const char* topicParam)
                     {
-                        return info.m_topic < topicParam;
+                        return storedTopic < topicParam;
                     });
 
-            if ((iter == filtersMap.end()) || (iter->m_topic != config.m_topic)) {
+            if ((iter == filtersMap.end()) || (*iter != config.m_topic)) {
                 errorLog("Requested unsubscribe hasn't been used for subscription before");
                 return CC_Mqtt5ErrorCode_BadParam;
             }
@@ -214,12 +214,12 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
             auto iter = 
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), topicStr,
-                    [](auto& info, auto& topicParam)
+                    [](auto& storedTopic, auto& topicParam)
                     {
-                        return info.m_topic < topicParam;
+                        return storedTopic < topicParam;
                     });
 
-            if ((iter == filtersMap.end()) || (iter->m_topic != topicStr)) {
+            if ((iter == filtersMap.end()) || (*iter != topicStr)) {
                 continue;
             }
 

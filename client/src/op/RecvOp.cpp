@@ -8,6 +8,8 @@
 #include "op/RecvOp.h"
 #include "ClientImpl.h"
 
+#include <string_view>
+
 namespace cc_mqtt5_client
 {
 
@@ -20,6 +22,64 @@ namespace
 inline RecvOp* asRecvOp(void* data)
 {
     return reinterpret_cast<RecvOp*>(data);
+}
+
+bool isTopicMatch(std::string_view filter, std::string_view topic)
+{
+    if ((filter.size() == 1U) && (filter[0] == '#')) {
+        return true;
+    }
+
+    if (topic.empty()) {
+        return filter.empty();
+    }
+
+    auto filterSepPos = filter.find_first_of("/");
+    auto topicSepPos = topic.find_first_of("/");
+
+    if ((filterSepPos == std::string_view::npos) && 
+        (topicSepPos != std::string_view::npos)) {
+        return false;
+    }
+
+    if (topicSepPos != std::string_view::npos) {
+        COMMS_ASSERT(filterSepPos != std::string_view::npos);
+        if (((filter[0] == '+') && (filterSepPos == 1U)) || 
+            (filter.substr(0, filterSepPos) == topic.substr(0, topicSepPos))) {
+            return isTopicMatch(filter.substr(filterSepPos + 1U), topic.substr(topicSepPos + 1U));
+        }
+
+        return false;
+    }
+
+    if (filterSepPos != std::string_view::npos) {
+        COMMS_ASSERT(topicSepPos == std::string_view::npos);
+        if (filter.size() <= (filterSepPos + 1U)) {
+            // trailing '/' on the filter without any character after that
+            return false;
+        }
+
+        if (((filter[0] == '+') && (filterSepPos == 1U)) || 
+            (filter.substr(0, filterSepPos) == topic)) {
+            return isTopicMatch(filter.substr(filterSepPos + 1U), std::string_view());
+        }
+
+        return false;
+    }
+
+    COMMS_ASSERT(filterSepPos == std::string_view::npos);
+    COMMS_ASSERT(topicSepPos == std::string_view::npos);
+
+    return 
+        (((filter[0] == '+') && (filter.size() == 1U)) || 
+         (filter == topic));
+}
+
+bool isTopicMatch(const TopicFilterStr& filter, const TopicStr& topic)
+{
+    COMMS_ASSERT(!filter.empty());
+    COMMS_ASSERT(!topic.empty());
+    return isTopicMatch(std::string_view(filter.c_str(), filter.size()), std::string_view(topic.c_str(), topic.size()));
 }
 
 } // namespace     
@@ -145,19 +205,19 @@ void RecvOp::handle(PublishMsg& msg)
 
     if constexpr (Config::HasSubTopicVerification) {
         if (client().configState().m_verifySubFilter) {
-            auto& filtersMap = client().reuseState().m_subFilters;
+            auto& subFilters = client().reuseState().m_subFilters;
             auto iter = 
-                std::lower_bound(
-                    filtersMap.begin(), filtersMap.end(), *topicPtr,
-                    [](auto& info, auto& topicParam)
+                std::find_if(
+                    subFilters.begin(), subFilters.end(),
+                    [&topicStr = *topicPtr](auto& filter)
                     {
-                        return info.m_topic < topicParam;
+                        return isTopicMatch(filter, topicStr);
                     });
 
-            if ((iter == filtersMap.end()) || (iter->m_topic != *topicPtr)) {
+            if (iter == subFilters.end()) {
                 errorLog("Received PUBLISH on non-subscribed topic");
                 completeNotAuthorized();
-                return;
+                return;                
             }
         }
     }  

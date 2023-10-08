@@ -16,14 +16,7 @@ namespace cc_mqtt5_client
 {
 
 using TopicFilterStr = SubscribeMsg::Field_list::ValueType::value_type::Field_topic::ValueType;
-
-struct TopicFilterInfo
-{
-    TopicFilterStr m_topic;
-    unsigned m_subId = 0U;
-};
-
-using SubFiltersMap = ObjListType<TopicFilterInfo, Config::SubFiltersLimit, Config::HasSubTopicVerification>;
+using SubFiltersMap = ObjListType<TopicFilterStr, Config::SubFiltersLimit, Config::HasSubTopicVerification>;
 
 
 } // namespace cc_mqtt5_client

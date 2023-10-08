@@ -108,7 +108,6 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
         auto& propBundle = propVar.initField_subscriptionId();
         auto& valueField = propBundle.field_value();        
         valueField.setValue(config.m_subId);
-        m_subId = config.m_subId;
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -235,13 +234,12 @@ void SubscribeOp::handle(SubackMsg& msg)
             auto iter = 
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), topicStr,
-                    [](auto& info, auto& topicParam)
+                    [](auto& storedTopic, auto& topicParam)
                     {
-                        return info.m_topic < topicParam;
+                        return storedTopic < topicParam;
                     });
 
-            if ((iter != filtersMap.end()) && (iter->m_topic == topicStr)) {
-                iter->m_subId = m_subId;
+            if ((iter != filtersMap.end()) && (*iter == topicStr)) {
                 continue;
             }
 
@@ -252,9 +250,7 @@ void SubscribeOp::handle(SubackMsg& msg)
                 return;
             }
 
-            iter = filtersMap.insert(iter, TopicFilterInfo());
-            iter->m_topic = topicStr;
-            iter->m_subId = m_subId;
+            filtersMap.insert(iter, topicStr);
         }
     }
 

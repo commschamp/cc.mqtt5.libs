@@ -1,0 +1,108 @@
+#include "UnitTestCommonBase.h"
+#include "UnitTestDefs.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include "client.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestReceive : public CxxTest::TestSuite, public UnitTestCommonBase
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestReceive::test1()
+{
+    // Simple receive of Qos0
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned MessageExpiryInterval = 10;
+    const std::string ResponseTopic = "ResponseTopic";
+    const UnitTestData CorrelationData = {0x21, 0x32, 0x43, 0x54};
+    const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
+    const bool Retain = true;
+    const std::string ContentType("ContentType");
+    const std::string UserPropKey1("Key1");
+    const std::string UserPropVal1("Val1");
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_retain().setBitValue_bit(Retain);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    auto& propsVec = publishMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_payloadFormatIndicator();
+        field.field_value().setValue(Format);
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_messageExpiryInterval();
+        field.field_value().setValue(MessageExpiryInterval);
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_responseTopic();
+        field.field_value().setValue(ResponseTopic);
+    } while (false);    
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_correlationData();
+        field.field_value().setValue(CorrelationData);
+    } while (false);       
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_contentType();
+        field.field_value().setValue(ContentType);
+    } while (false);     
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().setValue(UserPropKey1);
+        field.field_value().field_second().setValue(UserPropVal1);
+    } while (false);        
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_responseTopic, ResponseTopic);
+    TS_ASSERT_EQUALS(msgInfo.m_correlationData, CorrelationData);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(msgInfo.m_contentType, ContentType);
+    TS_ASSERT(msgInfo.m_subIds.empty());
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_AtMostOnceDelivery);
+    TS_ASSERT_EQUALS(msgInfo.m_format, Format);
+    TS_ASSERT_EQUALS(msgInfo.m_retained, Retain);
+    unitTestPopReceivedMessageInfo();
+}

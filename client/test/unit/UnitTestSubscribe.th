@@ -33,7 +33,7 @@ void UnitTestSubscribe::test1()
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
-    auto tickReq = unitTestTickReq();
+    auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
 
 
@@ -120,7 +120,7 @@ void UnitTestSubscribe::test2()
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
     
-    auto tickReq = unitTestTickReq();
+    auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive
 
     auto subscribe1 = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);

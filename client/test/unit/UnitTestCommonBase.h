@@ -12,10 +12,11 @@
 
 class UnitTestCommonBase
 {
+public:
+    using UnitTestData = std::vector<std::uint8_t>;
+
 protected:
     static constexpr unsigned UnitTestDefaultOpTimeoutMs = 2000;
-
-    using UnitTestData = std::vector<std::uint8_t>;
 
     struct UnitTestUserProp
     {
@@ -136,6 +137,32 @@ protected:
         UnitTestPublishResponse& operator=(const CC_Mqtt5PublishResponse& other);
     };    
 
+    struct UnitTestMessageInfo
+    {
+        std::string m_topic;
+        UnitTestData m_data;
+        std::string m_responseTopic;
+        UnitTestData m_correlationData;
+        UnitTestUserProp::List m_userProps;
+        std::string m_contentType;
+        std::string m_reasonStr;
+        std::vector<unsigned> m_subIds;
+        CC_Mqtt5QoS m_qos = CC_Mqtt5QoS_ValuesLimit;
+        CC_Mqtt5PayloadFormat m_format = CC_Mqtt5PayloadFormat_Unspecified;
+        bool m_retained = false;     
+
+        UnitTestMessageInfo() = default;
+        UnitTestMessageInfo(const UnitTestMessageInfo&) = default;
+
+        UnitTestMessageInfo(const CC_Mqtt5MessageInfo& other)
+        {
+            *this = other;
+        }
+
+        UnitTestMessageInfo& operator=(const UnitTestMessageInfo&) = default;
+        UnitTestMessageInfo& operator=(const CC_Mqtt5MessageInfo& other);        
+    };    
+
     struct UnitTestPublishResponseInfo
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
@@ -184,7 +211,11 @@ protected:
     bool unitTestHasDisconnectInfo() const;
     const UnitTestDisconnectInfo& unitTestDisconnectInfo() const;
     void unitTestPopDisconnectInfo();
+    bool unitTestHasMessageRecieved();
+    const UnitTestMessageInfo& unitTestReceivedMessageInfo();
+    void unitTestPopReceivedMessageInfo();      
     void unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart = true, unsigned topicAliasMax = 0U);
+    void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic);
 
 private:
 
@@ -210,5 +241,6 @@ private:
     std::vector<UnitTestAuthInfo> m_outAuthInfo;
     std::vector<CC_Mqtt5UserProp> m_userPropsTmp;
     std::vector<UnitTestDisconnectInfo> m_disconnectInfo;
+    std::vector<UnitTestMessageInfo> m_receivedMessages;
     bool m_disconnected = false;
 };

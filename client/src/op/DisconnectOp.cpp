@@ -62,7 +62,7 @@ CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 
 CC_Mqtt5ErrorCode DisconnectOp::send()
 {
-    if ((m_disconnectMsg.field_reasonCode().field().value() != DiconnectReason::Success) || 
+    if ((m_disconnectMsg.field_reasonCode().field().value() != DisconnectReason::Success) || 
         (!m_disconnectMsg.field_propertiesList().field().value().empty())) {
         m_disconnectMsg.field_reasonCode().setExists();
         m_disconnectMsg.field_propertiesList().setExists();

@@ -22,6 +22,7 @@ class SubscribeOp final : public Op
     using Base = Op;
 public:
     explicit SubscribeOp(ClientImpl& client);
+    ~SubscribeOp();
 
     CC_Mqtt5ErrorCode configTopic(const CC_Mqtt5SubscribeTopicConfig& config);
     CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5SubscribeExtraConfig& config);
@@ -46,6 +47,7 @@ private:
     TimerMgr::Timer m_timer;
     CC_Mqtt5SubscribeCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;
+    unsigned m_subId = 0U;
 
     static_assert(ExtConfig::SubscribeOpTimers == 1U);
 };

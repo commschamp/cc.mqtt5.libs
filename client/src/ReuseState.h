@@ -8,6 +8,7 @@
 #pragma once
 
 #include "TopicAliasDefs.h"
+#include "TopicFilterDefs.h"
 
 namespace cc_mqtt5_client
 {
@@ -17,6 +18,7 @@ struct ReuseState
     RecvTopicsMap m_recvTopicAliases;
     SendTopicsMap m_sendTopicAliases;
     SendTopicsFreeAliasList m_sendTopicFreeAliases;
+    SubFiltersMap m_subFilters;
 };
 
 } // namespace cc_mqtt5_client

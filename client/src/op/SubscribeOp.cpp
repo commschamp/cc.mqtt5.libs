@@ -48,7 +48,12 @@ SubscribeOp::SubscribeOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-}    
+}  
+
+SubscribeOp::~SubscribeOp()
+{
+    releasePacketId(m_subMsg.field_packetId().value());
+}
 
 CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& config)
 {
@@ -103,6 +108,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
         auto& propBundle = propVar.initField_subscriptionId();
         auto& valueField = propBundle.field_value();        
         valueField.setValue(config.m_subId);
+        m_subId = config.m_subId;
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -155,7 +161,8 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
 
 void SubscribeOp::handle(SubackMsg& msg)
 {
-    if (msg.field_packetId().value() != m_subMsg.field_packetId().value()) {
+    auto packetId = msg.field_packetId().value();
+    if (packetId != m_subMsg.field_packetId().value()) {
         return;
     }
 
@@ -167,11 +174,12 @@ void SubscribeOp::handle(SubackMsg& msg)
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5SubscribeResponse();
 
-    auto protocolErrorOnExit = 
+    auto terminationReason = DisconnectReason::ProtocolError;
+    auto terminateOnExit = 
         comms::util::makeScopeGuard(
-            [&cl = client()]()
+            [&cl = client(), &terminationReason]()
             {
-                protocolErrorTermination(cl);
+                terminationWithReason(cl, terminationReason);
             }
         );    
 
@@ -188,13 +196,66 @@ void SubscribeOp::handle(SubackMsg& msg)
     }
 
     if (propsHandler.isProtocolError()) {
+        errorLog("Protocol error in SUBACK properties");
         return;
     }  
 
+    auto& topicsVec = m_subMsg.field_list().value();
+    auto& reasonCodesVec = msg.field_list().value();
 
-    reasonCodes.reserve(msg.field_list().value().size());
-    for (auto rc : msg.field_list().value()) {
+    if (topicsVec.size() != reasonCodesVec.size()) {
+        errorLog("Amount of reason codes in SUBACK doesn't match amount of subcribe topics");
+        return;
+    }
+
+    reasonCodes.reserve(std::min(reasonCodesVec.size(), reasonCodesVec.max_size()));
+    for (auto idx = 0U; idx < reasonCodesVec.size(); ++idx) {
+        auto rc = msg.field_list().value()[idx];
+        if (reasonCodes.max_size() <= idx) {
+            errorLog("Cannot accumulate all the subscribe reported reason codes, insufficient memory");
+            status = CC_Mqtt5AsyncOpStatus_InternalError;
+            terminationReason = DisconnectReason::ImplSpecificError;
+            return;
+        }
+
         reasonCodes.push_back(static_cast<CC_Mqtt5ReasonCode>(rc.value()));
+
+        if constexpr (Config::HasSubTopicVerification) {
+            if (!client().configState().m_verifySubFilter) {
+                continue;
+            }
+
+            if (reasonCodes.back() >=  CC_Mqtt5ReasonCode_UnspecifiedError) {
+                // Subscribe is not confirmed
+                continue;
+            }            
+            
+            auto& topicStr = m_subMsg.field_list().value()[idx].field_topic().value();
+            auto& filtersMap = client().reuseState().m_subFilters;
+            auto iter = 
+                std::lower_bound(
+                    filtersMap.begin(), filtersMap.end(), topicStr,
+                    [](auto& info, auto& topicParam)
+                    {
+                        return info.m_topic < topicParam;
+                    });
+
+            if ((iter != filtersMap.end()) && (iter->m_topic == topicStr)) {
+                iter->m_subId = m_subId;
+                continue;
+            }
+
+            if (filtersMap.max_size() <= filtersMap.size()) {
+                errorLog("Subscibe filters storage reached its maximum, can't store any more topics");
+                status = CC_Mqtt5AsyncOpStatus_InternalError;
+                terminationReason = DisconnectReason::ImplSpecificError;
+                return;
+            }
+
+            iter = filtersMap.insert(iter, TopicFilterInfo());
+            iter->m_topic = topicStr;
+            iter->m_subId = m_subId;
+        }
     }
 
     comms::cast_assign(response.m_reasonCodesCount) = reasonCodes.size();
@@ -212,11 +273,9 @@ void SubscribeOp::handle(SubackMsg& msg)
         comms::cast_assign(response.m_userPropsCount) = userProps.size();
     }    
 
-    if (response.m_reasonCodesCount != m_subMsg.field_list().value().size()) {
-        return;
-    }
 
-    protocolErrorOnExit.release();
+
+    terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
 

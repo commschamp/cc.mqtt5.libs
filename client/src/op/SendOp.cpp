@@ -34,6 +34,11 @@ SendOp::SendOp(ClientImpl& client) :
     COMMS_ASSERT(m_responseTimer.isValid());
 }    
 
+SendOp::~SendOp()
+{
+    releasePacketId(m_pubMsg.field_packetId().field().value());
+}
+
 void SendOp::handle(PubackMsg& msg)
 {
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
@@ -297,10 +302,6 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         m_topicConfigured = true;
     }
 
-    if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
-        m_pubMsg.field_packetId().field().setValue(allocPacketId());
-    }
-
     auto& propsField = m_pubMsg.field_propertiesList();
     if (alias > 0U) {
         if (!canAddProp(propsField)) {
@@ -447,6 +448,12 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
     m_cb = cb;
     m_cbData = cbData;
+
+    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+    if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
+        m_pubMsg.field_packetId().field().setValue(allocPacketId());
+    }
+
     m_pubMsg.doRefresh(); // Update packetId presence
 
     m_sendAttempts = 0U;

@@ -50,6 +50,11 @@ UnsubscribeOp::UnsubscribeOp(ClientImpl& client) :
 {
 }    
 
+UnsubscribeOp::~UnsubscribeOp()
+{
+    releasePacketId(m_unsubMsg.field_packetId().value());
+}
+
 CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfig& config)
 {
     if ((config.m_topic == nullptr) || (config.m_topic[0] == '\0')) {
@@ -62,7 +67,23 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    // TODO: check subscribed before
+    if constexpr (Config::HasSubTopicVerification) {
+        if (client().configState().m_verifySubFilter) {
+            auto& filtersMap = client().reuseState().m_subFilters;
+            auto iter = 
+                std::lower_bound(
+                    filtersMap.begin(), filtersMap.end(), config.m_topic,
+                    [](auto& info, const char* topicParam)
+                    {
+                        return info.m_topic < topicParam;
+                    });
+
+            if ((iter == filtersMap.end()) || (iter->m_topic != config.m_topic)) {
+                errorLog("Requested unsubscribe hasn't been used for subscription before");
+                return CC_Mqtt5ErrorCode_BadParam;
+            }
+        }
+    }    
 
     auto& topicVec = m_unsubMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
@@ -135,13 +156,14 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5UnsubscribeResponse();
 
-    auto protocolErrorOnExit = 
+    auto terminationReason = DisconnectReason::ProtocolError;
+    auto terminateOnExit = 
         comms::util::makeScopeGuard(
-            [&cl = client()]()
+            [&cl = client(), &terminationReason]()
             {
-                protocolErrorTermination(cl);
+                terminationWithReason(cl, terminationReason);
             }
-        );    
+        );     
 
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
@@ -150,18 +172,59 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
                 completeOpInternal(status, &response);
             });
 
+    auto& unsubFiltersVec = m_unsubMsg.field_list().value();
+    auto& reasonCodesVec = msg.field_list().value();
+
+    if (unsubFiltersVec.size() != reasonCodesVec.size()) {
+        errorLog("Amount of reason codes in UNSUBACK doesn't match amount of unsubcribe topics");
+        return;
+    }
+
     PropsHandler propsHandler;
     for (auto& p : msg.field_propertiesList().value()) {
         p.currentFieldExec(propsHandler);
     }
 
     if (propsHandler.isProtocolError()) {
+        errorLog("Protocol error in UNSUBACK properties");
         return;
     }  
 
-    reasonCodes.reserve(msg.field_list().value().size());
-    for (auto rc : msg.field_list().value()) {
+    reasonCodes.reserve(std::min(reasonCodesVec.size(), reasonCodesVec.max_size()));
+    for (auto idx = 0U; idx < reasonCodesVec.size(); ++idx) {
+        auto rc = msg.field_list().value()[idx];
+        if (reasonCodes.max_size() <= idx) {
+            errorLog("Cannot accumulate all the unsubscribe reported reason codes, insufficient memory");
+            status = CC_Mqtt5AsyncOpStatus_InternalError;
+            terminationReason = DisconnectReason::ImplSpecificError;
+            return;
+        }
+
         reasonCodes.push_back(static_cast<CC_Mqtt5ReasonCode>(rc.value()));
+
+        if constexpr (Config::HasSubTopicVerification) {
+            if (reasonCodes.back() >=  CC_Mqtt5ReasonCode_UnspecifiedError) {
+                // Unsubscribe is not confirmed
+                continue;
+            }
+
+            // Remove from the subscribed topics record regardless of the client().configState().m_verifySubFilter
+            auto& topicStr = m_unsubMsg.field_list().value()[idx].value();
+            auto& filtersMap = client().reuseState().m_subFilters;
+            auto iter = 
+                std::lower_bound(
+                    filtersMap.begin(), filtersMap.end(), topicStr,
+                    [](auto& info, auto& topicParam)
+                    {
+                        return info.m_topic < topicParam;
+                    });
+
+            if ((iter == filtersMap.end()) || (iter->m_topic != topicStr)) {
+                continue;
+            }
+
+            filtersMap.erase(iter);
+        }        
     }
 
     comms::cast_assign(response.m_reasonCodesCount) = reasonCodes.size();
@@ -183,7 +246,7 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
         return;
     }
 
-    protocolErrorOnExit.release();
+    terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
 

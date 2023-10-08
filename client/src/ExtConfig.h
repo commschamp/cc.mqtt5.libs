@@ -46,12 +46,20 @@ struct ExtConfig : public Config
         RecvOpsLimit + 
         SendOpsLimit;
 
+    static const unsigned PacketIdsLimitSumTmp = 
+        SubscribeOpsLimit + 
+        UnsubscribeOpsLimit + 
+        SendOpsLimit;    
+
+    static const unsigned PacketIdsLimit = HasDynMemAlloc ? 0U : PacketIdsLimitSumTmp;
+
     static_assert(HasDynMemAlloc || (TimersLimit > 0U));
     static_assert(HasDynMemAlloc || (ConnectOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (KeepAliveOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (RecvOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (SendOpsLimit > 0U));
     static_assert(HasDynMemAlloc || (OpsLimit > 0U));
+    static_assert(HasDynMemAlloc || (PacketIdsLimit > 0U));
 };
 
 } // namespace cc_mqtt5_client

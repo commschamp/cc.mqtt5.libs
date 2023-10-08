@@ -37,34 +37,46 @@ void RecvOp::handle(PublishMsg& msg)
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
+    if (qos > Qos::ExactlyOnceDelivery) {
+        terminationWithReason(DisconnectReason::QosNotSupported);
+        return;
+    }
+
+    auto completeNotAuthorized = 
+        [this, &msg, qos]()
+        {
+            auto sendNotAuthorized = 
+                [this, &msg](auto& outMsg)
+                {
+                    outMsg.field_packetId().value() = msg.field_packetId().field().value();
+                    outMsg.field_reasonCode().setExists();
+                    outMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized;
+                    outMsg.field_propertiesList().setExists();
+                    sendMessage(outMsg);
+                };    
+
+            do {
+                if (qos == Qos::AtMostOnceDelivery) {
+                    break;
+                }    
+
+                if (qos == Qos::AtLeastOnceDelivery) {
+                    PubackMsg pubackMsg;
+                    sendNotAuthorized(pubackMsg);
+                    break;
+                }
+
+                PubrecMsg pubrecMsg;
+                sendNotAuthorized(pubrecMsg);
+                break;
+            } while (false);
+
+            opComplete();
+        };
+
     if (!client().sessionState().m_connected) {
         errorLog("Received PUBLISH when not CONNECTED");
-        if (qos == Qos::AtMostOnceDelivery) {
-            return;
-        }        
-
-        auto completeNotAuthorized = 
-            [this, &msg](auto& outMsg)
-            {
-                outMsg.field_packetId().value() = msg.field_packetId().field().value();
-                outMsg.field_reasonCode().setExists();
-                outMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized;
-                outMsg.field_propertiesList().setExists();
-                sendMessage(outMsg);
-                opComplete();
-            };
-
-        if (qos == Qos::AtLeastOnceDelivery) {
-            PubackMsg pubackMsg;
-            completeNotAuthorized(pubackMsg);
-            return;
-        }
-
-        if (qos == Qos::AtLeastOnceDelivery) {
-            PubrecMsg pubrecMsg;
-            completeNotAuthorized(pubrecMsg);
-            return;
-        }
+        completeNotAuthorized();
     }
 
     auto& topic = msg.field_topic().value();
@@ -107,7 +119,7 @@ void RecvOp::handle(PublishMsg& msg)
         if ((topicAlias == 0U) ||
             (client().sessionState().m_maxRecvTopicAlias < topicAlias)) {
             errorLog("Broker used invalid topic alias.");
-            terminationWithReason(DiconnectReason::TopicAliasInvalid);
+            terminationWithReason(DisconnectReason::TopicAliasInvalid);
             return;
         }
 
@@ -130,6 +142,26 @@ void RecvOp::handle(PublishMsg& msg)
     } while (false);
 
     COMMS_ASSERT(topicPtr != nullptr);
+
+    if constexpr (Config::HasSubTopicVerification) {
+        if (client().configState().m_verifySubFilter) {
+            auto& filtersMap = client().reuseState().m_subFilters;
+            auto iter = 
+                std::lower_bound(
+                    filtersMap.begin(), filtersMap.end(), *topicPtr,
+                    [](auto& info, auto& topicParam)
+                    {
+                        return info.m_topic < topicParam;
+                    });
+
+            if ((iter == filtersMap.end()) || (iter->m_topic != *topicPtr)) {
+                errorLog("Received PUBLISH on non-subscribed topic");
+                completeNotAuthorized();
+                return;
+            }
+        }
+    }  
+
     m_info.m_topic = topicPtr->c_str();
     auto& data = msg.field_payload().value();
     comms::cast_assign(m_info.m_dataLen) = data.size();
@@ -188,7 +220,7 @@ void RecvOp::handle(PublishMsg& msg)
     if (!msg.field_packetId().doesExist()) {
         [[maybe_unused]] static constexpr bool ProtocolDecodingError = false;
         COMMS_ASSERT(ProtocolDecodingError);
-        terminationWithReason(DiconnectReason::UnspecifiedError);
+        terminationWithReason(DisconnectReason::UnspecifiedError);
         return;
     }    
 

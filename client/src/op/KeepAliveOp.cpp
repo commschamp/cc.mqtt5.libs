@@ -132,7 +132,7 @@ void KeepAliveOp::sendPing()
 void KeepAliveOp::pingTimeoutInternal()
 {
     COMMS_ASSERT(!m_respTimer.isActive());
-    sendDisconnectWithReason(DiconnectReason::KeepAliveTimeout);
+    sendDisconnectWithReason(DisconnectReason::KeepAliveTimeout);
     client().notifyDisconnected(true);
 }
 

@@ -224,6 +224,32 @@ bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle hand
     }
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle, bool enabled)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }  
+
+    if constexpr (cc_mqtt5_client::Config::HasSubTopicVerification) {
+        clientFromHandle(handle)->configState().m_verifySubFilter = enabled;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+    else {
+        return CC_Mqtt5ErrorCode_NotSupported;
+    }
+}
+
+bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle)
+{
+    if constexpr (cc_mqtt5_client::Config::HasSubTopicVerification) {
+        COMMS_ASSERT(handle != nullptr);
+        return clientFromHandle(handle)->configState().m_verifySubFilter;
+    }
+    else {
+        return false;
+    }
+}
+
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop)
 {
     *prop = CC_Mqtt5UserProp();

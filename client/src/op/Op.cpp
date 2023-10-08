@@ -57,19 +57,61 @@ void Op::doApiGuard()
     m_client.doApiGuard();
 }
 
-unsigned Op::allocPacketId()
+std::uint16_t Op::allocPacketId()
 {
-    auto& packetId = m_client.sessionState().m_packetId;
-    ++packetId;
     static constexpr auto MaxPacketId = std::numeric_limits<std::uint16_t>::max();
-    if (MaxPacketId <= packetId) {
-        packetId = 1U;
+    auto& allocatedPacketIds = m_client.sessionState().m_allocatedPacketIds;
+
+    if ((allocatedPacketIds.max_size() <= allocatedPacketIds.size()) || 
+        (MaxPacketId <= allocatedPacketIds.size())) {
+        errorLog("No more available packet IDs for allocation");
+        return 0U;
     }
 
-    return packetId;
+    auto& lastPacketId = m_client.sessionState().m_lastPacketId;
+    auto nextPacketId = static_cast<std::uint16_t>(lastPacketId + 1U);
+
+    if (nextPacketId == 0U) {
+        nextPacketId = 1U;
+    }
+    
+    while (true) {
+        if (allocatedPacketIds.empty() || (allocatedPacketIds.back() < nextPacketId)) {
+            allocatedPacketIds.push_back(nextPacketId);
+            break;
+        }
+
+        auto iter = std::lower_bound(allocatedPacketIds.begin(), allocatedPacketIds.end(), nextPacketId);
+        if ((iter == allocatedPacketIds.end()) || (*iter != nextPacketId)) {
+            allocatedPacketIds.insert(iter, nextPacketId);
+            break;
+        }
+
+        ++nextPacketId;
+    } 
+
+    lastPacketId = static_cast<std::uint16_t>(nextPacketId);
+    return lastPacketId;
 }
 
-void Op::sendDisconnectWithReason(ClientImpl& client, DiconnectReason reason)
+void Op::releasePacketId(std::uint16_t id)
+{
+    if (id == 0U) {
+        return;
+    }
+    
+    auto& allocatedPacketIds = m_client.sessionState().m_allocatedPacketIds;
+    auto iter = std::lower_bound(allocatedPacketIds.begin(), allocatedPacketIds.end(), id);
+    if ((iter == allocatedPacketIds.end()) || (*iter != id)) {
+        [[maybe_unused]] static constexpr bool ShouldNotHappen = false;
+        COMMS_ASSERT(ShouldNotHappen);
+        return;
+    }    
+
+    allocatedPacketIds.erase(iter);
+}
+
+void Op::sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason)
 {
     DisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
@@ -78,25 +120,25 @@ void Op::sendDisconnectWithReason(ClientImpl& client, DiconnectReason reason)
     client.sendMessage(disconnectMsg);
 }
 
-void Op::sendDisconnectWithReason(DiconnectReason reason)
+void Op::sendDisconnectWithReason(DisconnectReason reason)
 {
     sendDisconnectWithReason(m_client, reason);
 }
 
-void Op::terminationWithReason(ClientImpl& client, DiconnectReason reason)
+void Op::terminationWithReason(ClientImpl& client, DisconnectReason reason)
 {
     sendDisconnectWithReason(client, reason);
     client.notifyDisconnected(true);
 }
 
-void Op::terminationWithReason(DiconnectReason reason)
+void Op::terminationWithReason(DisconnectReason reason)
 {
     terminationWithReason(m_client, reason);
 }
 
 void Op::protocolErrorTermination(ClientImpl& client)
 {
-    terminationWithReason(client, DiconnectReason::ProtocolError);
+    terminationWithReason(client, DisconnectReason::ProtocolError);
 }
 
 void Op::protocolErrorTermination()

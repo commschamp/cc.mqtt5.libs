@@ -433,7 +433,7 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     if (response.m_sessionPresent && m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) {
         errorLog("Session present when clean session is requested");
-        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }
 
@@ -444,21 +444,21 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     if (propsHandler.isProtocolError()) {
         errorLog("Protocol error in CONNACK properties");
-        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }    
 
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod != nullptr) && (m_authMethod != propsHandler.m_authMethod->field_value().value())) {
         errorLog("Invalid authentication method in CONNACK.");
-        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }      
     
     // Auth method needs to be the same
     if ((propsHandler.m_authMethod == nullptr) && (!m_authMethod.empty())) {
         errorLog("No authentication method in CONNACK.");
-        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }
     
@@ -467,7 +467,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
     else if ((response.m_reasonCode < CC_Mqtt5ReasonCode_UnspecifiedError) && (m_connectMsg.field_clientId().value().empty())) {
         errorLog("Client ID hasn't been assigned by the broker");
-        sendDisconnectWithReason(DiconnectReason::ProtocolError);
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }
 
@@ -596,7 +596,7 @@ void ConnectOp::handle(AuthMsg& msg)
     auto protocolErrorCompletion = 
         [this]()
         {
-            sendDisconnectWithReason(DiconnectReason::ProtocolError);
+            sendDisconnectWithReason(DisconnectReason::ProtocolError);
             completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
         };
 
@@ -650,7 +650,7 @@ void ConnectOp::handle(AuthMsg& msg)
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc != CC_Mqtt5AuthErrorCode_Continue) {
         COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
-        sendDisconnectWithReason(DiconnectReason::UnspecifiedError);
+        sendDisconnectWithReason(DisconnectReason::UnspecifiedError);
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         // No members access after this point, the op will be deleted
         return;
@@ -661,7 +661,7 @@ void ConnectOp::handle(AuthMsg& msg)
         comms::util::makeScopeGuard(
             [this, &termStatus]()
             {
-                sendDisconnectWithReason(DiconnectReason::UnspecifiedError);
+                sendDisconnectWithReason(DisconnectReason::UnspecifiedError);
                 completeOpInternal(termStatus);
             });
 

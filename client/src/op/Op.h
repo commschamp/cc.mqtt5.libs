@@ -61,7 +61,7 @@ public:
 
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
-    using DiconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType;
+    using DisconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType;
 
     explicit Op(ClientImpl& client);
 
@@ -71,18 +71,18 @@ protected:
     void sendMessage(const ProtMessage& msg);
     void opComplete();
     void doApiGuard();
-    unsigned allocPacketId();
-
+    std::uint16_t allocPacketId();
+    void releasePacketId(std::uint16_t id);
 
     ClientImpl& client()
     {
         return m_client;
     }
 
-    static void sendDisconnectWithReason(ClientImpl& client, DiconnectReason reason);
-    void sendDisconnectWithReason(DiconnectReason reason);
-    static void terminationWithReason(ClientImpl& client, DiconnectReason reason);
-    void terminationWithReason(DiconnectReason reason);
+    static void sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason);
+    void sendDisconnectWithReason(DisconnectReason reason);
+    static void terminationWithReason(ClientImpl& client, DisconnectReason reason);
+    void terminationWithReason(DisconnectReason reason);
     static void protocolErrorTermination(ClientImpl& client);
     void protocolErrorTermination();
     inline void errorLog(const char* msg)

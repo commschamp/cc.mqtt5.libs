@@ -25,6 +25,7 @@ class SendOp final : public Op
     using Base = Op;
 public:
     explicit SendOp(ClientImpl& client);
+    ~SendOp();
 
     using Base::handle;
     virtual void handle(PubackMsg& msg) override;

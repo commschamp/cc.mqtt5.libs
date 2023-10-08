@@ -78,6 +78,9 @@ bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic(CC_Mqtt5ClientHandle hand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled);
 bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle handle);
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle, bool enabled);
+bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle);
+
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);

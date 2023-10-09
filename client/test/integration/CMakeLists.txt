@@ -27,5 +27,6 @@ endfunction ()
 ##################################
 
 cc_mqtt5_client_add_integration_test(IntegrationTestBasicConnect)
+cc_mqtt5_client_add_integration_test(IntegrationTestBasicPubSub)
 
 

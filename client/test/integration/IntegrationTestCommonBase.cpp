@@ -66,6 +66,11 @@ CC_Mqtt5ErrorCode IntegrationTestCommonBase::integrationTestSendConnect(CC_Mqtt5
     return ::cc_mqtt5_client_connect_send(handle, &IntegrationTestCommonBase::integrationTestConnectCompleteCb, this);
 }
 
+CC_Mqtt5ErrorCode IntegrationTestCommonBase::integrationTestSendSubscribe(CC_Mqtt5SubscribeHandle handle)
+{
+    return ::cc_mqtt5_client_subscribe_send(handle, &IntegrationTestCommonBase::integrationTestSubscribeCompleteCb, this);
+}
+
 void IntegrationTestCommonBase::integrationTestDoReadInternal()
 {
     assert(m_socket.is_open());
@@ -141,6 +146,12 @@ void IntegrationTestCommonBase::integrationTestConnectCompleteImpl(
 {
 }
 
+void IntegrationTestCommonBase::integrationTestSubscribeCompleteImpl(
+    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] const CC_Mqtt5SubscribeResponse* response)
+{
+}
+
 void IntegrationTestCommonBase::integrationTestBrokerDisconnectedInternal(const CC_Mqtt5DisconnectInfo* info)
 {
     std::cout << "INFO: Disconnected ";
@@ -167,6 +178,12 @@ void IntegrationTestCommonBase::integrationTestConnectCompleteInternal(CC_Mqtt5A
     }
     std::cout << std::endl;
     integrationTestConnectCompleteImpl(status, response);
+}
+
+void IntegrationTestCommonBase::integrationTestSubscribeCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+{
+    std::cout << "INFO: Subscribe complete with status=" << status << std::endl;
+    integrationTestSubscribeCompleteImpl(status, response);
 }
 
 void IntegrationTestCommonBase::integrationTestTickProgramCb(void* data, unsigned ms)
@@ -233,4 +250,9 @@ void IntegrationTestCommonBase::integrationTestMessageReceivedCb(void* data, con
 void IntegrationTestCommonBase::integrationTestConnectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
 {
     asObj(data)->integrationTestConnectCompleteInternal(status, response);
+}
+
+void IntegrationTestCommonBase::integrationTestSubscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+{
+    asObj(data)->integrationTestSubscribeCompleteInternal(status, response);
 }

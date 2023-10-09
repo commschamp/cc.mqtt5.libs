@@ -40,12 +40,14 @@ public:
     }
 
     CC_Mqtt5ErrorCode integrationTestSendConnect(CC_Mqtt5ConnectHandle handle);
+    CC_Mqtt5ErrorCode integrationTestSendSubscribe(CC_Mqtt5SubscribeHandle handle);
 
 protected:
     virtual unsigned integrationTestGetTimeoutSecImpl();
     virtual void integrationTestTimeoutImpl();
     virtual void integrationTestBrokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);    
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+    virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 private:
     void integrationTestDoReadInternal();
@@ -53,6 +55,7 @@ private:
     void integrationTestBrokerDisconnectedInternal(const CC_Mqtt5DisconnectInfo* info);    
     void integrationTestMessageReceivedInternal(const CC_Mqtt5MessageInfo* info);
     void integrationTestConnectCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+    void integrationTestSubscribeCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
     static void integrationTestTickProgramCb(void* data, unsigned ms);
     static unsigned integrationTestCancelTickWaitCb(void* data);
@@ -60,6 +63,7 @@ private:
     static void integrationTestBrokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info);
     static void integrationTestMessageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info);
     static void integrationTestConnectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+    static void integrationTestSubscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
     boost::asio::io_context& m_io;
     Socket m_socket;

@@ -1,5 +1,7 @@
 #include "UnitTestCommonBase.h"
 
+#include "UnitTestPropsHandler.h"
+
 #include <iostream>
 
 namespace 
@@ -423,7 +425,7 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
     unitTestPopConnectResponseInfo();
 }
 
-void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic)
+void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)
 {
     auto config = CC_Mqtt5SubscribeTopicConfig();
     ::cc_mqtt5_client_subscribe_init_config_topic(&config);
@@ -435,6 +437,13 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     [[maybe_unused]] auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
     assert(ec == CC_Mqtt5ErrorCode_Success);
 
+    if (subId > 0U) {
+        auto extra = CC_Mqtt5SubscribeExtraConfig();
+        extra.m_subId = subId;
+        ec = cc_mqtt5_client_subscribe_config_extra(subscribe, &extra);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }
+
     ec = unitTestSendSubscribe(subscribe);
     assert(ec == CC_Mqtt5ErrorCode_Success);
     assert(!unitTestIsSubscribeComplete());
@@ -444,6 +453,15 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     assert(sentMsg->getId() == cc_mqtt5::MsgId_Subscribe);    
     [[maybe_unused]] auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     assert(subscribeMsg != nullptr);
+    if (subId > 0U) {
+        UnitTestPropsHandler propsHandler;
+        for (auto& p : subscribeMsg->field_propertiesList().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+
+        assert (!propsHandler.m_subscriptionIds.empty());
+        assert(propsHandler.m_subscriptionIds.front()->field_value().value() == subId);
+    }
 
     unitTestTick(1000);
     UnitTestSubackMsg subackMsg;

@@ -329,6 +329,9 @@ void RecvOp::handle(PublishMsg& msg)
             m_userProps[idx].m_key = tgtStorage.m_key.c_str();
             m_userProps[idx].m_value = tgtStorage.m_value.c_str();
         }
+
+        comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+        m_info.m_userProps = &m_userProps[0];
     }     
 
     if (propsHandler.m_contentType != nullptr) {

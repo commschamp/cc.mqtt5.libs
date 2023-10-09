@@ -11,6 +11,8 @@ class UnitTestReceive : public CxxTest::TestSuite, public UnitTestCommonBase
 {
 public:
     void test1();
+    void test2();
+    void test3();
 
 private:
     virtual void setUp() override
@@ -32,6 +34,7 @@ void UnitTestReceive::test1()
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
 
     const std::string Topic = "some/topic";
     const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
@@ -102,6 +105,166 @@ void UnitTestReceive::test1()
     TS_ASSERT_EQUALS(msgInfo.m_contentType, ContentType);
     TS_ASSERT(msgInfo.m_subIds.empty());
     TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_AtMostOnceDelivery);
+    TS_ASSERT_EQUALS(msgInfo.m_format, Format);
+    TS_ASSERT_EQUALS(msgInfo.m_retained, Retain);
+    unitTestPopReceivedMessageInfo();
+}
+
+void UnitTestReceive::test2()
+{
+    // Simple receive of Qos1
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Puback);    
+    auto* pubackMsg = dynamic_cast<UnitTestPubackMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubackMsg, nullptr);
+    TS_ASSERT_EQUALS(pubackMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubackMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubackMsg->field_propertiesList().isMissing());
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_AtLeastOnceDelivery);
+    unitTestPopReceivedMessageInfo();
+}
+
+void UnitTestReceive::test3()
+{
+    // Simple receive of Qos2
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    const unsigned SubId = 10;
+
+    unitTestPerformBasicSubscribe(client, "#", SubId);
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned MessageExpiryInterval = 10;
+    const std::string ResponseTopic = "ResponseTopic";
+    const UnitTestData CorrelationData = {0x21, 0x32, 0x43, 0x54};
+    const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
+    const bool Retain = true;
+    const std::string ContentType("ContentType");
+    const std::string UserPropKey1("Key1");
+    const std::string UserPropVal1("Val1");
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_retain().setBitValue_bit(Retain);
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    auto& propsVec = publishMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_payloadFormatIndicator();
+        field.field_value().setValue(Format);
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_messageExpiryInterval();
+        field.field_value().setValue(MessageExpiryInterval);
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_responseTopic();
+        field.field_value().setValue(ResponseTopic);
+    } while (false);    
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_correlationData();
+        field.field_value().setValue(CorrelationData);
+    } while (false);       
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_contentType();
+        field.field_value().setValue(ContentType);
+    } while (false);     
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().setValue(UserPropKey1);
+        field.field_value().field_second().setValue(UserPropVal1);
+    } while (false);    
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_subscriptionId();
+        field.field_value().setValue(SubId);
+    } while (false);               
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+
+    unitTestTick(1000);
+    UnitTestPubrelMsg pubrelMsg;
+    pubrelMsg.field_packetId().setValue(PacketId);
+    unitTestReceiveMessage(pubrelMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubcomp);    
+    auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
+    TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_responseTopic, ResponseTopic);
+    TS_ASSERT_EQUALS(msgInfo.m_correlationData, CorrelationData);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(msgInfo.m_contentType, ContentType);
+    TS_ASSERT_EQUALS(msgInfo.m_subIds.size(), 1U);
+    TS_ASSERT_EQUALS(msgInfo.m_subIds[0], SubId);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     TS_ASSERT_EQUALS(msgInfo.m_format, Format);
     TS_ASSERT_EQUALS(msgInfo.m_retained, Retain);
     unitTestPopReceivedMessageInfo();

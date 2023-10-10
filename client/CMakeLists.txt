@@ -205,4 +205,10 @@ if (CC_MQTT5_CLIENT_DEFAULT_LIB)
     gen_lib_mqtt5_client("")
 endif ()
 
+if (NOT "${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES}" STREQUAL "")
+    foreach (custom_config ${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES})
+        gen_lib_mqtt5_client("${custom_config}")
+    endforeach ()
+endforeach ()
+
 add_subdirectory(test)

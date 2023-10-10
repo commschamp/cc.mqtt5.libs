@@ -216,6 +216,34 @@ bool IntegrationTestCommonBase::integrationTestStartBasicPublish(const char* top
     return true;
 }
 
+bool IntegrationTestCommonBase::integrationTestStartBasicDisconnect(CC_Mqtt5ReasonCode reasonCode)
+{
+    auto config = CC_Mqtt5DisconnectConfig();
+    ::cc_mqtt5_client_disconnect_init_config(&config);
+    config.m_reasonCode = reasonCode;
+
+    auto* client = integrationTestClient();
+    auto disconnect = ::cc_mqtt5_client_disconnect_prepare(client, nullptr);
+    if (disconnect == nullptr) {
+        integrationTestErrorLog() << "Failed to prepare disconnect" << std::endl;
+        return false;
+    }
+
+    auto ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        integrationTestErrorLog() << "Failed to configure disconnect" << std::endl;
+        return false;             
+    }
+
+    ec = ::cc_mqtt5_client_disconnect_send(disconnect);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        integrationTestErrorLog() << "Failed to send disconnect" << std::endl;
+        return false;             
+    }
+
+    return true;
+}
+
 bool IntegrationTestCommonBase::integrationTestVerifyConnectSuccessful(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {

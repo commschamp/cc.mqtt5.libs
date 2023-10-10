@@ -50,6 +50,7 @@ public:
     bool integrationTestStartBasicConnect(bool cleanStart = true);
     bool integrationTestStartBasicSubscribe(const char* topic);
     bool integrationTestStartBasicPublish(const char* topic, const char* data, CC_Mqtt5QoS qos);
+    bool integrationTestStartBasicDisconnect(CC_Mqtt5ReasonCode reasonCode = CC_Mqtt5ReasonCode_NormalDisconnection);
 
     bool integrationTestVerifyConnectSuccessful(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     bool integrationTestVerifySubscribeSuccessful(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response, unsigned reasonCodesCount = 1U);

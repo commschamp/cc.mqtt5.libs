@@ -13,7 +13,6 @@ public:
         Base(io),
         m_exitCode(exitCode)
     {
-
     }
 
 protected:
@@ -42,14 +41,7 @@ protected:
             return; 
         }
 
-        std::cout << "INFO: m_highQosPubLimit=" << response->m_highQosPubLimit << '\n';
-        std::cout << "INFO: m_topicAliasMax=" << response->m_topicAliasMax << '\n';
-        std::cout << "INFO: maxQos=" << response->m_maxQos << '\n';
-        std::cout << "INFO: sessionPresent=" << response->m_sessionPresent << '\n';
-        std::cout << "INFO: retainAvailable=" << response->m_retainAvailable << '\n';
-        std::cout << "INFO: wildcardSubAvailable=" << response->m_wildcardSubAvailable << '\n';
-        std::cout << "INFO: subIdsAvailable=" << response->m_subIdsAvailable << '\n';
-        std::cout << "INFO: sharedSubsAvailable=" << response->m_sharedSubsAvailable << '\n';
+        integrationTestPrintConnectResponse(*response);
 
         auto disconnect = ::cc_mqtt5_client_disconnect_prepare(integrationTestClient(), nullptr);
         if (disconnect == nullptr) {

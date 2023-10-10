@@ -242,7 +242,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
         }
 
         io.run();
-
     }
     catch (const std::exception& e) {
         std::cerr << "ERROR: Unexpected exception: " << e.what() << std::endl;

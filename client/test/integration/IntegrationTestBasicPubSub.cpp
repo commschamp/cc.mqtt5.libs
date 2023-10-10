@@ -8,27 +8,19 @@
 namespace 
 {
 
-std::ostream& errorLog(const std::string& name)
+struct PubInfo
 {
-    return (std::cerr << "ERROR: " << name << ": ");
-}    
+    std::string m_topic;
+    std::string m_data;
+    CC_Mqtt5QoS m_qos;
+};
 
-std::ostream& infoLog(const std::string& name)
-{
-    return (std::cout << "INFO: " << name << ": ");
-}    
-
-void printConnectInfo(const std::string& name, const CC_Mqtt5ConnectResponse* response)
-{
-    infoLog(name) << "m_highQosPubLimit=" << response->m_highQosPubLimit << '\n';
-    infoLog(name) << "m_topicAliasMax=" << response->m_topicAliasMax << '\n';
-    infoLog(name) << "maxQos=" << response->m_maxQos << '\n';
-    infoLog(name) << "sessionPresent=" << response->m_sessionPresent << '\n';
-    infoLog(name) << "retainAvailable=" << response->m_retainAvailable << '\n';
-    infoLog(name) << "wildcardSubAvailable=" << response->m_wildcardSubAvailable << '\n';
-    infoLog(name) << "subIdsAvailable=" << response->m_subIdsAvailable << '\n';
-    infoLog(name) << "sharedSubsAvailable=" << response->m_sharedSubsAvailable << '\n';
-}
+const PubInfo PubInfoMap[] = {
+    {"cc_mqtt5_client/pubsub_topic1", "11111", CC_Mqtt5QoS_AtMostOnceDelivery},
+    {"cc_mqtt5_client/pubsub_topic2", "22222", CC_Mqtt5QoS_AtLeastOnceDelivery},
+    {"cc_mqtt5_client/pubsub_topic3", "33333", CC_Mqtt5QoS_ExactlyOnceDelivery},
+};
+std::size_t PubInfoMapSize = std::extent<decltype(PubInfoMap)>::value;
 
 } // namespace 
 
@@ -38,7 +30,7 @@ class IntegrationTestBasicPubSub_Client1: public IntegrationTestCommonBase
     using Base = IntegrationTestCommonBase;
 public:
     IntegrationTestBasicPubSub_Client1(boost::asio::io_context& io, int& exitCode) :
-        Base(io),
+        Base(io, "IntegrationTestBasicPubSub_Client1"),
         m_exitCode(exitCode)
     {
     }
@@ -46,38 +38,12 @@ public:
     bool start()
     {
         if (!integrationTestStart()) {
-            errorLog(m_name) << "Failed to start." << std::endl;
             return false;
         }
 
-        auto connectConfig = CC_Mqtt5ConnectBasicConfig();
-        ::cc_mqtt5_client_connect_init_config_basic(&connectConfig);
-        connectConfig.m_clientId = m_name.c_str();
-        connectConfig.m_cleanStart = true;
-
-        auto* client = integrationTestClient();
-        if (client == nullptr) {
-            errorLog(m_name) << "Invalid client" << std::endl;
+        if (!integrationTestStartBasicConnect()) {
             return false;
         }
-
-        auto* connect = ::cc_mqtt5_client_connect_prepare(client, nullptr);
-        if (connect == nullptr) {
-            errorLog(m_name) << "Failed to prepare connect" << std::endl;
-            return false;
-        }
-
-        auto ec = ::cc_mqtt5_client_connect_config_basic(connect, &connectConfig);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog(m_name) << "Failed to configure connect" << std::endl;
-            return false;
-        }
-        
-        ec = integrationTestSendConnect(connect);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog(m_name) << "Failed to send connect" << std::endl;
-            return false;
-        } 
 
         return true;       
     }
@@ -85,61 +51,153 @@ public:
 protected:
     virtual void integrationTestBrokerDisconnectedImpl([[maybe_unused]] const CC_Mqtt5DisconnectInfo* info) override
     {
-        errorLog(m_name) << "Unexpected disconnection from broker" << std::endl;
+        integrationTestErrorLog() << "Unexpected disconnection from broker" << std::endl;
         failTestInternal();
     }  
 
+    virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info) override
+    {
+        // Echo all incoming messages
+        std::string data(reinterpret_cast<const char*>(info->m_data), info->m_dataLen);
+        if (!integrationTestStartBasicPublish(info->m_topic, data.c_str(), info->m_qos)) {
+            failTestInternal();
+            return;
+        }
+    }
+
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
     {
-        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
-            errorLog(m_name) << "Unexpected connection status: " << status << std::endl;
+        if (!integrationTestVerifyConnectSuccessful(status, response)) {
             failTestInternal();
             return;
         }
 
-        if (response == nullptr) {
-            errorLog(m_name) << "connection response is not provided" << std::endl;
+        integrationTestPrintConnectResponse(*response);
+
+        if (!integrationTestStartBasicSubscribe("#")) {
             failTestInternal();
             return;            
         }
-
-        if (response->m_reasonCode != CC_Mqtt5ReasonCode_Success) {
-            failTestInternal();
-            return; 
-        }
-
-        printConnectInfo(m_name, response);
-        doSubscribe();
     }
 
     virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
-        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
-            errorLog(m_name) << "Unexpected subscribe status: " << status << std::endl;
+        if (!integrationTestVerifySubscribeSuccessful(status, response)) {
             failTestInternal();
             return;
         }
 
-        if (response == nullptr) {
-            errorLog(m_name) << "Subscription response is not provided" << std::endl;
+        // Wait for message
+    }    
+
+    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
+    {
+        if (!integrationTestVerifyPublishSuccessful(status, response)) {
+            failTestInternal();
+            return;
+        }        
+    }
+
+private:
+    void failTestInternal()
+    {
+        assert(0);
+        m_exitCode = -1;
+        io().stop();        
+    }
+
+    int& m_exitCode; 
+};
+
+class IntegrationTestBasicPubSub_Client2: public IntegrationTestCommonBase
+{
+    using Base = IntegrationTestCommonBase;
+public:
+    IntegrationTestBasicPubSub_Client2(boost::asio::io_context& io, int& exitCode) :
+        Base(io, "IntegrationTestBasicPubSub_Client2"),
+        m_exitCode(exitCode)
+    {
+    }
+
+    bool start()
+    {
+        if (!integrationTestStart()) {
+            return false;
+        }
+
+        if (!integrationTestStartBasicConnect()) {
+            return false;
+        }
+
+        return true;       
+    }
+
+protected:
+    virtual void integrationTestBrokerDisconnectedImpl([[maybe_unused]] const CC_Mqtt5DisconnectInfo* info) override
+    {
+        integrationTestErrorLog() << "Unexpected disconnection from broker" << std::endl;
+        failTestInternal();
+    }  
+
+    virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info) override
+    {
+        assert(m_pubCount < PubInfoMapSize);
+        auto& pubInfo = PubInfoMap[m_pubCount];
+        if (info->m_topic != pubInfo.m_topic) {
+            integrationTestErrorLog() << "Unexpected topic: " << info->m_topic << "!=" << pubInfo.m_topic << std::endl;
             failTestInternal();
             return;            
         }
 
-        if (response->m_reasonCodesCount != 1U) {
-            errorLog(m_name) << "Unexpected amount of susbscription reason codes: " << response->m_reasonCodesCount << std::endl;
+        std::string data(reinterpret_cast<const char*>(info->m_data), info->m_dataLen);
+        if (data != pubInfo.m_data) {
+            integrationTestErrorLog() << "Unexpected data: " << info->m_data << "!=" << pubInfo.m_data << std::endl;
             failTestInternal();
-            return; 
+            return;    
         }
 
-        if (response->m_reasonCodes[0] >= CC_Mqtt5ReasonCode_UnspecifiedError) {
-            errorLog(m_name) << "Unexpected subscription reason code: " << response->m_reasonCodes[0] << std::endl;
+        if (info->m_qos != pubInfo.m_qos) {
+            integrationTestErrorLog() << "Unexpected qos: " << info->m_qos << "!=" << pubInfo.m_qos << std::endl;
             failTestInternal();
-            return; 
+            return;                
         }
 
-        infoLog(m_name) << "Subscription complete." << std::endl;
-        io().stop(); // TODO: remove
+        integrationTestInfoLog() << "Publish " << m_pubCount << " is echoed back" << std::endl;
+        ++m_pubCount;
+        doNextPublish();
+    }    
+
+    virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
+    {
+        if (!integrationTestVerifyConnectSuccessful(status, response)) {
+            failTestInternal();
+            return;
+        }
+
+        integrationTestPrintConnectResponse(*response);
+
+        if (!integrationTestStartBasicSubscribe("#")) {
+            failTestInternal();
+            return;            
+        }
+    }
+
+    virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
+    {
+        if (!integrationTestVerifySubscribeSuccessful(status, response)) {
+            failTestInternal();
+            return;
+        }
+
+        doNextPublish();
+    }    
+
+    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
+    {
+        if (!integrationTestVerifyPublishSuccessful(status, response)) {
+            failTestInternal();
+            return;
+        }        
     }    
 
 private:
@@ -150,36 +208,23 @@ private:
         io().stop();        
     }
 
-    void doSubscribe()
+    void doNextPublish()
     {
-        auto config = CC_Mqtt5SubscribeTopicConfig();
-        ::cc_mqtt5_client_subscribe_init_config_topic(&config);
-        config.m_topic = "#";
-        auto* client = integrationTestClient();
-        auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
-        if (subscribe == nullptr) {
-            errorLog(m_name) << "Failed to prepare subscribe" << std::endl;
-            failTestInternal();
+        if (PubInfoMapSize <= m_pubCount) {
+            integrationTestInfoLog() << "All publishes are complete" << std::endl;
+            io().stop();
             return;
         }
 
-        auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &config);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog(m_name) << "Failed to configure subscribe topic" << std::endl;
+        auto& info = PubInfoMap[m_pubCount];
+        if (!integrationTestStartBasicPublish(info.m_topic.c_str(), info.m_data.c_str(), info.m_qos)) {
             failTestInternal();
-            return;
-        }
-
-        ec = integrationTestSendSubscribe(subscribe);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog(m_name) << "Failed to configure subscribe topic" << std::endl;
-            failTestInternal();
-            return;
+            return;            
         }        
     }
 
-    int& m_exitCode; 
-    std::string m_name = "client1";
+    int& m_exitCode;
+    unsigned m_pubCount = 0U; 
 };
 
 
@@ -189,8 +234,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
     try {
         boost::asio::io_context io;
         IntegrationTestBasicPubSub_Client1 client1(io, exitCode);
+        IntegrationTestBasicPubSub_Client2 client2(io, exitCode);
 
-        if (!client1.start()) {
+        if ((!client1.start()) || 
+            (!client2.start())) {
             return -1;
         }
 

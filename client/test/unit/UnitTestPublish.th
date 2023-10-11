@@ -20,6 +20,7 @@ public:
     void test8();
     void test9();
     void test10();
+    void test11();
 
 private:
     virtual void setUp() override
@@ -44,7 +45,7 @@ void UnitTestPublish::test1()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtMostOnceDelivery;
     const bool Retain = true;
 
@@ -63,7 +64,7 @@ void UnitTestPublish::test1()
 
     const std::string ContentType("ContentType");
     const std::string ResponseTopic("ResponseTopic");
-    const std::vector<std::uint8_t> CorrelationData = {0x11, 0x22, 0x33, 0x44};
+    const UnitTestData CorrelationData = {0x11, 0x22, 0x33, 0x44};
     const unsigned MsgExpiry = 10;
     const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
 
@@ -138,7 +139,7 @@ void UnitTestPublish::test2()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
@@ -189,7 +190,7 @@ void UnitTestPublish::test3()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
@@ -278,7 +279,7 @@ void UnitTestPublish::test4()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
@@ -332,7 +333,7 @@ void UnitTestPublish::test5()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
@@ -395,7 +396,7 @@ void UnitTestPublish::test6()
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
@@ -472,7 +473,7 @@ void UnitTestPublish::test7()
     auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 2U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
     ::cc_mqtt5_client_publish_init_config_basic(&config);
@@ -579,7 +580,7 @@ void UnitTestPublish::test8()
     auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 3U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
     ::cc_mqtt5_client_publish_init_config_basic(&config);
@@ -671,7 +672,7 @@ void UnitTestPublish::test9()
     auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 3U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    const std::vector<std::uint8_t> Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
     ::cc_mqtt5_client_publish_init_config_basic(&config);
@@ -809,3 +810,58 @@ void UnitTestPublish::test10()
     ec = unitTestSendPublish(publish);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);   
 }
+
+void UnitTestPublish::test11()
+{
+    // Testing invalid packet ID in PUBACK
+    // [MQTT-2.2.1-5]
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    const UnitTestData Data = {0x11, 0x22, 0x33};
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    config.m_topic = "hello/bla";
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);   
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    // Unexpected packet ID in puback
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(publishMsg->field_packetId().field().value() + 1U);
+    unitTestReceiveMessage(pubackMsg);
+    
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();        
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);    
+    auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(disconnectMsg, nullptr);
+    TS_ASSERT(disconnectMsg->field_reasonCode().doesExist());
+    TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(!unitTestHasDisconnectInfo())
+}
+

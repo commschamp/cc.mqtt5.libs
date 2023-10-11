@@ -502,7 +502,7 @@ void ClientImpl::handle(PubackMsg& msg)
     if (iter == m_sendOps.end()) {
         errorLog("PUBACK with unknown packet id");
         sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        notifyDisconnected(true);
+        notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
         return;
     }
 
@@ -579,7 +579,7 @@ void ClientImpl::handle(PubcompMsg& msg)
     if (iter == m_sendOps.end()) {
         errorLog("PUBCOMP with unknown packet id");
         sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        notifyDisconnected(true);
+        notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
         return;
     }
 
@@ -690,13 +690,13 @@ void ClientImpl::notifyConnected()
     createKeepAliveOpIfNeeded();
 }
 
-void ClientImpl::notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info)
+void ClientImpl::notifyDisconnected(bool reportDisconnection, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5DisconnectInfo* info)
 {
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
     m_sessionState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
-    terminateAllOps(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+    terminateAllOps(status);
 
     if (reportDisconnection) {
         COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);

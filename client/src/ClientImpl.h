@@ -128,7 +128,7 @@ public:
     void opComplete(const op::Op* op);
     void doApiGuard();
     void notifyConnected();
-    void notifyDisconnected(bool reportDisconnection, const CC_Mqtt5DisconnectInfo* info = nullptr);
+    void notifyDisconnected(bool reportDisconnection, CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
 
     TimerMgr& timerMgr()

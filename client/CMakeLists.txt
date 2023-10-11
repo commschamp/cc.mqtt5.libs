@@ -209,6 +209,6 @@ if (NOT "${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES}" STREQUAL "")
     foreach (custom_config ${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES})
         gen_lib_mqtt5_client("${custom_config}")
     endforeach ()
-endforeach ()
+endif ()
 
 add_subdirectory(test)

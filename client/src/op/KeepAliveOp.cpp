@@ -83,7 +83,7 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
         }        
     }
 
-    client().notifyDisconnected(true, &info);
+    client().notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
     // No members access after this point, the op will be deleted    
 }
 

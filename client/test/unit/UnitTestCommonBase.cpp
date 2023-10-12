@@ -88,6 +88,14 @@ UnitTestCommonBase::UnitTestSubscribeResponse& UnitTestCommonBase::UnitTestSubsc
     return *this;
 }
 
+UnitTestCommonBase::UnitTestUnsubscribeResponse& UnitTestCommonBase::UnitTestUnsubscribeResponse::operator=(const CC_Mqtt5UnsubscribeResponse& response)
+{
+    assignDataInternal(m_reasonCodes, response.m_reasonCodes, response.m_reasonCodesCount);
+    assignStringInternal(m_reasonStr, response.m_reasonStr);
+    UnitTestUserProp::copyProps(response.m_userProps, response.m_userPropsCount, m_userProps);
+    return *this;
+}
+
 UnitTestCommonBase::UnitTestDisconnectInfo& UnitTestCommonBase::UnitTestDisconnectInfo::operator=(const CC_Mqtt5DisconnectInfo& other)
 {
     m_reasonCode = other.m_reasonCode;
@@ -203,6 +211,12 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendSubscribe(CC_Mqtt5SubscribeHan
     subscribe = nullptr;
 }
 
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendUnsubscribe(CC_Mqtt5UnsubscribeHandle& unsubscribe)
+{
+    return ::cc_mqtt5_client_unsubscribe_send(unsubscribe, &UnitTestCommonBase::unitTestUnsubscribeCompleteCb, this);
+    unsubscribe = nullptr;
+}
+
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish)
 {
     return ::cc_mqtt5_client_publish_send(publish, &UnitTestCommonBase::unitTestPublishCompleteCb, this);
@@ -260,6 +274,22 @@ void UnitTestCommonBase::unitTestPopSubscribeResponseInfo()
 {
     assert(!m_subscribeResp.empty());
     m_subscribeResp.erase(m_subscribeResp.begin());
+}
+
+bool UnitTestCommonBase::unitTestIsUnsubscribeComplete()
+{
+    return !m_unsubscribeResp.empty();
+}
+const UnitTestCommonBase::UnitTestUnsubscribeResponseInfo& UnitTestCommonBase::unitTestUnsubscribeResponseInfo()
+{
+    assert(!m_unsubscribeResp.empty());
+    return m_unsubscribeResp.front();
+}
+
+void UnitTestCommonBase::unitTestPopUnsubscribeResponseInfo()
+{
+    assert(!m_unsubscribeResp.empty());
+    m_unsubscribeResp.erase(m_unsubscribeResp.begin());
 }
 
 bool UnitTestCommonBase::unitTestIsPublishComplete()
@@ -541,6 +571,18 @@ void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpS
     assert(realObj->m_subscribeResp.empty());
     realObj->m_subscribeResp.resize(realObj->m_subscribeResp.size() + 1U);
     auto& info = realObj->m_subscribeResp.back();
+    info.m_status = status;
+    if (response != nullptr) {
+        info.m_response = *response;
+    }
+}
+
+void UnitTestCommonBase::unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+{
+    auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+    assert(realObj->m_unsubscribeResp.empty());
+    realObj->m_unsubscribeResp.resize(realObj->m_unsubscribeResp.size() + 1U);
+    auto& info = realObj->m_unsubscribeResp.back();
     info.m_status = status;
     if (response != nullptr) {
         info.m_response = *response;

@@ -85,8 +85,33 @@ protected:
         std::string m_reasonStr;
         std::vector<UnitTestUserProp> m_userProps;
 
+        UnitTestSubscribeResponse() = default;
+        UnitTestSubscribeResponse(const UnitTestSubscribeResponse& other) = default;
+        explicit UnitTestSubscribeResponse(const CC_Mqtt5SubscribeResponse& other)
+        {
+            *this = other;
+        }
+
+        UnitTestSubscribeResponse& operator=(const UnitTestSubscribeResponse&) = default;
         UnitTestSubscribeResponse& operator=(const CC_Mqtt5SubscribeResponse& response);
     };
+
+    struct UnitTestUnsubscribeResponse
+    {
+        std::vector<CC_Mqtt5ReasonCode> m_reasonCodes;
+        std::string m_reasonStr;
+        std::vector<UnitTestUserProp> m_userProps;
+
+        UnitTestUnsubscribeResponse() = default;
+        UnitTestUnsubscribeResponse(const UnitTestUnsubscribeResponse& other) = default;
+        UnitTestUnsubscribeResponse(const CC_Mqtt5UnsubscribeResponse& other)
+        {
+            *this = other;
+        }
+
+        UnitTestUnsubscribeResponse& operator=(const UnitTestUnsubscribeResponse&) = default;
+        UnitTestUnsubscribeResponse& operator=(const CC_Mqtt5UnsubscribeResponse& response);
+    };    
 
     struct UnitTestConnectResponseInfo
     {
@@ -98,7 +123,13 @@ protected:
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestSubscribeResponse m_response;
-    };    
+    };  
+
+    struct UnitTestUnsubscribeResponseInfo
+    {
+        CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
+        UnitTestUnsubscribeResponse m_response;
+    };          
 
     struct UnitTestDisconnectInfo
     {
@@ -189,6 +220,7 @@ protected:
     void unitTestTick(unsigned ms = 0, bool forceTick = false);
     CC_Mqtt5ErrorCode unitTestSendConnect(CC_Mqtt5ConnectHandle& connect);
     CC_Mqtt5ErrorCode unitTestSendSubscribe(CC_Mqtt5SubscribeHandle& subscribe);
+    CC_Mqtt5ErrorCode unitTestSendUnsubscribe(CC_Mqtt5UnsubscribeHandle& unsubscribe);
     CC_Mqtt5ErrorCode unitTestSendPublish(CC_Mqtt5PublishHandle& subscribe);
     UniTestsMsgPtr unitTestGetSentMessage();
     bool unitTestHasSentMessage() const;
@@ -198,6 +230,9 @@ protected:
     bool unitTestIsSubscribeComplete();
     const UnitTestSubscribeResponseInfo& unitTestSubscribeResponseInfo();
     void unitTestPopSubscribeResponseInfo();
+    bool unitTestIsUnsubscribeComplete();
+    const UnitTestUnsubscribeResponseInfo& unitTestUnsubscribeResponseInfo();
+    void unitTestPopUnsubscribeResponseInfo();
     bool unitTestIsPublishComplete();
     const UnitTestPublishResponseInfo& unitTestPublishResponseInfo();
     void unitTestPopPublishResponseInfo();
@@ -227,6 +262,7 @@ private:
     static unsigned unitTestCancelNextTickWaitCb(void* obj);
     static void unitTestConnectCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     static void unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+    static void unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
     static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
     
@@ -236,6 +272,7 @@ private:
     std::vector<std::uint8_t> m_receivedData;
     std::vector<UnitTestConnectResponseInfo> m_connectResp;
     std::vector<UnitTestSubscribeResponseInfo> m_subscribeResp;
+    std::vector<UnitTestUnsubscribeResponseInfo> m_unsubscribeResp;
     std::vector<UnitTestPublishResponseInfo> m_publishResp;
     std::vector<UnitTestAuthInfo> m_inAuthInfo;
     std::vector<UnitTestAuthInfo> m_outAuthInfo;

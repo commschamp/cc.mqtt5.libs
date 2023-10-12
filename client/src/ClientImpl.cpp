@@ -491,6 +491,10 @@ void ClientImpl::handle(PublishMsg& msg)
 
 void ClientImpl::handle(PubackMsg& msg)
 {
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }            
+
     auto iter = 
         std::find_if(
             m_sendOps.begin(), m_sendOps.end(),
@@ -501,19 +505,18 @@ void ClientImpl::handle(PubackMsg& msg)
 
     if (iter == m_sendOps.end()) {
         errorLog("PUBACK with unknown packet id");
-        sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
         return;
     }
 
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
     msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(PubrecMsg& msg)
 {
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }  
+
     auto iter = 
         std::find_if(
             m_sendOps.begin(), m_sendOps.end(),
@@ -533,14 +536,15 @@ void ClientImpl::handle(PubrecMsg& msg)
         return;
     }
 
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
     msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(PubrelMsg& msg)
 {
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+
     auto iter = 
         std::find_if(
             m_recvOps.begin(), m_recvOps.end(),
@@ -560,14 +564,16 @@ void ClientImpl::handle(PubrelMsg& msg)
         return;
     }
 
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
+
     msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(PubcompMsg& msg)
 {
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }
+
     auto iter = 
         std::find_if(
             m_sendOps.begin(), m_sendOps.end(),
@@ -578,14 +584,9 @@ void ClientImpl::handle(PubcompMsg& msg)
 
     if (iter == m_sendOps.end()) {
         errorLog("PUBCOMP with unknown packet id");
-        sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError);
-        notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
         return;
     }
 
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
     msg.dispatch(**iter);
 }
 

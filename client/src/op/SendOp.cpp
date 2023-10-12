@@ -480,6 +480,12 @@ Op::Type SendOp::typeImpl() const
     return Type_Send;
 }
 
+void SendOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
+{
+    reportPubComplete(status);
+    opComplete();
+}
+
 void SendOp::restartResponseTimer()
 {
     auto& state = client().configState();

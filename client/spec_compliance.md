@@ -28,5 +28,11 @@
     * Tested in UnitTestReceive::test4.
 - [MQTT-2.2.1-5]: A PUBACK, PUBREC , PUBREL, or PUBCOMP packet MUST contain the same Packet Identifier as the
     PUBLISH packet that was originally sent     
-    * Correct behaviour is thested throughout all the unit / integration testing.
-    * 
+    * Correct behaviour is tested throughout all the unit / integration testing.
+    * Ignoring reception of invalid PUBACK is tested in UnitTestPublish::test11.
+    * On reception of invalid PUBREC, sending PUBREL with "Packet Identifier not found" reason code, tested in UnitTestPublish::test12
+    * On reception of invalid PUBREL, sending PUBCOMP with "Packet Identifier not found" reason code, tested in UnitTestReceive::test5
+    * Ignoring reception of invalid PUBCOMP is tested in UnitTestPublish::test13.
+- [MQTT-2.2.1-6]: A SUBACK and UNSUBACK MUST contain the Packet Identifier that was used in the corresponding SUBSCRIBE and UNSUBSCRIBE packet  
+    respectively.
+    * Ignoring reception of invalid SUBACK is tested in UnitTestSubscribe::test4.

@@ -131,7 +131,14 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms)
 
 unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const unsigned char* buf, unsigned bufLen)
 {
+    COMMS_ASSERT(handle != nullptr);
     return clientFromHandle(handle)->processData(buf, bufLen);
+}
+
+void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected)
+{
+    COMMS_ASSERT(handle != nullptr);
+    clientFromHandle(handle)->notifyNetworkDisconnected(disconnected);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms)

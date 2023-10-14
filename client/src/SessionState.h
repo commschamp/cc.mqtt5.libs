@@ -22,6 +22,7 @@ struct SessionState
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
+    std::uint64_t m_sessionExpiryIntervalMs = 0U;
     unsigned m_keepAliveMs = 0U;
     unsigned m_sendLimit = 0U;
     unsigned m_maxRecvTopicAlias = 0U;
@@ -33,6 +34,7 @@ struct SessionState
     bool m_terminating = false;
     bool m_subIdsAvailable = false;
     bool m_firstConnect = true;
+    bool m_networkDisconnected = false;
 };
 
 } // namespace cc_mqtt5_client

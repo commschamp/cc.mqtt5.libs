@@ -60,6 +60,7 @@ public:
     CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
+    void notifyNetworkDisconnected(bool disconnected);
 
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);

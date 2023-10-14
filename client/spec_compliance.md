@@ -128,6 +128,7 @@
     * Server specific.
 - [MQTT-3.1.2-23]: The Client and Server MUST store the Session State after the Network Connection is closed if the
     Session Expiry Interval is greater than 0
+    * Implemented by allowing notification of the network disconnection.
     * !!!! NOT IMPLEMENTED YET.
 - [MQTT-3.1.2-24]: The Server MUST NOT send packets exceeding Maximum Packet Size to the Client
     * Spec: If a Client receives a packet whose size exceeds this limit, this is a Protocol Error, the Client uses

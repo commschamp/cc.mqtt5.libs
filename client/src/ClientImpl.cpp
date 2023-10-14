@@ -97,7 +97,21 @@ void ClientImpl::tick(unsigned ms)
 unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 {
     auto guard = apiEnter();
+    COMMS_ASSERT(!m_sessionState.m_networkDisconnected);
+    if (m_sessionState.m_networkDisconnected) {
+        return 0U;
+    }
+
     return static_cast<unsigned>(comms::processAllWithDispatch(iter, len, m_frame, *this));
+}
+
+void ClientImpl::notifyNetworkDisconnected(bool disconnected)
+{
+    auto guard = apiEnter();
+    m_sessionState.m_networkDisconnected = disconnected;
+    for (auto* op : m_ops) {
+        op->networkConnectivityChanged();
+    }
 }
 
 op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
@@ -128,6 +142,12 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             updateEc(ec, CC_Mqtt5ErrorCode_AlreadyConnected);
             break;
         }        
+
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }
 
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start connect operation, retry in next event loop iteration.");
@@ -179,6 +199,12 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }        
+
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start disconnect operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
@@ -222,6 +248,12 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
+
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }        
 
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
@@ -267,6 +299,12 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }        
+
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
@@ -310,6 +348,12 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
             break;
         }
+
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }        
 
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start publish operation, retry in next event loop iteration.");

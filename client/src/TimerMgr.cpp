@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 
 namespace cc_mqtt5_client
 {
@@ -64,7 +65,8 @@ void TimerMgr::tick(unsigned ms)
 
     for (auto idx = 0U; idx < m_timers.size(); ++idx) {
         auto& info = m_timers[idx];
-        if (info.m_timeoutCb == nullptr) {
+        if ((info.m_timeoutCb == nullptr) ||
+            (info.m_suspended)) {
             continue;
         }
 
@@ -88,11 +90,13 @@ unsigned TimerMgr::getMinWait() const
         return 0U;
     }
 
-    static constexpr auto Limit = std::numeric_limits<unsigned>::max();
-    unsigned result = Limit;
+    static constexpr auto Limit = std::numeric_limits<std::uint64_t>::max();
+    auto result = Limit;
 
     for (auto& info : m_timers) {
-        if ((!info.m_allocated) || (info.m_timeoutCb == nullptr)) {
+        if ((!info.m_allocated) || 
+            (info.m_timeoutCb == nullptr) || 
+            (info.m_suspended)) {
             continue;
         }
 
@@ -103,7 +107,7 @@ unsigned TimerMgr::getMinWait() const
         return 0U;
     }
 
-    return result;
+    return static_cast<unsigned>(std::min(result, std::uint64_t(std::numeric_limits<unsigned>::max())));
 }
 
 void TimerMgr::freeTimer(unsigned idx)
@@ -120,7 +124,7 @@ void TimerMgr::freeTimer(unsigned idx)
     --m_allocatedTimers;
 }
 
-void TimerMgr::timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* data)
+void TimerMgr::timerWait(unsigned idx, std::uint64_t timeoutMs, TimeoutCb cb, void* data)
 {
     COMMS_ASSERT(idx < m_timers.size()); 
     if (m_timers.size() <= idx) {
@@ -160,6 +164,30 @@ bool TimerMgr::timerIsActive(unsigned idx) const
     COMMS_ASSERT(info.m_allocated);
     COMMS_ASSERT(info.m_timeoutCb != nullptr || (info.m_timeoutMs == 0U));
     return (info.m_timeoutCb != nullptr);
+}
+
+void TimerMgr::timerSetSuspended(unsigned idx, bool suspended)
+{
+    COMMS_ASSERT(idx < m_timers.size()); 
+    if (m_timers.size() <= idx) {
+        return;
+    }
+
+    auto& info = m_timers[idx];
+    COMMS_ASSERT(info.m_allocated);
+    info.m_suspended = suspended;
+}
+
+bool TimerMgr::timerIsSuspended(unsigned idx) const
+{
+    COMMS_ASSERT(idx < m_timers.size()); 
+    if (m_timers.size() <= idx) {
+        return false;
+    }
+
+    auto& info = m_timers[idx];
+    COMMS_ASSERT(info.m_allocated);
+    return info.m_suspended;
 }
 
 } // namespace cc_mqtt5_client

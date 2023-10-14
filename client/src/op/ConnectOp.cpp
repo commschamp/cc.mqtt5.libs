@@ -577,8 +577,9 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     reuseState.m_sendTopicAliases.resize(std::min(reuseState.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
 
-    state.m_keepAliveMs = keepAlive * 1000;
+    state.m_keepAliveMs = keepAlive * 1000U;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
+    state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_firstConnect = false;
 
@@ -750,6 +751,14 @@ Op::Type ConnectOp::typeImpl() const
 void ConnectOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 {
     completeOpInternal(status);
+}
+
+void ConnectOp::networkConnectivityChangedImpl()
+{
+    if (client().sessionState().m_networkDisconnected) {
+        completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+        return;
+    }
 }
 
 void ConnectOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)

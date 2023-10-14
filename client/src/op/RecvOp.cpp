@@ -415,6 +415,11 @@ Op::Type RecvOp::typeImpl() const
     return Type_Recv;
 }
 
+void RecvOp::networkConnectivityChangedImpl()
+{
+    m_responseTimer.setSuspended(client().sessionState().m_networkDisconnected);
+}
+
 void RecvOp::restartResponseTimer()
 {
     auto& state = client().configState();

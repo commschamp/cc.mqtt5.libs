@@ -19,7 +19,7 @@ struct ExtConfig : public Config
     static constexpr unsigned ConnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned KeepAliveOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned ConnectOpTimers = 1U;
-    static constexpr unsigned KeepAliveOpTimers = 3U;
+    static constexpr unsigned KeepAliveOpTimers = 4U;
     static constexpr unsigned DisconnectOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned DisconnectOpTimers = 0U;
     static constexpr unsigned SubscribeOpTimers = 1U;    

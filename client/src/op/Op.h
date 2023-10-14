@@ -59,6 +59,11 @@ public:
         m_responseTimeoutMs = ms;
     }    
 
+    void networkConnectivityChanged()
+    {
+        networkConnectivityChangedImpl();
+    }
+
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
     using DisconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType;
@@ -67,6 +72,7 @@ protected:
 
     virtual Type typeImpl() const = 0;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status);
+    virtual void networkConnectivityChangedImpl();
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();

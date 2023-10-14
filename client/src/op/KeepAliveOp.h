@@ -34,22 +34,26 @@ public:
 
 protected:
     virtual Type typeImpl() const override;    
+    virtual void networkConnectivityChangedImpl() override;
 
 private:
     void restartPingTimer();
     void restartRecvTimer();
     void sendPing();
     void pingTimeoutInternal();
+    void sessionExpiryTimeoutInternal();
 
     static void sendPingCb(void* data);
     static void recvTimeoutCb(void* data);
     static void pingTimeoutCb(void* data);
+    static void sessionExpiryTimeoutCb(void* data);
 
     TimerMgr::Timer m_pingTimer;
     TimerMgr::Timer m_recvTimer;  
     TimerMgr::Timer m_respTimer;  
+    TimerMgr::Timer m_sessionExpiryTimer;  
 
-    static_assert(ExtConfig::KeepAliveOpTimers == 3U);
+    static_assert(ExtConfig::KeepAliveOpTimers == 4U);
 };
 
 } // namespace op

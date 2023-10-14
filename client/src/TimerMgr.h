@@ -38,7 +38,7 @@ public:
             }
         }
 
-        void wait(unsigned timeoutMs, TimeoutCb cb, void* data)
+        void wait(std::uint64_t timeoutMs, TimeoutCb cb, void* data)
         {
             m_timerMgr.timerWait(m_idx, timeoutMs, cb, data);
         }
@@ -51,6 +51,24 @@ public:
         bool isActive() const
         {
             return m_timerMgr.timerIsActive(m_idx);
+        }
+
+        void setSuspended(bool suspended)
+        {
+            if (!isActive()) {
+                return;
+            }
+
+            m_timerMgr.timerSetSuspended(m_idx, suspended);
+        }
+
+        bool isSuspended() const
+        {
+            if (!isActive()) {
+                return false;
+            }
+
+            return m_timerMgr.timerIsSuspended(m_idx);
         }
 
     private:
@@ -80,10 +98,11 @@ public:
 private:
     struct TimerInfo
     {
-        unsigned m_timeoutMs = 0U;
+        std::uint64_t m_timeoutMs = 0U;
         TimeoutCb m_timeoutCb = nullptr;
         void* m_timeoutData = nullptr;
         bool m_allocated = false;
+        bool m_suspended = false;
     };
 
     using StorageType = ObjListType<TimerInfo, ExtConfig::TimersLimit>;
@@ -91,9 +110,11 @@ private:
     friend class Timer;
 
     void freeTimer(unsigned idx);
-    void timerWait(unsigned idx, unsigned timeoutMs, TimeoutCb cb, void* data);
+    void timerWait(unsigned idx, std::uint64_t timeoutMs, TimeoutCb cb, void* data);
     void timerCancel(unsigned idx);
     bool timerIsActive(unsigned idx) const;
+    void timerSetSuspended(unsigned idx, bool suspended);
+    bool timerIsSuspended(unsigned idx) const;
 
     StorageType m_timers;
     unsigned m_allocatedTimers = 0U;

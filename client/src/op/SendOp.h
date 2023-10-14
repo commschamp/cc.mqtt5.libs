@@ -47,6 +47,7 @@ public:
 protected:
     virtual Type typeImpl() const override;    
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
+    virtual void networkConnectivityChangedImpl() override;
 
 private:
     void restartResponseTimer();

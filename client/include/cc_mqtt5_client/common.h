@@ -61,6 +61,7 @@ typedef enum
     CC_Mqtt5ErrorCode_NotSupported, ///< Feature is not supported
     CC_Mqtt5ErrorCode_RetryLater, ///< Retry in next event loop iteration.
     CC_Mqtt5ErrorCode_Terminating, ///< The client is in "terminating" state, (re)init is required.
+    CC_Mqtt5ErrorCode_NetworkDisconnected, ///< When network is disconnected issueing new ops is not accepted
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 

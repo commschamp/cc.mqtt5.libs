@@ -260,6 +260,11 @@ void UnsubscribeOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
     completeOpInternal(status);
 }
 
+void UnsubscribeOp::networkConnectivityChangedImpl()
+{
+    m_timer.setSuspended(client().sessionState().m_networkDisconnected);
+}
+
 void UnsubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
 {
     COMMS_ASSERT(m_cb != nullptr);

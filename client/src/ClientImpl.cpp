@@ -123,6 +123,12 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_sessionState.m_connected) {
+            errorLog("Client is already connected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_AlreadyConnected);
+            break;
+        }        
+
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start connect operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);

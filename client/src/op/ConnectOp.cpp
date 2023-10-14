@@ -46,11 +46,6 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((config.m_passwordLen > 0U) && (config.m_username == nullptr)) {
-        errorLog("Username is not provided in connect configuration.");
-        return CC_Mqtt5ErrorCode_BadParam;
-    }
-
     if ((!config.m_cleanStart) && (client().sessionState().m_firstConnect)) {
         errorLog("Clean start flag needs to be set on the first connection attempt");
         return CC_Mqtt5ErrorCode_BadParam;
@@ -101,6 +96,11 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         errorLog("Will topic is not provided.");
         return CC_Mqtt5ErrorCode_BadParam;
     }
+
+    if ((config.m_qos < CC_Mqtt5QoS_AtMostOnceDelivery) || (config.m_qos > CC_Mqtt5QoS_ExactlyOnceDelivery)) {
+        errorLog("Invalid qill QoS value in configuration.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
 
     m_connectMsg.field_willTopic().field().value() = config.m_topic;
     if (config.m_dataLen > 0U) {

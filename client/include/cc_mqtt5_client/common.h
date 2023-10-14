@@ -53,6 +53,7 @@ typedef enum
     CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
     CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
     CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
+    CC_Mqtt5ErrorCode_AlreadyConnected, ///< The client library is already connected to the broker, cannot perform connection operation.
     CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
     CC_Mqtt5ErrorCode_InsufficientConfig, ///< The required configuration hasn't been performed.
     CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.

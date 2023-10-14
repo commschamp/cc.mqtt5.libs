@@ -15,6 +15,10 @@ public:
     void test3();
     void test4();
     void test5();
+    void test6();
+    void test7();
+    void test8();
+    void test9();
 
 private:
     virtual void setUp() override
@@ -31,6 +35,12 @@ private:
 void UnitTestConnect::test1()
 {
     // Simple connect and ack
+    // [MQTT-3.1.2-1]
+    // [MQTT-3.1.2-2]
+    // [MQTT-3.1.2-11]
+    // [MQTT-3.1.2-13]
+    // [MQTT-3.1.2-16]
+    // [MQTT-3.1.2-18]
     auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
@@ -60,6 +70,11 @@ void UnitTestConnect::test1()
     TS_ASSERT_DIFFERS(connectMsg, nullptr);
     TS_ASSERT_EQUALS(connectMsg->field_protocolName().value(), "MQTT");
     TS_ASSERT_EQUALS(connectMsg->field_protocolVersion().value(), 5U);
+    TS_ASSERT(!connectMsg->field_flags().field_low().getBitValue_willFlag());
+    TS_ASSERT_EQUALS(connectMsg->field_flags().field_willQos().value(), UnitTestConnectMsg::Field_flags::Field_willQos::ValueType::AtMostOnceDelivery);
+    TS_ASSERT(!connectMsg->field_flags().field_high().getBitValue_willRetain());
+    TS_ASSERT(!connectMsg->field_flags().field_high().getBitValue_userNameFlag());
+    TS_ASSERT(!connectMsg->field_flags().field_high().getBitValue_passwordFlag());
     TS_ASSERT_EQUALS(connectMsg->field_clientId().value(), ClientId);
     TS_ASSERT_EQUALS(connectMsg->field_keepAlive().value(), KeepAlive);
     TS_ASSERT(connectMsg->field_flags().field_low().getBitValue_cleanStart());
@@ -97,7 +112,11 @@ void UnitTestConnect::test1()
 
 void UnitTestConnect::test2()
 {
-    // Testing connect properties
+    // Testing connect properties and will
+    // [MQTT-3.1.2-9]
+    // [MQTT-3.1.2-17]
+    // [MQTT-3.1.2-19]
+    // [MQTT-3.1.2-21]
     auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
@@ -647,6 +666,7 @@ void UnitTestConnect::test4()
 void UnitTestConnect::test5()
 {
     // Keep alive test
+    // [MQTT-3.1.2-20]
     auto* client = unitTestAllocClient();
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
@@ -721,4 +741,98 @@ void UnitTestConnect::test5()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);
     auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
     TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::KeepAliveTimeout);
+}
+
+void UnitTestConnect::test6()
+{
+    // Testing inability to send any message before CONNECT.
+    // [MQTT-3.1.0-1]
+    auto* client = unitTestAllocClient();
+
+    auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
+    auto* disconnect = ::cc_mqtt5_client_disconnect_prepare(client, &ec);
+    TS_ASSERT_EQUALS(disconnect, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
+
+    auto* subscribe = ::cc_mqtt5_client_subscribe_prepare(client, &ec);    
+    TS_ASSERT_EQUALS(subscribe, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
+
+    auto* unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, &ec);    
+    TS_ASSERT_EQUALS(unsubscribe, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);    
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, &ec);    
+    TS_ASSERT_EQUALS(publish, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);        
+}
+
+void UnitTestConnect::test7()
+{
+    // Testing attempt to send connect message second time
+    // [MQTT-3.1.0-2]
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    const std::string ClientId(__FUNCTION__);
+    unitTestPerformBasicConnect(client, ClientId.c_str());
+
+    // Second connection attempt
+    auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
+    auto* connect = cc_mqtt5_client_connect_prepare(client, &ec);
+    TS_ASSERT_EQUALS(connect, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_AlreadyConnected);        
+}
+
+void UnitTestConnect::test8()
+{
+    // Testing rejection of the non "clean start" on the first attempt to connect
+    // [MQTT-3.1.2-4]
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+    
+    auto config = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&config);
+
+    config.m_clientId = __FUNCTION__;
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+}
+
+void UnitTestConnect::test9()
+{
+    // Testing invalid will Qos
+    // [MQTT-3.1.2-12]
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+    
+    auto config = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&config);
+
+    config.m_clientId = __FUNCTION__;
+    config.m_cleanStart = true;
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto willConfig = CC_Mqtt5ConnectWillConfig();
+    cc_mqtt5_client_connect_init_config_will(&willConfig);
+
+    const UnitTestData WillData = {0x1, 0x2, 0x3};
+    willConfig.m_topic = "will/topic";
+    willConfig.m_data = &WillData[0];
+    willConfig.m_dataLen = static_cast<decltype(willConfig.m_dataLen)>(WillData.size());
+    willConfig.m_qos = static_cast<decltype(willConfig.m_qos)>(3);
+    ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }

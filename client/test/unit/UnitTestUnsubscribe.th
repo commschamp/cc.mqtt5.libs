@@ -7,10 +7,13 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestSubscribe : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestUnsubscribe : public CxxTest::TestSuite, public UnitTestCommonBase
 {
 public:
     void test1();
+    void test2();
+    void test3();
+    void test4();
 
 private:
     virtual void setUp() override
@@ -24,10 +27,10 @@ private:
     }
 };
 
-void UnitTestSubscribe::test1()
+void UnitTestUnsubscribe::test1()
 {
     // Simple unsubscribe and ack
-    auto* client = unitTestAllocClient(true);
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
@@ -87,5 +90,204 @@ void UnitTestSubscribe::test1()
     TS_ASSERT_EQUALS(unsubackInfo.m_response.m_reasonCodes.size(), 2U);
     TS_ASSERT(unsubackInfo.m_response.m_reasonStr.empty());
     TS_ASSERT(unsubackInfo.m_response.m_userProps.empty());
+    unitTestPopUnsubscribeResponseInfo();
+}
+
+void UnitTestUnsubscribe::test2()
+{
+    // Parallel unsubscribe 
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
+
+    const std::string Topic1("topic1");
+    const std::string Topic2("topic2");
+
+    unitTestTick(1000);
+    unitTestPerformBasicSubscribe(client, Topic1.c_str());
+    unitTestTick(1000);
+    unitTestPerformBasicSubscribe(client, Topic2.c_str());
+
+    auto config1 = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config1);
+    config1.m_topic = Topic1.c_str();
+
+    auto unsubscribe1 = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe1, nullptr);
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe1, &config1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg1 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(unsubscribeMsg1, nullptr);
+    TS_ASSERT(unsubscribeMsg1->field_propertiesList().value().empty());
+    TS_ASSERT_EQUALS(unsubscribeMsg1->field_list().value().size(), 1U);
+    TS_ASSERT_EQUALS(unsubscribeMsg1->field_list().value()[0].value(), Topic1);
+    auto packetId1 = unsubscribeMsg1->field_packetId().value();
+
+    auto config2 = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config2);
+    config2.m_topic = Topic2.c_str();
+
+    auto unsubscribe2 = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe2, nullptr);
+
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe2, &config2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg2 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(unsubscribeMsg2, nullptr);
+    TS_ASSERT(unsubscribeMsg2->field_propertiesList().value().empty());
+    TS_ASSERT_EQUALS(unsubscribeMsg2->field_list().value().size(), 1U);
+    TS_ASSERT_EQUALS(unsubscribeMsg2->field_list().value()[0].value(), Topic2);
+    auto packetId2 = unsubscribeMsg2->field_packetId().value();
+
+    TS_ASSERT_DIFFERS(packetId1, packetId2);
+
+    unitTestTick(1000);
+    UnitTestUnsubackMsg unsubackMsg1;
+    unsubackMsg1.field_packetId().setValue(packetId1);
+    unsubackMsg1.field_list().value().resize(1);
+    unsubackMsg1.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    unitTestReceiveMessage(unsubackMsg1);
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
+
+    auto& unsubackInfo1 = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(unsubackInfo1.m_response.m_reasonCodes.size(), 1U);
+    unitTestPopUnsubscribeResponseInfo();
+
+    UnitTestUnsubackMsg unsubackMsg2;
+    unsubackMsg2.field_packetId().setValue(packetId2);
+    unsubackMsg2.field_list().value().resize(1);
+    unsubackMsg2.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    unitTestReceiveMessage(unsubackMsg2);
+    TS_ASSERT(unitTestIsUnsubscribeComplete());    
+
+    auto& unsubackInfo2 = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(unsubackInfo2.m_response.m_reasonCodes.size(), 1U);
+    TS_ASSERT(unsubackInfo2.m_response.m_reasonStr.empty());
+    TS_ASSERT(unsubackInfo2.m_response.m_userProps.empty());
+    unitTestPopUnsubscribeResponseInfo();
+}
+
+void UnitTestUnsubscribe::test3()
+{
+    // Invalid unsubscribe topics
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
+
+    const std::string Topic1("#");
+
+    unitTestTick(1000);
+    unitTestPerformBasicSubscribe(client, Topic1.c_str());
+
+    auto unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe, nullptr);
+
+    auto config = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config);
+    config.m_topic = "++";
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_topic = "#+";
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+
+    config.m_topic = "#/hello";
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "hello+/bla";
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "#hello";
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+
+    config.m_topic = "+hello";
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);       
+
+    config.m_topic = "+"; // valid topic but not subscribed
+    ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);      
+
+    ec = unitTestSendUnsubscribe(unsubscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);      
+}
+
+void UnitTestUnsubscribe::test4()
+{
+    // Testing invalid unsuback;
+    // [MQTT-2.2.1-6]
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    const std::string Topic("#");
+
+    unitTestTick(1000);
+    unitTestPerformBasicSubscribe(client, Topic.c_str());
+
+    auto config = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config);
+    config.m_topic = Topic.c_str();
+
+    auto unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe, nullptr);
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    auto packetId = unsubscribeMsg->field_packetId().value();
+
+    unitTestTick(1000);
+    UnitTestUnsubackMsg unsubackMsg;
+    unsubackMsg.field_packetId().setValue(packetId + 1U);
+    unsubackMsg.field_list().value().resize(1);
+    unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    unitTestReceiveMessage(unsubackMsg);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    unitTestTick(); // Timeout
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
+
+    auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopUnsubscribeResponseInfo();
 }

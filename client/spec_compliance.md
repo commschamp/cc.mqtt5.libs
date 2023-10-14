@@ -36,3 +36,8 @@
 - [MQTT-2.2.1-6]: A SUBACK and UNSUBACK MUST contain the Packet Identifier that was used in the corresponding SUBSCRIBE and UNSUBSCRIBE packet  
     respectively.
     * Ignoring reception of invalid SUBACK is tested in UnitTestSubscribe::test4.
+    * Ignoring reception of invalid UNSUBACK is tested in UnitTestUnsubscribe::test4.
+- [MQTT-2.2.2-1]:  If there are no properties, this MUST be indicated by including a Property Length of zero.
+    * Part of protocol definition.
+- [MQTT-3.1.0-1]: After a Network Connection is established by a Client to a Server, the first packet sent from the Client to
+    the Server MUST be a CONNECT packet

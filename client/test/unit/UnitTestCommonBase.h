@@ -249,7 +249,12 @@ protected:
     bool unitTestHasMessageRecieved();
     const UnitTestMessageInfo& unitTestReceivedMessageInfo();
     void unitTestPopReceivedMessageInfo();      
-    void unitTestPerformBasicConnect(CC_Mqtt5Client* client, const char* clientId, bool cleanStart = true, unsigned topicAliasMax = 0U);
+    void unitTestPerformBasicConnect(
+        CC_Mqtt5Client* client, 
+        const char* clientId, 
+        bool cleanStart = true, 
+        unsigned topicAliasMax = 0U,
+        unsigned sessionExpiryInterval = 0U);
     void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId = 0U);
 
 private:

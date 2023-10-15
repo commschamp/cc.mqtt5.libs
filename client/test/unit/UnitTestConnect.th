@@ -19,6 +19,8 @@ public:
     void test7();
     void test8();
     void test9();
+    void test10();
+    void test11();
 
 private:
     virtual void setUp() override
@@ -836,3 +838,85 @@ void UnitTestConnect::test9()
     ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
+
+void UnitTestConnect::test10()
+{
+    // Testing network disconnection during connect
+    // [MQTT-3.1.2-23]
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+    
+    auto config = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&config);
+
+    config.m_clientId = __FUNCTION__;
+    config.m_cleanStart = true;
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+
+    unitTestTick(1000);
+    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+
+    TS_ASSERT(unitTestIsConnectComplete());
+    auto& connackInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    // New connection attempt when network is disconnected
+    connect = cc_mqtt5_client_connect_prepare(client, &ec);
+    TS_ASSERT_EQUALS(connect, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+}
+
+
+void UnitTestConnect::test11()
+{
+    // Delaying keep alive ping when network is disconnected
+    // [MQTT-3.1.2-23]
+
+    auto* client = unitTestAllocClient(true);
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive - 60 seconds
+
+    unitTestTick(10000); // 10 seconds
+
+    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
+
+    unitTestTick(5000); // 5 seconds
+    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, 50000); // Remaining period of the keep alive
+
+    unitTestTick(45000); // 45 seconds
+    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
+
+    TS_ASSERT(!unitTestIsDisconnected());
+    unitTestTick(); // Session expiry timeout
+    TS_ASSERT(unitTestIsDisconnected());
+}
+
+

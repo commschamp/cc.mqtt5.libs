@@ -412,7 +412,8 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
     CC_Mqtt5Client* client, 
     const char* clientId, 
     bool cleanStart,
-    unsigned topicAliasMax)
+    unsigned topicAliasMax,
+    unsigned sessionExpiryInterval)
 {
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
     assert(connect != nullptr);
@@ -444,6 +445,13 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_topicAliasMax();
         field.field_value().setValue(topicAliasMax);
+    }
+
+    if (sessionExpiryInterval > 0U) {
+        auto& propsVec = connackMsg.field_propertiesList().value();
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_sessionExpiryInterval();
+        field.field_value().setValue(sessionExpiryInterval);
     }
 
     unitTestReceiveMessage(connackMsg);
@@ -507,6 +515,7 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_Success);
     unitTestPopSubscribeResponseInfo();    
 }
+
 
 void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)
 {

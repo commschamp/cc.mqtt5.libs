@@ -59,6 +59,7 @@ private:
     void* m_authCbData = nullptr;
     AuthMethodStorageType m_authMethod;
     unsigned m_sessionExpiryInterval = 0U;
+    unsigned m_maxPacketSize = 0U;
 
     static_assert(ExtConfig::ConnectOpTimers == 1U);
 };

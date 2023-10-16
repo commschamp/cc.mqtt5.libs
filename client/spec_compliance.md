@@ -138,7 +138,7 @@
 - [MQTT-3.1.2-24]: The Server MUST NOT send packets exceeding Maximum Packet Size to the Client
     * Spec: If a Client receives a packet whose size exceeds this limit, this is a Protocol Error, the Client uses
     DISCONNECT with Reason Code 0x95 (Packet too large)
-    * !!!! Check is NOT IMPLEMENTED YET.
+    * !!!! Check is implemented, NOT TESTED YET.
 - [MQTT-3.1.2-25]: Where a Packet is too large to send, the Server MUST discard it without sending it and then behave as if
     it had completed sending that Application Message.
     * Server specific.

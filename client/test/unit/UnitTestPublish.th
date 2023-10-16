@@ -471,7 +471,7 @@ void UnitTestPublish::test7()
 {
     // Qos0 publish with topic id
     auto* client = unitTestAllocClient();
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 10);
+    unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     const std::string Topic("some/topic");
@@ -578,7 +578,7 @@ void UnitTestPublish::test8()
 {
     // Qos1 publish with topic id
     auto* client = unitTestAllocClient();
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 10);
+    unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     const std::string Topic("some/topic");
@@ -670,7 +670,7 @@ void UnitTestPublish::test9()
 {
     // Qos2 publish with topic id
     auto* client = unitTestAllocClient();
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 10);
+    unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     const std::string Topic("some/topic");
@@ -1028,7 +1028,7 @@ void UnitTestPublish::test14()
     auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
@@ -1097,7 +1097,7 @@ void UnitTestPublish::test15()
     auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};

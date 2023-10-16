@@ -890,7 +890,7 @@ void UnitTestConnect::test11()
     TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
 
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive - 60 seconds

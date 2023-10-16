@@ -250,6 +250,8 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propBundle = propVar.initField_maxPacketSize();
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_maxPacketSize);
+
+        m_maxPacketSize = config.m_maxPacketSize;
     }
 
     if (config.m_topicAliasMaximum > 0U) {
@@ -580,6 +582,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_keepAliveMs = keepAlive * 1000U;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
+    state.m_maxPacketSize = m_maxPacketSize;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_firstConnect = false;
 

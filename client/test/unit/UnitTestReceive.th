@@ -407,7 +407,7 @@ void UnitTestReceive::test6()
     ::cc_mqtt5_client_set_default_response_timeout(client, ResponseTimeout);
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
@@ -473,7 +473,7 @@ void UnitTestReceive::test7()
     ::cc_mqtt5_client_set_default_response_timeout(client, ResponseTimeout);
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     unitTestPerformBasicSubscribe(client, "#");

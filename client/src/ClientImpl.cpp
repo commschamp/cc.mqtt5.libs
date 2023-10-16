@@ -98,11 +98,74 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 {
     auto guard = apiEnter();
     COMMS_ASSERT(!m_sessionState.m_networkDisconnected);
+    
     if (m_sessionState.m_networkDisconnected) {
         return 0U;
     }
 
-    return static_cast<unsigned>(comms::processAllWithDispatch(iter, len, m_frame, *this));
+    auto disconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType::ProtocolError;
+    auto disconnectOnExitGuard = 
+        comms::util::makeScopeGuard(
+            [this, &disconnectReason]()
+            {
+                sendDisconnectMsg(disconnectReason);    
+                notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
+            });
+
+    unsigned consumed = 0;
+    while (consumed < len) {
+        auto remLen = len - consumed;
+        auto* iterTmp = iter;
+
+        using IdAndFlagsField = ProtFrame::Layer_idAndFlags::Field;
+        static_assert(IdAndFlagsField::minLength() == IdAndFlagsField::maxLength());
+
+        if (remLen <= IdAndFlagsField::minLength()) {
+            // Size info is not available
+            break;
+        }
+
+        using SizeField = ProtFrame::Layer_size::Field;
+        SizeField sizeField;
+        std::advance(iterTmp, IdAndFlagsField::minLength());
+        auto es = sizeField.read(iterTmp, remLen - IdAndFlagsField::minLength());
+        if (es == comms::ErrorStatus::NotEnoughData) {
+            break;
+        }
+
+        if (es != comms::ErrorStatus::Success) {
+            return consumed; // Disconnect
+        }        
+
+        if (m_sessionState.m_maxPacketSize > 0U) {
+            auto maxAllowedSize = m_sessionState.m_maxPacketSize + IdAndFlagsField::minLength() + sizeField.length();
+            if (maxAllowedSize < sizeField.value()) {
+                errorLog("The message length exceeded max packet size");
+                disconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge;
+                return consumed;
+            }
+        }
+
+        iterTmp = iter;
+        ProtFrame::MsgPtr msg;
+        es = m_frame.read(msg, iterTmp, remLen);
+        if (es == comms::ErrorStatus::NotEnoughData) {
+            break;
+        }
+
+        if (es != comms::ErrorStatus::Success) {
+            errorLog("Unexpected error in framing / payload parsing");
+            return consumed;
+        }
+
+        COMMS_ASSERT(msg);
+        msg->dispatch(*this);
+        consumed += static_cast<unsigned>(std::distance(iter, iterTmp));
+        iter = iterTmp;
+    }
+
+    disconnectOnExitGuard.release();
+    return consumed;    
 }
 
 void ClientImpl::notifyNetworkDisconnected(bool disconnected)

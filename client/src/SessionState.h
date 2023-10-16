@@ -27,6 +27,7 @@ struct SessionState
     unsigned m_sendLimit = 0U;
     unsigned m_maxRecvTopicAlias = 0U;
     unsigned m_maxSendTopicAlias = 0U;
+    unsigned m_maxPacketSize = 0U;
     PacketIdsList m_allocatedPacketIds;
     std::uint16_t m_lastPacketId = 0U;
     bool m_initialized = false;

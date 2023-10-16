@@ -408,22 +408,31 @@ void UnitTestCommonBase::unitTestPopReceivedMessageInfo()
     m_receivedMessages.erase(m_receivedMessages.begin());
 }
 
-void UnitTestCommonBase::unitTestPerformBasicConnect(
+void UnitTestCommonBase::unitTestPerformConnect(
     CC_Mqtt5Client* client, 
-    const char* clientId, 
-    bool cleanStart,
-    unsigned topicAliasMax,
-    unsigned sessionExpiryInterval)
+    const CC_Mqtt5ConnectBasicConfig* basicConfig,
+    const CC_Mqtt5ConnectWillConfig* willConfig,
+    const CC_Mqtt5ConnectExtraConfig* extraConfig,
+    const UnitTestConnectResponseConfig* responseConfig)
 {
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
     assert(connect != nullptr);
 
-    auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
-    connectBasicConfig.m_clientId = clientId;
-    connectBasicConfig.m_cleanStart = cleanStart;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
-    assert(ec == CC_Mqtt5ErrorCode_Success);
+    auto ec = CC_Mqtt5ErrorCode_Success;
+    if (basicConfig != nullptr) {
+        ec = cc_mqtt5_client_connect_config_basic(connect, basicConfig);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }
+
+    if (willConfig != nullptr) {
+        ec = cc_mqtt5_client_connect_config_will(connect, willConfig);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }
+
+    if (extraConfig != nullptr) {
+        ec = cc_mqtt5_client_connect_config_extra(connect, extraConfig);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }
 
     ec = unitTestSendConnect(connect);
     assert(ec == CC_Mqtt5ErrorCode_Success);
@@ -440,19 +449,26 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
 
-    if (topicAliasMax > 0U) {
-        auto& propsVec = connackMsg.field_propertiesList().value();
-        propsVec.resize(propsVec.size() + 1U);
-        auto& field = propsVec.back().initField_topicAliasMax();
-        field.field_value().setValue(topicAliasMax);
-    }
+    do {
+        if (responseConfig == nullptr) {
+            break;
+        }
 
-    if (sessionExpiryInterval > 0U) {
-        auto& propsVec = connackMsg.field_propertiesList().value();
-        propsVec.resize(propsVec.size() + 1U);
-        auto& field = propsVec.back().initField_sessionExpiryInterval();
-        field.field_value().setValue(sessionExpiryInterval);
-    }
+        if (responseConfig->m_topicAliasMax > 0U) {
+            auto& propsVec = connackMsg.field_propertiesList().value();
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_topicAliasMax();
+            field.field_value().setValue(responseConfig->m_topicAliasMax);
+        }
+
+        if (responseConfig->m_sessionExpiryInterval > 0U) {
+            auto& propsVec = connackMsg.field_propertiesList().value();
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_sessionExpiryInterval();
+            field.field_value().setValue(responseConfig->m_sessionExpiryInterval);
+        }
+
+    } while (false);
 
     unitTestReceiveMessage(connackMsg);
     assert(unitTestIsConnectComplete());   
@@ -460,7 +476,56 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
     auto& connectInfo = unitTestConnectResponseInfo();
     assert(connectInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
     assert(connectInfo.m_response.m_reasonCode == CC_Mqtt5ReasonCode_Success);
-    unitTestPopConnectResponseInfo();
+    unitTestPopConnectResponseInfo();    
+}
+
+void UnitTestCommonBase::unitTestPerformBasicConnect(
+    CC_Mqtt5Client* client, 
+    const char* clientId, 
+    bool cleanStart)
+{
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = clientId;
+    basicConfig.m_cleanStart = cleanStart;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr);
+}
+
+void UnitTestCommonBase::unitTestPerformPubTopicAliasConnect(
+    CC_Mqtt5Client* client, 
+    const char* clientId, 
+    unsigned topicAliasMax,
+    bool cleanStart)
+{
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = clientId;
+    basicConfig.m_cleanStart = cleanStart;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_topicAliasMax = topicAliasMax;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, &responseConfig);
+}
+
+
+void UnitTestCommonBase::unitTestPerformSessionExpiryConnect(
+    CC_Mqtt5Client* client, 
+    const char* clientId, 
+    unsigned sessionExpiryInterval,
+    bool cleanStart)
+{
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = clientId;
+    basicConfig.m_cleanStart = cleanStart;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_sessionExpiryInterval = sessionExpiryInterval;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
 }
 
 void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)
@@ -515,7 +580,6 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_Success);
     unitTestPopSubscribeResponseInfo();    
 }
-
 
 void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)
 {

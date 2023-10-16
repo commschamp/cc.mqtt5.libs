@@ -206,6 +206,12 @@ protected:
         unsigned m_elapsed = 0U;
     };    
 
+    struct UnitTestConnectResponseConfig
+    {
+        unsigned m_topicAliasMax = 0U;
+        unsigned m_sessionExpiryInterval = 0U;
+    };
+
     void unitTestSetUp();
     void unitTestTearDown();
     UnitTestClientPtr::pointer unitTestAllocClient(bool addLog = false);
@@ -249,12 +255,31 @@ protected:
     bool unitTestHasMessageRecieved();
     const UnitTestMessageInfo& unitTestReceivedMessageInfo();
     void unitTestPopReceivedMessageInfo();      
+    void unitTestPerformConnect(
+        CC_Mqtt5Client* client, 
+        const CC_Mqtt5ConnectBasicConfig* basicConfig,
+        const CC_Mqtt5ConnectWillConfig* willConfig = nullptr,
+        const CC_Mqtt5ConnectExtraConfig* extraConfig = nullptr,
+        const UnitTestConnectResponseConfig* responseConfig = nullptr);
+
     void unitTestPerformBasicConnect(
         CC_Mqtt5Client* client, 
         const char* clientId, 
-        bool cleanStart = true, 
-        unsigned topicAliasMax = 0U,
-        unsigned sessionExpiryInterval = 0U);
+        bool cleanStart = true);
+
+    void unitTestPerformPubTopicAliasConnect(
+        CC_Mqtt5Client* client, 
+        const char* clientId, 
+        unsigned topicAliasMax,
+        bool cleanStart = true);        
+
+    void unitTestPerformSessionExpiryConnect(
+        CC_Mqtt5Client* client, 
+        const char* clientId, 
+        unsigned sessionExpiryInterval,
+        bool cleanStart = true);
+
+
     void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId = 0U);
 
 private:

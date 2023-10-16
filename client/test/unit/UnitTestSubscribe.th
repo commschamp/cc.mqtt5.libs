@@ -326,7 +326,7 @@ void UnitTestSubscribe::test5()
     auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
-    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();

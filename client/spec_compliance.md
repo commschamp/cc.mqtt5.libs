@@ -129,12 +129,12 @@
 - [MQTT-3.1.2-23]: The Client and Server MUST store the Session State after the Network Connection is closed if the
     Session Expiry Interval is greater than 0
     * Implemented by allowing notification of the network disconnection.
-    * When network disconnected during connection attempt, the operation is immediately aborted. Tested in UnitTestConnect::test10.
+    * When network is disconnected during connection attempt, the operation is immediately aborted. Tested in UnitTestConnect::test10.
     * Suspending keep alive ping for session expiry period is tested in UnitTestConnect::test11.
     * Suspending subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
     * Suspending unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
     * Suspending publish operation for session expiry period is tested in UnitTestPublish::test14 and UnitTestPublish::test15.
-    * Suspending message reception for session expiry period is !!!! NOT TESTED YET.
+    * Suspending message reception for session expiry period is tested in UnitTestReceive::test6 and UnitTestReceive::test7.
 - [MQTT-3.1.2-24]: The Server MUST NOT send packets exceeding Maximum Packet Size to the Client
     * Spec: If a Client receives a packet whose size exceeds this limit, this is a Protocol Error, the Client uses
     DISCONNECT with Reason Code 0x95 (Packet too large)

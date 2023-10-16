@@ -15,6 +15,8 @@ public:
     void test3();
     void test4();
     void test5();
+    void test6();
+    void test7();
 
 private:
     virtual void setUp() override
@@ -342,7 +344,6 @@ void UnitTestReceive::test4()
     unitTestPopReceivedMessageInfo();
 }
 
-
 void UnitTestReceive::test5()
 {
     // Testing invalid packet ID in PUBREL
@@ -393,4 +394,120 @@ void UnitTestReceive::test5()
     TS_ASSERT_EQUALS(pubcompMsg->field_reasonCode().field().value(), UnitTestPubrecMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound);
 
     unitTestTick();
+}
+
+void UnitTestReceive::test6()
+{
+    // Testing network disconnection during reception of Qos2 message
+    // [MQTT-3.1.2-23]
+
+    auto* client = unitTestAllocClient();
+
+    const unsigned ResponseTimeout = 2000;
+    ::cc_mqtt5_client_set_default_response_timeout(client, ResponseTimeout);
+
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
+
+    unitTestTick(1000);
+    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
+
+    unitTestTick(5000);
+    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout - 1000); 
+
+    // Sending PUBREL with invalid packet id;
+    UnitTestPubrelMsg pubrelMsg;
+    pubrelMsg.field_packetId().setValue(PacketId);
+    unitTestReceiveMessage(pubrelMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubcomp);    
+    auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();
+}
+
+
+void UnitTestReceive::test7()
+{
+    // Testing network disconnection during reception of Qos2 message
+    // [MQTT-3.1.2-23]
+
+    auto* client = unitTestAllocClient();
+
+    const unsigned ResponseTimeout = 2000;
+    ::cc_mqtt5_client_set_default_response_timeout(client, ResponseTimeout);
+
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformBasicConnect(client, __FUNCTION__, true, 0U, SessionExpiryInterval);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
+
+    unitTestTick(1000);
+    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
+
+    unitTestTick(); // Session expiry
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestIsDisconnected());
 }

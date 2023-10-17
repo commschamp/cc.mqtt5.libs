@@ -880,7 +880,6 @@ void UnitTestConnect::test10()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
 }
 
-
 void UnitTestConnect::test11()
 {
     // Delaying keep alive ping when network is disconnected
@@ -918,5 +917,6 @@ void UnitTestConnect::test11()
     unitTestTick(); // Session expiry timeout
     TS_ASSERT(unitTestIsDisconnected());
 }
+
 
 

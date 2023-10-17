@@ -17,6 +17,7 @@ public:
     void test5();
     void test6();
     void test7();
+    void test8();
 
 private:
     virtual void setUp() override
@@ -461,7 +462,6 @@ void UnitTestReceive::test6()
     unitTestPopReceivedMessageInfo();
 }
 
-
 void UnitTestReceive::test7()
 {
     // Testing network disconnection during reception of Qos2 message
@@ -510,4 +510,54 @@ void UnitTestReceive::test7()
     unitTestTick(); // Session expiry
     TS_ASSERT(!unitTestHasMessageRecieved());
     TS_ASSERT(unitTestIsDisconnected());
+}
+
+void UnitTestReceive::test8()
+{
+    // Rejecting packet bigger than configured.
+    // [MQTT-3.1.2-24]
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_maxPacketSize = 300;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const std::size_t PayloadLimit = 
+        sizeof(std::uint8_t) + // frame's ID + FLAGS
+        sizeof(std::uint16_t) + // frame's size
+        Topic.size() + sizeof(std::uint16_t) + // Topic string
+        sizeof(std::uint8_t); // properties length
+
+    const UnitTestData Data((extraConfig.m_maxPacketSize - PayloadLimit) + 1U, 0x11);
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestIsDisconnected());    
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);    
+    auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(disconnectMsg, nullptr);
+    TS_ASSERT(disconnectMsg->field_reasonCode().doesExist());
+    TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge);
 }

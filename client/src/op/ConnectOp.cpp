@@ -241,6 +241,15 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
     }
 
     if (config.m_maxPacketSize > 0U) {
+        static const std::size_t MinValue = 
+            ProtFrame::Layer_idAndFlags::Field::maxLength() + 
+            ProtFrame::Layer_size::Field::maxLength();
+
+        if (config.m_maxPacketSize < MinValue) {
+            errorLog("The \"Max Packet Size\" configuration value is too small.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;

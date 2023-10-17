@@ -138,7 +138,10 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
         }        
 
         if (m_sessionState.m_maxPacketSize > 0U) {
-            auto maxAllowedSize = m_sessionState.m_maxPacketSize + IdAndFlagsField::minLength() + sizeField.length();
+            auto prefixSize = IdAndFlagsField::minLength() + sizeField.length();
+            COMMS_ASSERT(prefixSize <= m_sessionState.m_maxPacketSize);
+
+            auto maxAllowedSize = m_sessionState.m_maxPacketSize - prefixSize;
             if (maxAllowedSize < sizeField.value()) {
                 errorLog("The message length exceeded max packet size");
                 disconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge;

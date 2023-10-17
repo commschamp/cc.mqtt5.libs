@@ -260,16 +260,24 @@ void SubscribeOp::handle(SubackMsg& msg)
     }
 
     if (propsHandler.m_reasonStr != nullptr) {
+        if (!client().sessionState().m_problemInfoAllowed) {
+            errorLog("Received reason string in CONNACK when \"problem information\" was disabled in CONNECT.");
+            return; 
+        }
+
         response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
     }       
 
     if (!propsHandler.m_userProps.empty()) {
+        if (!client().sessionState().m_problemInfoAllowed) {
+            errorLog("Received user properties in CONNACK when \"problem information\" was disabled in CONNECT.");
+            return; 
+        }
+
         fillUserProps(propsHandler, userProps);
         response.m_userProps = &userProps[0];
         comms::cast_assign(response.m_userPropsCount) = userProps.size();
     }    
-
-
 
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;

@@ -581,6 +581,22 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     unitTestPopSubscribeResponseInfo();    
 }
 
+void UnitTestCommonBase::unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason)
+{
+    assert(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    assert(sentMsg);
+    assert(sentMsg->getId() == cc_mqtt5::MsgId_Disconnect);    
+    auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
+    assert(disconnectMsg != nullptr);
+    if (disconnectMsg->field_reasonCode().isMissing()) {
+        assert(reason == UnitTestDisconnectReason::Success);
+        return;
+    }
+
+    assert(disconnectMsg->field_reasonCode().field().value() == reason);        
+}
+
 void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)
 {
     std::cout << "ERROR: " << msg << std::endl;

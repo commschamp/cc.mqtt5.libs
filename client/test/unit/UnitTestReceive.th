@@ -553,11 +553,5 @@ void UnitTestReceive::test8()
     TS_ASSERT(!unitTestHasMessageRecieved());
     TS_ASSERT(unitTestIsDisconnected());    
 
-    auto sentMsg = unitTestGetSentMessage();
-    TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Disconnect);    
-    auto* disconnectMsg = dynamic_cast<UnitTestDisconnectMsg*>(sentMsg.get());
-    TS_ASSERT_DIFFERS(disconnectMsg, nullptr);
-    TS_ASSERT(disconnectMsg->field_reasonCode().doesExist());
-    TS_ASSERT_EQUALS(disconnectMsg->field_reasonCode().field().value(), UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge);
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::PacketTooLarge);
 }

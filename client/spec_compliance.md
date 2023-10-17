@@ -142,3 +142,18 @@
 - [MQTT-3.1.2-25]: Where a Packet is too large to send, the Server MUST discard it without sending it and then behave as if
     it had completed sending that Application Message.
     * Server specific.
+- [MQTT-3.1.2-26]: The Server MUST NOT send a Topic Alias in a PUBLISH packet to the Client greater than Topic Alias Maximum.
+    * Server specific
+- [MQTT-3.1.2-27]: If Topic Alias Maximum is absent or zero, the Server MUST NOT send any Topic Aliases
+    to the Client 
+    * Server specific
+- [MQTT-3.1.2-28]:  A value of 0 (for "Request Response Information" in CONNECT) indicates that the Server MUST NOT return Response Information.
+    * Server specific
+- [MQTT-3.1.2-29]: If the value of Request Problem Information is 0, the Server MAY return a Reason String or User
+    Properties on a CONNACK or DISCONNECT packet, but MUST NOT send a Reason String or User
+    Properties on any packet other than PUBLISH, CONNACK, or DISCONNECT 
+    * Spec: If the value is 0 (of Request Problem Information in CONNECT) and the Client receives a Reason String or 
+    User Properties in a packet other than PUBLISH, CONNACK, or DISCONNECT, it uses a DISCONNECT packet with Reason Code 0x82 (Protocol Error)
+    * Rejecting "Reason String" in SUBACK message is tested in UnitTestSubscribe::test7.
+    * Rejecting "User Properties" in SUBACK message is tested in UnitTestSubscribe::test8.
+- 

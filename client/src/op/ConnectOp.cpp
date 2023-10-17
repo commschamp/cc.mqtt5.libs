@@ -313,6 +313,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propBundle = propVar.initField_requestProblemInfo();
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_requestProblemInfo);   
+        m_requestProblemInfo = config.m_requestProblemInfo;
     }    
 
     return CC_Mqtt5ErrorCode_Success;
@@ -594,6 +595,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_maxPacketSize = m_maxPacketSize;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_firstConnect = false;
+    state.m_problemInfoAllowed = m_requestProblemInfo;
 
     if constexpr (Config::SendMaxLimit > 0U) {
         state.m_sendLimit = std::min(state.m_sendLimit, Config::SendMaxLimit);

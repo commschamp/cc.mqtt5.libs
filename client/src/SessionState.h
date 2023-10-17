@@ -30,6 +30,7 @@ struct SessionState
     unsigned m_maxPacketSize = 0U;
     PacketIdsList m_allocatedPacketIds;
     std::uint16_t m_lastPacketId = 0U;
+    bool m_problemInfoAllowed = false;
     bool m_initialized = false;
     bool m_connected = false;
     bool m_terminating = false;

@@ -282,6 +282,9 @@ protected:
 
     void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId = 0U);
 
+    using UnitTestDisconnectReason = UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType;
+    void unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason = UnitTestDisconnectReason::Success);
+
 private:
 
     static void unitTestErrorLogCb(void* obj, const char* msg);

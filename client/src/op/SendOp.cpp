@@ -62,7 +62,11 @@ void SendOp::handle(PubackMsg& msg)
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
-                reportPubComplete(status, &response);
+                auto* responsePtr = &response;
+                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+                    responsePtr = nullptr;
+                }
+                reportPubComplete(status, responsePtr);
                 opComplete();
             });        
 
@@ -139,7 +143,11 @@ void SendOp::handle(PubrecMsg& msg)
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
-                reportPubComplete(status, &response);
+                auto* responsePtr = &response;
+                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+                    responsePtr = nullptr;
+                }
+                reportPubComplete(status, responsePtr);
                 opComplete();
             });    
 
@@ -239,7 +247,11 @@ void SendOp::handle(PubcompMsg& msg)
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
-                reportPubComplete(status, &response);
+                auto* responsePtr = &response;
+                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+                    responsePtr = nullptr;
+                }
+                reportPubComplete(status, responsePtr);
                 opComplete();
             });  
 

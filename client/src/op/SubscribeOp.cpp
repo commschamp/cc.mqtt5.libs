@@ -186,7 +186,11 @@ void SubscribeOp::handle(SubackMsg& msg)
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
-                completeOpInternal(status, &response);
+                auto* responsePtr = &response;
+                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+                    responsePtr = nullptr;
+                }
+                completeOpInternal(status, responsePtr);
             });     
 
     PropsHandler propsHandler;

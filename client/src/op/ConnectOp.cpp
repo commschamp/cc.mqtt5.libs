@@ -437,7 +437,11 @@ void ConnectOp::handle(ConnackMsg& msg)
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
-                completeOpInternal(status, &response);
+                auto* responsePtr = &response;
+                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+                    responsePtr = nullptr;
+                }                
+                completeOpInternal(status, responsePtr);
             });
 
     comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().value();

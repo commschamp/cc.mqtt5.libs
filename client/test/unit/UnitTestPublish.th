@@ -25,7 +25,12 @@ public:
     void test13();
     void test14();
     void test15();
-
+    void test16();
+    void test17();
+    void test18();
+    void test19();
+    void test20();
+    void test21();
 
 private:
     virtual void setUp() override
@@ -188,7 +193,17 @@ void UnitTestPublish::test3()
 {
     // Simple Qos1 publish with response properties
     auto* client = unitTestAllocClient();
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_requestProblemInfo = true;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
@@ -330,8 +345,17 @@ void UnitTestPublish::test4()
 void UnitTestPublish::test5()
 {
     // Simple Qos2 publish
-    auto* client = unitTestAllocClient();
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+    auto* client = unitTestAllocClient(true);
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_requestProblemInfo = true;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
     auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
@@ -366,9 +390,40 @@ void UnitTestPublish::test5()
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
 
+    const auto NoSubscribers = UnitTestPubrecMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string ReasonStr("ReasonStr");
+    const std::string UserPropKey1 = "Key1";
+    const std::string UserPropVal1 = "Val1";    
+    const std::string UserPropKey2 = "Key2";
+    const std::string UserPropVal2 = "Val2";        
+
     unitTestTick(1000);
     UnitTestPubrecMsg pubrecMsg;
     pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    pubrecMsg.field_reasonCode().setExists();
+    pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubrecMsg.field_propertiesList().setExists();
+    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey1;
+        field.field_value().field_second().value() = UserPropVal1;
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey2;
+        field.field_value().field_second().value() = UserPropVal2;
+    } while (false);    
+
     unitTestReceiveMessage(pubrecMsg);
     TS_ASSERT(!unitTestIsPublishComplete());
 
@@ -382,11 +437,42 @@ void UnitTestPublish::test5()
     unitTestTick(1000);
     UnitTestPubcompMsg pubcompMsg;
     pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
+    pubcompMsg.field_reasonCode().setExists();
+    pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubcompMsg.field_propertiesList().setExists();
+    auto& compPropsVec = pubcompMsg.field_propertiesList().field().value();
+    do {
+        compPropsVec.resize(compPropsVec.size() + 1U);
+        auto& field = compPropsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    do {
+        compPropsVec.resize(compPropsVec.size() + 1U);
+        auto& field = compPropsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey1;
+        field.field_value().field_second().value() = UserPropVal1;
+    } while (false);
+
+    do {
+        compPropsVec.resize(compPropsVec.size() + 1U);
+        auto& field = compPropsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey2;
+        field.field_value().field_second().value() = UserPropVal2;
+    } while (false);       
     unitTestReceiveMessage(pubcompMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
     auto& pubackInfo = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_NoMatchingSubscribers);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonStr, ReasonStr);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps.size(), 2U);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_key, UserPropKey2);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_value, UserPropVal2);
+
     unitTestPopPublishResponseInfo();
 }
 
@@ -1171,4 +1257,455 @@ void UnitTestPublish::test15()
     TS_ASSERT(unitTestIsDisconnected());
 }
 
+void UnitTestPublish::test16()
+{
+    // Testing rejection of "Reason String" in PUBACK
+    // [MQTT-3.1.2-29]
 
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string ReasonStr("ReasonStr");
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    pubackMsg.field_reasonCode().setExists();
+    pubackMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubackMsg.field_propertiesList().setExists();
+    auto& propsVec = pubackMsg.field_propertiesList().field().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());      
+}
+
+void UnitTestPublish::test17()
+{
+    // Testing rejection of "User Properties" in PUBACK
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string UserPropKey1 = "Key1";
+    const std::string UserPropVal1 = "Val1";    
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    pubackMsg.field_reasonCode().setExists();
+    pubackMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubackMsg.field_propertiesList().setExists();
+    auto& propsVec = pubackMsg.field_propertiesList().field().value();
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey1;
+        field.field_value().field_second().value() = UserPropVal1;
+    } while (false);
+
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());    
+}
+
+void UnitTestPublish::test18()
+{
+    // Testing rejection of "Reason String" in PUBREC
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string ReasonStr("ReasonStr");
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    pubrecMsg.field_reasonCode().setExists();
+    pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubrecMsg.field_propertiesList().setExists();
+    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    unitTestReceiveMessage(pubrecMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());      
+}
+
+void UnitTestPublish::test19()
+{
+    // Testing rejection of "User Properties" in PUBREL
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string UserPropKey1 = "Key1";
+    const std::string UserPropVal1 = "Val1";    
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    pubrecMsg.field_reasonCode().setExists();
+    pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubrecMsg.field_propertiesList().setExists();
+    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey1;
+        field.field_value().field_second().value() = UserPropVal1;
+    } while (false);
+
+    unitTestReceiveMessage(pubrecMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());    
+}
+
+void UnitTestPublish::test20()
+{
+    // Testing rejection of "Reason String" in PUBCOMP
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    unitTestReceiveMessage(pubrecMsg);
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string ReasonStr("ReasonStr");    
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
+    pubcompMsg.field_reasonCode().setExists();
+    pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubcompMsg.field_propertiesList().setExists();
+    auto& propsVec = pubcompMsg.field_propertiesList().field().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    unitTestReceiveMessage(pubcompMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());      
+}
+
+
+void UnitTestPublish::test21()
+{
+    // Testing rejection of "User Properties" in PUBCOMP
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+
+    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
+    unitTestReceiveMessage(pubrecMsg);
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);
+
+    const auto NoSubscribers = UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NoMatchingSubscribers;
+    const std::string UserPropKey1 = "Key1";
+    const std::string UserPropVal1 = "Val1";    
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
+    pubcompMsg.field_reasonCode().setExists();
+    pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
+    pubcompMsg.field_propertiesList().setExists();
+    auto& propsVec = pubcompMsg.field_propertiesList().field().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UserPropKey1;
+        field.field_value().field_second().value() = UserPropVal1;
+    } while (false);
+
+    unitTestReceiveMessage(pubcompMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopPublishResponseInfo();
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());      
+}

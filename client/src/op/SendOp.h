@@ -61,8 +61,6 @@ private:
     PublishMsg m_pubMsg;
     CC_Mqtt5PublishCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;    
-    UserPropsList m_userProps; // Will be referenced in response
-    CC_Mqtt5PublishResponse m_response;
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     bool m_acked = false;

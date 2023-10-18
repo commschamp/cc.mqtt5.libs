@@ -15,6 +15,9 @@ public:
     void test3();
     void test4();
     void test5();
+    void test6();
+    void test7();
+    void test8();
 
 private:
     virtual void setUp() override
@@ -362,5 +365,195 @@ void UnitTestUnsubscribe::test5()
     auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     unitTestPopUnsubscribeResponseInfo();
+    TS_ASSERT(unitTestIsDisconnected());    
+}
+
+void UnitTestUnsubscribe::test6()
+{
+    // Testing properties in UNSUBACK
+
+    auto* client = unitTestAllocClient();
+    
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_requestProblemInfo = true;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    auto config = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config);
+    config.m_topic = "#";
+
+    auto unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe, nullptr);
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
+
+    const std::string ReasonStr("ReasonStr");
+    const std::string UnsubackUserPropKey1 = "Key1";
+    const std::string UnsubackUserPropVal1 = "Val1";
+
+    UnitTestUnsubackMsg unsubackMsg;
+    unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
+    unsubackMsg.field_list().value().resize(1);
+    unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UnsubackUserPropKey1;
+        field.field_value().field_second().value() = UnsubackUserPropVal1;
+    } while (false);    
+
+    unitTestReceiveMessage(unsubackMsg);
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
+
+    auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_reasonCodes.size(), 1U);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_reasonCodes[0], CC_Mqtt5ReasonCode_Success);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_reasonStr, ReasonStr);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps[0].m_key, UnsubackUserPropKey1);
+    TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps[0].m_value, UnsubackUserPropVal1);
+    unitTestPopUnsubscribeResponseInfo();    
+}
+
+void UnitTestUnsubscribe::test7()
+{
+    // Testing rejection of "Reason String" in UNSUBACK
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    auto config = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config);
+    config.m_topic = "#";
+
+    auto unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe, nullptr);
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
+
+    const std::string ReasonStr("ReasonStr");
+
+    UnitTestUnsubackMsg unsubackMsg;
+    unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
+    unsubackMsg.field_list().value().resize(1);
+    unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_reasonStr();
+        field.field_value().value() = ReasonStr;
+    } while (false);
+
+    unitTestReceiveMessage(unsubackMsg);
+    
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
+
+    auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopUnsubscribeResponseInfo();    
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());
+}
+
+void UnitTestUnsubscribe::test8()
+{
+    // Testing rejection of "User properties" in UNSUBACK
+    // [MQTT-3.1.2-29]
+
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    auto config = CC_Mqtt5UnsubscribeTopicConfig();
+    ::cc_mqtt5_client_unsubscribe_init_config_topic(&config);
+    config.m_topic = "#";
+
+    auto unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(unsubscribe, nullptr);
+
+    auto ec = ::cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendUnsubscribe(unsubscribe);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsUnsubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
+
+    const std::string UnsubackUserPropKey1 = "Key1";
+    const std::string UnsubackUserPropVal1 = "Val1";
+
+    UnitTestUnsubackMsg unsubackMsg;
+    unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
+    unsubackMsg.field_list().value().resize(1);
+    unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_userProperty();
+        field.field_value().field_first().value() = UnsubackUserPropKey1;
+        field.field_value().field_second().value() = UnsubackUserPropVal1;
+    } while (false);    
+
+    unitTestReceiveMessage(unsubackMsg);
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
+
+    auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
+    TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopUnsubscribeResponseInfo();    
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
     TS_ASSERT(unitTestIsDisconnected());    
 }

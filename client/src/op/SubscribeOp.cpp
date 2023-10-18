@@ -261,7 +261,7 @@ void SubscribeOp::handle(SubackMsg& msg)
 
     if (propsHandler.m_reasonStr != nullptr) {
         if (!client().sessionState().m_problemInfoAllowed) {
-            errorLog("Received reason string in CONNACK when \"problem information\" was disabled in CONNECT.");
+            errorLog("Received reason string in SUBACK when \"problem information\" was disabled in CONNECT.");
             return; 
         }
 
@@ -270,7 +270,7 @@ void SubscribeOp::handle(SubackMsg& msg)
 
     if (!propsHandler.m_userProps.empty()) {
         if (!client().sessionState().m_problemInfoAllowed) {
-            errorLog("Received user properties in CONNACK when \"problem information\" was disabled in CONNECT.");
+            errorLog("Received user properties in SUBACK when \"problem information\" was disabled in CONNECT.");
             return; 
         }
 

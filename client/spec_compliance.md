@@ -156,4 +156,13 @@
     User Properties in a packet other than PUBLISH, CONNACK, or DISCONNECT, it uses a DISCONNECT packet with Reason Code 0x82 (Protocol Error)
     * Rejecting "Reason String" in SUBACK message is tested in UnitTestSubscribe::test7.
     * Rejecting "User Properties" in SUBACK message is tested in UnitTestSubscribe::test8.
+    * Rejecting "Reason String" in UNSUBACK message is tested in UnitTestUnsubscribe::test7.
+    * Rejecting "User Properties" in UNSUBACK message is tested in UnitTestUnsubscribe::test8.
+    * Rejecting "Reason String" in PUBACK message is tested in UnitTestPublish::test16.
+    * Rejecting "User Properties" in PUBACK message is tested in UnitTestPublish::test17.    
+    * Rejecting "Reason String" in PUBREC message is tested in UnitTestPublish::test18.
+    * Rejecting "User Properties" in PUBREC message is tested in UnitTestPublish::test19.        
+    * Rejecting "Reason String" in PUBCOMP message is tested in UnitTestPublish::test20.
+    * Rejecting "User Properties" in PUBCOMP message is tested in UnitTestPublish::test21.        
+
 - 

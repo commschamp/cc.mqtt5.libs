@@ -176,7 +176,6 @@ protected:
         UnitTestData m_correlationData;
         UnitTestUserProp::List m_userProps;
         std::string m_contentType;
-        std::string m_reasonStr;
         std::vector<unsigned> m_subIds;
         CC_Mqtt5QoS m_qos = CC_Mqtt5QoS_ValuesLimit;
         CC_Mqtt5PayloadFormat m_format = CC_Mqtt5PayloadFormat_Unspecified;
@@ -260,6 +259,7 @@ protected:
         const CC_Mqtt5ConnectBasicConfig* basicConfig,
         const CC_Mqtt5ConnectWillConfig* willConfig = nullptr,
         const CC_Mqtt5ConnectExtraConfig* extraConfig = nullptr,
+        CC_Mqtt5ConnectAuthConfig* authConfig = nullptr,
         const UnitTestConnectResponseConfig* responseConfig = nullptr);
 
     void unitTestPerformBasicConnect(

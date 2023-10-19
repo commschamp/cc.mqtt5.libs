@@ -656,10 +656,22 @@ void ConnectOp::handle(AuthMsg& msg)
     }
 
     if (propsHandler.m_reasonStr != nullptr) {
+        if (!m_requestProblemInfo) {
+            errorLog("Received reason string in AUTH when \"problem information\" was disabled in CONNECT.");
+            protocolErrorCompletion();
+            return;
+        }
+
         inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
     }
 
     if (!propsHandler.m_userProps.empty()) {
+        if (!m_requestProblemInfo) {
+            errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
+            protocolErrorCompletion();
+            return;
+        }
+
         fillUserProps(propsHandler, userProps);
         inInfo.m_userProps = &userProps[0];
         comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();

@@ -1625,7 +1625,6 @@ void UnitTestPublish::test20()
     TS_ASSERT(unitTestIsDisconnected());      
 }
 
-
 void UnitTestPublish::test21()
 {
     // Testing rejection of "User Properties" in PUBCOMP

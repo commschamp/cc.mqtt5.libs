@@ -324,7 +324,6 @@ typedef struct
     const CC_Mqtt5UserProp* m_userProps;
     unsigned m_userPropsCount;
     const char* m_contentType;
-    const char* m_reasonStr;      // TODO: remove, the reason are there for the acknowledgments
     const unsigned* m_subIds;       
     unsigned m_subIdsCount;
     CC_Mqtt5QoS m_qos;

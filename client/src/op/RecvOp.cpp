@@ -137,6 +137,7 @@ void RecvOp::handle(PublishMsg& msg)
     if (!client().sessionState().m_connected) {
         errorLog("Received PUBLISH when not CONNECTED");
         completeNotAuthorized();
+        return;
     }
 
     auto& topic = msg.field_topic().value();
@@ -363,13 +364,6 @@ void RecvOp::handle(PubrelMsg& msg)
         return;
     }
 
-    if ((msg.field_reasonCode().doesExist()) && 
-        (msg.field_reasonCode().field().value() != PubrelMsg::Field_reasonCode::Field::ValueType::Success)) {
-        errorLog("Publish reception terminated due to error reason code in PUBREL message.");
-        opComplete();
-        return;
-    }
-
     if (msg.field_propertiesList().doesExist()) {
         PropsHandler propsHandler;
         for (auto& p : msg.field_propertiesList().field().value()) {
@@ -377,18 +371,35 @@ void RecvOp::handle(PubrelMsg& msg)
         }
 
         if (propsHandler.m_reasonStr != nullptr) {
-            auto& reasonStr = propsHandler.m_reasonStr->field_value().value();
-            if (!reasonStr.empty()) {
-                m_info.m_reasonStr = reasonStr.c_str();    
-            }        
+            if (!client().sessionState().m_problemInfoAllowed) {
+                errorLog("Received reason string in PUBREL when \"problem information\" was disabled in CONNECT.");
+                protocolErrorTermination();
+                return; 
+            }
+
+            errorLog("PUBREL reason info:");
+            errorLog(propsHandler.m_reasonStr->field_value().value().c_str());
         }    
 
         if (!propsHandler.m_userProps.empty()) {
+            if (!client().sessionState().m_problemInfoAllowed) {
+                errorLog("Received user properties in PUBREL when \"problem information\" was disabled in CONNECT.");
+                protocolErrorTermination();
+                return; 
+            }
+
             fillUserProps(propsHandler, m_userProps);
             comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
             m_info.m_userProps = &m_userProps[0];
         }     
     }   
+
+    if ((msg.field_reasonCode().doesExist()) && 
+        (msg.field_reasonCode().field().value() != PubrelMsg::Field_reasonCode::Field::ValueType::Success)) {
+        errorLog("Publish reception terminated due to error reason code in PUBREL message.");
+        opComplete();
+        return;
+    }    
 
     PubcompMsg pubcompMsg;
     pubcompMsg.field_packetId().setValue(m_packetId);

@@ -162,7 +162,10 @@
     * Rejecting "User Properties" in PUBACK message is tested in UnitTestPublish::test17.    
     * Rejecting "Reason String" in PUBREC message is tested in UnitTestPublish::test18.
     * Rejecting "User Properties" in PUBREC message is tested in UnitTestPublish::test19.        
+    * Rejecting "Reason String" in PUBREL message is tested in UnitTestReceive::test9.
+    * Rejecting "User Properties" in PUBREL message is tested in UnitTestReceive::test10.        
     * Rejecting "Reason String" in PUBCOMP message is tested in UnitTestPublish::test20.
     * Rejecting "User Properties" in PUBCOMP message is tested in UnitTestPublish::test21.        
-
+    * Rejecting "Reason String" in AUTH message is tested in UnitTestConnect::test12.
+    * Rejecting "User Properties" in AUTH message is tested in UnitTestConnect::test13.            
 - 

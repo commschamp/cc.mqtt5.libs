@@ -121,7 +121,6 @@ UnitTestCommonBase::UnitTestMessageInfo& UnitTestCommonBase::UnitTestMessageInfo
     assignDataInternal(m_correlationData, other.m_correlationData, other.m_correlationDataLen);
     UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
     assignStringInternal(m_contentType, other.m_contentType);
-    assignStringInternal(m_reasonStr, other.m_reasonStr);
     assignDataInternal(m_subIds, other.m_subIds, other.m_subIdsCount);
     m_qos = other.m_qos;
     m_format = other.m_format;
@@ -134,6 +133,7 @@ void UnitTestCommonBase::unitTestSetUp()
     assert(!m_client);
     m_tickReq.clear();
     m_sentData.clear();
+    m_receivedData.clear();
     m_connectResp.clear();
     m_subscribeResp.clear();
     m_inAuthInfo.clear();
@@ -149,6 +149,7 @@ void UnitTestCommonBase::unitTestTearDown()
 
 UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient(bool addLog)
 {
+    assert(!m_client);
     m_client.reset(cc_mqtt5_client_new());
     assert(!::cc_mqtt5_client_is_initialized(m_client.get()));
     if (addLog) {
@@ -413,6 +414,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     const CC_Mqtt5ConnectBasicConfig* basicConfig,
     const CC_Mqtt5ConnectWillConfig* willConfig,
     const CC_Mqtt5ConnectExtraConfig* extraConfig,
+    CC_Mqtt5ConnectAuthConfig* authConfig,
     const UnitTestConnectResponseConfig* responseConfig)
 {
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
@@ -434,6 +436,14 @@ void UnitTestCommonBase::unitTestPerformConnect(
         assert(ec == CC_Mqtt5ErrorCode_Success);
     }
 
+    if (authConfig != nullptr) {
+        assert(authConfig->m_authCb == nullptr);
+        authConfig->m_authCb = &UnitTestCommonBase::unitTestAuthCb;
+        authConfig->m_authCbData = this;        
+        ec = cc_mqtt5_client_connect_config_auth(connect, authConfig);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }    
+
     ec = unitTestSendConnect(connect);
     assert(ec == CC_Mqtt5ErrorCode_Success);
 
@@ -448,6 +458,21 @@ void UnitTestCommonBase::unitTestPerformConnect(
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
+    auto& propsVec = connackMsg.field_propertiesList().value();
+
+    if (authConfig != nullptr) {
+        {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_authMethod();
+            field.field_value().setValue(authConfig->m_authMethod);
+        }
+
+        {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_authData();
+            comms::util::assign(field.field_value().value(), authConfig->m_authData, authConfig->m_authData + authConfig->m_authDataLen);
+        }        
+    }
 
     do {
         if (responseConfig == nullptr) {
@@ -455,14 +480,12 @@ void UnitTestCommonBase::unitTestPerformConnect(
         }
 
         if (responseConfig->m_topicAliasMax > 0U) {
-            auto& propsVec = connackMsg.field_propertiesList().value();
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_topicAliasMax();
             field.field_value().setValue(responseConfig->m_topicAliasMax);
         }
 
         if (responseConfig->m_sessionExpiryInterval > 0U) {
-            auto& propsVec = connackMsg.field_propertiesList().value();
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_sessionExpiryInterval();
             field.field_value().setValue(responseConfig->m_sessionExpiryInterval);
@@ -489,7 +512,7 @@ void UnitTestCommonBase::unitTestPerformBasicConnect(
     basicConfig.m_clientId = clientId;
     basicConfig.m_cleanStart = cleanStart;
 
-    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr);
+    unitTestPerformConnect(client, &basicConfig);
 }
 
 void UnitTestCommonBase::unitTestPerformPubTopicAliasConnect(
@@ -506,9 +529,8 @@ void UnitTestCommonBase::unitTestPerformPubTopicAliasConnect(
     UnitTestConnectResponseConfig responseConfig;
     responseConfig.m_topicAliasMax = topicAliasMax;
 
-    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, &responseConfig);
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 }
-
 
 void UnitTestCommonBase::unitTestPerformSessionExpiryConnect(
     CC_Mqtt5Client* client, 

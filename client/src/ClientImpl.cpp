@@ -83,6 +83,7 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     m_sessionState = SessionState();
     m_sessionState.m_initialized = true;
     m_sessionState.m_firstConnect = firstConnect;
+    COMMS_ASSERT(m_timerMgr.getMinWait() == 0U);
     return CC_Mqtt5ErrorCode_Success;
 }
 

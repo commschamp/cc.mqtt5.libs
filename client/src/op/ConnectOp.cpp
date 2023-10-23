@@ -449,7 +449,6 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     if (response.m_sessionPresent && m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) {
         errorLog("Session present when clean session is requested");
-        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }
 
@@ -606,6 +605,44 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     client().notifyConnected();
+}
+
+void ConnectOp::handle(DisconnectMsg& msg)
+{
+
+    auto info = CC_Mqtt5DisconnectInfo();
+    
+    if (msg.field_reasonCode().doesExist()) {
+        comms::cast_assign(info.m_reasonCode) = msg.field_reasonCode().field().value();
+    }
+
+    if (msg.field_propertiesList().doesExist()) {
+        PropsHandler propsHandler;
+        for (auto& p : msg.field_propertiesList().field().value()) {
+            p.currentFieldExec(propsHandler);
+        } 
+
+        if (propsHandler.m_reasonStr != nullptr) {
+            info.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+        }     
+
+        if (propsHandler.m_serverRef != nullptr) {
+            info.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
+        }
+
+        if (!propsHandler.m_userProps.empty()) {
+            UserPropsList userProps;
+            fillUserProps(propsHandler, userProps);
+            info.m_userProps = &userProps[0];
+            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+        }        
+    }
+
+    auto& cl = client();
+    completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+    // No members access after this point, the op will be deleted    
+
+    cl.notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
 }
 
 void ConnectOp::handle(AuthMsg& msg)

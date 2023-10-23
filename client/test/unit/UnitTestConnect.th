@@ -23,6 +23,12 @@ public:
     void test11();
     void test12();
     void test13();
+    void test14();
+    void test15();
+    void test16();
+    void test17();
+    void test18();
+    void test19();
 
 private:
     virtual void setUp() override
@@ -1064,3 +1070,246 @@ void UnitTestConnect::test13()
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
+void UnitTestConnect::test14()
+{
+    // Testing rejection of connection with "Client ID not valid"
+    // [MQTT-3.1.3-8]
+
+    auto* client = unitTestAllocClient(true);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_cleanStart = true;
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(connectMsg, nullptr);
+    TS_ASSERT(connectMsg->field_clientId().value().empty());
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::ClientIdInvalid;
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_ClientIdInvalid);
+    unitTestPopConnectResponseInfo();
+
+    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+}
+
+void UnitTestConnect::test15()
+{
+    // Testing reception of DISCONNECT instead of CONNACK
+    // [MQTT-3.1.4-1]
+
+    auto* client = unitTestAllocClient(true);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(connectMsg, nullptr);
+
+    unitTestTick(1000);
+    UnitTestDisconnectMsg disconnectMsg;
+    disconnectMsg.field_reasonCode().setExists();
+    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_reasonCode().field().value() = UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::ImplSpecificError;
+    unitTestReceiveMessage(disconnectMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+    unitTestPopConnectResponseInfo();
+
+    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_ImplSpecificError);
+    unitTestPopDisconnectInfo();
+}
+
+void UnitTestConnect::test16()
+{
+    // Testing network disconnection after rejecting connect
+    // [MQTT-3.1.4-2]
+
+    auto* client = unitTestAllocClient(true);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_sessionExpiryInterval = 10;
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = cc_mqtt5_client_connect_config_extra(connect, &extraConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(connectMsg, nullptr);
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::UnspecifiedError;
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
+    unitTestPopConnectResponseInfo();
+
+    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+
+    TS_ASSERT(unitTestCheckNoTicks());
+    ::cc_mqtt5_client_notify_network_disconnected(client, true); 
+}
+
+void UnitTestConnect::test17()
+{
+    // Testing session taken over disconnection after successful connection.
+    // [MQTT-3.1.4-3]
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    unitTestTick(1000);
+    UnitTestDisconnectMsg disconnectMsg;
+    disconnectMsg.field_reasonCode().setExists();
+    disconnectMsg.field_reasonCode().field().value() = UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::SessionTakenOver;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_SessionTakenOver);
+
+    TS_ASSERT(!cc_mqtt5_client_is_initialized(client)); // Re-init is required.
+}
+
+void UnitTestConnect::test18()
+{
+    // Testing reception of the session present when clean was requested
+    // [MQTT-3.2.2-4]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(connect, nullptr);
+
+    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendConnect(connect);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
+    auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(connectMsg, nullptr);
+
+    unitTestTick(1000);
+    UnitTestConnackMsg connackMsg;
+    connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::UnspecifiedError;
+    connackMsg.field_flags().setBitValue_sp(true);
+    unitTestReceiveMessage(connackMsg);
+    TS_ASSERT(unitTestIsConnectComplete());
+
+    auto& connectInfo = unitTestConnectResponseInfo();
+    TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopConnectResponseInfo();
+
+    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+}
+
+void UnitTestConnect::test19()
+{
+    // Testing cleared subscription when clean state is reported.
+    // [MQTT-3.2.2-5]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    unitTestPerformBasicSubscribe(client, "#");
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();    
+
+    unitTestTick(1000);
+    unitTestPerformBasicDisconnect(client);
+
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    auto ec = ::cc_mqtt5_client_init(client);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    // Reconnecting requesting non clean start, while broker reports session is not present
+    unitTestPerformBasicConnect(client, __FUNCTION__, false);
+
+    // Publish message is expected to be ignored
+    unitTestReceiveMessage(publishMsg);
+    TS_ASSERT(!unitTestHasMessageRecieved());
+}

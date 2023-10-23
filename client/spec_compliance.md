@@ -168,4 +168,100 @@
     * Rejecting "User Properties" in PUBCOMP message is tested in UnitTestPublish::test21.        
     * Rejecting "Reason String" in AUTH message is tested in UnitTestConnect::test12.
     * Rejecting "User Properties" in AUTH message is tested in UnitTestConnect::test13.            
-- 
+- [MQTT-3.1.2-30]: If a Client sets an Authentication Method in the CONNECT, the Client MUST NOT send any packets other
+    than AUTH or DISCONNECT packets until it has received a CONNACK packet.
+    * Inability to send any other packet is tested in UnitTestConnect::test6.
+    * Sending AUTH packet is tested in UnitTestConnect::test3.
+- [MQTT-3.1.3-1]: The Payload of the CONNECT packet contains one or more length-prefixed fields, whose presence is
+    determined by the flags in the Variable Header. These fields, if present, MUST appear in the order Client
+    Identifier, Will Properties, Will Topic, Will Payload, User Name, Password
+    * Part of protocol definition.
+    * Presence of fields is tested in UnitTestConnect::test2.
+- [MQTT-3.1.3-2]: The ClientID MUST be used by Clients and by Servers to identify state that they hold
+    relating to this MQTT Session between the Client and the Server
+    * The selection of the client ID is up to the using application.
+- [MQTT-3.1.3-3]: The ClientID MUST be present and is the first field in the CONNECT packet Payload
+    * Part of the protocol definition.
+- [MQTT-3.1.3-4]: The ClientID MUST be a UTF-8 Encoded String
+    * The client ID configuration is passed as a zero terminated string, UTF-8 encoding is the responsibility of the application.
+- [MQTT-3.1.3-5]: The Server MUST allow ClientID’s which are between 1 and 23 UTF-8 encoded bytes in length, and that
+    contain only the characters "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    * Spec: The Server MAY allow ClientID’s that contain more than 23 encoded bytes. The Server MAY allow
+        ClientID’s that contain characters not included in the list given above.
+    * Server specific, no client side limitation.
+- [MQTT-3.1.3-6]: A Server MAY allow a Client to supply a ClientID that has a length of zero bytes, however if it does so the
+    Server MUST treat this as a special case and assign a unique ClientID to that Client
+    * Server specific.
+    * Client ID allocated by the server is reported in the connect response callback.
+- [MQTT-3.1.3-7]: It MUST then process the CONNECT packet as if the Client had provided that unique ClientID, and MUST
+    return the Assigned Client Identifier in the CONNACK packet
+    * Server specific.
+    * Reporting allocated client id is tested in UnitTestConnect::test3.
+- [MQTT-3.1.3-8]: If the Server rejects the ClientID it MAY respond to the CONNECT packet with a CONNACK using
+    Reason Code 0x85 (Client Identifier not valid) as described in section 4.13 Handling errors, and then it
+    MUST close the Network Connection.
+    * Client side tested in UnitTestConnect::test14.
+- [MQTT-3.1.3-9]: If a new Network Connection to this Session is made before the
+    Will Delay Interval has passed, the Server MUST NOT send the Will Message
+    * Server specific.
+- [MQTT-3.1.3-11]:  The Will Topic MUST be a UTF-8 Encoded String
+    * UTF-8 encoding is responsibility of the application.
+    * Will topic configuration is accepted via zero terminated C-string.
+- [MQTT-3.1.3-12]: If the User Name Flag is set to 1, the User Name is the next field in the Payload. The User Name MUST
+    be a UTF-8 Encoded String.
+    * UTF-8 encoding is responsibility of the application.
+    * The user name configuration is accepted via zero terminated C-string.
+- [MQTT-3.1.4-1]: The Server MUST validate that the CONNECT packet matches the format described in section
+    3.1 and close the Network Connection if it does not match.
+    * Spec: The Server MAY send a CONNACK with a Reason Code of 0x80 or greater as described in section 4.13 before closing
+        the Network Connection.
+    * Server specific.
+    * Client library doesn't allow sending malformed CONNECT packet.
+    * Reception of DISCONNECT instead of CONNACK is tested in UnitTestConnect::test15.
+- [MQTT-3.1.4-2]: The Server MAY check that the contents of the CONNECT packet meet any further restrictions and
+    SHOULD perform authentication and authorization checks. If any of these checks fail, it MUST
+    close the Network Connection.
+    * Spec: Before closing the Network Connection, it MAY send an appropriate CONNACK response with a Reason Code of 0x80 or greater.
+    * Network disconnection during incomplete connect (without CONNACK) is tested in UnitTestConnect::test10.
+    * Network disconnection after rejecting CONNACK is tested in UnitTestConnect::test16.
+- [MQTT-3.1.4-3]: If the ClientID represents a Client already connected to the Server, the Server sends a
+    DISCONNECT packet to the existing Client with Reason Code of 0x8E (Session taken over) as
+    described in section 4.13 and MUST close the Network Connection of the existing Client
+    * Client reporting disconnection is tested in 
+- [MQTT-3.1.4-4]: The Server MUST perform the processing of Clean Start that is described in section 3.1.2.4
+    * Server specific
+- [MQTT-3.1.4-5]: The Server MUST acknowledge the CONNECT packet with a CONNACK packet containing a
+    0x00 (Success) Reason Code
+    * Server specific.
+- [MQTT-3.1.4-6]:  If the Server rejects the CONNECT, it MUST NOT process any data sent by the Client after the CONNECT packet except AUTH
+    packets
+    * Spec: Clients are allowed to send further MQTT Control Packets immediately after sending a CONNECT
+        packet; Clients need not wait for a CONNACK packet to arrive from the Server.
+    * The client library prevents sending any packet until connection is finalized (CONNACK is received).
+- [MQTT-3.2.0-1]: The Server MUST send a CONNACK with a 0x00 (Success) Reason Code before sending any
+    Packet other than AUTH.
+    * Server specific.
+    * ??? Client behaviour is not determined.
+- [MQTT-3.2.0-2]:  The Server MUST NOT send more than one CONNACK in a Network Connection.
+    * Server specific.
+    * Client ignores unexpected CONNACK.
+- [MQTT-3.2.2-1]: Byte 1 (of the CONNACK) is the "Connect Acknowledge Flags". Bits 7-1 are reserved and MUST be set to 0.
+    * Part of the protocol definition.
+- [MQTT-3.2.2-2]: If the Server accepts a connection with Clean Start set to 1, the Server MUST set Session Present to 0 in
+    the CONNACK packet in addition to setting a 0x00 (Success) Reason Code in the CONNACK packet
+    * Server specific.
+- [MQTT-3.2.2-3]: If the Server accepts a connection with Clean Start set to 0 and the Server has Session State for the
+    ClientID, it MUST set Session Present to 1 in the CONNACK packet, otherwise it MUST set Session
+    Present to 0 in the CONNACK packet. In both cases it MUST set a 0x00 (Success) Reason Code in the
+    CONNACK packet.
+    * Server specific
+-  [MQTT-3.2.2-4]: If the Client does not have Session State and receives Session Present set to 1 it MUST close
+    the Network Connection.
+    * Client API returns protocol error for the connection operation.
+    * It's up to the application to close connection.
+    * Tested in UnitTestConnect::test18.
+- [MQTT-3.2.2-5]: If the Client does have Session State and receives Session Present set to 0 it MUST discard its
+    Session State if it continues with the Network Connection
+    * Clearing previous subscriptions is tested in UnitTestConnect::test19.
+    * Clearing previous outgoing topic alias is tested in ???
+    * Clearing previous incoming topic alias is tested in ???

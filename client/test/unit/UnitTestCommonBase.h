@@ -207,6 +207,7 @@ protected:
 
     struct UnitTestConnectResponseConfig
     {
+        bool m_sessionPresent = false;
         unsigned m_topicAliasMax = 0U;
         unsigned m_sessionExpiryInterval = 0U;
     };
@@ -279,6 +280,12 @@ protected:
         unsigned sessionExpiryInterval,
         bool cleanStart = true);
 
+    void unitTestPerformDisconnect(
+        CC_Mqtt5Client* client, 
+        const CC_Mqtt5DisconnectConfig* config
+    );
+
+    void unitTestPerformBasicDisconnect(CC_Mqtt5Client* client, CC_Mqtt5ReasonCode reasonCode = CC_Mqtt5ReasonCode_NormalDisconnection);
 
     void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId = 0U);
 

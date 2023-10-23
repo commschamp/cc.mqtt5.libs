@@ -479,6 +479,8 @@ void UnitTestCommonBase::unitTestPerformConnect(
             break;
         }
 
+        connackMsg.field_flags().setBitValue_sp(responseConfig->m_sessionPresent);
+
         if (responseConfig->m_topicAliasMax > 0U) {
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_topicAliasMax();
@@ -548,6 +550,35 @@ void UnitTestCommonBase::unitTestPerformSessionExpiryConnect(
     extraConfig.m_sessionExpiryInterval = sessionExpiryInterval;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+}
+
+void UnitTestCommonBase::unitTestPerformDisconnect(
+    CC_Mqtt5Client* client, 
+    const CC_Mqtt5DisconnectConfig* config)
+{
+    auto* disconnect = ::cc_mqtt5_client_disconnect_prepare(client, nullptr);
+    assert(disconnect != nullptr);
+    if (config != nullptr) {
+        [[maybe_unused]] auto ec = cc_mqtt5_client_diconnect_config(disconnect, config);
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+    }
+
+    [[maybe_unused]] auto ec = cc_mqtt5_client_disconnect_send(disconnect);
+    assert(ec == CC_Mqtt5ErrorCode_Success);
+
+    auto reason = UnitTestDisconnectReason::Success;
+    if (config != nullptr) {
+        reason = static_cast<decltype(reason)>(config->m_reasonCode);
+    }
+
+    unitTestVerifyDisconnectSent(reason);
+}
+
+void UnitTestCommonBase::unitTestPerformBasicDisconnect(CC_Mqtt5Client* client, CC_Mqtt5ReasonCode reasonCode)
+{
+    auto config = CC_Mqtt5DisconnectConfig();
+    config.m_reasonCode = reasonCode;
+    unitTestPerformDisconnect(client, &config);
 }
 
 void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)

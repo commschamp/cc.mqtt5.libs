@@ -68,6 +68,7 @@ CC_Mqtt5ErrorCode DisconnectOp::send()
         m_disconnectMsg.field_propertiesList().setExists();
     }
 
+    auto guard = client().apiEnter();
     auto& clientObj = client();
     clientObj.sendMessage(m_disconnectMsg);
     opComplete(); // No members access after this point, the op will be deleted

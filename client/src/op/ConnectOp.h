@@ -35,6 +35,7 @@ public:
 
     using Base::handle;
     virtual void handle(ConnackMsg& msg) override;
+    virtual void handle(DisconnectMsg& msg) override;
     virtual void handle(AuthMsg& msg) override;
 
 protected:

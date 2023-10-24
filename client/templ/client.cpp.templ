@@ -141,6 +141,12 @@ void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle ha
     clientFromHandle(handle)->notifyNetworkDisconnected(disconnected);
 }
 
+bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle)
+{
+    COMMS_ASSERT(handle != nullptr);
+    return clientFromHandle(handle)->isNetworkDisconnected();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms)
 {
     if ((handle == nullptr) || (ms == 0U)) {

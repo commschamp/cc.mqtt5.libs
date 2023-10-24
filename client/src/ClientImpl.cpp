@@ -46,7 +46,12 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 }
 
 } // namespace 
-    
+
+ClientImpl::~ClientImpl()
+{
+    COMMS_ASSERT(m_apiEnterCount == 0U);
+    terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+}
 
 CC_Mqtt5ErrorCode ClientImpl::init()
 {
@@ -179,6 +184,11 @@ void ClientImpl::notifyNetworkDisconnected(bool disconnected)
     for (auto* op : m_ops) {
         op->networkConnectivityChanged();
     }
+}
+
+bool ClientImpl::isNetworkDisconnected() const
+{
+    return m_sessionState.m_networkDisconnected;
 }
 
 op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
@@ -462,25 +472,25 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
             return CC_Mqtt5ErrorCode_Terminating;
         }    
 
-        if (m_sessionState.m_maxSendTopicAlias <= m_reuseState.m_sendTopicAliases.size()) {
+        if (m_sessionState.m_maxSendTopicAlias <= m_sessionState.m_sendTopicAliases.size()) {
             errorLog("Broker doesn't support usage of any more aliases.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        if (m_reuseState.m_sendTopicAliases.max_size() <= m_reuseState.m_sendTopicAliases.size()) {
+        if (m_sessionState.m_sendTopicAliases.max_size() <= m_sessionState.m_sendTopicAliases.size()) {
             errorLog("Amount of topic aliases has reached their maximum allowed memory.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
         auto iter = 
             std::lower_bound(
-                m_reuseState.m_sendTopicAliases.begin(), m_reuseState.m_sendTopicAliases.end(), topic,
+                m_sessionState.m_sendTopicAliases.begin(), m_sessionState.m_sendTopicAliases.end(), topic,
                 [](auto& info, const char* topicParam)
                 {
                     return info.m_topic < topicParam;
                 });
 
-        if ((iter != m_reuseState.m_sendTopicAliases.end()) && 
+        if ((iter != m_sessionState.m_sendTopicAliases.end()) && 
             (iter->m_topic == topic)) {
             iter->m_lowQosRegRemCount = qos0RegsCount;
             iter->m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
@@ -488,19 +498,19 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
         }
 
         unsigned alias = 0U;
-        if (!m_reuseState.m_sendTopicFreeAliases.empty()) {
-            alias = m_reuseState.m_sendTopicFreeAliases.back();
+        if (!m_sessionState.m_sendTopicFreeAliases.empty()) {
+            alias = m_sessionState.m_sendTopicFreeAliases.back();
             COMMS_ASSERT(alias > 0U);
-            m_reuseState.m_sendTopicFreeAliases.pop_back();
+            m_sessionState.m_sendTopicFreeAliases.pop_back();
         }
 
         if (alias == 0U) {
-            comms::cast_assign(alias) = m_reuseState.m_sendTopicFreeAliases.size() + 1U;
+            comms::cast_assign(alias) = m_sessionState.m_sendTopicFreeAliases.size() + 1U;
         }
 
         COMMS_ASSERT(alias > 0U);
         COMMS_ASSERT(alias <= m_sessionState.m_maxSendTopicAlias);
-        auto infoIter = m_reuseState.m_sendTopicAliases.insert(iter, TopicAliasInfo());
+        auto infoIter = m_sessionState.m_sendTopicAliases.insert(iter, TopicAliasInfo());
         infoIter->m_topic = topic;
         infoIter->m_alias = alias;
         infoIter->m_lowQosRegRemCount = qos0RegsCount;
@@ -521,19 +531,19 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
         
         auto iter = 
             std::lower_bound(
-                m_reuseState.m_sendTopicAliases.begin(), m_reuseState.m_sendTopicAliases.end(), topic,
+                m_sessionState.m_sendTopicAliases.begin(), m_sessionState.m_sendTopicAliases.end(), topic,
                 [](auto& info, const char* topicParam)
                 {
                     return info.m_topic < topicParam;
                 });
 
-        if ((iter == m_reuseState.m_sendTopicAliases.end()) || (iter->m_topic != topic)) {
+        if ((iter == m_sessionState.m_sendTopicAliases.end()) || (iter->m_topic != topic)) {
             errorLog("Alias for provided topic hasn't been allocated before.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
-        m_reuseState.m_sendTopicFreeAliases.push_back(iter->m_alias);
-        m_reuseState.m_sendTopicAliases.erase(iter);
+        m_sessionState.m_sendTopicFreeAliases.push_back(iter->m_alias);
+        m_sessionState.m_sendTopicAliases.erase(iter);
         return CC_Mqtt5ErrorCode_Success;
     }
     else {

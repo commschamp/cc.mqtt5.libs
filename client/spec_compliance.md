@@ -263,5 +263,24 @@
 - [MQTT-3.2.2-5]: If the Client does have Session State and receives Session Present set to 0 it MUST discard its
     Session State if it continues with the Network Connection
     * Clearing previous subscriptions is tested in UnitTestConnect::test19.
-    * Clearing previous outgoing topic alias is tested in ???
-    * Clearing previous incoming topic alias is tested in ???
+    * Client library terminates all pending Qos1 and Qos2 publishes on explicit disconnection request.
+- [MQTT-3.2.2-6]: If a Server sends a CONNACK packet containing a non-zero Reason Code it MUST set Session Present
+    to 0
+    * Server specific
+    * Wrong set of the session present bit doesn't influence client library operation.
+- [MQTT-3.2.2-7]:  If a Server sends a CONNACK packet containing a Reason code of 128 or greater it MUST then close the Network Connection.
+    * Server specific
+    * Tested in UnitTestConnect::test20
+- [MQTT-3.2.2-8]: The Server sending the CONNACK packet MUST use one of the Connect Reason Code values.
+    * Server specific.
+    * Client doesn't filter the reported reason code, just reports it as-is to the application.
+- [MQTT-3.2.2-9]: If a Server does not support QoS 1 or QoS 2 PUBLISH packets it MUST send a Maximum QoS in the
+    CONNACK packet specifying the highest QoS it supports
+    * Tested in UnitTestConnect::test2 and UnitTestConnect::test21.
+- [MQTT-3.2.2-10]: A Server that does not support QoS 1 or QoS 2 PUBLISH packets MUST still accept SUBSCRIBE packets containing a Requested QoS
+    of 0, 1 or 2.
+    * Server specific.
+- [MQTT-3.2.2-11]: If a Client receives a Maximum QoS from a Server, it MUST NOT send PUBLISH packets at a QoS level
+    exceeding the Maximum QoS level specified
+    * Client rejects attempt to send message with QoS too high.
+    * Tested in UnitTestPublish::test22.

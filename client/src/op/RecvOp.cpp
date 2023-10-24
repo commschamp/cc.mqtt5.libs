@@ -184,7 +184,7 @@ void RecvOp::handle(PublishMsg& msg)
             return;
         }
 
-        auto& recvTopicAliases = client().reuseState().m_recvTopicAliases;
+        auto& recvTopicAliases = client().sessionState().m_recvTopicAliases;
 
         if (!topic.empty()) {
             recvTopicAliases.resize(std::max(recvTopicAliases.size(), std::size_t(topicAlias + 1U)));

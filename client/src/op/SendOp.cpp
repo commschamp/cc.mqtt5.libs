@@ -317,6 +317,11 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if (config.m_qos > client().sessionState().m_pubMaxQos) {
+        errorLog("QoS value is too high in publish.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     unsigned alias = 0U;
     bool mustAssignTopic = true;
     do {
@@ -325,7 +330,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-            auto& state = client().reuseState();
+            auto& state = client().sessionState();
             auto iter = 
                 std::lower_bound(
                     state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), config.m_topic,
@@ -640,7 +645,7 @@ void SendOp::confirmRegisteredAlias()
 {
     COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
     COMMS_ASSERT(m_registeredAlias);
-    auto& state = client().reuseState();
+    auto& state = client().sessionState();
     auto& topic = m_pubMsg.field_topic().value();
     auto iter = 
         std::lower_bound(

@@ -29,6 +29,8 @@ public:
     void test17();
     void test18();
     void test19();
+    void test20();
+    void test21();
 
 private:
     virtual void setUp() override
@@ -127,6 +129,7 @@ void UnitTestConnect::test2()
     // [MQTT-3.1.2-17]
     // [MQTT-3.1.2-19]
     // [MQTT-3.1.2-21]
+    // [MQTT-3.2.2-9]
     auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
@@ -1313,3 +1316,46 @@ void UnitTestConnect::test19()
     unitTestReceiveMessage(publishMsg);
     TS_ASSERT(!unitTestHasMessageRecieved());
 }
+
+void UnitTestConnect::test20()
+{
+    // Testing rejecting CONNACK with network disconnection
+    // [MQTT-3.2.2-7]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_reasonCode = CC_Mqtt5ReasonCode_UnspecifiedError;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!cc_mqtt5_client_is_network_disconnected(client));
+    cc_mqtt5_client_notify_network_disconnected(client, true);
+    TS_ASSERT(cc_mqtt5_client_is_network_disconnected(client));
+    cc_mqtt5_client_init(client);
+    TS_ASSERT(!cc_mqtt5_client_is_network_disconnected(client));
+}
+
+void UnitTestConnect::test21()
+{
+    // Testing report of the max Qos by the broker
+    // [MQTT-3.2.2-9]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_maxQos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(cc_mqtt5_client_is_connected(client));
+}
+

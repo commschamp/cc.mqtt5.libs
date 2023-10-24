@@ -9,6 +9,9 @@
 
 #include "ExtConfig.h"
 #include "ObjListType.h"
+#include "TopicAliasDefs.h"
+
+#include "cc_mqtt5_client/common.h"
 
 #include <cstdint>
 
@@ -22,6 +25,9 @@ struct SessionState
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
+    RecvTopicsMap m_recvTopicAliases;
+    SendTopicsMap m_sendTopicAliases;
+    SendTopicsFreeAliasList m_sendTopicFreeAliases;
     std::uint64_t m_sessionExpiryIntervalMs = 0U;
     unsigned m_keepAliveMs = 0U;
     unsigned m_sendLimit = 0U;
@@ -29,6 +35,7 @@ struct SessionState
     unsigned m_maxSendTopicAlias = 0U;
     unsigned m_maxPacketSize = 0U;
     PacketIdsList m_allocatedPacketIds;
+    CC_Mqtt5QoS m_pubMaxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     std::uint16_t m_lastPacketId = 0U;
     bool m_problemInfoAllowed = false;
     bool m_initialized = false;

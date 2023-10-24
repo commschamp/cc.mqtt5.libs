@@ -52,6 +52,8 @@ public:
         ClientImpl& m_client;
     };
 
+    ~ClientImpl();
+
     ApiEnterGuard apiEnter()
     {
         return ApiEnterGuard(*this);
@@ -61,6 +63,7 @@ public:
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
     void notifyNetworkDisconnected(bool disconnected);
+    bool isNetworkDisconnected() const;
 
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
     op::DisconnectOp* disconnectPrepare(CC_Mqtt5ErrorCode* ec);

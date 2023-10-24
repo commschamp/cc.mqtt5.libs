@@ -288,7 +288,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_topicAliasMaximum);        
         client().sessionState().m_maxRecvTopicAlias = config.m_topicAliasMaximum;
-        client().reuseState().m_recvTopicAliases.reserve(config.m_topicAliasMaximum);
+        client().sessionState().m_recvTopicAliases.reserve(config.m_topicAliasMaximum);
     }
 
     if (config.m_requestResponseInfo) {
@@ -590,12 +590,13 @@ void ConnectOp::handle(ConnackMsg& msg)
         reuseState = ReuseState();
     }    
 
-    reuseState.m_sendTopicAliases.resize(std::min(reuseState.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
+    state.m_sendTopicAliases.resize(std::min(state.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
 
     state.m_keepAliveMs = keepAlive * 1000U;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
     state.m_maxPacketSize = m_maxPacketSize;
+    state.m_pubMaxQos = response.m_maxQos;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_firstConnect = false;
     state.m_problemInfoAllowed = m_requestProblemInfo;
@@ -830,11 +831,12 @@ void ConnectOp::networkConnectivityChangedImpl()
 
 void ConnectOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
 {
-    COMMS_ASSERT(m_cb != nullptr);
     auto cb = m_cb;
     auto* cbData = m_cbData;
     opComplete(); // mustn't access data members after destruction
-    cb(cbData, status, response);    
+    if (cb != nullptr) {
+        cb(cbData, status, response);    
+    }
 }
 
 void ConnectOp::opTimeoutInternal()

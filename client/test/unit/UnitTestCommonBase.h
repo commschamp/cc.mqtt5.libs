@@ -207,9 +207,11 @@ protected:
 
     struct UnitTestConnectResponseConfig
     {
-        bool m_sessionPresent = false;
+        CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+        CC_Mqtt5QoS m_maxQos = CC_Mqtt5QoS_ValuesLimit;
         unsigned m_topicAliasMax = 0U;
         unsigned m_sessionExpiryInterval = 0U;
+        bool m_sessionPresent = false;
     };
 
     void unitTestSetUp();
@@ -227,7 +229,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestSendConnect(CC_Mqtt5ConnectHandle& connect);
     CC_Mqtt5ErrorCode unitTestSendSubscribe(CC_Mqtt5SubscribeHandle& subscribe);
     CC_Mqtt5ErrorCode unitTestSendUnsubscribe(CC_Mqtt5UnsubscribeHandle& unsubscribe);
-    CC_Mqtt5ErrorCode unitTestSendPublish(CC_Mqtt5PublishHandle& subscribe);
+    CC_Mqtt5ErrorCode unitTestSendPublish(CC_Mqtt5PublishHandle& publish);
     UniTestsMsgPtr unitTestGetSentMessage();
     bool unitTestHasSentMessage() const;
     bool unitTestIsConnectComplete();

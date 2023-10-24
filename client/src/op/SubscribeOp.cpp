@@ -304,11 +304,12 @@ void SubscribeOp::networkConnectivityChangedImpl()
 
 void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
-    COMMS_ASSERT(m_cb != nullptr);
     auto cb = m_cb;
     auto* cbData = m_cbData;
     opComplete(); // mustn't access data members after destruction
-    cb(cbData, status, response);    
+    if (cb != nullptr) {
+        cb(cbData, status, response);    
+    }
 }
 
 void SubscribeOp::opTimeoutInternal()

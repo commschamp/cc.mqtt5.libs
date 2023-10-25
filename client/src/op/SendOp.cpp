@@ -317,8 +317,15 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if (config.m_qos > client().sessionState().m_pubMaxQos) {
+    auto& state = client().sessionState();
+
+    if (config.m_qos > state.m_pubMaxQos) {
         errorLog("QoS value is too high in publish.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    if (config.m_retain && (!state.m_retainAvailable)) {
+        errorLog("Retain is not supported by the broker");
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
@@ -330,7 +337,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-            auto& state = client().sessionState();
+            
             auto iter = 
                 std::lower_bound(
                     state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), config.m_topic,

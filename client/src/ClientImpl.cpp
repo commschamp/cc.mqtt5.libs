@@ -143,11 +143,11 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
             return consumed; // Disconnect
         }        
 
-        if (m_sessionState.m_maxPacketSize > 0U) {
+        if (m_sessionState.m_maxRecvPacketSize > 0U) {
             auto prefixSize = IdAndFlagsField::minLength() + sizeField.length();
-            COMMS_ASSERT(prefixSize <= m_sessionState.m_maxPacketSize);
+            COMMS_ASSERT(prefixSize <= m_sessionState.m_maxRecvPacketSize);
 
-            auto maxAllowedSize = m_sessionState.m_maxPacketSize - prefixSize;
+            auto maxAllowedSize = m_sessionState.m_maxRecvPacketSize - prefixSize;
             if (maxAllowedSize < sizeField.value()) {
                 errorLog("The message length exceeded max packet size");
                 disconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge;
@@ -750,6 +750,11 @@ void ClientImpl::handle(ProtMessage& msg)
 CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
 {
     auto len = m_frame.length(msg);
+    if ((m_sessionState.m_maxSendPacketSize > 0U) && (m_sessionState.m_maxSendPacketSize < len)) {
+        errorLog("The packet length exceeds limit set by the broker.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     if (m_buf.max_size() < len) {
         errorLog("Output buffer overflow.");
         return CC_Mqtt5ErrorCode_BufferOverflow;

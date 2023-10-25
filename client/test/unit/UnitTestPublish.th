@@ -32,6 +32,8 @@ public:
     void test20();
     void test21();
     void test22();
+    void test23();
+    void test24();
 
 private:
     virtual void setUp() override
@@ -1755,9 +1757,109 @@ void UnitTestPublish::test22()
 
     ec = unitTestSendPublish(publish);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-    TS_ASSERT(unitTestIsPublishComplete());
 
     TS_ASSERT(unitTestIsPublishComplete());
     unitTestPopPublishResponseInfo();
 }
 
+void UnitTestPublish::test23()
+{
+    // Testing rejection of publish with retain when it's unavailable
+    // [MQTT-3.2.2-14]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    bool retainAvailable = false;
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_retainAvailable = &retainAvailable;
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    config.m_retain = true;
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_retain = false;
+    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    unitTestPopPublishResponseInfo();
+}
+
+void UnitTestPublish::test24()
+{
+    // Testing rejection of publish exceeding max packet size
+    // [MQTT-3.2.2-15]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    const unsigned MaxPacketSize = 300;
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_maxPacketSize = MaxPacketSize;
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data(MaxPacketSize, 0x1);
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    ::cc_mqtt5_client_publish_init_config_basic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+
+    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+    TS_ASSERT_EQUALS(publish, nullptr);
+
+    publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size() - 100U);
+    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    unitTestPopPublishResponseInfo();    
+}

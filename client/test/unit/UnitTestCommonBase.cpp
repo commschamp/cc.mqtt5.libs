@@ -210,26 +210,30 @@ void UnitTestCommonBase::unitTestTick(unsigned ms, bool forceTick)
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendConnect(CC_Mqtt5ConnectHandle& connect)
 {
-    return ::cc_mqtt5_client_connect_send(connect, &UnitTestCommonBase::unitTestConnectCompleteCb, this);
+    auto result = ::cc_mqtt5_client_connect_send(connect, &UnitTestCommonBase::unitTestConnectCompleteCb, this);
     connect = nullptr;
+    return result;
 }
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendSubscribe(CC_Mqtt5SubscribeHandle& subscribe)
 {
-    return ::cc_mqtt5_client_subscribe_send(subscribe, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
+    auto result = ::cc_mqtt5_client_subscribe_send(subscribe, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
     subscribe = nullptr;
+    return result;
 }
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendUnsubscribe(CC_Mqtt5UnsubscribeHandle& unsubscribe)
 {
-    return ::cc_mqtt5_client_unsubscribe_send(unsubscribe, &UnitTestCommonBase::unitTestUnsubscribeCompleteCb, this);
+    auto result = ::cc_mqtt5_client_unsubscribe_send(unsubscribe, &UnitTestCommonBase::unitTestUnsubscribeCompleteCb, this);
     unsubscribe = nullptr;
+    return result;
 }
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish)
 {
-    return ::cc_mqtt5_client_publish_send(publish, &UnitTestCommonBase::unitTestPublishCompleteCb, this);
+    auto result = ::cc_mqtt5_client_publish_send(publish, &UnitTestCommonBase::unitTestPublishCompleteCb, this);
     publish = nullptr;
+    return result;
 }
 
 UniTestsMsgPtr UnitTestCommonBase::unitTestGetSentMessage()
@@ -508,6 +512,18 @@ void UnitTestCommonBase::unitTestPerformConnect(
             field.field_value().setValue(responseConfig->m_maxQos);
         }
 
+        if (responseConfig->m_retainAvailable != nullptr) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_retainAvailable();
+            field.field_value().setValue(*responseConfig->m_retainAvailable);
+        }
+
+        if (responseConfig->m_maxPacketSize > 0U) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_maxPacketSize();
+            field.field_value().setValue(responseConfig->m_maxPacketSize);
+        }
+
     } while (false);
 
     unitTestReceiveMessage(connackMsg);
@@ -517,6 +533,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     test_assert(connectInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
     test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_reasonCode == CC_Mqtt5ReasonCode_Success));
     test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_maxQos == CC_Mqtt5QoS_ExactlyOnceDelivery));
+    test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_maxPacketSize == 0U));
 
     if (responseConfig != nullptr) {
         test_assert(connectInfo.m_response.m_reasonCode == responseConfig->m_reasonCode);
@@ -531,6 +548,17 @@ void UnitTestCommonBase::unitTestPerformConnect(
         else {
             test_assert(connectInfo.m_response.m_maxQos == CC_Mqtt5QoS_ExactlyOnceDelivery);
         }    
+
+        if (responseConfig->m_retainAvailable != nullptr) {
+            test_assert(connectInfo.m_response.m_retainAvailable == *responseConfig->m_retainAvailable);
+        }
+        else {
+            test_assert(connectInfo.m_response.m_retainAvailable);
+        }
+
+        if (responseConfig->m_maxPacketSize > 0U) {
+            test_assert(connectInfo.m_response.m_maxPacketSize == responseConfig->m_maxPacketSize);
+        }
     }
     unitTestPopConnectResponseInfo();    
 }

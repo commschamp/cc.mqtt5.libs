@@ -38,7 +38,6 @@ ConnectOp::ConnectOp(ClientImpl& client) :
 {
 }   
 
-
 CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& config)
 {
     if ((config.m_passwordLen > 0U) && (config.m_password == nullptr)) {
@@ -56,6 +55,11 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
     }
     else {
         m_connectMsg.field_clientId().value().clear();
+    }
+
+    if ((m_connectMsg.field_clientId().value().empty()) && (!config.m_cleanStart)) {
+        errorLog("Clean start flag needs to be set for empty client id");
+        return CC_Mqtt5ErrorCode_BadParam;
     }
 
     bool hasUsername = (config.m_username != nullptr);
@@ -260,7 +264,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_maxPacketSize);
 
-        m_maxPacketSize = config.m_maxPacketSize;
+        m_maxRecvPacketSize = config.m_maxPacketSize;
     }
 
     if (config.m_topicAliasMaximum > 0U) {
@@ -595,9 +599,11 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_keepAliveMs = keepAlive * 1000U;
     state.m_sendLimit = response.m_highQosPubLimit + 1U;
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
-    state.m_maxPacketSize = m_maxPacketSize;
+    state.m_maxRecvPacketSize = m_maxRecvPacketSize;
+    state.m_maxSendPacketSize = response.m_maxPacketSize;
     state.m_pubMaxQos = response.m_maxQos;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
+    state.m_retainAvailable = response.m_retainAvailable;
     state.m_firstConnect = false;
     state.m_problemInfoAllowed = m_requestProblemInfo;
 

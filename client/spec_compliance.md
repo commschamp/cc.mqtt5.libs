@@ -284,3 +284,45 @@
     exceeding the Maximum QoS level specified
     * Client rejects attempt to send message with QoS too high.
     * Tested in UnitTestPublish::test22.
+- [MQTT-3.2.2-12]: If a Server receives a CONNECT packet containing a Will QoS that exceeds its capabilities, it MUST
+    reject the connection. It SHOULD use a CONNACK packet with Reason Code 0x9B (QoS not supported)
+    as described in section 4.13 Handling errors, and MUST close the Network Connection
+    * Server specific
+    * Client side is not aware of Will QoS limit during connection, connection request will be rejected.
+    * Tested in UnitTestConnect::test22.
+- [MQTT-3.2.2-13]: If a Server receives a CONNECT packet containing a Will Message with the Will Retain set to 1, and it
+    does not support retained messages, the Server MUST reject the connection request. It SHOULD send
+    CONNACK with Reason Code 0x9A (Retain not supported) and then it MUST close the Network
+    Connection
+    * Server specific
+    * Tested in UnitTestConnect::test23.
+- [MQTT-3.2.2-14]: A Client receiving Retain Available set to 0 from the Server MUST NOT send a PUBLISH packet with the
+    RETAIN flag set to 1.
+    * Client rejecting publish configuration with retain set when unavailable.
+    * Tested in UnitTestPublish::test23.
+- [MQTT-3.2.2-15]: The Client MUST NOT send packets exceeding Maximum Packet Size to the Server.
+    * Client will reject "send" request with "Bad Parameter" error code.
+    * Tested in UnitTestPublish::test24.
+- [MQTT-3.2.2-16]: If the Client connects using a zero length Client Identifier, the Server MUST respond with a CONNACK
+    containing an Assigned Client Identifier. The Assigned Client Identifier MUST be a new Client Identifier
+    not used by any other Session currently in the Server.
+    * Server specific.
+    * Client doesn't store the client id, just passes it to the application.
+    * Client doesn't respond to the incorrect behaviour of the broker (which doesn't allocate new client id).
+    * Client requires "clean start" flags set for empty client id. Tested in UnitTestConnect::test24.
+- [MQTT-3.2.2-17]:  The Client MUST NOT send a Topic Alias in a PUBLISH packet to the Server greater than this (Topic Alias Maximum) value.
+    * Client exposes API to allocate topic aliases.
+    * Topic aliases allocation is allowed only after connect
+    * Topic alias allocation is rejected once the broker's limit is reached.
+    * Tested in UnitTestConnect::test25.
+- [MQTT-3.2.2-18]: If Topic Alias Maximum is absent or 0, the Client MUST NOT send any Topic Aliases on to the Server.
+    * 0 limit works the same way as with [MQTT-3.2.2-17]
+    * Tested in UnitTestConnect::test26.
+- [MQTT-3.2.2-19]: The Server MUST NOT send this property (Reason String) if it would increase the size of the CONNACK packet 
+    beyond the Maximum Packet Size specified by the Client.
+    * Server specific.
+- [MQTT-3.2.2-20]: The Server MUST NOT send this property (User Property) if it would increase the size of the CONNACK packet 
+    beyond the Maximum Packet Size specified by the Client.
+    * Server specific.
+- TODO: implment and test wildcard subscription disabled check.
+

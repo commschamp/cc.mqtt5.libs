@@ -211,7 +211,9 @@ protected:
         CC_Mqtt5QoS m_maxQos = CC_Mqtt5QoS_ValuesLimit;
         unsigned m_topicAliasMax = 0U;
         unsigned m_sessionExpiryInterval = 0U;
+        unsigned m_maxPacketSize = 0U;
         bool m_sessionPresent = false;
+        bool* m_retainAvailable = nullptr;
     };
 
     void unitTestSetUp();

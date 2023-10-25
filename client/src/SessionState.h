@@ -33,7 +33,8 @@ struct SessionState
     unsigned m_sendLimit = 0U;
     unsigned m_maxRecvTopicAlias = 0U;
     unsigned m_maxSendTopicAlias = 0U;
-    unsigned m_maxPacketSize = 0U;
+    unsigned m_maxRecvPacketSize = 0U;
+    unsigned m_maxSendPacketSize = 0U;
     PacketIdsList m_allocatedPacketIds;
     CC_Mqtt5QoS m_pubMaxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     std::uint16_t m_lastPacketId = 0U;
@@ -42,6 +43,7 @@ struct SessionState
     bool m_connected = false;
     bool m_terminating = false;
     bool m_subIdsAvailable = false;
+    bool m_retainAvailable = false;
     bool m_firstConnect = true;
     bool m_networkDisconnected = false;
 };

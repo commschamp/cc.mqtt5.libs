@@ -241,7 +241,7 @@
 - [MQTT-3.2.0-1]: The Server MUST send a CONNACK with a 0x00 (Success) Reason Code before sending any
     Packet other than AUTH.
     * Server specific.
-    * ??? Client behaviour is not determined.
+    * Client behaviour on unexpected packet is not determined.
 - [MQTT-3.2.0-2]:  The Server MUST NOT send more than one CONNACK in a Network Connection.
     * Server specific.
     * Client ignores unexpected CONNACK.
@@ -324,5 +324,95 @@
 - [MQTT-3.2.2-20]: The Server MUST NOT send this property (User Property) if it would increase the size of the CONNACK packet 
     beyond the Maximum Packet Size specified by the Client.
     * Server specific.
-- TODO: implment and test wildcard subscription disabled check.
-
+- [MQTT-3.2.2-21]:  If the Server sends a Server Keep Alive on the CONNACK packet, the Client MUST use this value instead of the Keep Alive
+    value the Client sent on CONNECT.
+    * Tested in UnitTestConnect::test2.
+- [MQTT-3.2.2-22]: If the Server does not send the Server Keep Alive, the Server MUST use the Keep Alive value set by the Client on CONNECT.
+    * Server specific.
+- [MQTT-3.3.1-1]: The DUP flag MUST be set to 1 by the Client or Server when it attempts to re-deliver a PUBLISH packet.
+    * Send tested in UnitTestPublish::test4 and UnitTestPublish::test6.
+    * When DUP flag is cleared and the publish is not complete, the publish is rejected with "Packet Id in Use" error, tested in    
+        UnitTestReceive::test4.
+    * Receiving DUP flag set when broker didn't receive PUBREL is tested in UnitTestReceive::test11.
+    * Receiving DUP flag set when first PUBLISH from the broker hasn't been received is tested in UnitTestReceive::test12.
+- [MQTT-3.3.1-2]: The DUP flag MUST be set to 0 for all QoS 0 messages.
+    * Send tested in UnitTestPublish::test1.
+    * Receive dup flag is ignored on QoS 0 message.
+- [MQTT-3.3.1-3]: The DUP flag in the outgoing PUBLISH packet is set
+    independently to the incoming PUBLISH packet, its value MUST be determined solely by whether the
+    outgoing PUBLISH packet is a retransmission
+    * Tested in UnitTestPublish::test4 and UnitTestPublish::test6.
+- [MQTT-3.3.1-4]: A PUBLISH Packet MUST NOT have both QoS bits set to 1
+    * Not allowing to set invalid QoS value is tested in UnitTestPublish::test25.
+- [MQTT-3.3.1-5]: If the RETAIN flag is set to 1 in a PUBLISH packet sent by a Client to a Server, the Server MUST replace
+    any existing retained message for this topic and store the Application Message
+    * Server specific.
+- [MQTT-3.3.1-6]: If the Payload contains zero bytes it is processed normally by the Server but any retained message with the same topic name
+    MUST be removed and any future subscribers for the topic will not receive a retained message.
+    * Server specific.
+- [MQTT-3.3.1-7]: A retained message with a Payload containing zero bytes MUST NOT be stored as a retained
+    message on the Server.
+    * Server specific.
+- [MQTT-3.3.1-8]: If the RETAIN flag is 0 in a PUBLISH packet sent by a Client to a Server, the Server MUST NOT store the
+    message as a retained message and MUST NOT remove or replace any existing retained message.
+    * Server specific
+- [MQTT-3.3.1-9]: If Retain Handling is set to 0 the Server MUST send the retained messages matching the Topic
+    Filter of the subscription to the Client
+    * Server specific
+- [MQTT-3.3.1-10]: If Retain Handling is set to 1 then if the subscription did not already exist, the Server MUST send
+    all retained message matching the Topic Filter of the subscription to the Client, and if the
+    subscription did exist the Server MUST NOT send the retained messages.
+    * Server specific
+    * Client library doesn't track the subscription flags, assuming broker behaves
+- [MQTT-3.3.1-11]: If Retain Handling is set to 2, the Server MUST NOT send the retained messages
+    * Server specific
+    * Client library doesn't track the subscription flags, assuming broker behaves.
+- [MQTT-3.3.1-12]: If the value of Retain As Published subscription option is set to 0, the Server MUST set the RETAIN
+    flag to 0 when forwarding an Application Message regardless of how the RETAIN flag was set in the
+    received PUBLISH packet 
+    * Server specific
+- [MQTT-3.3.1-13]: If the value of Retain As Published subscription option is set to 1, the Server MUST set the RETAIN
+    flag equal to the RETAIN flag in the received PUBLISH packet 
+    * Server specific
+- [MQTT-3.3.2-1]: The Topic Name MUST be present as the first field in the PUBLISH packet Variable Header. It MUST be
+    a UTF-8 Encoded String
+    * Topic is zero terminated C-string, UTF-8 compliance is responsibility of the application.
+- [MQTT-3.3.2-2]: The Topic Name in the PUBLISH packet MUST NOT contain wildcard characters.
+    * Tested in UnitTestPublish::test10.
+- [MQTT-3.3.2-3]: The Topic Name in a PUBLISH packet sent by a Server to a subscribing Client MUST match the
+    Subscription’s Topic Filter
+    * Reception of the unsolicited messages is tested in UnitTestReceive::test13.
+- [MQTT-3.3.2-4]: A Server MUST send the Payload Format Indicator unaltered to all subscribers receiving the Application
+    Message    
+    * Server specific
+    * Support for the "Payload Format Indicator" is tested in UnitTestPublish::test1.
+    * Reception of the "Payload Format Indicator" is tested in UnitTestReceive::test1 and UnitTestReceive::test3.
+- [MQTT-3.3.2-5]: If the Message Expiry Interval has passed and the Server has not managed to start onward delivery to a matching
+    subscriber, then it MUST delete the copy of the message for that subscriber
+    * Server specific
+    * Support for the "Message Expiry Interval" is tested in UnitTestPublish::test1.
+- [MQTT-3.3.2-6]: The PUBLISH packet sent to a Client by the Server MUST contain a Message Expiry Interval set to the
+    received value minus the time that the Application Message has been waiting in the Server.
+    * Server specific
+    * Reception of the "Message Expiry Interval" is tested in UnitTestReceive::test1 and UnitTestReceive::test3.
+- [MQTT-3.3.2-7]: A receiver MUST NOT carry forward any Topic Alias mappings from one Network
+    Connection to another
+    * The outgoing topic aliases are cleared when network disconnection is reported. Tested in UnitTestPublish::test26.
+    * The incoming topic aliases are cleared only during re-init in case the broker hasn't detected disconnection.
+- [MQTT-3.3.2-8]: A sender MUST NOT send a PUBLISH packet containing a Topic
+    Alias which has the value 0.
+    * Tested in UnitTestPublish::test7, UnitTestPublish::test8, and UnitTestPublish::test9
+- [MQTT-3.3.2-9]: A Client MUST NOT send a PUBLISH packet with a Topic Alias greater than the Topic Alias Maximum
+    value returned by the Server in the CONNACK packet.
+    * Client prevents allocating extra topic aliases. Tested in UnitTestConnect::test25.
+- [MQTT-3.3.2-10]: A Client MUST accept all Topic Alias values greater than 0 and less than or equal 
+    to the Topic Alias Maximum value that it sent in the CONNECT packet.
+    * ??? Not tested yet
+- [MQTT-3.3.2-11]: A Server MUST NOT send a PUBLISH packet with a Topic Alias greater than the Topic Alias Maximum
+    value sent by the Client in the CONNECT packet.
+    * Server specific
+    * ??? Not tested yet
+- [MQTT-3.3.2-12]: A Server MUST accept all Topic Alias
+    values greater than 0 and less than or equal to the Topic Alias Maximum value that it returned in the
+    CONNACK packet.
+    * Server specific

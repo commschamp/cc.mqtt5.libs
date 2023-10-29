@@ -135,6 +135,7 @@ void UnitTestConnect::test2()
     // [MQTT-3.1.2-19]
     // [MQTT-3.1.2-21]
     // [MQTT-3.2.2-9]
+    // [MQTT-3.2.2-21]
     auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());

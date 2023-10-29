@@ -188,6 +188,16 @@ bool Op::verifySubFilterInternal(const char* filter)
             return false;
         }
 
+        if (!m_client.sessionState().m_sharedSubsAvailable) {
+            static const char SharePrefix[] = {'$', 's', 'h', 'a', 'r', 'e', '/' };
+
+            // If filter is shorted than SharePrefix, then it is assumed std::equal execution will terminate on diffence.
+            if (std::equal(std::begin(SharePrefix), std::end(SharePrefix), filter)) {
+                errorLog("Shared subscriptions not accepted by the broker, cannot use \"$share/\" prefixed topics.");
+                return false;
+            }
+        }
+
         auto pos = 0U;
         int lastSep = -1;
         while (filter[pos] != '\0') {
@@ -206,6 +216,11 @@ bool Op::verifySubFilterInternal(const char* filter)
             }   
 
             if (ch == MultLevelWildcard) {
+                if (!m_client.sessionState().m_wildcardSubAvailable) {
+                    errorLog("Wildcard subscriptions not accepted by the broker, cannot use \'#\'.");
+                    return false;
+                }
+                                
                 if (filter[pos + 1] != '\0') {
                     errorLog("Multi-level wildcard \'#\' must be last.");
                     return false;
@@ -225,6 +240,11 @@ bool Op::verifySubFilterInternal(const char* filter)
 
             if (ch != SingleLevelWildcard) {
                 continue;
+            }
+
+            if (!m_client.sessionState().m_wildcardSubAvailable) {
+                errorLog("Wildcard subscriptions not accepted by the broker, cannot use \'+\'.");
+                return false;
             }
 
             auto nextCh = filter[pos + 1];

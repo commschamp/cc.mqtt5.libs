@@ -271,6 +271,10 @@ void RecvOp::handle(PublishMsg& msg)
         comms::cast_assign(m_info.m_format) = propsHandler.m_payloadFormatIndicator->field_value().value();
     }
 
+    if (propsHandler.m_messageExpiryInterval != nullptr) {
+        comms::cast_assign(m_info.m_messageExpiryInterval) = propsHandler.m_messageExpiryInterval->field_value().value();
+    }
+
     m_info.m_retained = msg.transportField_flags().field_retain().getBitValue_bit();
 
     if (qos == Qos::AtMostOnceDelivery) {

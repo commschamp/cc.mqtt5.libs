@@ -181,8 +181,17 @@ void ClientImpl::notifyNetworkDisconnected(bool disconnected)
 {
     auto guard = apiEnter();
     m_sessionState.m_networkDisconnected = disconnected;
+    if (disconnected) {
+        for (auto& aliasInfo : m_sessionState.m_sendTopicAliases) {
+            aliasInfo.m_lowQosRegRemCount = aliasInfo.m_lowQosRegCountRequest;
+            aliasInfo.m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
+        }
+    }
+
     for (auto* op : m_ops) {
-        op->networkConnectivityChanged();
+        if (op != nullptr) {
+            op->networkConnectivityChanged();
+        }
     }
 }
 
@@ -492,6 +501,7 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
 
         if ((iter != m_sessionState.m_sendTopicAliases.end()) && 
             (iter->m_topic == topic)) {
+            iter->m_lowQosRegCountRequest = qos0RegsCount;
             iter->m_lowQosRegRemCount = qos0RegsCount;
             iter->m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
             return CC_Mqtt5ErrorCode_Success;

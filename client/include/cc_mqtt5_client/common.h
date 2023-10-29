@@ -326,6 +326,7 @@ typedef struct
     const char* m_contentType;
     const unsigned* m_subIds;       
     unsigned m_subIdsCount;
+    unsigned m_messageExpiryInterval;
     CC_Mqtt5QoS m_qos;
     CC_Mqtt5PayloadFormat m_format;
     bool m_retained;     

@@ -130,6 +130,7 @@ UnitTestCommonBase::UnitTestMessageInfo& UnitTestCommonBase::UnitTestMessageInfo
     UnitTestUserProp::copyProps(other.m_userProps, other.m_userPropsCount, m_userProps);
     assignStringInternal(m_contentType, other.m_contentType);
     assignDataInternal(m_subIds, other.m_subIds, other.m_subIdsCount);
+    m_messageExpiryInterval = other.m_messageExpiryInterval;
     m_qos = other.m_qos;
     m_format = other.m_format;
     m_retained = other.m_retained;
@@ -524,6 +525,24 @@ void UnitTestCommonBase::unitTestPerformConnect(
             field.field_value().setValue(responseConfig->m_maxPacketSize);
         }
 
+        if (responseConfig->m_wildcardSubAvailable != nullptr) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_wildcardSubAvail();
+            field.field_value().setValue(*responseConfig->m_wildcardSubAvailable);
+        }     
+
+        if (responseConfig->m_subIdsAvailable != nullptr) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_subIdAvail();
+            field.field_value().setValue(*responseConfig->m_subIdsAvailable);
+        }   
+
+        if (responseConfig->m_sharedSubsAvailable != nullptr) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_sharedSubAvail();
+            field.field_value().setValue(*responseConfig->m_sharedSubsAvailable);
+        }              
+
     } while (false);
 
     unitTestReceiveMessage(connackMsg);
@@ -559,6 +578,27 @@ void UnitTestCommonBase::unitTestPerformConnect(
         if (responseConfig->m_maxPacketSize > 0U) {
             test_assert(connectInfo.m_response.m_maxPacketSize == responseConfig->m_maxPacketSize);
         }
+
+        if (responseConfig->m_wildcardSubAvailable != nullptr) {
+            test_assert(connectInfo.m_response.m_wildcardSubAvailable == *responseConfig->m_wildcardSubAvailable);
+        }
+        else {
+            test_assert(connectInfo.m_response.m_wildcardSubAvailable);
+        }      
+
+        if (responseConfig->m_subIdsAvailable != nullptr) {
+            test_assert(connectInfo.m_response.m_subIdsAvailable == *responseConfig->m_subIdsAvailable);
+        }
+        else {
+            test_assert(connectInfo.m_response.m_subIdsAvailable);
+        }     
+
+        if (responseConfig->m_sharedSubsAvailable != nullptr) {
+            test_assert(connectInfo.m_response.m_sharedSubsAvailable == *responseConfig->m_sharedSubsAvailable);
+        }
+        else {
+            test_assert(connectInfo.m_response.m_sharedSubsAvailable);
+        }                     
     }
     unitTestPopConnectResponseInfo();    
 }

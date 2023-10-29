@@ -18,6 +18,9 @@ public:
     void test6();
     void test7();
     void test8();
+    void test9();
+    void test10();
+    void test11();
     
 
 private:
@@ -572,4 +575,108 @@ void UnitTestSubscribe::test8()
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
     TS_ASSERT(unitTestIsDisconnected());    
+}
+
+void UnitTestSubscribe::test9()
+{
+    // Testing wildcard subscriptions disabled
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    bool wildcardSubAvailable = false;
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_wildcardSubAvailable = &wildcardSubAvailable;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&subscribeConfig);
+    subscribeConfig.m_topic = "#";
+
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    subscribeConfig.m_topic = "hello/#";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    subscribeConfig.m_topic = "hello/+";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    subscribeConfig.m_topic = "hello/1";
+    ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+}
+
+void UnitTestSubscribe::test10()
+{
+    // Testing subscription IDs disabled
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    bool subIdsAvailable = false;
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_subIdsAvailable = &subIdsAvailable;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);
+    topicConfig.m_topic = "#";
+
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto extraConfig = CC_Mqtt5SubscribeExtraConfig();
+    ::cc_mqtt5_client_subscribe_init_config_extra(&extraConfig);
+    extraConfig.m_subId = 10;
+
+    ec = ::cc_mqtt5_client_subscribe_config_extra(subscribe, &extraConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+}
+
+void UnitTestSubscribe::test11()
+{
+    // Testing shared subscriptions disabled
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    bool sharedSubsAvailable = false;
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_sharedSubsAvailable = &sharedSubsAvailable;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);
+    topicConfig.m_topic = "$share/ShareName/#";
+
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }

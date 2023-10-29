@@ -602,8 +602,10 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_maxRecvPacketSize = m_maxRecvPacketSize;
     state.m_maxSendPacketSize = response.m_maxPacketSize;
     state.m_pubMaxQos = response.m_maxQos;
+    state.m_wildcardSubAvailable = response.m_wildcardSubAvailable;
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_retainAvailable = response.m_retainAvailable;
+    state.m_sharedSubsAvailable = response.m_sharedSubsAvailable;
     state.m_firstConnect = false;
     state.m_problemInfoAllowed = m_requestProblemInfo;
 

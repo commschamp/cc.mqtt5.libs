@@ -177,6 +177,7 @@ protected:
         UnitTestUserProp::List m_userProps;
         std::string m_contentType;
         std::vector<unsigned> m_subIds;
+        unsigned m_messageExpiryInterval = 0U;
         CC_Mqtt5QoS m_qos = CC_Mqtt5QoS_ValuesLimit;
         CC_Mqtt5PayloadFormat m_format = CC_Mqtt5PayloadFormat_Unspecified;
         bool m_retained = false;     
@@ -214,6 +215,9 @@ protected:
         unsigned m_maxPacketSize = 0U;
         bool m_sessionPresent = false;
         bool* m_retainAvailable = nullptr;
+        bool* m_wildcardSubAvailable = nullptr;
+        bool* m_subIdsAvailable = nullptr;
+        bool* m_sharedSubsAvailable = nullptr;
     };
 
     void unitTestSetUp();

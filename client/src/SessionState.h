@@ -42,8 +42,10 @@ struct SessionState
     bool m_initialized = false;
     bool m_connected = false;
     bool m_terminating = false;
+    bool m_wildcardSubAvailable = false;
     bool m_subIdsAvailable = false;
     bool m_retainAvailable = false;
+    bool m_sharedSubsAvailable = false;
     bool m_firstConnect = true;
     bool m_networkDisconnected = false;
 };

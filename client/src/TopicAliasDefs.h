@@ -25,6 +25,7 @@ struct TopicAliasInfo
 
     TopicStr m_topic;
     unsigned m_alias = 0U;
+    std::uint8_t m_lowQosRegCountRequest = DefaultLowQosRegRemCount;
     std::uint8_t m_lowQosRegRemCount = DefaultLowQosRegRemCount;
     std::uint8_t m_highQosRegRemCount = DefaultHighQosRegRemCount;
 };

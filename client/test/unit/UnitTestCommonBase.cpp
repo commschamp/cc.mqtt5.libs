@@ -541,7 +541,13 @@ void UnitTestCommonBase::unitTestPerformConnect(
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_sharedSubAvail();
             field.field_value().setValue(*responseConfig->m_sharedSubsAvailable);
-        }              
+        }      
+
+        if (responseConfig->m_recvMaximum > 0U) {
+            propsVec.resize(propsVec.size() + 1U);
+            auto& field = propsVec.back().initField_receiveMax();
+            field.field_value().setValue(responseConfig->m_recvMaximum);
+        }
 
     } while (false);
 

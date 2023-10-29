@@ -161,6 +161,11 @@ public:
             errorLogInternal(msg);
         }
     }
+
+    std::size_t sendsCount() const
+    {
+        return m_sendOps.size();
+    }
     
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;

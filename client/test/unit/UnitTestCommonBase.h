@@ -213,6 +213,7 @@ protected:
         unsigned m_topicAliasMax = 0U;
         unsigned m_sessionExpiryInterval = 0U;
         unsigned m_maxPacketSize = 0U;
+        unsigned m_recvMaximum = 0U;
         bool m_sessionPresent = false;
         bool* m_retainAvailable = nullptr;
         bool* m_wildcardSubAvailable = nullptr;

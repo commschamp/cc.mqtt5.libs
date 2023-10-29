@@ -30,7 +30,7 @@ struct SessionState
     SendTopicsFreeAliasList m_sendTopicFreeAliases;
     std::uint64_t m_sessionExpiryIntervalMs = 0U;
     unsigned m_keepAliveMs = 0U;
-    unsigned m_sendLimit = 0U;
+    unsigned m_highQosPubLimit = 0U;
     unsigned m_maxRecvTopicAlias = 0U;
     unsigned m_maxSendTopicAlias = 0U;
     unsigned m_maxRecvPacketSize = 0U;

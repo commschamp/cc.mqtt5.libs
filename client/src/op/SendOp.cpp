@@ -324,6 +324,11 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if ((config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) && (state.m_highQosPubLimit < client().sendsCount())) {
+        errorLog("Exceeding number of allowed high QoS publishes.");
+        return CC_Mqtt5ErrorCode_Busy;        
+    }
+
     if (config.m_retain && (!state.m_retainAvailable)) {
         errorLog("Retain is not supported by the broker");
         return CC_Mqtt5ErrorCode_BadParam;
@@ -443,6 +448,11 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
     }
 
     if (config.m_responseTopic != nullptr) {
+        if (!verifyPubTopic(config.m_responseTopic, true)) {
+            errorLog("Bad response topic format in publish.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         if (!canAddProp(propsField)) {
             errorLog("Cannot add publish property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;

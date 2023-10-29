@@ -407,12 +407,57 @@
     * Client prevents allocating extra topic aliases. Tested in UnitTestConnect::test25.
 - [MQTT-3.3.2-10]: A Client MUST accept all Topic Alias values greater than 0 and less than or equal 
     to the Topic Alias Maximum value that it sent in the CONNECT packet.
-    * ??? Not tested yet
+    * Tested in UnitTestReceive::test14.
 - [MQTT-3.3.2-11]: A Server MUST NOT send a PUBLISH packet with a Topic Alias greater than the Topic Alias Maximum
     value sent by the Client in the CONNECT packet.
     * Server specific
-    * ??? Not tested yet
+    * On reception of the invalid topic alias, the client disconnects with "Topic Alias Invalid" reason.
+    * Tested in UnitTestReceive::test15.
 - [MQTT-3.3.2-12]: A Server MUST accept all Topic Alias
     values greater than 0 and less than or equal to the Topic Alias Maximum value that it returned in the
     CONNACK packet.
     * Server specific
+    * Client API doesn't allow allocation of the topic alias above the maximum value.
+- [MQTT-3.3.2-13]: The Response Topic MUST be a UTF-8 Encoded String.
+    * The "Response Topic" is zero terminated C-string.
+    * UTF-8 compliance is the responsibility of the application.
+- [MQTT-3.3.2-14]:  The Response Topic MUST NOT contain wildcard characters.
+    * Preventing attempt to use wildcards in the response topic configuration is tested in UnitTestPublish::test27.
+- [MQTT-3.3.2-15]: The Server MUST send the Response Topic unaltered to all subscribers receiving the Application
+    Message
+    * Server specific.
+- [MQTT-3.3.2-16]: The Server MUST send the Correlation Data unaltered to all subscribers receiving the Application
+    Message
+    * Server specific.
+- [MQTT-3.3.2-17]: The Server MUST send all User Properties unaltered in a PUBLISH packet when forwarding the
+    Application Message to a Client
+    * Server specific.
+- [MQTT-3.3.2-18]: The Server MUST maintain the order of User
+    Properties when forwarding the Application Message
+    * Server specific.
+- [MQTT-3.3.2-19]: The Content Type MUST be a UTF-8 Encoded String
+    * Implemented as zero terminated C-string.
+    * UTF-8 compatibility is a responsibility of the application.
+- [MQTT-3.3.2-20]: A Server MUST send the Content Type unaltered to all subscribers receiving the Application Message
+    * Server specific
+- [MQTT-3.3.4-1]: The receiver of a PUBLISH Packet MUST respond with the packet as determined by the QoS in the
+    PUBLISH Packet
+    * Outgoing PUBACK and PUBREC are tested in multiple unittests.
+    * Incoming wrong packet is tested in UnitTestPublish::test28 and UnitTestPublish::test29.
+- [MQTT-3.3.4-2]: In this case (of client subscriptions overlap) the Server
+    MUST deliver the message to the Client respecting the maximum QoS of all the matching subscriptions
+    * Server specific.
+- [MQTT-3.3.4-3]: If the Client specified a Subscription Identifier for any of the overlapping subscriptions the Server MUST
+    send those Subscription Identifiers in the message which is published as the result of the subscriptions
+    * Server specific
+- [MQTT-3.3.4-4]: If the Server sends a single copy of the message it MUST include in the PUBLISH
+    packet the Subscription Identifiers for all matching subscriptions which have a Subscription Identifiers,
+    their order is not significant
+    * Server specific.
+- [MQTT-3.3.4-6]: A PUBLISH packet sent from a Client to a Server
+    MUST NOT contain a Subscription Identifier
+    * Client doesn't provide an ability to send subscription id via the API.
+- [MQTT-3.3.4-7]: The Client MUST NOT send more than Receive Maximum QoS 1 and QoS 2 PUBLISH packets for which
+    it has not received PUBACK, PUBCOMP, or PUBREC with a Reason Code of 128 or greater from the
+    Server.
+    * Limiting number of high qos messages is tested in UnitTestPublish::test30.

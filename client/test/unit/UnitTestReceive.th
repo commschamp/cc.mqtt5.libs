@@ -23,6 +23,8 @@ public:
     void test11();
     void test12();
     void test13();
+    void test14();
+    void test15();
 
 private:
     virtual void setUp() override
@@ -806,9 +808,7 @@ void UnitTestReceive::test12()
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
-    const unsigned SubId = 10;
-
-    unitTestPerformBasicSubscribe(client, "#", SubId);
+    unitTestPerformBasicSubscribe(client, "#");
     unitTestTick(1000);
 
     const std::string Topic = "some/topic";
@@ -866,9 +866,7 @@ void UnitTestReceive::test13()
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(::cc_mqtt5_client_is_connected(client));
 
-    const unsigned SubId = 10;
-
-    unitTestPerformBasicSubscribe(client, "topic1/#", SubId);
+    unitTestPerformBasicSubscribe(client, "topic1/#");
     unitTestTick(1000);
 
     const std::string Topic = "topic2";
@@ -914,6 +912,152 @@ void UnitTestReceive::test13()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().doesExist());
-    TS_ASSERT_EQUALS(pubrecMsg->field_reasonCode().field().value(), UnitTestPubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized);
+    TS_ASSERT_EQUALS(pubrecMsg->field_reasonCode().field().value(), UnitTestPubrecMsg::Field_reasonCode::Field::ValueType::NotAuthorized);
     TS_ASSERT(!unitTestHasMessageRecieved()); // ignored
+}
+
+void UnitTestReceive::test14()
+{
+    // Testing reception of topic aliases
+    // [MQTT-3.3.2-10]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_topicAliasMaximum = 10;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+    const unsigned TopicAlias = 5;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    auto& propsVec = publishMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_topicAlias();
+        field.field_value().setValue(TopicAlias);
+    } while (false);
+    
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo2 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();
+
+    unitTestTick(1000);
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery;
+    publishMsg.field_topic().value().clear();
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Puback);    
+    auto* pubackMsg = dynamic_cast<UnitTestPubackMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubackMsg, nullptr);
+    TS_ASSERT(pubackMsg->field_reasonCode().isMissing());
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo1 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo1.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();
+
+    unitTestTick(1000);
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
+
+    UnitTestPubrelMsg pubrelMsg;
+    pubrelMsg.field_packetId().setValue(PacketId);
+    unitTestReceiveMessage(pubrelMsg);   
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubcomp);    
+    auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
+    TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo3 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo3.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();
+}
+
+void UnitTestReceive::test15()
+{
+    // Testing reception of invalid topic alias
+    // [MQTT-3.3.2-10]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_topicAliasMaximum = 10;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+    const unsigned TopicAlias = 15;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    auto& propsVec = publishMsg.field_propertiesList().value();
+    do {
+        propsVec.resize(propsVec.size() + 1U);
+        auto& field = propsVec.back().initField_topicAlias();
+        field.field_value().setValue(TopicAlias);
+    } while (false);
+    
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::TopicAliasInvalid);
+    TS_ASSERT(unitTestIsDisconnected());
 }

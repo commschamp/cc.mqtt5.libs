@@ -63,6 +63,7 @@ private:
     void* m_cbData = nullptr;    
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
+    CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
     bool m_acked = false;
     bool m_registeredAlias = false;
     bool m_topicConfigured = false;

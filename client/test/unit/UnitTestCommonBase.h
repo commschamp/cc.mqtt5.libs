@@ -66,7 +66,7 @@ protected:
         std::vector<std::uint8_t> m_authData;
         std::vector<UnitTestUserProp> m_userProps;
         unsigned m_sessionExpiryInterval = 0;
-        unsigned m_highQosPubLimit = 0;
+        unsigned m_highQosSendLimit = 0;
         unsigned m_maxPacketSize = 0;
         unsigned m_topicAliasMax = 0;
         CC_Mqtt5QoS m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;

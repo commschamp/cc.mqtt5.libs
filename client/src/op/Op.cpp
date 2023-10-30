@@ -13,6 +13,7 @@
 #include "comms/cast.h"
 
 #include <algorithm>
+#include <type_traits>
 
 namespace cc_mqtt5_client
 {
@@ -169,6 +170,24 @@ void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProp
     }
 }
 
+bool Op::isSharedTopicFilter(const char* filter)
+{
+    static const char SharePrefix[] = {'$', 's', 'h', 'a', 'r', 'e', '/' };
+    static const size_t SharePrefixSize = std::extent<decltype(SharePrefix)>::value;
+
+    for (auto idx = 0U; idx < SharePrefixSize; ++idx) {
+        if (filter[idx] == '\0') {
+            return false;
+        }
+
+        if (SharePrefix[idx] != filter[idx]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void Op::errorLogInternal(const char* msg)
 {
     if constexpr (Config::HasErrorLog) {
@@ -188,14 +207,9 @@ bool Op::verifySubFilterInternal(const char* filter)
             return false;
         }
 
-        if (!m_client.sessionState().m_sharedSubsAvailable) {
-            static const char SharePrefix[] = {'$', 's', 'h', 'a', 'r', 'e', '/' };
-
-            // If filter is shorted than SharePrefix, then it is assumed std::equal execution will terminate on diffence.
-            if (std::equal(std::begin(SharePrefix), std::end(SharePrefix), filter)) {
-                errorLog("Shared subscriptions not accepted by the broker, cannot use \"$share/\" prefixed topics.");
-                return false;
-            }
+        if ((!m_client.sessionState().m_sharedSubsAvailable) && isSharedTopicFilter(filter)) {
+            errorLog("Shared subscriptions not accepted by the broker, cannot use \"$share/\" prefixed topics.");
+            return false;
         }
 
         auto pos = 0U;

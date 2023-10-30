@@ -166,6 +166,11 @@ public:
     {
         return m_sendOps.size();
     }
+
+    std::size_t recvsCount() const
+    {
+        return m_recvOps.size();
+    }    
     
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;

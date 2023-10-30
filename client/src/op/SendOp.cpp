@@ -217,6 +217,7 @@ void SendOp::handle(PubrecMsg& msg)
         return;
     }
 
+    m_reasonCode = response.m_reasonCode;
     terminateOnExit.release();
     completeOpOnExit.release();
     ++m_sendAttempts;
@@ -265,7 +266,9 @@ void SendOp::handle(PubcompMsg& msg)
         return;
     }    
 
-    if (msg.field_reasonCode().doesExist()) {
+    response.m_reasonCode = m_reasonCode;
+    if ((msg.field_reasonCode().doesExist()) && 
+        (msg.field_reasonCode().field().value() != PubcompMsg::Field_reasonCode::Field::ValueType::Success)) {
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
     }    
 
@@ -324,7 +327,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) && (state.m_highQosPubLimit < client().sendsCount())) {
+    if ((config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) && (state.m_highQosSendLimit < client().sendsCount())) {
         errorLog("Exceeding number of allowed high QoS publishes.");
         return CC_Mqtt5ErrorCode_Busy;        
     }

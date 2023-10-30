@@ -239,7 +239,7 @@ typedef struct
     const CC_Mqtt5UserProp* m_userProps;
     unsigned m_userPropsCount;
     unsigned m_sessionExpiryInterval;
-    unsigned m_highQosPubLimit;
+    unsigned m_highQosSendLimit;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMax;
     CC_Mqtt5QoS m_maxQos;

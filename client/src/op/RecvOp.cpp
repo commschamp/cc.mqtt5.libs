@@ -102,6 +102,15 @@ void RecvOp::handle(PublishMsg& msg)
         return;
     }
 
+    auto& sessionState = client().sessionState();
+
+    if ((qos > Qos::AtMostOnceDelivery) && 
+        (0U < sessionState.m_highQosRecvLimit) && 
+        (sessionState.m_highQosRecvLimit < client().recvsCount())) {
+        terminationWithReason(DisconnectReason::ReceiveMaxExceeded);
+        return;
+    }
+
     auto completeNotAuthorized = 
         [this, &msg, qos]()
         {
@@ -134,7 +143,7 @@ void RecvOp::handle(PublishMsg& msg)
             opComplete();
         };
 
-    if (!client().sessionState().m_connected) {
+    if (!sessionState.m_connected) {
         errorLog("Received PUBLISH when not CONNECTED");
         completeNotAuthorized();
         return;

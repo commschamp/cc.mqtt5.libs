@@ -95,7 +95,7 @@ std::ostream& IntegrationTestCommonBase::integrationTestInfoLog()
 
 void IntegrationTestCommonBase::integrationTestPrintConnectResponse(const CC_Mqtt5ConnectResponse& response)
 {
-    integrationTestInfoLog() << "m_highQosPubLimit=" << response.m_highQosPubLimit << '\n';
+    integrationTestInfoLog() << "m_highQosSendLimit=" << response.m_highQosSendLimit << '\n';
     integrationTestInfoLog() << "m_topicAliasMax=" << response.m_topicAliasMax << '\n';
     integrationTestInfoLog() << "maxQos=" << response.m_maxQos << '\n';
     integrationTestInfoLog() << "sessionPresent=" << response.m_sessionPresent << '\n';

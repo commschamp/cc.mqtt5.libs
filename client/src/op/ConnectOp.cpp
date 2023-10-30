@@ -242,6 +242,8 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
         auto& propBundle = propVar.initField_receiveMax();
         auto& valueField = propBundle.field_value();          
         valueField.setValue(config.m_receiveMaximum);
+
+        m_highQosRecvLimit = config.m_receiveMaximum;
     }
 
     if (config.m_maxPacketSize > 0U) {
@@ -422,7 +424,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5ConnectResponse();
     response.m_sessionExpiryInterval = m_sessionExpiryInterval;
-    response.m_highQosPubLimit = std::numeric_limits<std::uint16_t>::max();
+    response.m_highQosSendLimit = std::numeric_limits<std::uint16_t>::max();
     response.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     response.m_retainAvailable = true;
     response.m_wildcardSubAvailable = true;
@@ -430,7 +432,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     response.m_sharedSubsAvailable = true;
 
     if constexpr (Config::SendMaxLimit > 0U) {
-        response.m_highQosPubLimit = std::min(response.m_highQosPubLimit, Config::SendMaxLimit);
+        response.m_highQosSendLimit = std::min(response.m_highQosSendLimit, Config::SendMaxLimit);
     }
 
     if constexpr (Config::MaxOutputPacketSize > 0U) {
@@ -522,10 +524,10 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     if (propsHandler.m_receiveMax != nullptr) {
-        response.m_highQosPubLimit = propsHandler.m_receiveMax->field_value().value();
+        response.m_highQosSendLimit = propsHandler.m_receiveMax->field_value().value();
 
         if constexpr (Config::SendMaxLimit > 0U) {
-            response.m_highQosPubLimit = std::min(response.m_highQosPubLimit, Config::SendMaxLimit);
+            response.m_highQosSendLimit = std::min(response.m_highQosSendLimit, Config::SendMaxLimit);
         }
     }
 
@@ -584,7 +586,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     auto& state = client().sessionState();
     if (!connected) {
         state.m_keepAliveMs = 0U;
-        state.m_highQosPubLimit = 0U;
+        state.m_highQosSendLimit = 0U;
         state.m_subIdsAvailable = false;
         return;
     }
@@ -597,7 +599,8 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_sendTopicAliases.resize(std::min(state.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
 
     state.m_keepAliveMs = keepAlive * 1000U;
-    state.m_highQosPubLimit = response.m_highQosPubLimit;
+    state.m_highQosSendLimit = response.m_highQosSendLimit;
+    state.m_highQosRecvLimit = m_highQosRecvLimit;
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
     state.m_maxRecvPacketSize = m_maxRecvPacketSize;
     state.m_maxSendPacketSize = response.m_maxPacketSize;
@@ -610,7 +613,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_problemInfoAllowed = m_requestProblemInfo;
 
     if constexpr (Config::SendMaxLimit > 0U) {
-        state.m_highQosPubLimit = std::min(state.m_highQosPubLimit, Config::SendMaxLimit);
+        state.m_highQosSendLimit = std::min(state.m_highQosSendLimit, Config::SendMaxLimit);
     }
 
     client().notifyConnected();

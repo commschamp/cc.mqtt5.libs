@@ -67,6 +67,11 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    if (config.m_noLocal && isSharedTopicFilter(config.m_topic)) {
+        errorLog("Shared subscriptions cannot set \"no local\" flag.");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
     auto& topicVec = m_subMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
         errorLog("Too many configured topics for subscribe operation.");

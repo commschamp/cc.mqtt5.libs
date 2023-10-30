@@ -165,6 +165,8 @@ protected:
         }        
     }    
 
+    static bool isSharedTopicFilter(const char* filter);
+
 private:
     void errorLogInternal(const char* msg);
     bool verifySubFilterInternal(const char* filter);

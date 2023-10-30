@@ -461,3 +461,77 @@
     it has not received PUBACK, PUBCOMP, or PUBREC with a Reason Code of 128 or greater from the
     Server.
     * Limiting number of high qos messages is tested in UnitTestPublish::test30.
+- [MQTT-3.3.4-8]: The Client MUST NOT delay the sending of any packets other than PUBLISH packets due to having sent
+    Receive Maximum PUBLISH packets without receiving acknowledgements for them.
+    * No limitation for other packets have been implemented.
+- [MQTT-3.3.4-9]: The Server MUST NOT send more than Receive Maximum QoS 1 and QoS 2 PUBLISH packets for
+    which it has not received PUBACK, PUBCOMP, or PUBREC with a Reason Code of 128 or greater from
+    the Client.
+    * Spec: If it receives more than Receive Maximum QoS 1 and QoS 2 PUBLISH
+        packets where it has not sent a PUBACK or PUBCOMP in response, the Client uses DISCONNECT with
+        Reason Code 0x93 (Receive Maximum exceeded).
+    * Tested in UnitTestReceive::test16.
+- [MQTT-3.3.4-10]: The Server MUST NOT delay the sending of any packets other than PUBLISH packets due to having
+    sent Receive Maximum PUBLISH packets without receiving acknowledgements for them.
+    * Server specific
+- [MQTT-3.4.2-1]: The Client or Server sending the PUBACK packet MUST use one of the PUBACK Reason Codes.
+    * When client sends PUBACK only specified reason codes are used.
+    * When PUBACK received from the server, the reason code "as-is" reported via callback to the client.
+- [MQTT-3.4.2-2]:  The sender MUST NOT send this property (Reason String)
+    if it would increase the size of the PUBACK packet beyond the Maximum Packet Size specified by the receiver.
+    * Client side never sends "Reason String" in its PUBACK.
+- [MQTT-3.4.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the PUBACK
+    packet beyond the Maximum Packet Size specified by the receiver.
+    * Client side never sends "User Property" in its PUBACK.
+- [MQTT-3.5.2-1]: The Client or Server sending the PUBREC packet MUST use one of the PUBREC Reason Code values.
+    * When client sends PUBREC only specified reason codes are used.
+    * When PUBREC received from the server, the reason code "as-is" reported via callback to the client or ignored if "success".
+- [MQTT-3.5.2-2]:  The sender MUST NOT send this property (Reason String) 
+    if it would increase the size of the PUBREC packet beyond the Maximum Packet Size specified by the receiver
+    * Client side never sends "Reason String" in its PUBREC.
+- [MQTT-3.5.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the PUBREC
+    packet beyond the Maximum Packet Size specified by the receiver.
+    * Client side never sends "User Property" in its PUBREC.
+- [MQTT-3.6.1-1]: Bits 3,2,1 and 0 of the Fixed Header in the PUBREL packet are reserved and MUST be set to 0,0,1 and 0
+    respectively. The Server MUST treat any other value as malformed and close the Network Connection.
+    * Part of protocol definition.
+    * When received invalid PUBREL, client disconnectes with protocol error.
+    * Tested in UnitTestReceive::test17.
+- [MQTT-3.6.2-1]: The Client or Server sending the PUBREL packet MUST use one of the PUBREL Reason Code values
+    * When client sends PUBACK only specified reason codes are used.
+    * When non-success PUBREL is received, the reception of the message is dropped.
+- [MQTT-3.6.2-2]: The sender MUST NOT send this Property (Reason String) 
+    if it would increase the size of the PUBREL packet beyond the Maximum Packet Size
+    specified by the receiver
+    * Client side never sends "Reason String" in its PUBREL.
+- [MQTT-3.6.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the
+    PUBREL packet beyond the Maximum Packet Size specified by the receiver.
+    * Client side never sends "User Property" in its PUBREL.
+- [MQTT-3.7.2-1]: The Client or Server sending the PUBCOMP packet MUST use one of the PUBCOMP Reason Code
+    values.
+    * When client sends PUBCOMP only specified reason codes are used.
+    * When PUBCOMP received from the server, the reason code "as-is" reported via callback to the client.
+- [MQTT-3.7.2-2]: The sender MUST NOT send this Property (Reason String )
+    if it would increase the size of the PUBCOMP packet beyond the Maximum Packet Size
+    specified by the receiver.
+    * Client side never sends "Reason String" in its PUBCOMP.
+- [MQTT-3.7.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the PUBCOMP
+    packet beyond the Maximum Packet Size specified by the receiver.
+    * Client side never sends "User Property" in its PUBCOMP.
+- [MQTT-3.8.1-1]: Bits 3,2,1 and 0 of the Fixed Header of the SUBSCRIBE packet are reserved and MUST be set to 0,0,1
+    and 0 respectively. The Server MUST treat any other value as malformed and close the Network
+    Connection.
+    * Part of protocol definition.
+- [MQTT-3.8.3-1]: The Topic Filters MUST be a UTF-8 Encoded String.
+    * The topic configuration is zero terminated C-string.
+    * The UTF-8 compliance is application responsibility.
+- [MQTT-3.8.3-2]: The Payload MUST contain at least one Topic Filter and Subscription Options pair.
+    * Client doesn't allow sending the subscription request if no topic has been configured.
+    * Tested in UnitTestSubscribe::test3.
+- [MQTT-3.8.3-3]: Bit 2 of the Subscription Options represents the No Local option. If the value is 1, Application Messages
+    MUST NOT be forwarded to a connection with a ClientID equal to the ClientID of the publishing
+    connection.
+    * Server specific.
+- [MQTT-3.8.3-4]: It is a Protocol Error to set the No Local bit to 1 on a Shared Subscription.
+    * Client doesn't allow such configuration.
+    * Tested in UnitTestSubscribe::test12.

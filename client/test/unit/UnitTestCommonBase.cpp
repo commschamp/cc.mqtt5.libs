@@ -8,12 +8,12 @@
 namespace 
 {
 
-void test_assert(bool cond)
-{
-    if (!cond) {
-        std::exit(1);
+#define test_assert(cond_) \
+    if (!(cond_)) { \
+        std::cerr << "\nAssertion failure (" << #cond_ << ") in " << __FILE__ << ":" << __LINE__ << std::endl; \
+        std::exit(1); \
     }
-}
+
 
 void assignStringInternal(std::string& dest, const char* source)
 {
@@ -67,13 +67,13 @@ UnitTestCommonBase::UnitTestConnectResponse& UnitTestCommonBase::UnitTestConnect
 {
     auto thisTie = 
         std::tie(
-            m_reasonCode, m_sessionExpiryInterval, m_highQosPubLimit, m_maxPacketSize, m_topicAliasMax,
+            m_reasonCode, m_sessionExpiryInterval, m_highQosSendLimit, m_maxPacketSize, m_topicAliasMax,
             m_maxQos, m_sessionPresent, m_retainAvailable, m_wildcardSubAvailable, m_subIdsAvailable, 
             m_sharedSubsAvailable);
 
     auto responseTie = 
         std::forward_as_tuple(
-            response.m_reasonCode, response.m_sessionExpiryInterval, response.m_highQosPubLimit, response.m_maxPacketSize, response.m_topicAliasMax,
+            response.m_reasonCode, response.m_sessionExpiryInterval, response.m_highQosSendLimit, response.m_maxPacketSize, response.m_topicAliasMax,
             response.m_maxQos, response.m_sessionPresent, response.m_retainAvailable, response.m_wildcardSubAvailable, response.m_subIdsAvailable, 
             response.m_sharedSubsAvailable);            
 

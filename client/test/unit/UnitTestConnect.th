@@ -424,7 +424,7 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[1].m_key, BrokerPropKey2);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[1].m_value, BrokerPropVal2);    
     TS_ASSERT_EQUALS(connectInfo.m_response.m_sessionExpiryInterval, SessionExpiryInterval);
-    TS_ASSERT_EQUALS(connectInfo.m_response.m_highQosPubLimit, BrokerReceiveMax);
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_highQosSendLimit, BrokerReceiveMax);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_maxPacketSize, BrokerMaxPacketSize);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_topicAliasMax, BrokerTopicAliasMax);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_maxQos, BrokerMaxQos);

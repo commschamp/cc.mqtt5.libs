@@ -25,6 +25,8 @@ public:
     void test13();
     void test14();
     void test15();
+    void test16();
+    void test17();
 
 private:
     virtual void setUp() override
@@ -1060,4 +1062,104 @@ void UnitTestReceive::test15()
     TS_ASSERT(!unitTestHasMessageRecieved());
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::TopicAliasInvalid);
     TS_ASSERT(unitTestIsDisconnected());
+}
+
+void UnitTestReceive::test16()
+{
+    // Testing exceeding "Receive Maximum" value by the broker
+    // [MQTT-3.3.4-9]
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_receiveMaximum = 1;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());    
+
+    // Send again with different PacketId
+    publishMsg.field_packetId().field().setValue(PacketId + 1U);
+    unitTestReceiveMessage(publishMsg);  
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ReceiveMaxExceeded);
+    TS_ASSERT(unitTestIsDisconnected());             
+}
+
+void UnitTestReceive::test17()
+{
+    // Testing invalid PUBREL
+    // [MQTT-3.6.1-1]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());  
+
+    UnitTestPubrelMsg pubrelMsg;
+    pubrelMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    pubrelMsg.field_packetId().setValue(PacketId);
+    unitTestReceiveMessage(pubrelMsg);    
+
+    TS_ASSERT(!unitTestHasMessageRecieved());
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());             
 }

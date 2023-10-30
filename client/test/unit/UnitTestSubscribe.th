@@ -21,6 +21,7 @@ public:
     void test9();
     void test10();
     void test11();
+    void test12();
     
 
 private:
@@ -239,6 +240,7 @@ void UnitTestSubscribe::test2()
 void UnitTestSubscribe::test3()
 {
     // Invalid subscribe topics
+    // [MQTT-3.8.3-2]
 
     auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -679,4 +681,26 @@ void UnitTestSubscribe::test11()
 
     auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+}
+
+void UnitTestSubscribe::test12()
+{
+    // Testing rejection of the "No Local" bit set for shared subscriptions
+    // [MQTT-3.8.3-4]
+
+    auto* client = unitTestAllocClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+
+    auto subscribe = ::cc_mqtt5_client_subscribe_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
+    ::cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);
+    topicConfig.m_topic = "$share/ShareName/#";
+    topicConfig.m_noLocal = true;
+
+    auto ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 }

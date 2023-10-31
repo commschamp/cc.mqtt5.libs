@@ -687,6 +687,7 @@ void UnitTestConnect::test5()
 {
     // Keep alive test
     // [MQTT-3.1.2-20]
+    // [MQTT-3.12.4-1]
     auto* client = unitTestAllocClient();
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);

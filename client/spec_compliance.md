@@ -535,3 +535,102 @@
 - [MQTT-3.8.3-4]: It is a Protocol Error to set the No Local bit to 1 on a Shared Subscription.
     * Client doesn't allow such configuration.
     * Tested in UnitTestSubscribe::test12.
+- [MQTT-3.8.3-5]:  The Server MUST treat a SUBSCRIBE packet as malformed if any of Reserved bits in the Payload are non-zero
+    * Server specific
+    * Client doesn't change the reserved bits.
+- [MQTT-3.8.4-1]: When the Server receives a SUBSCRIBE packet from a Client, the Server MUST respond with a
+    SUBACK packet.
+    * Server specific.
+    * Tested throughout the UnitTestSubscribe unit tests.
+- [MQTT-3.8.4-2]: The SUBACK packet MUST have the same Packet Identifier as the
+    SUBSCRIBE packet that it is acknowledging.
+    * Wrong packet id in SUBACK is tested in UnitTestSubscribe::test4.
+- [MQTT-3.8.4-3]: If a Server receives a SUBSCRIBE packet containing a Topic Filter that is identical to a Non-shared
+    Subscription’s Topic Filter for the current Session, then it MUST replace that existing Subscription with a
+    new Subscription.
+    * Server specific.
+- [MQTT-3.8.4-4]: If the Retain Handling option is 0, 
+    any existing retained messages matching the Topic Filter MUST be re-sent, but Applicaton
+    Messages MUST NOT be lost due to replacing the Subscription.
+    * Server specific.
+- [MQTT-3.8.4-5]: If a Server receives a SUBSCRIBE packet that contains multiple Topic Filters it MUST handle that packet
+    as if it had received a sequence of multiple SUBSCRIBE packets, except that it combines their responses
+    into a single SUBACK response.
+    * Server specific
+    * Tested in UnitTestSubscribe::test1.
+- [MQTT-3.8.4-6]: The SUBACK packet sent by the Server to the Client MUST contain a Reason Code for each Topic
+    Filter/Subscription Option pair
+    * On wrong number of reason codes client disconnects with "Protocol Error" reason code.
+    * Tested in UnitTestSubscribe::test13.
+- [MQTT-3.8.4-7]: This Reason Code MUST either show the maximum QoS
+    that was granted for that Subscription or indicate that the subscription failed
+    * The reported reason code is reported to the application "as-is".
+- [MQTT-3.8.4-8]: The QoS of Application Messages sent in response to a Subscription MUST be the minimum of the QoS of the originally published 
+    message and the Maximum QoS granted by the Server.
+    * Server specific.
+    * The client doesn't preserve subscription QoS, just obeys the published QoS.
+- [MQTT-3.9.2-1]: The Server MUST NOT send this Property (Reason String) if it would increase 
+    the size of the SUBACK packet beyond the Maximum Packet Size specified by the Client.
+    * Server specific.
+- [MQTT-3.9.2-2]: The Server MUST NOT send this property (User Property) if it would increase the size of the SUBACK packet
+    beyond the Maximum Packet Size specified by Client.
+    * Server specific.
+- [MQTT-3.9.3-1]:  The order of Reason Codes in the SUBACK packet MUST
+    match the order of Topic Filters in the SUBSCRIBE packet
+    * Server specific.
+- [MQTT-3.9.3-2]: The Server sending a SUBACK packet MUST use one of the Subscribe Reason Codes for each Topic
+    Filter received
+    * Server specific.
+    * The received reason code just reported to the application.
+- [MQTT-3.10.1-1]: Bits 3,2,1 and 0 of the Fixed Header of the UNSUBSCRIBE packet are reserved and MUST be set to
+    0,0,1 and 0 respectively. The Server MUST treat any other value as malformed and close the Network
+    Connection    
+    * Part of protocol definition.
+- [MQTT-3.10.3-1]: The Topic Filters in an UNSUBSCRIBE packet MUST be UTF-8 Encoded Strings
+    * The topic parameter is zero terminated C-string.
+    * UTF-8 compliance is the responsibility of the application.
+- [MQTT-3.10.3-2]: The Payload of an UNSUBSCRIBE packet MUST contain at least one Topic Filter.
+    * Client doesn't allow sending the UNSUBSCRIBE message if no topic has been configured.
+    * Tested in UnitTestUnsubscribe::test3.
+- [MQTT-3.10.4-1]: The Topic Filters (whether they contain wildcards or not) supplied in an UNSUBSCRIBE packet MUST be
+    compared character-by-character with the current set of Topic Filters held by the Server for the Client. If
+    any filter matches exactly then its owning Subscription MUST be deleted.
+    * Client doesn't allow configuring UNSUBSCRIBE topic that didn't go through SUBSCRIBE before.
+    * Tested in UnitTestUnsubscribe::test9.
+- [MQTT-3.10.4-2]: When a Server receives UNSUBSCRIBE It MUST stop adding any new messages 
+    which match the Topic Filters, for delivery to the Client.
+    * Server specific
+- [MQTT-3.10.4-3]: When a Server receives UNSUBSCRIBE It MUST complete the delivery of any 
+    QoS 1 or QoS 2 messages which match the Topic Filters and it has started to send to the Client.
+    * Server specific.
+    * Finishing reception of Qos2 message is tested in UnitTestReceive::test18
+- [MQTT-3.10.4-4]: The Server MUST respond to an UNSUBSCRIBE request by sending an UNSUBACK packet
+    * Tested throughout the UnitTestUnsubscribe tests.
+- [MQTT-3.10.4-5]: The UNSUBACK packet MUST have the same Packet Identifier as the UNSUBSCRIBE packet.
+    Even where no Topic Subscriptions are deleted, the Server MUST respond with an UNSUBACK
+    * Invalid packet id in UNSUBACK is tested in UnitTestUnsubscribe::test4.
+- [MQTT-3.10.4-6]: If a Server receives an UNSUBSCRIBE packet that contains multiple Topic Filters, it MUST process that
+    packet as if it had received a sequence of multiple UNSUBSCRIBE packets, except that it sends just one
+    UNSUBACK response.
+    * Server specific.
+- [MQTT-3.11.2-1]: The Server MUST NOT send this Property (Reason String) 
+    if it would increase the size of the UNSUBACK packet beyond the Maximum Packet Size specified by the Client 
+    * Server specific.
+- [MQTT-3.11.2-2]: The Server MUST NOT send this property (User Property) if it would increase the size of the UNSUBACK
+    packet beyond the Maximum Packet Size specified by the Client 
+    * Server specific.
+- [MQTT-3.11.3-1]: The order of Reason Codes in the UNSUBACK packet MUST match the order of Topic Filters in the UNSUBSCRIBE packet.
+    * Multiple reason codes are tested in UnitTestUnsubscribe::test1.
+    * Unexpected amount of reason codes causes "Protocol Error" disconnection. Tested in UnitTestUnsubscribe::test10.
+- [MQTT-3.11.3-2]: The Server sending an UNSUBACK packet MUST use one of the Unsubscribe Reason Code values for each Topic Filter
+    received    
+    * The reason codes are reported to the application "as-is"
+- [MQTT-3.12.4-1]: The Server MUST send a PINGRESP packet in response to a PINGREQ packet.
+    * Tested in UnitTestConnect::test5.
+- [MQTT-3.14.0-1]: A Server MUST NOT send a DISCONNECT until after it has sent a CONNACK with Reason Code of less
+    than 0x80
+    * Server specific.
+- [MQTT-3.14.1-1]: The Client or Server MUST validate that reserved bits are set to 0. If they are not zero it sends a
+    DISCONNECT packet with a Reason code of 0x81 (Malformed Packet).
+- [MQTT-3.14.2-2]: The Session Expiry Interval MUST NOT be sent on a DISCONNECT by the Server
+    * The value if send is just ignored by the client.    

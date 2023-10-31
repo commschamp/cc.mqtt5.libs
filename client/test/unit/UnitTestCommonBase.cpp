@@ -728,14 +728,14 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     UnitTestSubackMsg subackMsg;
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
-    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
+    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
     unitTestReceiveMessage(subackMsg);
     test_assert(unitTestIsSubscribeComplete());    
 
     [[maybe_unused]] auto& subackInfo = unitTestSubscribeResponseInfo();
     test_assert(subackInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
     test_assert(subackInfo.m_response.m_reasonCodes.size() == 1U);
-    test_assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_Success);
+    test_assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_GrantedQos2);
     unitTestPopSubscribeResponseInfo();    
 }
 

@@ -29,6 +29,7 @@ struct SessionState
     SendTopicsMap m_sendTopicAliases;
     SendTopicsFreeAliasList m_sendTopicFreeAliases;
     std::uint64_t m_sessionExpiryIntervalMs = 0U;
+    unsigned m_connectSessionExpiryInterval = 0U;
     unsigned m_keepAliveMs = 0U;
     unsigned m_highQosSendLimit = 0U;
     unsigned m_highQosRecvLimit = 0U;

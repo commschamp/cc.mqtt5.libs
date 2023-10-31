@@ -28,6 +28,11 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
     auto& propsField = m_disconnectMsg.field_propertiesList().field();
     if (config.m_expiryInterval != nullptr) {
+        if ((*config.m_expiryInterval > 0) && (client().sessionState().m_connectSessionExpiryInterval == 0U)) {
+            errorLog("Non-zero expiry interval in DISCONNECT is not allowed when zero expiry interval used in CONNECT.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         if (!canAddProp(propsField)) {
             errorLog("Cannot add disconnect property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;

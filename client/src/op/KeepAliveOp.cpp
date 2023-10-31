@@ -57,6 +57,13 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
     m_recvTimer.cancel();  
     m_respTimer.cancel();
 
+    if (!msg.doValid()) {
+        // Required by the [MQTT-3.14.1-1] clause of the spec
+        sendDisconnectWithReason(client(), DisconnectReason::MalformedPacket);
+        client().notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+        return;
+    }
+
     auto info = CC_Mqtt5DisconnectInfo();
     
     if (msg.field_reasonCode().doesExist()) {

@@ -602,6 +602,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_highQosSendLimit = response.m_highQosSendLimit;
     state.m_highQosRecvLimit = m_highQosRecvLimit;
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
+    state.m_connectSessionExpiryInterval = m_sessionExpiryInterval;
     state.m_maxRecvPacketSize = m_maxRecvPacketSize;
     state.m_maxSendPacketSize = response.m_maxPacketSize;
     state.m_pubMaxQos = response.m_maxQos;

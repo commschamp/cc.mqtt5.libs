@@ -1,0 +1,90 @@
+#include "UnitTestCommonBase.h"
+#include "UnitTestDefs.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include "client.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestDisconnect : public CxxTest::TestSuite, public UnitTestCommonBase
+{
+public:
+    void test1();
+    void test2();
+    void test3();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestDisconnect::test1()
+{
+    // Simple disconnect from broker
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();
+}
+
+void UnitTestDisconnect::test2()
+{
+    // Bad reserved bits DISCONNECT from broker
+    // [MQTT-3.14.1-1]
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    UnitTestDisconnectMsg disconnectMsg;
+    disconnectMsg.transportField_flags().field_qos().setValue(CC_Mqtt5QoS_AtLeastOnceDelivery);
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(!unitTestHasDisconnectInfo());
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::MalformedPacket);
+    TS_ASSERT(unitTestIsDisconnected());        
+}
+
+void UnitTestDisconnect::test3()
+{
+    // Testing spec:
+    // If the Session Expiry Interval in the CONNECT packet was zero, then it is a Protocol Error to set a non-
+    // zero Session Expiry Interval in the DISCONNECT packet sent by the Client
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    auto config = CC_Mqtt5DisconnectConfig();
+    cc_mqtt5_client_disconnect_init_config(&config);
+
+    unsigned expiryInterval = 10;
+    config.m_expiryInterval = &expiryInterval;
+
+    auto* disconnect = cc_mqtt5_client_disconnect_prepare(client, nullptr);
+    TS_ASSERT_DIFFERS(disconnect, nullptr);
+    auto ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+}
+

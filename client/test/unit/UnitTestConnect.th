@@ -514,8 +514,10 @@ void UnitTestConnect::test3()
 
     unitTestTick(1000);
     UnitTestAuthMsg brokerAuthMsg;
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -564,10 +566,12 @@ void UnitTestConnect::test3()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Auth);
     auto* authMsg = dynamic_cast<UnitTestAuthMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(authMsg, nullptr);
-    TS_ASSERT_EQUALS(authMsg->field_reasonCode().value(), UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth);
+    TS_ASSERT(authMsg->field_reasonCode().doesExist());
+    TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
 
+    TS_ASSERT(authMsg->field_propertiesList().doesExist());
     UnitTestPropsHandler authPropsHandler;
-    for (auto& p : authMsg->field_propertiesList().value()) {
+    for (auto& p : authMsg->field_propertiesList().field().value()) {
         p.currentFieldExec(authPropsHandler);
     }    
 
@@ -657,8 +661,10 @@ void UnitTestConnect::test4()
 
     unitTestTick(1000);
     UnitTestAuthMsg brokerAuthMsg;
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -973,8 +979,10 @@ void UnitTestConnect::test12()
 
     unitTestTick(1000);
     UnitTestAuthMsg brokerAuthMsg;
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1046,8 +1054,10 @@ void UnitTestConnect::test13()
 
     unitTestTick(1000);
     UnitTestAuthMsg brokerAuthMsg;
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1623,8 +1633,10 @@ void UnitTestConnect::test27()
     const UnitTestData BrokerAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.transportField_flags().field_qos().setValue(CC_Mqtt5QoS_AtLeastOnceDelivery);
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::ContinueAuth;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1684,8 +1696,10 @@ void UnitTestConnect::test28()
     
     const UnitTestData BrokerAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
     UnitTestAuthMsg brokerAuthMsg;
-    brokerAuthMsg.field_reasonCode().value() = UnitTestAuthMsg::Field_reasonCode::ValueType::Success;
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().value();
+    brokerAuthMsg.field_reasonCode().setExists();
+    brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::Success;
+    brokerAuthMsg.field_propertiesList().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();

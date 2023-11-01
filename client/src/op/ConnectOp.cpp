@@ -677,62 +677,67 @@ void ConnectOp::handle(AuthMsg& msg)
     }        
 
     if ((m_authMethod.empty()) || 
-        (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth)) {
+        (msg.field_reasonCode().isMissing()) ||
+        (msg.field_reasonCode().field().value() != AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth)) {
         errorLog("Invalid reason code received received in AUTH message");
         protocolErrorCompletion();
         // No members access after this point, the op will be deleted
         return;
     }
 
-    PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
-        p.currentFieldExec(propsHandler);
-    }
-
-    if (propsHandler.isProtocolError()) {
-        protocolErrorCompletion();
-        // No members access after this point, the op will be deleted
-        return;
-    }
-
-    if ((propsHandler.m_authMethod == nullptr) || 
-        (m_authMethod != propsHandler.m_authMethod->field_value().value().c_str())) {
-        protocolErrorCompletion();
-        // No members access after this point, the op will be deleted
-        return;        
-    }
-
     UserPropsList userProps; // Will be referenced in inInfo
     auto inInfo = CC_Mqtt5AuthInfo();
 
-    if (propsHandler.m_authData != nullptr) {
-        auto& vec = propsHandler.m_authData->field_value().value();
-        comms::cast_assign(inInfo.m_authDataLen) = vec.size();
-        if (inInfo.m_authDataLen > 0U) {
-            inInfo.m_authData = &vec[0];
-        }
-    }
+    if (msg.field_propertiesList().doesExist()) {
 
-    if (propsHandler.m_reasonStr != nullptr) {
-        if (!m_requestProblemInfo) {
-            errorLog("Received reason string in AUTH when \"problem information\" was disabled in CONNECT.");
+        PropsHandler propsHandler;
+        for (auto& p : msg.field_propertiesList().field().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+
+        if (propsHandler.isProtocolError()) {
             protocolErrorCompletion();
+            // No members access after this point, the op will be deleted
             return;
         }
 
-        inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
-    }
-
-    if (!propsHandler.m_userProps.empty()) {
-        if (!m_requestProblemInfo) {
-            errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
+        if ((propsHandler.m_authMethod == nullptr) || 
+            (m_authMethod != propsHandler.m_authMethod->field_value().value().c_str())) {
             protocolErrorCompletion();
-            return;
+            // No members access after this point, the op will be deleted
+            return;        
         }
 
-        fillUserProps(propsHandler, userProps);
-        inInfo.m_userProps = &userProps[0];
-        comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
+
+        if (propsHandler.m_authData != nullptr) {
+            auto& vec = propsHandler.m_authData->field_value().value();
+            comms::cast_assign(inInfo.m_authDataLen) = vec.size();
+            if (inInfo.m_authDataLen > 0U) {
+                inInfo.m_authData = &vec[0];
+            }
+        }
+
+        if (propsHandler.m_reasonStr != nullptr) {
+            if (!m_requestProblemInfo) {
+                errorLog("Received reason string in AUTH when \"problem information\" was disabled in CONNECT.");
+                protocolErrorCompletion();
+                return;
+            }
+
+            inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
+        }
+
+        if (!propsHandler.m_userProps.empty()) {
+            if (!m_requestProblemInfo) {
+                errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
+                protocolErrorCompletion();
+                return;
+            }
+
+            fillUserProps(propsHandler, userProps);
+            inInfo.m_userProps = &userProps[0];
+            comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
+        }
     }
 
     auto outInfo = CC_Mqtt5AuthInfo();
@@ -754,9 +759,11 @@ void ConnectOp::handle(AuthMsg& msg)
             });
 
     AuthMsg respMsg;
-    respMsg.field_reasonCode().setValue(AuthMsg::Field_reasonCode::ValueType::ContinueAuth);
+    respMsg.field_reasonCode().setExists();
+    respMsg.field_reasonCode().field().setValue(AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
 
-    auto& propsField = respMsg.field_propertiesList();
+    respMsg.field_propertiesList().setExists();
+    auto& propsField = respMsg.field_propertiesList().field();
 
     {
         if (!canAddProp(propsField)) {

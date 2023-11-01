@@ -669,8 +669,16 @@ void ConnectOp::handle(AuthMsg& msg)
             completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
         };
 
+    if (!msg.doValid()) {
+        errorLog("Invalid flags received in AUTH message");
+        protocolErrorCompletion();
+        // No members access after this point, the op will be deleted
+        return;
+    }        
+
     if ((m_authMethod.empty()) || 
         (msg.field_reasonCode().value() != AuthMsg::Field_reasonCode::ValueType::ContinueAuth)) {
+        errorLog("Invalid reason code received received in AUTH message");
         protocolErrorCompletion();
         // No members access after this point, the op will be deleted
         return;
@@ -729,8 +737,7 @@ void ConnectOp::handle(AuthMsg& msg)
 
     auto outInfo = CC_Mqtt5AuthInfo();
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
-    if (authEc != CC_Mqtt5AuthErrorCode_Continue) {
-        COMMS_ASSERT(authEc == CC_Mqtt5AuthErrorCode_Disconnect);
+    if (authEc == CC_Mqtt5AuthErrorCode_Disconnect) {
         sendDisconnectWithReason(DisconnectReason::UnspecifiedError);
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         // No members access after this point, the op will be deleted

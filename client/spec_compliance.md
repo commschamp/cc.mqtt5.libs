@@ -634,3 +634,25 @@
     DISCONNECT packet with a Reason code of 0x81 (Malformed Packet).
 - [MQTT-3.14.2-2]: The Session Expiry Interval MUST NOT be sent on a DISCONNECT by the Server
     * The value if send is just ignored by the client.    
+- [MQTT-3.14.2-3]: The sender MUST NOT send this Property (Reason String) if it would increase the size of the DISCONNECT packet
+    beyond the Maximum Packet Size specified by the receiver    
+    * Server specific
+- [MQTT-3.14.2-4]: The sender MUST NOT send this property (User Property) if it would increase the size of the DISCONNECT
+    packet beyond the Maximum Packet Size specified by the receiver.
+    * Server specific
+- [MQTT-3.14.4-1]: After sending a DISCONNECT packet the sender MUST NOT send any more MQTT Control Packets on that Network Connection
+    * After disconnect request client doesn't allow sending any more packets without explicit (re)initialization. 
+        Tested in UnitTestDisconnect::test4.
+    * The application is expected to close the network connection and on new connection do the re-init.
+- [MQTT-3.14.4-2]: After sending a DISCONNECT packet the sender MUST close the Network Connection.
+    * Responsiblity of the application.
+- [MQTT-3.14.4-3]: On receipt of DISCONNECT with a Reason Code of 0x00 (Success) the Server
+    MUST discard any Will Message associated with the current Connection without publishing it
+    * Server specific.
+- [MQTT-3.15.1-1]: Bits 3,2,1 and 0 of the Fixed Header of the AUTH packet are reserved and MUST all be set to 0. The
+    Client or Server MUST treat any other value as malformed and close the Network Connection
+    * Tested in UnitTestConnect::test27.
+- [MQTT-3.15.2-1]: The sender of the AUTH Packet MUST use one of the Authenticate Reason Codes.
+    * Client complies, application doesn't have control over reason code.
+    * When during connect client doesn't receive "Continue Auth" it protocol error. Tested in UnitTestConnect::test28.
+    * ??? Reauth not tested.

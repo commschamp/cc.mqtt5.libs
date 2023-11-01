@@ -460,6 +460,10 @@ void UnitTestCommonBase::unitTestPerformConnect(
     ec = unitTestSendConnect(connect);
     test_assert(ec == CC_Mqtt5ErrorCode_Success);
 
+    if (authConfig != nullptr) {
+        test_assert(false); // Not implemented yet
+    }
+
     auto sentMsg = unitTestGetSentMessage();
     test_assert(static_cast<bool>(sentMsg));
     test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Connect);

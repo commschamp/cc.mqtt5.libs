@@ -463,6 +463,63 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
     return sendOp;
 }
 
+op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
+{
+    op::ReauthOp* reauthOp = nullptr;
+    do {
+        if (!m_reauthOps.empty()) {
+            // Already allocated
+            errorLog("Another reauth operation is in progress.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Busy);
+            break;
+        }
+                
+        if (!m_sessionState.m_initialized) {
+            errorLog("Client must be initialized to allow reauth.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
+            break;
+        }
+
+        if (!m_sessionState.m_connected) {
+            errorLog("Client must be connected to allow reauth.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
+            break;
+        }
+
+        if (m_sessionState.m_terminating) {
+            errorLog("Session termination is in progress, cannot initiate reauth.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+            break;
+        }
+
+        if (m_sessionState.m_networkDisconnected) {
+            errorLog("Network is disconnected.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
+            break;            
+        }        
+
+        if (m_ops.max_size() <= m_ops.size()) {
+            errorLog("Cannot start reauth operation, retry in next event loop iteration.");
+            updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+            break;
+        }        
+
+        auto ptr = m_reauthOpsAlloc.alloc(*this);
+        if (!ptr) {
+            errorLog("Cannot allocate new reauth operation.");
+            updateEc(ec, CC_Mqtt5ErrorCode_OutOfMemory);
+            break;
+        }
+
+        m_ops.push_back(ptr.get());
+        m_reauthOps.push_back(std::move(ptr));
+        reauthOp = m_reauthOps.back().get();
+        updateEc(ec, CC_Mqtt5ErrorCode_Success);
+    } while (false);
+
+    return reauthOp;
+}
+
 CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount)
 {
     if constexpr (Config::HasTopicAliases) {
@@ -808,6 +865,7 @@ void ClientImpl::opComplete(const op::Op* op)
         /* Type_Unsubscribe */ &ClientImpl::opComplete_Unsubscribe,
         /* Type_Recv */ &ClientImpl::opComplete_Recv,
         /* Type_Send */ &ClientImpl::opComplete_Send,
+        /* Type_Reauth */ &ClientImpl::opComplete_Reauth,
     };
     static const std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == op::Op::Type_NumOfValues);
@@ -988,6 +1046,11 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
 void ClientImpl::opComplete_Send(const op::Op* op)
 {
     eraseFromList(op, m_sendOps);
+}
+
+void ClientImpl::opComplete_Reauth(const op::Op* op)
+{
+    eraseFromList(op, m_reauthOps);
 }
 
 } // namespace cc_mqtt5_client

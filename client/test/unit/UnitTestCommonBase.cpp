@@ -346,7 +346,7 @@ void UnitTestCommonBase::unitTestReceiveMessage(const UnitTestMessage& msg, bool
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestConfigAuth(CC_Mqtt5ConnectHandle handle, const std::string& method, const std::vector<std::uint8_t>& data)
 {
-    auto config = CC_Mqtt5ConnectAuthConfig();
+    auto config = CC_Mqtt5AuthConfig();
     cc_mqtt5_client_connect_init_config_auth(&config);
 
     config.m_authMethod = method.c_str();
@@ -369,6 +369,11 @@ void UnitTestCommonBase::unitTestClearAuth()
 {
     m_inAuthInfo.clear();
     m_outAuthInfo.clear();
+}
+
+bool UnitTestCommonBase::unitTestHasInAuthInfo() const
+{
+    return !m_inAuthInfo.empty();
 }
 
 const UnitTestCommonBase::UnitTestAuthInfo& UnitTestCommonBase::unitTestInAuthInfo() const
@@ -427,7 +432,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     const CC_Mqtt5ConnectBasicConfig* basicConfig,
     const CC_Mqtt5ConnectWillConfig* willConfig,
     const CC_Mqtt5ConnectExtraConfig* extraConfig,
-    CC_Mqtt5ConnectAuthConfig* authConfig,
+    CC_Mqtt5AuthConfig* authConfig,
     const UnitTestConnectResponseConfig* responseConfig)
 {
     auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
@@ -460,17 +465,44 @@ void UnitTestCommonBase::unitTestPerformConnect(
     ec = unitTestSendConnect(connect);
     test_assert(ec == CC_Mqtt5ErrorCode_Success);
 
-    if (authConfig != nullptr) {
-        test_assert(false); // Not implemented yet
-    }
-
     auto sentMsg = unitTestGetSentMessage();
     test_assert(static_cast<bool>(sentMsg));
     test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Connect);
     test_assert(!unitTestIsConnectComplete());    
 
     auto* tickReq = unitTestTickReq();
-    test_assert(tickReq->m_requested == UnitTestDefaultOpTimeoutMs);
+    test_assert(tickReq->m_requested == UnitTestDefaultOpTimeoutMs);    
+
+    if (authConfig != nullptr) {
+        const UnitTestData AuthData = {0x11, 0x22, 0x33, 0x44};
+        UnitTestAuthInfo authOutInfo;
+        authOutInfo.m_authData = AuthData;
+        unitTestAddOutAuth(authOutInfo);        
+        
+        UnitTestAuthMsg brokerAuth;
+        brokerAuth.field_reasonCode().setExists();
+        brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
+        brokerAuth.field_propertiesList().setExists();
+        auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+
+        if (authConfig->m_authMethod != nullptr) {
+            authPropsVec.resize(authPropsVec.size() + 1U);
+            auto& field = authPropsVec.back().initField_authMethod();
+            field.field_value().setValue(authConfig->m_authMethod);
+        }
+
+        if (authConfig->m_authDataLen > 0) {
+            authPropsVec.resize(authPropsVec.size() + 1U);
+            auto& field = authPropsVec.back().initField_authData();
+            comms::util::assign(field.field_value().value(), authConfig->m_authData, authConfig->m_authData + authConfig->m_authDataLen);
+        }       
+
+        unitTestTick(1000);
+        unitTestReceiveMessage(brokerAuth);  
+
+        test_assert(unitTestHasInAuthInfo()); 
+        unitTestPopInAuthInfo();
+    }
 
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
@@ -478,13 +510,13 @@ void UnitTestCommonBase::unitTestPerformConnect(
     auto& propsVec = connackMsg.field_propertiesList().value();
 
     if (authConfig != nullptr) {
-        {
+        if (authConfig->m_authMethod != nullptr) {
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_authMethod();
             field.field_value().setValue(authConfig->m_authMethod);
         }
 
-        {
+        if (authConfig->m_authDataLen > 0) {
             propsVec.resize(propsVec.size() + 1U);
             auto& field = propsVec.back().initField_authData();
             comms::util::assign(field.field_value().value(), authConfig->m_authData, authConfig->m_authData + authConfig->m_authDataLen);

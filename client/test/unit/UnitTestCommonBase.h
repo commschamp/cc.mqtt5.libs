@@ -255,6 +255,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestConfigAuth(CC_Mqtt5ConnectHandle handle, const std::string& method, const std::vector<std::uint8_t>& data);
     void unitTestAddOutAuth(const UnitTestAuthInfo& info);
     void unitTestClearAuth();
+    bool unitTestHasInAuthInfo() const;
     const UnitTestAuthInfo& unitTestInAuthInfo() const;
     void unitTestPopInAuthInfo();
     bool unitTestIsDisconnected() const;
@@ -269,7 +270,7 @@ protected:
         const CC_Mqtt5ConnectBasicConfig* basicConfig,
         const CC_Mqtt5ConnectWillConfig* willConfig = nullptr,
         const CC_Mqtt5ConnectExtraConfig* extraConfig = nullptr,
-        CC_Mqtt5ConnectAuthConfig* authConfig = nullptr,
+        CC_Mqtt5AuthConfig* authConfig = nullptr,
         const UnitTestConnectResponseConfig* responseConfig = nullptr);
 
     void unitTestPerformBasicConnect(

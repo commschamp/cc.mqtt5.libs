@@ -325,7 +325,7 @@ CC_Mqtt5ErrorCode ConnectOp::configExtra(const CC_Mqtt5ConnectExtraConfig& confi
     return CC_Mqtt5ErrorCode_Success;
 }
 
-CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5ConnectAuthConfig& config)
+CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthConfig& config)
 {
     if ((config.m_authCb == nullptr) ||
         (config.m_authMethod == nullptr)) {
@@ -601,6 +601,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_keepAliveMs = keepAlive * 1000U;
     state.m_highQosSendLimit = response.m_highQosSendLimit;
     state.m_highQosRecvLimit = m_highQosRecvLimit;
+    state.m_authMethod = std::move(m_authMethod);
     state.m_sessionExpiryIntervalMs = response.m_sessionExpiryInterval * 1000U;
     state.m_connectSessionExpiryInterval = m_sessionExpiryInterval;
     state.m_maxRecvPacketSize = m_maxRecvPacketSize;
@@ -743,7 +744,7 @@ void ConnectOp::handle(AuthMsg& msg)
     auto outInfo = CC_Mqtt5AuthInfo();
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc == CC_Mqtt5AuthErrorCode_Disconnect) {
-        sendDisconnectWithReason(DisconnectReason::UnspecifiedError);
+        sendDisconnectWithReason(DisconnectReason::NotAuthorized);
         completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
         // No members access after this point, the op will be deleted
         return;
@@ -767,6 +768,7 @@ void ConnectOp::handle(AuthMsg& msg)
 
     {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect auth property, reached available limit.");
             return;
         }
 
@@ -783,6 +785,7 @@ void ConnectOp::handle(AuthMsg& msg)
         }
 
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect auth property, reached available limit.");
             return;
         }
 
@@ -794,6 +797,7 @@ void ConnectOp::handle(AuthMsg& msg)
 
     if (outInfo.m_reasonStr != nullptr) {
         if (!canAddProp(propsField)) {
+            errorLog("Cannot add connect auth property, reached available limit.");
             return;
         }
 
@@ -818,6 +822,7 @@ void ConnectOp::handle(AuthMsg& msg)
             }
 
             if (!canAddProp(propsField)) {
+                errorLog("Cannot add connect auth property, reached available limit.");
                 return;
             }
 

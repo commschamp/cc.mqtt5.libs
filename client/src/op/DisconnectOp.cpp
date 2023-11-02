@@ -61,6 +61,7 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
 CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
+    m_disconnectMsg.field_propertiesList().setExists();
     auto& propsField = m_disconnectMsg.field_propertiesList().field();
     return addUserPropToList(propsField, prop);
 }

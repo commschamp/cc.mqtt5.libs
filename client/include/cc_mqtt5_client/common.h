@@ -185,6 +185,9 @@ typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
 struct CC_Mqtt5Publish;
 typedef CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
 
+struct CC_Mqtt5Reauth;
+typedef CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
+
 typedef struct
 {
     const char* m_key;
@@ -409,6 +412,8 @@ typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus 
 
 typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
+typedef void (*CC_Mqtt5ReauthCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
+
 
 typedef struct
 {
@@ -417,7 +422,7 @@ typedef struct
     unsigned m_authDataLen;
     CC_Mqtt5AuthCb m_authCb;
     void* m_authCbData;
-} CC_Mqtt5ConnectAuthConfig;
+} CC_Mqtt5AuthConfig;
 
 #ifdef __cplusplus
 }

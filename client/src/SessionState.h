@@ -9,6 +9,7 @@
 
 #include "ExtConfig.h"
 #include "ObjListType.h"
+#include "ProtocolDefs.h"
 #include "TopicAliasDefs.h"
 
 #include "cc_mqtt5_client/common.h"
@@ -21,6 +22,7 @@ namespace cc_mqtt5_client
 struct SessionState
 {
     using PacketIdsList = ObjListType<std::uint16_t, ExtConfig::PacketIdsLimit>;
+    using AuthMethodStorageType = ConnectMsg::Field_properties::ValueType::value_type::Field_authMethod::Field_value::ValueType;
 
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned DefaultTopicAliasMax = 10;
@@ -28,6 +30,7 @@ struct SessionState
     RecvTopicsMap m_recvTopicAliases;
     SendTopicsMap m_sendTopicAliases;
     SendTopicsFreeAliasList m_sendTopicFreeAliases;
+    AuthMethodStorageType m_authMethod;
     std::uint64_t m_sessionExpiryIntervalMs = 0U;
     unsigned m_connectSessionExpiryInterval = 0U;
     unsigned m_keepAliveMs = 0U;

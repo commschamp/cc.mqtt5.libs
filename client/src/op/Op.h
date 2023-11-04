@@ -14,6 +14,8 @@
 
 #include "cc_mqtt5_client/common.h"
 
+#include <limits>
+
 namespace cc_mqtt5_client
 {
 
@@ -154,9 +156,21 @@ protected:
             auto& valueField = propBundle.field_value();
             valueField.field_first().value() = prop.m_key;
 
+            if (maxStringLen() < valueField.field_first().value().size()) {
+                errorLog("User property key is too long.");
+                discardLastProp(field);
+                return CC_Mqtt5ErrorCode_BadParam;
+            }            
+
             if (prop.m_value != nullptr) {
                 valueField.field_second().value() = prop.m_value;
             }
+
+            if (maxStringLen() < valueField.field_second().value().size()) {
+                errorLog("User property value is too long.");
+                discardLastProp(field);
+                return CC_Mqtt5ErrorCode_BadParam;
+            }              
 
             return CC_Mqtt5ErrorCode_Success;
         }
@@ -166,7 +180,19 @@ protected:
         }        
     }    
 
+    template <typename TField>
+    void discardLastProp(TField& field)
+    {
+        COMMS_ASSERT(!field.value().empty());
+        field.value().pop_back();
+    };
+
     static bool isSharedTopicFilter(const char* filter);
+
+    static constexpr std::size_t maxStringLen()
+    {
+        return std::numeric_limits<std::uint16_t>::max();
+    }
 
 private:
     void errorLogInternal(const char* msg);

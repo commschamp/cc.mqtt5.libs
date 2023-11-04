@@ -94,6 +94,13 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
     topicVec.resize(topicVec.size() + 1U);
     auto& element = topicVec.back();
     element.value() = config.m_topic;
+
+    if (maxStringLen() < element.value().size()) {
+        errorLog("Unsubscription topic value is too long");
+        topicVec.pop_back();
+        return CC_Mqtt5ErrorCode_BadParam;
+    }  
+
     return CC_Mqtt5ErrorCode_Success;
 }
 

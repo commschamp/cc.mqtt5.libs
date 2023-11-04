@@ -344,7 +344,6 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
             if (config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicOnly) {
                 break;
             }
-
             
             auto iter = 
                 std::lower_bound(
@@ -407,8 +406,14 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
     m_pubMsg.transportField_flags().field_qos().setValue(config.m_qos);
     
     if (mustAssignTopic) {
-        m_pubMsg.field_topic().value() = config.m_topic;
+        auto& topicStr = m_pubMsg.field_topic().value();
+        topicStr = config.m_topic;
         m_topicConfigured = true;
+
+        if (maxStringLen() < topicStr.size()) {
+            errorLog("Publish topic value is too long");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }          
     }
 
     auto& propsField = m_pubMsg.field_propertiesList();
@@ -425,10 +430,16 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         m_topicConfigured = true;
     }
 
+    auto& dataVec = m_pubMsg.field_payload().value();
     if (config.m_dataLen > 0U) {
         COMMS_ASSERT(config.m_data != nullptr);
-        comms::util::assign(m_pubMsg.field_payload().value(), config.m_data, config.m_data + config.m_dataLen);
+        comms::util::assign(dataVec, config.m_data, config.m_data + config.m_dataLen);
     }
+
+    if (maxStringLen() < dataVec.size()) {
+        errorLog("Publish data value is too long");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }      
 
     m_registeredAlias = (alias > 0) && mustAssignTopic;
     return CC_Mqtt5ErrorCode_Success;
@@ -447,7 +458,13 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_contentType();
         auto& valueField = propBundle.field_value();
-        valueField.value() = config.m_contentType;        
+        valueField.value() = config.m_contentType;       
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Publish content type value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }         
     }
 
     if (config.m_responseTopic != nullptr) {
@@ -464,6 +481,12 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         auto& propBundle = propVar.initField_responseTopic();
         auto& valueField = propBundle.field_value();
         valueField.value() = config.m_responseTopic;        
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Publish response topic value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }          
     }
 
     if ((config.m_correlationDataLen > 0U) && (config.m_correlationData == nullptr)) {
@@ -482,6 +505,12 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         auto& valueField = propBundle.field_value();        
 
         comms::util::assign(valueField.value(), config.m_correlationData, config.m_correlationData + config.m_correlationDataLen);
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Publish correlation data value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }         
     }    
 
     if (config.m_messageExpiryInterval > 0U) {

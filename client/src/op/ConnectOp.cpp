@@ -50,11 +50,18 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
+    auto& clientIdStr = m_connectMsg.field_clientId().value();
     if (config.m_clientId != nullptr) {
-        m_connectMsg.field_clientId().value() = config.m_clientId;    
+        clientIdStr = config.m_clientId;    
     }
     else {
-        m_connectMsg.field_clientId().value().clear();
+        clientIdStr.clear();
+    }
+
+    if (maxStringLen() < clientIdStr.size()) {
+        errorLog("Client ID is too long");
+        clientIdStr.clear();
+        return CC_Mqtt5ErrorCode_BadParam;        
     }
 
     if ((m_connectMsg.field_clientId().value().empty()) && (!config.m_cleanStart)) {
@@ -68,11 +75,26 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         m_connectMsg.field_userName().field().value() = config.m_username;
     }
 
+    auto& usernameStr = m_connectMsg.field_userName().field().value();
+    if (maxStringLen() < usernameStr.size()) {
+        errorLog("Username is too long");
+        usernameStr.clear();
+        return CC_Mqtt5ErrorCode_BadParam;        
+    }
+
     bool hasPassword = (config.m_passwordLen > 0U);
     m_connectMsg.field_flags().field_high().setBitValue_passwordFlag(hasPassword);
+
+    auto& passwordStr = m_connectMsg.field_password().field().value();
     if (hasPassword) {
-        comms::util::assign(m_connectMsg.field_password().field().value(), config.m_password, config.m_password + config.m_passwordLen);
+        comms::util::assign(passwordStr, config.m_password, config.m_password + config.m_passwordLen);
     }
+
+    if (maxStringLen() < passwordStr.size()) {
+        errorLog("Password is too long");
+        passwordStr.clear();
+        return CC_Mqtt5ErrorCode_BadParam;        
+    }    
 
     m_connectMsg.field_flags().field_low().setBitValue_cleanStart(config.m_cleanStart);    
 
@@ -102,13 +124,27 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
     }
 
     if ((config.m_qos < CC_Mqtt5QoS_AtMostOnceDelivery) || (config.m_qos > CC_Mqtt5QoS_ExactlyOnceDelivery)) {
-        errorLog("Invalid qill QoS value in configuration.");
+        errorLog("Invalid will QoS value in configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    m_connectMsg.field_willTopic().field().value() = config.m_topic;
+    auto& willTopicStr = m_connectMsg.field_willTopic().field().value();
+    willTopicStr = config.m_topic;
+    if (maxStringLen() < willTopicStr.size()) {
+        errorLog("Will topic is too long.");
+        willTopicStr.clear();
+        return CC_Mqtt5ErrorCode_BadParam;        
+    }
+
+    auto& willData = m_connectMsg.field_willMessage().field().value();
     if (config.m_dataLen > 0U) {
-        comms::util::assign(m_connectMsg.field_willMessage().field().value(), config.m_data, config.m_data + config.m_dataLen);
+        comms::util::assign(willData, config.m_data, config.m_data + config.m_dataLen);
+    }
+
+    if (maxStringLen() < willData.size()) {
+        errorLog("Will data is too long.");
+        willData.clear();
+        return CC_Mqtt5ErrorCode_BadParam;                
     }
 
     m_connectMsg.field_flags().field_willQos().setValue(config.m_qos);
@@ -143,6 +179,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
         if (MaxValue < config.m_delayInterval) {
             errorLog("Will delay interval is too high.");
+            discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
@@ -164,6 +201,7 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
 
         if (MaxValue < config.m_messageExpiryInterval) {
             errorLog("Message expiry interval is too high");
+            discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
         }
 
@@ -180,17 +218,35 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         auto& propBundle = propVar.initField_contentType();
         auto& valueField = propBundle.field_value();
         valueField.value() = config.m_contentType;
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Content type value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
     }
 
     if (config.m_responseTopic != nullptr) {
+        if (!verifyPubTopic(config.m_responseTopic, true)) {
+            errorLog("Bad will response topic format in CONNECT.");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         if (!canAddProp(propsField)) {
             errorLog("Cannot add will property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }        
+
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_responseTopic();
         auto& valueField = propBundle.field_value();
-        valueField.value() = config.m_responseTopic;        
+        valueField.value() = config.m_responseTopic;    
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Will response topic value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }            
     }
 
     if ((config.m_correlationDataLen > 0U) && (config.m_correlationData == nullptr)) {
@@ -209,6 +265,12 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         auto& valueField = propBundle.field_value();        
 
         comms::util::assign(valueField.value(), config.m_correlationData, config.m_correlationData + config.m_correlationDataLen);
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Will correlation data value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }          
     }
 
     m_connectMsg.doRefresh();
@@ -349,6 +411,12 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthConfig& config)
         auto& valueField = propBundle.field_value();        
         valueField.value() = config.m_authMethod;
 
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth method value is too big.");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         m_authMethod = config.m_authMethod;
     }
 
@@ -367,6 +435,12 @@ CC_Mqtt5ErrorCode ConnectOp::configAuth(const CC_Mqtt5AuthConfig& config)
         auto& propBundle = propVar.initField_authData();
         auto& valueField = propBundle.field_value();        
         comms::util::assign(valueField.value(), config.m_authData, config.m_authData + config.m_authDataLen); 
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth data value is too big.");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }        
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -709,7 +783,6 @@ void ConnectOp::handle(AuthMsg& msg)
             return;        
         }
 
-
         if (propsHandler.m_authData != nullptr) {
             auto& vec = propsHandler.m_authData->field_value().value();
             comms::cast_assign(inInfo.m_authDataLen) = vec.size();
@@ -765,7 +838,6 @@ void ConnectOp::handle(AuthMsg& msg)
 
     respMsg.field_propertiesList().setExists();
     auto& propsField = respMsg.field_propertiesList().field();
-
     {
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect auth property, reached available limit.");
@@ -793,6 +865,13 @@ void ConnectOp::handle(AuthMsg& msg)
         auto& propBundle = propVar.initField_authData();
         auto& valueField = propBundle.field_value();        
         comms::util::assign(valueField.value(), outInfo.m_authData, outInfo.m_authData + outInfo.m_authDataLen); 
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth data value is too long");
+            discardLastProp(propsField);
+            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return;            
+        }        
     }    
 
     if (outInfo.m_reasonStr != nullptr) {
@@ -805,6 +884,13 @@ void ConnectOp::handle(AuthMsg& msg)
         auto& propBundle = propVar.initField_reasonStr();
         auto& valueField = propBundle.field_value();  
         valueField.value() = outInfo.m_reasonStr;           
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Reason string in CONNECT auth info too long");
+            discardLastProp(propsField);
+            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return;               
+        }         
     }
 
     if (outInfo.m_userPropsCount > 0U) {
@@ -815,25 +901,31 @@ void ConnectOp::handle(AuthMsg& msg)
 
         for (auto idx = 0U; idx < outInfo.m_userPropsCount; ++idx) {
             auto& prop = outInfo.m_userProps[idx];
+            auto ec = addUserPropToList(propsField, prop);
+            if (ec == CC_Mqtt5ErrorCode_Success) {
+                continue;
+            }
 
-            if (prop.m_key == nullptr) {
-                termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            static const std::pair<CC_Mqtt5ErrorCode, CC_Mqtt5AsyncOpStatus> Map[] = {
+                {CC_Mqtt5ErrorCode_BadParam, CC_Mqtt5AsyncOpStatus_BadParam},
+                {CC_Mqtt5ErrorCode_OutOfMemory, CC_Mqtt5AsyncOpStatus_OutOfMemory},
+                {CC_Mqtt5ErrorCode_NotSupported, CC_Mqtt5AsyncOpStatus_BadParam},
+            };
+
+            auto errorIter = 
+                std::find_if(
+                    std::begin(Map), std::end(Map),
+                    [ec](auto& info)
+                    {
+                        return ec == info.first;
+                    });
+
+            if (errorIter != std::end(Map)) {
+                termStatus = errorIter->second;
                 return;
             }
 
-            if (!canAddProp(propsField)) {
-                errorLog("Cannot add connect auth property, reached available limit.");
-                return;
-            }
-
-            auto& propVar = addProp(propsField);
-            auto& propBundle = propVar.initField_userProperty();            
-            auto& valueField = propBundle.field_value();
-            valueField.field_first().value() = prop.m_key;
-
-            if (prop.m_value != nullptr) {
-                valueField.field_second().value() = prop.m_value;
-            }
+            COMMS_ASSERT(false); // Should not happen
         }
     }
 

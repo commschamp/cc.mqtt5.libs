@@ -54,6 +54,12 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
         auto& propBundle = propVar.initField_reasonStr();
         auto& valueField = propBundle.field_value();        
         valueField.value() = config.m_reasonStr;
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Reason string value is too long");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }        
     }
 
     return CC_Mqtt5ErrorCode_Success;

@@ -758,3 +758,92 @@
 - [MQTT-4.6.0-1]: When the Client re-sends any PUBLISH packets, it MUST re-send them in the order in which the
     original PUBLISH packets were sent (this applies to QoS 1 and QoS 2 messages)
     * Tested in UnitTestPublish::test33 and UnitTestPublish::test34.
+- [MQTT-4.6.0-2]: The Client MUST send PUBACK packets in the order in which the corresponding PUBLISH
+    packets were received (QoS 1 messages).
+    * Complies by the nature of implementation, the client sends responses right away when processing
+        incoming messages
+- [MQTT-4.6.0-3]: The Client MUST send PUBREC packets in the order in which the corresponding PUBLISH
+    packets were received (QoS 2 messages)
+    * Complies by the nature of implementation, the client sends responses right away when processing
+        incoming messages
+- [MQTT-4.6.0-4]: The Client MUST send PUBREL packets in the order in which the corresponding PUBREC
+    packets were received (QoS 2 messages)
+    * Complies by the nature of implementation, the client sends responses right away when processing
+            incoming messages
+- [MQTT-4.6.0-5]: When a Server processes a message that has been published to an Ordered Topic, it MUST 
+    send PUBLISH packets to consumers (for the same Topic and QoS) in the order that they were received 
+    from any given Client
+    * Server specific.
+- [MQTT-4.6.0-6]: By default, a Server MUST treat every Topic as an Ordered Topic when it is forwarding messages on
+    Non-shared Subscriptions.
+    * Server specific.
+- [MQTT-4.7.0-1]: The wildcard characters can be used in Topic Filters, but MUST NOT be used within a Topic Name
+    * Tested in multiple unit tests mentioned above.
+- [MQTT-4.7.1-1]: The multi-level wildcard
+    character MUST be specified either on its own or following a topic level separator. In either case it MUST
+    be the last character specified in the Topic Filter
+    * Tested in UnitTestSubscribe::test3.
+- [MQTT-4.7.1-2]: The single-level wildcard can be used at any level in the Topic Filter, including first and last levels. Where
+    it is used, it MUST occupy an entire level of the filter 
+    * Tested in UnitTestSubscribe::test3.
+- [MQTT-4.7.2-1]: The Server MUST NOT match Topic Filters starting with a wildcard character (# or +) with Topic Names
+    beginning with a $ character
+    * Spec: The Server SHOULD prevent Clients from using such Topic Names to exchange messages with other Clients
+    * Server specific
+    * Publish configuration prevents usage of '$' prefix for topics. Tested in UnitTestPublish::test10.
+- [MQTT-4.7.3-1]: All Topic Names and Topic Filters MUST be at least one character long
+    * Tested in UnitTestPublish::test10 and UnitTestSubscribe::test3.
+- [MQTT-4.7.3-2]: Topic Names and Topic Filters MUST NOT include the null character (Unicode U+0000)
+    * All topic filters / names are passed as zero terminated C-strings, which is not sent to the broker.
+- [MQTT-4.7.3-3]: Topic Names and Topic Filters are UTF-8 Encoded Strings; they MUST NOT encode to more than
+    65,535 bytes.
+    * Every string / data configuration is checked for the maximum length and configuration is rejected.
+    * Not really tested.
+- [MQTT-4.7.3-4]: When it performs subscription matching the Server MUST NOT perform any normalization of Topic
+    Names or Topic Filters, or any modification or substitution of unrecognized characters
+    * Server specific.
+- [MQTT-4.8.2-1]: A Shared Subscription's Topic Filter MUST start with $share/ and MUST contain a ShareName that is at
+    least one character long.
+    * Tested in UnitTestSubscribe::test3.
+- [MQTT-4.8.2-2]: The ShareName MUST NOT contain the characters "/", "+" or
+    "#", but MUST be followed by a "/" character. This "/" character MUST be followed by a Topic Filter    
+    * Tested in UnitTestSubscribe::test3.
+- [MQTT-4.8.2-3]: When sending an Application Message to a Client the Server MUST respect the granted QoS for the Client's subscription
+    * Server specific.
+- [MQTT-4.8.2-4]: If the Server is in the process of sending a QoS 2 message to its chosen subscribing Client and the
+    connection to the Client breaks before delivery is complete, the Server MUST complete the delivery
+    of the message to that Client when it reconnects.
+    * Server specific.
+- [MQTT-4.8.2-6]: If a Client responds with a PUBACK or PUBREC containing a Reason Code of 0x80 or greater to a
+    PUBLISH packet from the Server, the Server MUST discard the Application Message and not attempt
+    to send it to any other Subscriber.
+    * Server specific.
+- [MQTT-4.9.0-1]: The Client or Server MUST set its initial send quota to a non-zero value not exceeding the Receive
+    Maximum 
+    * Client data structures allows reception of the configured high qos messages.
+- [MQTT-4.9.0-2]: Each time the Client or Server sends a PUBLISH packet at QoS > 0, it decrements the send quota. If the
+    send quota reaches zero, the Client or Server MUST NOT send any more PUBLISH packets with QoS > 0
+    * Tested in UnitTestPublish::test22.
+- [MQTT-4.9.0-3]: The Client and Server MUST continue to process and respond to all other MQTT
+    Control Packets even if the quota is zero
+    * Client doesn't have limitation on sending any other packets.
+- [MQTT-4.12.0-1]:  If the Server does not support the Authentication
+    Method supplied by the Client, it MAY send a CONNACK with a Reason Code of 0x8C (Bad
+    authentication method) or 0x87 (Not Authorized) and MUST close the
+    Network Connection
+    * Server specific
+- [MQTT-4.12.0-2]: If the Server requires additional information to complete the authentication, it can send an AUTH packet
+    to the Client. This packet MUST contain a Reason Code of 0x18 (Continue authentication).
+    * Tested in UnitTestConnect::test3.
+- [MQTT-4.12.0-3] The Client responds to an AUTH packet from the Server by sending a further AUTH packet. This packet
+    MUST contain a Reason Code of 0x18 (Continue authentication)
+    * Tested in UnitTestConnect::test3.
+- [MQTT-4.12.0-4]: The Server can reject the authentication at any point in this process. It MAY send a
+    CONNACK with a Reason Code of 0x80 or above as described in section 4.13, and MUST close the
+    Network Connection   
+    * Tested in UnitTestConnect::test29.
+- [MQTT-4.12.0-5]: If the initial CONNECT packet included an Authentication Method property then all AUTH packets, and
+    any successful CONNACK packet MUST include an Authentication Method Property with the same value
+    as in the CONNECT packet.
+    * Tested in UnitTestConnect::test3.
+    * When CONNACK has wrong AuthMethed Protocol Error is reported. Not tested yet ??? 

@@ -905,6 +905,8 @@ void UnitTestPublish::test10()
 {
     // Invalid publish topics
     // [MQTT-3.3.2-2]
+    // [MQTT-4.7.2-1]
+    // [MQTT-4.7.3-1]
 
     auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -927,6 +929,10 @@ void UnitTestPublish::test10()
     config.m_topic = "$hello";
     ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+
+    config.m_topic = "";
+    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     ec = unitTestSendPublish(publish);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);   
@@ -1743,6 +1749,7 @@ void UnitTestPublish::test22()
 {
     // Testing rejection of publish with QoS higher than allowed by broker
     // [MQTT-3.2.2-11]
+    // [MQTT-4.9.0-2]
 
     auto* client = unitTestAllocClient();
 

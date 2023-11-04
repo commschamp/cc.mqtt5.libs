@@ -72,6 +72,8 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
         auto& propBundle = propVar.initField_authMethod();
         auto& valueField = propBundle.field_value();        
         valueField.value() = connectAuthMethod;
+
+        COMMS_ASSERT(valueField.value().size() <= maxStringLen());
     }
 
     if (config.m_authDataLen > 0U) {
@@ -89,6 +91,12 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
         auto& propBundle = propVar.initField_authData();
         auto& valueField = propBundle.field_value();        
         comms::util::assign(valueField.value(), config.m_authData, config.m_authData + config.m_authDataLen); 
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth data value is too big.");
+            discardLastProp(propsField);
+            return CC_Mqtt5ErrorCode_BadParam;
+        }         
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -272,6 +280,7 @@ void ReauthOp::handle(AuthMsg& msg)
         auto& propBundle = propVar.initField_authMethod();
         auto& valueField = propBundle.field_value();        
         valueField.value() = client().sessionState().m_authMethod.c_str();
+        COMMS_ASSERT(valueField.value().size() <= maxStringLen());
     }
 
     if (outInfo.m_authDataLen > 0U) {
@@ -290,6 +299,12 @@ void ReauthOp::handle(AuthMsg& msg)
         auto& propBundle = propVar.initField_authData();
         auto& valueField = propBundle.field_value();        
         comms::util::assign(valueField.value(), outInfo.m_authData, outInfo.m_authData + outInfo.m_authDataLen); 
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth data value is too long");
+            status = CC_Mqtt5AsyncOpStatus_BadParam;
+            return;            
+        }         
     }    
 
     if (outInfo.m_reasonStr != nullptr) {
@@ -303,6 +318,12 @@ void ReauthOp::handle(AuthMsg& msg)
         auto& propBundle = propVar.initField_reasonStr();
         auto& valueField = propBundle.field_value();  
         valueField.value() = outInfo.m_reasonStr;           
+
+        if (maxStringLen() < valueField.value().size()) {
+            errorLog("Auth reason string is too long");
+            status = CC_Mqtt5AsyncOpStatus_BadParam;
+            return;            
+        }        
     }
 
     if (outInfo.m_userPropsCount > 0U) {
@@ -315,26 +336,31 @@ void ReauthOp::handle(AuthMsg& msg)
         for (auto idx = 0U; idx < outInfo.m_userPropsCount; ++idx) {
             auto& prop = outInfo.m_userProps[idx];
 
-            if (prop.m_key == nullptr) {
-                errorLog("Bad user property key pointer in AUTH");
-                status = CC_Mqtt5AsyncOpStatus_BadParam;
+            auto ec = addUserPropToList(propsField, prop);
+            if (ec == CC_Mqtt5ErrorCode_Success) {
+                continue;
+            }
+
+            static const std::pair<CC_Mqtt5ErrorCode, CC_Mqtt5AsyncOpStatus> Map[] = {
+                {CC_Mqtt5ErrorCode_BadParam, CC_Mqtt5AsyncOpStatus_BadParam},
+                {CC_Mqtt5ErrorCode_OutOfMemory, CC_Mqtt5AsyncOpStatus_OutOfMemory},
+                {CC_Mqtt5ErrorCode_NotSupported, CC_Mqtt5AsyncOpStatus_BadParam},
+            };
+
+            auto errorIter = 
+                std::find_if(
+                    std::begin(Map), std::end(Map),
+                    [ec](auto& info)
+                    {
+                        return ec == info.first;
+                    });
+
+            if (errorIter != std::end(Map)) {
+                status = errorIter->second;
                 return;
             }
 
-            if (!canAddProp(propsField)) {
-                errorLog("Cannot add auth property, reached available limit.");
-                status = CC_Mqtt5AsyncOpStatus_OutOfMemory;
-                return;
-            }
-
-            auto& propVar = addProp(propsField);
-            auto& propBundle = propVar.initField_userProperty();            
-            auto& valueField = propBundle.field_value();
-            valueField.field_first().value() = prop.m_key;
-
-            if (prop.m_value != nullptr) {
-                valueField.field_second().value() = prop.m_value;
-            }
+            COMMS_ASSERT(false); // Should not happen            
         }
     }
 

@@ -72,6 +72,11 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
+    if (CC_Mqtt5QoS_ValuesLimit <= config.m_maxQos) {
+        errorLog("Bad subscription qos value.");
+        return CC_Mqtt5ErrorCode_BadParam;        
+    }
+
     auto& topicVec = m_subMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
         errorLog("Too many configured topics for subscribe operation.");
@@ -85,6 +90,13 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
     element.field_options().field_bits().setBitValue_NL(config.m_noLocal);
     element.field_options().field_bits().setBitValue_RAP(config.m_retainAsPublished);
     element.field_options().field_retainHandling().setValue(config.m_retainHandling);
+
+    if (maxStringLen() < element.field_topic().value().size()) {
+        errorLog("Subscription topic value is too long");
+        topicVec.pop_back();
+        return CC_Mqtt5ErrorCode_BadParam;
+    }   
+
     return CC_Mqtt5ErrorCode_Success;
 }
 

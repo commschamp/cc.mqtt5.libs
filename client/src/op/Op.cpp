@@ -207,10 +207,44 @@ bool Op::verifySubFilterInternal(const char* filter)
             return false;
         }
 
-        if ((!m_client.sessionState().m_sharedSubsAvailable) && isSharedTopicFilter(filter)) {
-            errorLog("Shared subscriptions not accepted by the broker, cannot use \"$share/\" prefixed topics.");
-            return false;
-        }
+        do {
+            if (!isSharedTopicFilter(filter)) {
+                break;
+            }
+
+            if (!m_client.sessionState().m_sharedSubsAvailable) {
+                errorLog("Shared subscriptions not accepted by the broker, cannot use \"$share/\" prefixed topics.");
+                return false;
+            }
+
+            auto nextIdx = sizeof("$share/") - 1U; // 7 due to \0;
+            COMMS_ASSERT(nextIdx == 7U);
+            if ((filter[nextIdx] == '\0') || (filter[nextIdx] == '/')) {
+                errorLog("Shared subscriptions name must have at least one character.");
+                return false;
+            }        
+
+            while (filter[nextIdx] != '/') {
+                if (filter[nextIdx] == '\0') {
+                    errorLog("Shared subscriptions name must have topic after share name.");
+                    return false;
+                }
+
+                if ((filter[nextIdx] == MultLevelWildcard) || (filter[nextIdx] == SingleLevelWildcard)) {
+                    errorLog("Shared subscriptions name must not have wildcards.");
+                    return false;
+                }                
+
+                ++nextIdx;
+            }
+
+            ++nextIdx;
+            if (filter[nextIdx] == '\0') {
+                errorLog("Shared subscriptions name must have topic after share name.");
+                return false;
+            }            
+
+        } while (false);
 
         auto pos = 0U;
         int lastSep = -1;

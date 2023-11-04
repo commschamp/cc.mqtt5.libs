@@ -145,8 +145,11 @@ void UnitTestCommonBase::unitTestSetUp()
     m_receivedData.clear();
     m_connectResp.clear();
     m_subscribeResp.clear();
+    m_publishResp.clear();
+    m_reauthResp.clear();
     m_inAuthInfo.clear();
     m_outAuthInfo.clear();
+    m_userPropsTmp.clear();
     m_disconnectInfo.clear();
     m_disconnected = false;
 }
@@ -940,7 +943,7 @@ void UnitTestCommonBase::unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncO
 void UnitTestCommonBase::unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
-    test_assert(realObj->m_publishResp.empty());
+    // test_assert(realObj->m_publishResp.empty());
     realObj->m_publishResp.resize(realObj->m_publishResp.size() + 1U);
     auto& info = realObj->m_publishResp.back();
     info.m_status = status;

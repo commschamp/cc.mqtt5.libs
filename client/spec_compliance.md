@@ -666,3 +666,95 @@
     * On the client side the operation will be terminated in case "write" fails to due exceeding the message length size.
     * It is a responsibility of the application not to pass user properties.
     * Tested in UnitTestReauth::test4.
+- [MQTT-4.1.0-1]: The Client and Server MUST NOT discard the Session State while the Network Connection is open
+    * The client preserves its state between the "init" requests.
+- [MQTT-4.1.0-2]: The Server MUST discard the Session State when the Network Connection is closed and
+    the Session Expiry Interval has passed
+    * Server specific.
+- [MQTT-4.2-1]: A Client or Server MUST support the use of one or more underlying transport protocols that provide an
+    ordered, lossless, stream of bytes from the Client to Server and Server to Client
+    * The choice of I/O link is the responsibility of the application.
+- [MQTT-4.3.1-1]: In the QoS 0 delivery protocol, the sender MUST send a PUBLISH packet with QoS 0 and DUP flag set to 0.
+    * Client complies and doesn't provide an ability to change DUP flag.
+    * Tested in UnitTestPublish::test1.
+- [MQTT-4.3.2-1]: In the QoS 1 delivery protocol, the sender MUST assign an unused Packet Identifier 
+    each time it has a new Application Message to publish.
+    * Packet ID is allocated by wrapping around incremental integer.
+    * After the wrap around the client makes sure the newly allocated packet ID is not currently in use.
+    * Not really tested.
+- [MQTT-4.3.2-2]: In the QoS 1 delivery protocol, the sender MUST send a PUBLISH packet containing this 
+    Packet Identifier with QoS 1 and DUP flag set to 0.
+    * Client complies and doesn't provide an ability to change DUP flag.
+    * Tested in UnitTestPublish::test2.
+- [MQTT-4.3.2-3]: In the QoS 1 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged” 
+    until it has received the corresponding PUBACK packet from the receiver.
+    * Tested in multiple unit tests.
+- [MQTT-4.3.2-4]: In the QoS 1 delivery protocol, the receiver MUST respond with a PUBACK packet containing the Packet Identifier from the  incoming PUBLISH packet, having accepted ownership of the Application Message.
+    * Client acknowledgement is tested in UnitTestReceive::test2.
+- [MQTT-4.3.2-5]: In the QoS 1 delivery protocol, the receiver After it has sent a PUBACK packet the receiver MUST treat any incoming PUBLISH   
+    packet that contains the same Packet Identifier as being a new Application Message, irrespective of the
+    setting of its DUP flag    
+    * Tested in UnitTestReceive::test19.
+- [MQTT-4.3.3-1]: In the QoS2 delivery protocol, the sender MUST assign an unused Packet Identifier when 
+    it has a new Application Message to publish
+    * Packet ID is allocated by wrapping around incremental integer.
+    * After the wrap around the client makes sure the newly allocated packet ID is not currently in use.
+    * Not really tested.
+- [MQTT-4.3.3-2]: In the QoS2 delivery protocol, the sender MUST send a PUBLISH packet containing this 
+    Packet Identifier with QoS 2 and DUP flag set to 0.
+    * Tested in UnitTestPublish::test5.
+- [MQTT-4.3.3-3]: In the QoS2 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged” until 
+    it has received the corresponding PUBREC packet from the receiver.
+    * Tested in multiple unit tests.
+- [MQTT-4.3.3-4]: In the QoS2 delivery protocol, the sender MUST send a PUBREL packet when it receives a PUBREC 
+    packet from the receiver with a Reason Code value less than 0x80. This PUBREL packet MUST contain the same Packet
+    Identifier as the original PUBLISH packet.
+    * Tested in UnitTestPublish::test5.
+- [MQTT-4.3.3-5]: In the QoS2 delivery protocol, the sender MUST treat the PUBREL packet as “unacknowledged” until 
+    it has received the corresponding PUBCOMP packet from the receiver.
+    * Tested in UnitTestPublish::test6.
+- [MQTT-4.3.3-6]: In the QoS2 delivery protocol, the sender MUST NOT re-send the PUBLISH once it 
+    has sent the corresponding PUBREL packet.
+    * Tested in UnitTestPublish::test6.
+- [MQTT-4.3.3-7]: In the QoS2 delivery protocol, the sender MUST NOT apply Message expiry if a PUBLISH packet has been sent.
+    * Server specific.
+    * Client's acknowledgement timeout doesn't depend on "Message Expiry" configuration.
+- [MQTT-4.3.3-8]: In the QoS2 delivery protocol, the receiver MUST respond with a PUBREC containing the 
+    Packet Identifier from the incoming PUBLISH packet, having accepted ownership of the Application Message
+    * Tested in UnitTestReceive::test3.
+- [MQTT-4.3.3-9]: In the QoS2 delivery protocol, the receiver If it has sent a PUBREC with a Reason Code of 
+    0x80 or greater, the receiver MUST treat any subsequent PUBLISH packet that contains that Packet Identifier as 
+    being a new Application Message.
+    * Tested in UnitTestReceive::test20.
+- [MQTT-4.3.3-10]: In the QoS2 delivery protocol, the receiver Until it has received the corresponding PUBREL packet, 
+    the receiver MUST acknowledge any subsequent PUBLISH packet with the same Packet Identifier by sending a PUBREC. 
+    It MUST NOT cause duplicate messages to be delivered to any onward recipients in this case
+    * Tested in UnitTestReceive::test11.
+- [MQTT-4.3.3-11]: In the QoS2 delivery protocol, the receiver MUST respond to a PUBREL packet by sending a 
+    PUBCOMP packet containing the same Packet Identifier as the PUBREL
+    * Tested in UnitTestReceive::test3.
+- [MQTT-4.3.3-12]: In the QoS2 delivery protocol, the receiver After it has sent a PUBCOMP, the receiver 
+    MUST treat any subsequent PUBLISH packet that contains that Packet Identifier as being a new Application Message.
+    * Tested in UnitTestReceive::test21.
+- [MQTT-4.3.3-13]: In the QoS2 delivery protocol, the receiver MUST continue the QoS 2 acknowledgement sequence 
+    even if it has applied message expiry.
+    * Client's acknowledgement timeout doesn't depend on "Message Expiry" configuration.
+- [MQTT-4.4.0-1]: When a Client reconnects with Clean Start set to 0 and a session is present, both the Client and Server
+    MUST resend any unacknowledged PUBLISH packets (where QoS > 0) and PUBREL packets using their
+    original Packet Identifiers. This is the only circumstance where a Client or Server is REQUIRED to resend
+    messages. Clients and Servers MUST NOT resend messages at any other time.
+    * Not applicable to current client implementation. It doesn't allow connect without previous disconnection
+        where all outstanding requests get aborted.
+- [MQTT-4.4.0-2]: If PUBACK or PUBREC is received containing a Reason Code of 0x80 or greater the corresponding
+    PUBLISH packet is treated as acknowledged, and MUST NOT be retransmitted
+    * Tested in UnitTestPublish::test31 and UnitTestPublish::test32.
+- [MQTT-4.5.0-1]: When a Server takes ownership of an incoming Application Message it MUST add it to the Session State
+    for those Clients that have matching Subscriptions
+    * Server specific
+- [MQTT-4.5.0-2]: The Client MUST acknowledge any Publish packet it
+    receives according to the applicable QoS rules regardless of whether it elects to process the Application
+    Message that it contains.
+    * Tested in multiple unit-tests.
+- [MQTT-4.6.0-1]: When the Client re-sends any PUBLISH packets, it MUST re-send them in the order in which the
+    original PUBLISH packets were sent (this applies to QoS 1 and QoS 2 messages)
+    * Tested in UnitTestPublish::test33 and UnitTestPublish::test34.

@@ -790,6 +790,10 @@ void UnitTestConnect::test6()
     auto* publish = ::cc_mqtt5_client_publish_prepare(client, &ec);    
     TS_ASSERT_EQUALS(publish, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);        
+
+    auto* reauth = ::cc_mqtt5_client_reauth_prepare(client, &ec);    
+    TS_ASSERT_EQUALS(reauth, nullptr);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);      
 }
 
 void UnitTestConnect::test7()

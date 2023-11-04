@@ -147,6 +147,14 @@ void ReauthOp::handle(AuthMsg& msg)
     UserPropsList userProps; // Will be referenced in response or inInfo
     auto info = CC_Mqtt5AuthInfo();
 
+    auto disconnectReason = DisconnectReason::ProtocolError;
+    auto terminateOnExit = 
+        comms::util::makeScopeGuard(
+            [&cl = client(), &disconnectReason]()
+            {
+                terminationWithReason(cl, disconnectReason);
+            });     
+
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
             [this, &status, &info]()
@@ -158,13 +166,6 @@ void ReauthOp::handle(AuthMsg& msg)
                 completeOpInternal(status, infoPtr);
             });
 
-    auto disconnectReason = DisconnectReason::ProtocolError;
-    auto sendDisconnectOnExit = 
-        comms::util::makeScopeGuard(
-            [this, &disconnectReason]()
-            {
-                sendDisconnectWithReason(disconnectReason);
-            });              
 
     bool continueAuth = 
         msg.field_reasonCode().doesExist() && 
@@ -232,7 +233,7 @@ void ReauthOp::handle(AuthMsg& msg)
     }
 
     if (complete) {
-        sendDisconnectOnExit.release();
+        terminateOnExit.release();
         status = CC_Mqtt5AsyncOpStatus_Complete; // Reported in op completion callback
         return;
     }
@@ -344,7 +345,7 @@ void ReauthOp::handle(AuthMsg& msg)
         return;
     }
 
-    sendDisconnectOnExit.release();
+    terminateOnExit.release();
     completeOpOnExit.release();
     restartTimer();
 }

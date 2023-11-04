@@ -237,6 +237,13 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle&
     return result;
 }
 
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendReauth(CC_Mqtt5ReauthHandle& reauth)
+{
+    auto result = ::cc_mqtt5_client_reauth_send(reauth, &UnitTestCommonBase::unitTestReauthCompleteCb, this);
+    reauth = nullptr;
+    return result;
+}
+
 UniTestsMsgPtr UnitTestCommonBase::unitTestGetSentMessage()
 {
     UniTestsMsgPtr msg;
@@ -323,6 +330,23 @@ void UnitTestCommonBase::unitTestPopPublishResponseInfo()
     m_publishResp.erase(m_publishResp.begin());
 }
 
+bool UnitTestCommonBase::unitTestIsReauthComplete() const
+{
+    return !m_reauthResp.empty();
+}
+
+const UnitTestCommonBase::UnitTestReauthResponseInfo& UnitTestCommonBase::unitTestReauthResponseInfo()
+{
+    test_assert(!m_reauthResp.empty());
+    return m_reauthResp.front();
+}
+
+void UnitTestCommonBase::unitTestPopReauthResponseInfo()
+{
+    test_assert(!m_reauthResp.empty());
+    m_reauthResp.erase(m_reauthResp.begin());
+}
+
 void UnitTestCommonBase::unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData)
 {
     UnitTestsFrame frame;
@@ -360,6 +384,25 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestConfigAuth(CC_Mqtt5ConnectHandle h
     return cc_mqtt5_client_connect_config_auth(handle, &config);
 }
 
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestConfigReauth(CC_Mqtt5ReauthHandle handle, const std::string& method, const std::vector<std::uint8_t>& data)
+{
+    auto config = CC_Mqtt5AuthConfig();
+    cc_mqtt5_client_connect_init_config_auth(&config);
+
+    if (!method.empty()) {
+        config.m_authMethod = method.c_str();
+    }
+
+    comms::cast_assign(config.m_authDataLen) = data.size();
+    if (!data.empty()) {
+        config.m_authData = &data[0];
+    }
+
+    config.m_authCb = &UnitTestCommonBase::unitTestAuthCb;
+    config.m_authCbData = this;
+    return cc_mqtt5_client_reauth_config_auth(handle, &config);    
+}
+
 void UnitTestCommonBase::unitTestAddOutAuth(const UnitTestAuthInfo& info)
 {
     m_outAuthInfo.push_back(info);
@@ -386,6 +429,18 @@ void UnitTestCommonBase::unitTestPopInAuthInfo()
 {
     test_assert(!m_inAuthInfo.empty());
     m_inAuthInfo.erase(m_inAuthInfo.begin());
+}
+
+bool UnitTestCommonBase::unitTestHasOutAuthInfo() const
+{
+    return !m_outAuthInfo.empty();
+}
+
+void UnitTestCommonBase::unitTestPopOutAuthInfo()
+{
+    test_assert(!m_outAuthInfo.empty());
+    m_outAuthInfo.erase(m_outAuthInfo.begin());
+
 }
 
 bool UnitTestCommonBase::unitTestIsDisconnected() const
@@ -502,6 +557,16 @@ void UnitTestCommonBase::unitTestPerformConnect(
 
         test_assert(unitTestHasInAuthInfo()); 
         unitTestPopInAuthInfo();
+        unitTestPopOutAuthInfo();
+
+        sentMsg = unitTestGetSentMessage();
+        test_assert(static_cast<bool>(sentMsg));
+        test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Auth);
+        test_assert(!unitTestIsConnectComplete());        
+        auto* authMsg = dynamic_cast<UnitTestAuthMsg*>(sentMsg.get());
+        test_assert(authMsg != nullptr);
+        test_assert(authMsg->field_reasonCode().doesExist());
+        test_assert(authMsg->field_reasonCode().field().value() == UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
     }
 
     unitTestTick(1000);
@@ -882,6 +947,18 @@ void UnitTestCommonBase::unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpSta
     if (response != nullptr) {
         info.m_response = *response;
     }
+}
+
+void UnitTestCommonBase::unitTestReauthCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response)
+{
+    auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
+    test_assert(realObj->m_reauthResp.empty());
+    realObj->m_reauthResp.resize(realObj->m_reauthResp.size() + 1U);
+    auto& info = realObj->m_reauthResp.back();
+    info.m_status = status;
+    if (response != nullptr) {
+        info.m_response = *response;
+    }    
 }
 
 CC_Mqtt5AuthErrorCode UnitTestCommonBase::unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)

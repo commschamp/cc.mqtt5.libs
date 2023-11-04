@@ -198,6 +198,12 @@ protected:
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestPublishResponse m_response;
+    };         
+
+    struct UnitTestReauthResponseInfo
+    {
+        CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
+        UnitTestAuthInfo m_response;
     };          
 
     struct TickInfo
@@ -237,6 +243,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestSendSubscribe(CC_Mqtt5SubscribeHandle& subscribe);
     CC_Mqtt5ErrorCode unitTestSendUnsubscribe(CC_Mqtt5UnsubscribeHandle& unsubscribe);
     CC_Mqtt5ErrorCode unitTestSendPublish(CC_Mqtt5PublishHandle& publish);
+    CC_Mqtt5ErrorCode unitTestSendReauth(CC_Mqtt5ReauthHandle& reauth);
     UniTestsMsgPtr unitTestGetSentMessage();
     bool unitTestHasSentMessage() const;
     bool unitTestIsConnectComplete();
@@ -251,13 +258,19 @@ protected:
     bool unitTestIsPublishComplete();
     const UnitTestPublishResponseInfo& unitTestPublishResponseInfo();
     void unitTestPopPublishResponseInfo();
+    bool unitTestIsReauthComplete() const;
+    const UnitTestReauthResponseInfo& unitTestReauthResponseInfo();
+    void unitTestPopReauthResponseInfo();
     void unitTestReceiveMessage(const UnitTestMessage& msg, bool reportReceivedData = true);
     CC_Mqtt5ErrorCode unitTestConfigAuth(CC_Mqtt5ConnectHandle handle, const std::string& method, const std::vector<std::uint8_t>& data);
+    CC_Mqtt5ErrorCode unitTestConfigReauth(CC_Mqtt5ReauthHandle handle, const std::string& method, const std::vector<std::uint8_t>& data);
     void unitTestAddOutAuth(const UnitTestAuthInfo& info);
     void unitTestClearAuth();
     bool unitTestHasInAuthInfo() const;
     const UnitTestAuthInfo& unitTestInAuthInfo() const;
     void unitTestPopInAuthInfo();
+    bool unitTestHasOutAuthInfo() const;
+    void unitTestPopOutAuthInfo();
     bool unitTestIsDisconnected() const;
     bool unitTestHasDisconnectInfo() const;
     const UnitTestDisconnectInfo& unitTestDisconnectInfo() const;
@@ -314,6 +327,7 @@ private:
     static void unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
     static void unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
     static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+    static void unitTestReauthCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
     
     UnitTestClientPtr m_client;
@@ -324,6 +338,7 @@ private:
     std::vector<UnitTestSubscribeResponseInfo> m_subscribeResp;
     std::vector<UnitTestUnsubscribeResponseInfo> m_unsubscribeResp;
     std::vector<UnitTestPublishResponseInfo> m_publishResp;
+    std::vector<UnitTestReauthResponseInfo> m_reauthResp;
     std::vector<UnitTestAuthInfo> m_inAuthInfo;
     std::vector<UnitTestAuthInfo> m_outAuthInfo;
     std::vector<CC_Mqtt5UserProp> m_userPropsTmp;

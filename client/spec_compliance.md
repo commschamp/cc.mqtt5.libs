@@ -654,5 +654,15 @@
     * Tested in UnitTestConnect::test27.
 - [MQTT-3.15.2-1]: The sender of the AUTH Packet MUST use one of the Authenticate Reason Codes.
     * Client complies, application doesn't have control over reason code.
-    * When during connect client doesn't receive "Continue Auth" it protocol error. Tested in UnitTestConnect::test28.
-    * ??? Reauth not tested.
+    * When during connect client doesn't receive "Continue Auth" it's protocol error. Tested in UnitTestConnect::test28.
+    * When during reauth client doesn't receive "Continue Auth" or "Succes" it's protocol error. Tested in UnitTestReauth::test2.
+- [MQTT-3.15.2-2]: The sender MUST NOT send this property (Reason String) if it would increase the size of the AUTH packet beyond the
+    Maximum Packet Size specified by the receiver.
+    * On the client side the operation will be terminated in case "write" fails to due exceeding the message length size.
+    * It is a responsibility of the application not to use this string when length is exceeded.
+    * Tested in UnitTestReauth::test3.
+- [MQTT-3.15.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the AUTH packet
+    beyond the Maximum Packet Size specified by the receiver.
+    * On the client side the operation will be terminated in case "write" fails to due exceeding the message length size.
+    * It is a responsibility of the application not to pass user properties.
+    * Tested in UnitTestReauth::test4.

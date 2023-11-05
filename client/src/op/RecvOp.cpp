@@ -373,7 +373,7 @@ void RecvOp::handle(PubrelMsg& msg)
 
     if (!msg.doValid()) {
         errorLog("Received invalid flags in PUBREL message");
-        protocolErrorTermination();
+        terminationWithReason(DisconnectReason::MalformedPacket);
         return;
     }
 

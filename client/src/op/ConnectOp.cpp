@@ -738,15 +738,15 @@ void ConnectOp::handle(AuthMsg& msg)
     m_timer.cancel();
 
     auto protocolErrorCompletion = 
-        [this]()
+        [this](DisconnectReason reason = DisconnectReason::ProtocolError)
         {
-            sendDisconnectWithReason(DisconnectReason::ProtocolError);
+            sendDisconnectWithReason(reason);
             completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
         };
 
     if (!msg.doValid()) {
         errorLog("Invalid flags received in AUTH message");
-        protocolErrorCompletion();
+        protocolErrorCompletion(DisconnectReason::MalformedPacket);
         // No members access after this point, the op will be deleted
         return;
     }        

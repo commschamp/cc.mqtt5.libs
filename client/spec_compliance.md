@@ -846,4 +846,31 @@
     any successful CONNACK packet MUST include an Authentication Method Property with the same value
     as in the CONNECT packet.
     * Tested in UnitTestConnect::test3.
-    * When CONNACK has wrong AuthMethed Protocol Error is reported. Not tested yet ??? 
+    * When CONNACK has wrong AuthMethed, Protocol Error is reported. Tested in UnitTestConnect::test30.
+    * When AUTH has wrong AuthMethed, Protocol Error is reported. Tested in UnitTestConnect::test31.
+- [MQTT-4.12.0-6]:  If the Client does not include an Authentication Method in the CONNECT, the Server MUST NOT send an AUTH
+    packet, and it MUST NOT send an Authentication Method in the CONNACK packet.
+    * Server specific.
+    * Incorrect behaviou is rejected with "Protocol Error".
+    * Tested in UnitTestConnect::test32.
+- [MQTT-4.12.0-7]: If the Client does not include an Authentication Method in the CONNECT, the Client MUST NOT send an
+    AUTH packet to the Server.
+    * During the connection, client sends AUTH only as a response to the broker's AUTH, when allowed.
+    * During the reauthentication, client rejects an ability to perfrom re-authentication.
+    * Tested in UnitTestReauth::test5.
+- [MQTT-4.12.1-1]: If the Client supplied an Authentication Method in the CONNECT packet it can initiate a re-authentication
+    at any time after receiving a CONNACK. It does this by sending an AUTH packet with a Reason Code of
+    0x19 (Re-authentication). The Client MUST set the Authentication Method to the same value as the
+    Authentication Method originally used to authenticate the Network Connection.
+    * Tested in UnitTestReauth::test1.
+- [MQTT-4.12.1-2]: If the re-authentication fails, the Client or Server SHOULD send DISCONNECT with an appropriate
+    Reason Code.
+    * Tested in UnitTestReauth::test6 and UnitTestReauth::test7.
+- [MQTT-4.13.1-1]: When a Server detects a Malformed Packet or Protocol Error, and a Reason Code is given in the
+    specification, it MUST close the Network Connection.
+    * The error is reported to the application, closing the network connection is its responsibility.
+- [MQTT-4.13.2-1]: The CONNACK and DISCONNECT packets allow a Reason Code of 0x80 or greater to indicate that the
+    Network Connection will be closed. If a Reason Code of 0x80 or greater is specified, then the Network
+    Connection MUST be closed whether or not the CONNACK or DISCONNECT is sent.
+    * Responsibility of the application.
+- 

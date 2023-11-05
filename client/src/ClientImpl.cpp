@@ -496,7 +496,13 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
-        }        
+        }      
+
+        if (m_sessionState.m_authMethod.empty()) {
+            errorLog("Reauthentication allowed only when CONNECT used authentication.");
+            updateEc(ec, CC_Mqtt5ErrorCode_NotAuthenticated);
+            break;            
+        }  
 
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start reauth operation, retry in next event loop iteration.");

@@ -1168,7 +1168,7 @@ void UnitTestReceive::test17()
     unitTestReceiveMessage(pubrelMsg);    
 
     TS_ASSERT(!unitTestHasMessageRecieved());
-    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::MalformedPacket);
     TS_ASSERT(unitTestIsDisconnected());             
 }
 

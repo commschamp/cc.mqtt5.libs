@@ -227,30 +227,32 @@ typedef struct
     const char* m_value; ///< Value string
 } CC_Mqtt5UserProp;
 
+/// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_basic().
 typedef struct
 {
-    const char* m_clientId;
-    const char* m_username;
-    const unsigned char* m_password;
-    unsigned m_passwordLen;
-    unsigned m_keepAlive;
-    bool m_cleanStart;
+    const char* m_clientId; ///< Zero terminated Client ID string, can be NULL. When NULL means empty "Client ID".
+    const char* m_username; ///< Zero terminated Username string, can be NULL. When NULL means no username value
+    const unsigned char* m_password; ///< Pointer to password buffer, can be NULL. 
+    unsigned m_passwordLen; ///< Number of password bytes. When 0 means no password value.
+    unsigned m_keepAlive; ///< Keep alive seconds configuration.
+    bool m_cleanStart; ///< Clean start flag.
 } CC_Mqtt5ConnectBasicConfig;
 
+/// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_will().
 typedef struct
 {
-    const char* m_topic;
-    const unsigned char* m_data;
-    unsigned m_dataLen;
-    const char* m_contentType;
-    const char* m_responseTopic;
-    const unsigned char* m_correlationData;
-    unsigned m_correlationDataLen;
-    unsigned m_delayInterval;
-    unsigned m_messageExpiryInterval;
-    CC_Mqtt5QoS m_qos;
-    CC_Mqtt5PayloadFormat m_format;
-    bool m_retain;
+    const char* m_topic; ///< Zero terminated will topic, must NOT be NULL or empty.
+    const unsigned char* m_data; /// Will message data, can be NULL
+    unsigned m_dataLen; ///< Number of will data bytes. When 0 means no data.
+    const char* m_contentType; ///< "Content Type" will property, can be NULL.
+    const char* m_responseTopic; ///< "Response Topic" will property, can be NULL.
+    const unsigned char* m_correlationData; ///< "Correlation Data" will property, can be NULL.
+    unsigned m_correlationDataLen; ///< Number of bytes in the "Correlation Data" buffer. When 0 means no "Correlation Data".
+    unsigned m_delayInterval; ///< "Will Delay Interval" will property. 
+    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" will property. 
+    CC_Mqtt5QoS m_qos; ///< QoS value of the will message.
+    CC_Mqtt5PayloadFormat m_format; ///< "Payload Format Indicator" will property. 
+    bool m_retain; ///< "Retain" flag.
 } CC_Mqtt5ConnectWillConfig;
 
 /// @brief Extra properties configuration of the "connect" operation.

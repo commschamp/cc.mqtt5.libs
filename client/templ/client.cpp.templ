@@ -373,6 +373,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectH
     return connectOpFromHandle(handle)->addUserProp(*prop);
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop)
+{
+    if ((handle == nullptr) || (prop == nullptr)) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }        
+
+    return connectOpFromHandle(handle)->addWillUserProp(*prop);
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle handle, CC_Mqtt5ConnectCompleteCb cb, void* cbData)
 {
     if (handle == nullptr) {

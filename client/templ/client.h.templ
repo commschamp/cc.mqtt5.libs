@@ -134,6 +134,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_extra(CC_Mqtt5ConnectHa
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5AuthConfig* config);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
 
+/// @brief Add user property to the will configuratin of the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @param[in] prop Single user property info.
+/// @return Result code of the call.
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
+
 // @brief Send the prepared "connect" operation to broker
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
 /// @param[in] cb Callback to be invoked when "connect" operation is complete.

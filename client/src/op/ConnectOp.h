@@ -31,6 +31,7 @@ public:
     CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5ConnectExtraConfig& config);
     CC_Mqtt5ErrorCode configAuth(const CC_Mqtt5AuthConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
+    CC_Mqtt5ErrorCode addWillUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
     using Base::handle;

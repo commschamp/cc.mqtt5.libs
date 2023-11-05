@@ -107,7 +107,6 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
     }
     
     comms::units::setSeconds(m_connectMsg.field_keepAlive(), config.m_keepAlive);
-    m_connectMsg.doRefresh();
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -273,7 +272,6 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         }          
     }
 
-    m_connectMsg.doRefresh();
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -452,6 +450,12 @@ CC_Mqtt5ErrorCode ConnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
     return addUserPropToList(propsField, prop);
 }
 
+CC_Mqtt5ErrorCode ConnectOp::addWillUserProp(const CC_Mqtt5UserProp& prop)
+{
+    auto& propsField = m_connectMsg.field_willProperties().field();
+    return addUserPropToList(propsField, prop);
+}
+
 CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData) 
 {
     auto completeOnError = 
@@ -479,6 +483,7 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
     m_cb = cb;
     m_cbData = cbData;
     
+    m_connectMsg.doRefresh();
     auto result = client().sendMessage(m_connectMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;

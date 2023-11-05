@@ -123,15 +123,6 @@ bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle)
     return clientFromHandle(handle)->sessionState().m_initialized;
 }
 
-bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
-{
-    if (handle == nullptr) {
-        return false;
-    }
-
-    return clientFromHandle(handle)->sessionState().m_connected;
-}
-
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms)
 {
     clientFromHandle(handle)->tick(ms);
@@ -399,6 +390,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle h
 
     connectOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
     return CC_Mqtt5ErrorCode_Success;
+}
+
+bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return false;
+    }
+
+    return clientFromHandle(handle)->sessionState().m_connected;
 }
 
 CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)

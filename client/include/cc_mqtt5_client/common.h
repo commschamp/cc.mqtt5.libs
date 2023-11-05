@@ -33,7 +33,13 @@ extern "C" {
 /// @brief Version of the library as single numeric value
 #define CC_MQTT5_CLIENT_VERSION CC_MQTT5_CLIENT_MAKE_VERSION(CC_MQTT5_CLIENT_MAJOR_VERSION, CC_MQTT5_CLIENT_MINOR_VERSION, CC_MQTT5_CLIENT_PATCH_VERSION)
 
+/// @brief Special value for "Session Expiry Interval" property to specify that session never expires.
+/// @see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval
+/// @see @ref CC_Mqtt5ConnectResponse::m_sessionExpiryInterval
 #define CC_MQTT5_SESSION_NEVER_EXPIRES 0xffffffff
+
+/// @brief MQTT5 protocol limit to topic alias.
+/// @details The application is expected not to allocate more than 65535 topic aliases.
 #define CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT 0xffff
 
 /// @brief Quality of Service
@@ -48,7 +54,7 @@ typedef enum
 /// @brief Error code returned by various API functions.
 typedef enum
 {
-    CC_Mqtt5ErrorCode_Success, ///< The requested operation was successfully started.
+    CC_Mqtt5ErrorCode_Success, ///< The requested function executed successfully.
     CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report    
     CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
     CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
@@ -66,7 +72,7 @@ typedef enum
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 
-/// @brief Payload format indicator
+/// @brief Payload Format Indicator values as defined by the MQTT5 protocol
 typedef enum
 {
     CC_Mqtt5PayloadFormat_Unspecified = 0, ///< Unspecified format
@@ -74,25 +80,26 @@ typedef enum
     CC_Mqtt5PayloadFormat_ValuesLimit ///< Limit of the values
 } CC_Mqtt5PayloadFormat;
 
+/// @brief Status of the asynchronous operation.
 typedef enum
 {
-    CC_Mqtt5AsyncOpStatus_Complete,
-    CC_Mqtt5AsyncOpStatus_InternalError,
-    CC_Mqtt5AsyncOpStatus_Timeout,
-    CC_Mqtt5AsyncOpStatus_ProtocolError,
-    CC_Mqtt5AsyncOpStatus_Aborted,
-    CC_Mqtt5AsyncOpStatus_BrokerDisconnected,
-    CC_Mqtt5AsyncOpStatus_OutOfMemory,
-    CC_Mqtt5AsyncOpStatus_BadParam,
-    CC_Mqtt5AsyncOpStatus_ValuesLimit ///< Must be last
+    CC_Mqtt5AsyncOpStatus_Complete, ///< The requested operation has been completed, refer to reported extra details for information.
+    CC_Mqtt5AsyncOpStatus_InternalError, ///< Internal library error, please submit bug report    
+    CC_Mqtt5AsyncOpStatus_Timeout, ///< The required response from broker hasn't been received in time
+    CC_Mqtt5AsyncOpStatus_ProtocolError, ///< The broker's response doesn't comply with MQTT5 specification.
+    CC_Mqtt5AsyncOpStatus_Aborted, ///< The operation has been aborted before completion due to client's side operation.
+    CC_Mqtt5AsyncOpStatus_BrokerDisconnected, ///< The operation has been aborted before completion due to broker's disconnection.
+    CC_Mqtt5AsyncOpStatus_OutOfMemory, ///< The client library wasn't able to allocate necessary memory.
+    CC_Mqtt5AsyncOpStatus_BadParam, ///< Bad value has been returned from the relevant callback.
+    CC_Mqtt5AsyncOpStatus_ValuesLimit ///< Limit for the values
 } CC_Mqtt5AsyncOpStatus;
 
-
+/// @brief Error code returned by the @ref CC_Mqtt5AuthCb callback.
 typedef enum
 {
-    CC_Mqtt5AuthErrorCode_Continue,
-    CC_Mqtt5AuthErrorCode_Disconnect,
-    CC_Mqtt5AuthErrorCode_ValuesLimit
+    CC_Mqtt5AuthErrorCode_Continue, ///< Continue the authentication process
+    CC_Mqtt5AuthErrorCode_Disconnect, ///< Stop the authentication, send DISCONNECT to broker
+    CC_Mqtt5AuthErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5AuthErrorCode;
 
 typedef enum
@@ -144,55 +151,80 @@ typedef enum
     CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
 } CC_Mqtt5ReasonCode;
 
+/// @brief "Retain Handling" option as defined by the MQTT5 specification.
+/// @details It is used during the "subscribe" operation topic configuration.
 typedef enum
 {
-    CC_Mqtt5RetainHandling_Send = 0,
-    CC_Mqtt5RetainHandling_SendIfDoesNotExist = 1,
-    CC_Mqtt5AuthErrorCode_DoNotSend = 2,
-    CC_Mqtt5RetainHandling_ValuesLimit
+    CC_Mqtt5RetainHandling_Send = 0, ///< Send retained messages at the time of the subscribe
+    CC_Mqtt5RetainHandling_SendIfDoesNotExist = 1, ///< Send retained messages at subscribe only if the subscription does not currently exist
+    CC_Mqtt5AuthErrorCode_DoNotSend = 2, ///< Do not send retained messages at the time of the subscribe
+    CC_Mqtt5RetainHandling_ValuesLimit ///< Limit for the values
 } CC_Mqtt5RetainHandling;
 
+/// @brief Preference of whether to use numeric "Topic Alias" instead of string topic during publish operation.
 typedef enum
 {
-    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable,
-    CC_Mqtt5TopicAliasPreference_ForceAliasOnly,
-    CC_Mqtt5TopicAliasPreference_ForceTopicOnly,
-    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias,
-    CC_Mqtt5TopicAliasPreference_ValuesLimit
+    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable, ///< Use topic alias if such is available
+    CC_Mqtt5TopicAliasPreference_ForceAliasOnly, ///< Force sending topic alias, requires topic alias to be allocated.
+    CC_Mqtt5TopicAliasPreference_ForceTopicOnly, ///< Force sending topic string even if topic alias is available.
+    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias, ///< Force sending both topic string and its numeric alias.
+    CC_Mqtt5TopicAliasPreference_ValuesLimit ///< Limit for the values
 } CC_Mqtt5TopicAliasPreference;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ClientHandle
 struct CC_Mqtt5Client;
 
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by cc_mqtt5_client_new() function.
 typedef CC_Mqtt5Client* CC_Mqtt5ClientHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ConnectHandle
 struct CC_Mqtt5Connect;
-/// @brief Handle for connection operation.
+
+/// @brief Handle for "connect" operation.
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
 typedef CC_Mqtt5Connect* CC_Mqtt5ConnectHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5DisconnectHandle
 struct CC_Mqtt5Disconnect;
-/// @brief Handle for disconnection operation.
+
+/// @brief Handle for "disconnect" operation.
 /// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
 typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5SubscribeHandle
 struct CC_Mqtt5Subscribe;
+
+/// @brief Handle for "subscribe" operation.
+/// @details Returned by cc_mqtt5_client_subscribe_prepare() function.
 typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5UnsubscribeHandle
 struct CC_Mqtt5Unsubscribe;
+
+/// @brief Handle for "unsubscribe" operation.
+/// @details Returned by cc_mqtt5_client_unsubscribe_prepare() function.
 typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5PublishHandle
 struct CC_Mqtt5Publish;
+
+/// @brief Handle for "publish" operation.
+/// @details Returned by cc_mqtt5_client_publish_prepare() function.
 typedef CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
 
+/// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ReauthHandle
 struct CC_Mqtt5Reauth;
+
+/// @brief Handle for "reauth" operation.
+/// @details Returned by cc_mqtt5_client_reauth_prepare() function.
 typedef CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
 
+/// @brief Wraping structre of the single "User Property".
 typedef struct
 {
-    const char* m_key;
-    const char* m_value;
+    const char* m_key; ///< Key string
+    const char* m_value; ///< Value string
 } CC_Mqtt5UserProp;
 
 typedef struct
@@ -221,9 +253,10 @@ typedef struct
     bool m_retain;
 } CC_Mqtt5ConnectWillConfig;
 
+/// @brief Extra properties configuration of the "connect" operation.
 typedef struct
 {
-    unsigned m_sessionExpiryInterval;
+    unsigned m_sessionExpiryInterval; //!< "Session Expiry Interval" property.
     unsigned m_receiveMaximum;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMaximum;
@@ -231,6 +264,7 @@ typedef struct
     bool m_requestProblemInfo;
 } CC_Mqtt5ConnectExtraConfig;
 
+/// @brief Response information from broker to "connect" request
 typedef struct 
 {
     CC_Mqtt5ReasonCode m_reasonCode;
@@ -242,7 +276,7 @@ typedef struct
     unsigned m_authDataLen;
     const CC_Mqtt5UserProp* m_userProps;
     unsigned m_userPropsCount;
-    unsigned m_sessionExpiryInterval;
+    unsigned m_sessionExpiryInterval; //!< "Session Expiry Interval" property.
     unsigned m_highQosSendLimit;
     unsigned m_maxPacketSize;
     unsigned m_topicAliasMax;
@@ -317,23 +351,24 @@ typedef struct
     unsigned m_userPropsCount;
 } CC_Mqtt5UnsubscribeResponse;
 
+/// @brief Received message information
 typedef struct
 {
-    const char* m_topic;
-    const unsigned char* m_data;
-    unsigned m_dataLen;
-    const char* m_responseTopic;
-    const unsigned char* m_correlationData;
-    unsigned m_correlationDataLen; 
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;
-    const char* m_contentType;
-    const unsigned* m_subIds;       
-    unsigned m_subIdsCount;
-    unsigned m_messageExpiryInterval;
-    CC_Mqtt5QoS m_qos;
-    CC_Mqtt5PayloadFormat m_format;
-    bool m_retained;     
+    const char* m_topic; ///< Topic used to publish the message
+    const unsigned char* m_data; ///< Pointer to the temporary buffer containin message data
+    unsigned m_dataLen; ///< Amount of data bytes 
+    const char* m_responseTopic; ///< "Response Topic" property when provided, NULL if not.
+    const unsigned char* m_correlationData; ///< Pointer to the "Correlation Data" property value when provided, NULL if not.
+    unsigned m_correlationDataLen; ///< Amount of "Correlation Data" bytes;
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to the "User Property" properties array when provided, NULL if not.
+    unsigned m_userPropsCount; ///< Amount of "User Property" properties
+    const char* m_contentType; ///< "Content Type" property if provided, NULL if not.
+    const unsigned* m_subIds; ///< Pointer to array containing "Subscription Identifier" properties list when provided, NULL if not.
+    unsigned m_subIdsCount; ///< Amount of "Subscription Identifiers" in array.
+    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" property, defaults to 0 when not reported.
+    CC_Mqtt5QoS m_qos; ///< QoS value used by the broker to report the message.
+    CC_Mqtt5PayloadFormat m_format; ///< "Payload Format Indicator" property, defaults to @ref CC_Mqtt5PayloadFormat_Unspecified when not reported.
+    bool m_retained; ///< Indication of whether the received message was "retained".
 } CC_Mqtt5MessageInfo;
 
 typedef struct
@@ -391,20 +426,36 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 /// @param[in] data Pointer to user data object, passed as last parameter to
 ///     cc_mqtt5_client_set_send_output_data_callback() function.
 /// @param[in] buf Pointer to the buffer containing data to send
-/// @param[in] bufLen Number of bytes to send
+/// @param[in] bufLen Number of bytes in the buffer
+/// @post The buffer data can be deallocated / overwritten after the callback function returns.
 typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Callback used to report unsolicited disconnection of the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
+/// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 
+/// @post The data members of the reported info can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5DisconnectInfo* info);
 
+/// @brief Callback used to report new message received of the broker.
+/// @param[in] data Pointer to user data object, passed as the last parameter to
+///     the request call.
+/// @param[in] info Message information. Will NOT be NULL.
+/// @post The data members of the reported info can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5MessageReceivedReportCb)(void* data, const CC_Mqtt5MessageInfo* info);
 
+/// @brief Callback used to report discovered errors.
+/// @param[in] data Pointer to user data object, passed as the last parameter to
+///     the request call.
+/// @param[in] msg Error log message.
 typedef void (*CC_Mqtt5ErrorLogCb)(void* data, const char* msg);
 
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
+/// @brief Callback used to report incoming authentication data.
+/// @param[in] data Pointer to user data object passed during callback registration.
+/// @param[in] authInfoIn Pointer to authentication data received from broker.
+/// @param[out] authInfoOut Pointer to authentication data to be sent to the broker. Expected to be filled by the callback.
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);

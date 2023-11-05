@@ -193,9 +193,53 @@ function (gen_lib_mqtt5_client config_file)
     install(EXPORT ${lib_name}Config NAMESPACE cc::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/${lib_name}/cmake
     )        
+
+    if (DOXYGEN_FOUND)
+        set (doc_output_dir "${CMAKE_INSTALL_FULL_DATAROOTDIR}/doc/${lib_name}")
+        make_directory (${doc_output_dir})
+        
+        set (match_str "OUTPUT_DIRECTORY[^\n]*")
+        set (replacement_str "OUTPUT_DIRECTORY = ${doc_output_dir}")
+        set (output_file "${CMAKE_CURRENT_BINARY_DIR}/doxygen.conf")
+
+        if (NOT "${CC_MQTT5_CLIENT_CUSTOM_NAME}" STREQUAL "")
+            set (output_file "${CMAKE_CURRENT_BINARY_DIR}/doxygen_${CC_MQTT5_CLIENT_CUSTOM_NAME}.conf")
+        endif ()        
+
+        set (config_file "${CMAKE_CURRENT_SOURCE_DIR}/doxygen/doxygen.conf")
+        file (READ ${config_file} config_text)
+        string (REGEX REPLACE "${match_str}" "${replacement_str}" modified_config_text "${config_text}")
+        file (WRITE "${output_file}" "${modified_config_text}")
+        
+        set (interface_doc_dir "${CMAKE_CURRENT_BINARY_DIR}/interface_doc")
+        if (NOT "${CC_MQTT5_CLIENT_CUSTOM_NAME}" STREQUAL "")
+            set (interface_doc_dir "${interface_doc_dir}_${CC_MQTT5_CLIENT_CUSTOM_NAME}")
+        endif ()           
+
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${interface_doc_dir})
+
+        set (doc_tgt_name "doc_cc_mqtt5_client")
+        if (NOT "${CC_MQTT5_CLIENT_CUSTOM_NAME}" STREQUAL "")
+            set (doc_tgt_name "doc_cc_mqtt5_${CC_MQTT5_CLIENT_CUSTOM_NAME}_client")
+        endif ()           
+
+        add_custom_target (${doc_tgt_name}
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/doxygen/main.dox 
+                    ${CMAKE_CURRENT_SOURCE_DIR}/include/cc_mqtt5_client/common.h
+                    "${header_output}" 
+                    ${interface_doc_dir}/ 
+                COMMAND ${DOXYGEN_EXECUTABLE} ${output_file}
+                WORKING_DIRECTORY ${interface_doc_dir})
+                
+        add_dependencies(${doc_tgt_name} ${header_tgt_name})           
+    endif ()    
 endfunction()
 
 ######################################################################
+
+find_package (Doxygen)
 
 install (
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/cc_mqtt5_client

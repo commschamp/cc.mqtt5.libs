@@ -24,7 +24,7 @@ extern "C" {
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new();
 
 /// @brief Free previously allocated client.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @post The client handler becomes invalid and cannot be used any longer.
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 
@@ -32,12 +32,13 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 /// @details Re-initializes all internal data structures into their default variables
 ///     and checks that all the required callbacks have been set. If there are old
 ///     outstanding operations they are all aborted.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
 
+/// @brief Check that the client has been (re)initialized
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @return @b true if cc_mqtt5_##NAME##client_init() has been invoked before, @b false otherwise.
 bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
-
-bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Notify client about requested time expiry.
 /// @details The reported amount of milliseconds needs to be from the 
@@ -49,7 +50,7 @@ bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 ///     new measurement if needed.
 ///     This call may cause invocation of some other callbacks, such as a request
 ///     to send new data to the broker.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] ms Number of elapsed @b milliseconds.
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 
@@ -58,7 +59,7 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 ///     request to cancel the currently running time measurement, send some messages to
 ///     the broker, report incoming application message, and (re)start time
 ///     measurement.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] buf Pointer to the buffer of data to process.
 /// @param[in] bufLen Number of bytes in the data buffer.
 /// @return Number of processed bytes.
@@ -69,7 +70,14 @@ unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const
 void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected);
 bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle);
 
+/// @brief Configure default response timeout period
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] ms Response timeout duration in @b milliseconds.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms);
+
+/// @brief Retrieved currently configured default response timeout period
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @return Response timeout duration in @b milliseconds.
 unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHandle handle);
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount);
@@ -100,6 +108,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHan
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle handle, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle handle);
+bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 
 CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
 void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* config);
@@ -153,7 +162,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_cancel(CC_Mqtt5ReauthHandle han
 ///     measurement is required, the provided callback will be invoked with
 ///     the timeout duration in milliseconds. After requested time expires,
 ///     the @ref cc_mqtt5_##NAME##client_tick() function must be invoked.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -168,7 +177,7 @@ void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
 ///     @ref cc_mqtt5_##NAME##client_set_next_tick_program_callback() function. This function
 ///     sets appropriate callback. When invoked, it must return number of
 ///     elapsed milliseconds since previoius time measurement request.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -179,9 +188,9 @@ void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
     
 /// @brief Set callback to send raw data over I/O link.
 /// @details The callback is invoked when there is a need to send data
-///     to the gateway. The callback is invoked for every single message
-///     that need to be sent as a single datagram. 
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+///     to the broker. The callback is invoked for every single message
+///     that need to be sent. 
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -191,7 +200,7 @@ void cc_mqtt5_##NAME##client_set_send_output_data_callback(
     void* data);
 
 /// @brief Set callback to report unsolicited disconnection of the broker.
-/// @param[in] client Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -200,11 +209,21 @@ void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     CC_Mqtt5BrokerDisconnectReportCb cb,
     void* data);
 
+/// @brief Set callback to report received message from the broker.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] cb Callback function.
+/// @param[in] data Pointer to any user data structure. It will passed as one 
+///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_message_received_report_callback(
     CC_Mqtt5ClientHandle handle,
     CC_Mqtt5MessageReceivedReportCb cb,
     void* data);
-    
+
+/// @brief Set callback to report error messages.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] cb Callback function.
+/// @param[in] data Pointer to any user data structure. It will passed as one 
+///     of the parameters in callback invocation. May be NULL.
 void cc_mqtt5_##NAME##client_set_error_log_callback(
     CC_Mqtt5ClientHandle handle,
     CC_Mqtt5ErrorLogCb cb,

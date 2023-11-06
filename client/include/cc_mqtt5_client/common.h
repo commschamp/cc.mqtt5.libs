@@ -320,49 +320,58 @@ typedef struct
     unsigned m_userPropsCount;      
 } CC_Mqtt5DisconnectInfo;
 
+/// @brief Configuration structure of the "disconnect" operation.
+/// @see @b cc_mqtt5_client_disconnect_init_config()
 typedef struct
 {
-    CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_reasonStr;
-    unsigned* m_expiryInterval;
+    CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" to report to the broker
+    const char* m_reasonStr; ///< "Reason String" property, can be NULL when missing.
+    unsigned* m_sessionExpiryInterval; ///< Pointer to "Session Expiry Interval" property value, can be NULL when missing.
 } CC_Mqtt5DisconnectConfig;
 
+/// @brief Topic filter configuration structure of the "subscribe" operation.
+/// @see @b cc_mqtt5_client_subscribe_init_config_topic()
 typedef struct
 {
-    const char* m_topic;
-    CC_Mqtt5QoS m_maxQos;
-    CC_Mqtt5RetainHandling m_retainHandling;
-    bool m_noLocal; 
-    bool m_retainAsPublished;
+    const char* m_topic; ///< "Topic Filter" string, mustn't be NULL
+    CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" value, defaults to @ref CC_Mqtt5QoS_ExactlyOnceDelivery.
+    CC_Mqtt5RetainHandling m_retainHandling; ///< "Retain Handling" subscription option, defaults to @ref CC_Mqtt5RetainHandling_Send.
+    bool m_noLocal; ///< "No Local" subscription option, defaults to @b false.
+    bool m_retainAsPublished; ///< "Retain As Published" subscription option, defaults to @b false.
 } CC_Mqtt5SubscribeTopicConfig;
 
+/// @brief Extra subscription properties configuration structure.
+/// @see @b cc_mqtt5_client_subscribe_init_config_extra()
 typedef struct
 {
-    unsigned m_subId;
+    unsigned m_subId; ///< "Subscription Identifier" property, defaults to invalid value of @b 0.
 } CC_Mqtt5SubscribeExtraConfig;
 
-
+/// @brief Response information from broker to "subscribe" request
 typedef struct 
 {
-    const CC_Mqtt5ReasonCode* m_reasonCodes;
-    unsigned m_reasonCodesCount;
-    const char* m_reasonStr;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;
+    const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic subscription reason codes.
+    unsigned m_reasonCodesCount; ///< Amount of reason codes in the array.
+    const char* m_reasonStr; ///< "Reason String" property, can be NULL
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
 } CC_Mqtt5SubscribeResponse;
 
+/// @brief Topic filter configuration structure of the "unsubscribe" operation.
+/// @see @b cc_mqtt5_client_unsubscribe_init_config_topic()
 typedef struct
 {
-    const char* m_topic;
+    const char* m_topic; ///< "Topic Filter" string, mustn't be NULL
 } CC_Mqtt5UnsubscribeTopicConfig;
 
+/// @brief Response information from broker to "unsubscribe" request
 typedef struct 
 {
-    const CC_Mqtt5ReasonCode* m_reasonCodes;
-    unsigned m_reasonCodesCount;
-    const char* m_reasonStr;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;
+    const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic unsubscription reason codes.
+    unsigned m_reasonCodesCount; ///< Amount of reason codes in the array.
+    const char* m_reasonStr; ///< "Reason String" property, can be NULL
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
 } CC_Mqtt5UnsubscribeResponse;
 
 /// @brief Received message information
@@ -479,8 +488,22 @@ typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus stat
 /// @param[out] authInfoOut Pointer to authentication data to be sent to the broker. Expected to be filled by the callback.
 typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 
+/// @brief Callback used to report completion of the "subscribe" operation.
+/// @param[in] data Pointer to user data object passed as last parameter to the
+///     @b cc_mqtt5_client_subscribe_send().
+/// @param[in] status Status of the "subscribe" operation.
+/// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
+///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @post The data members of the reported response can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
+/// @brief Callback used to report completion of the "unsubscribe" operation.
+/// @param[in] data Pointer to user data object passed as last parameter to the
+///     @b cc_mqtt5_client_unsubscribe_send().
+/// @param[in] status Status of the "unsubscribe" operation.
+/// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
+///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @post The data members of the reported response can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
 typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);

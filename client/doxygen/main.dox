@@ -10,6 +10,9 @@
 /// It is a responsibility of the calling application to manage network connectivity
 /// as well as measure time required for the correct operation of the MQTT5 protocol.
 ///
+/// The library allows the application to have a full control over the raw data for
+/// any extra analysis and/or manipulation, such as encryption.
+///
 /// @section cc_mqtt5_client_header Header
 /// To use this <b>MQTT5 Client Library</b> use the following include statement:
 /// @code
@@ -265,7 +268,7 @@
 /// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
 /// CC_Mqtt5ConnectHandle connect = cc_mqtt5_client_connect_prepare(client, &ec);
 /// if (connect == NULL) {
-///     printf("ERROR: Connect failed with ec=%d\n", ec);
+///     printf("ERROR: Connect allocation failed with ec=%d\n", ec);
 /// }
 /// @endcode
 ///
@@ -442,7 +445,7 @@
 /// See also documentation of the @ref CC_Mqtt5UserProp structure.
 ///
 /// @subsection cc_mqtt5_client_connect_send Sending Connection Request
-/// When all the necessary configuration is performed for the allocated "connect"
+/// When all the necessary configurations are performed for the allocated "connect"
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_connect_send() function.
 /// @code
@@ -469,7 +472,7 @@
 /// <b> if and only if</b> the function returns @ref CC_Mqtt5ErrorCode_Success.
 ///
 /// The handle returned by the @b cc_mqtt5_client_connect_prepare() function
-/// can be discarded (there is not free / de-allocation) right after the
+/// can be discarded (there is no free / de-allocation) right after the
 /// @b cc_mqtt5_client_connect_send() invocation
 /// regardless of the returned error code. However, the handle remains valid until
 /// the callback is called (in case the @ref CC_Mqtt5ErrorCode_Success was returned).
@@ -508,6 +511,9 @@
 ///     ...
 /// }
 /// @endcode
+/// In case the @b cc_mqtt5_client_connect_send() function was successfully
+/// called before the @b cc_mqtt5_client_connect_cancel(), the operation is
+/// cancelled @b without callback invocation.
 ///
 /// @subsection cc_mqtt5_client_connect_check Check The Library Remains Connected
 /// At any time it is possible to check the internal state of the library of
@@ -515,3 +521,418 @@
 /// @code
 /// bool isConnected = cc_mqtt5_client_is_connected(client);
 /// @endcode
+///
+/// @section cc_mqtt5_client_disconnect Disconnecting From Broker
+/// To disconnect from broker use "disconnect" operation.
+///
+/// @subsection cc_mqtt5_client_disconnect_prepare Preparing "Disconnect" Operation.
+/// @code
+/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+/// CC_Mqtt5DisconnectHandle disconnect = cc_mqtt5_client_disconnect_prepare(client, &ec);
+/// if (disconnect == NULL) {
+///     printf("ERROR: Disconnect allocation failed with ec=%d\n", ec);
+/// }
+/// @endcode
+///
+/// @subsection cc_mqtt5_client_disconnect_config Configuration of "Disconnect" Operation
+/// The configuration of the "disconnect" operation is performed using a single
+/// @b cc_mqtt5_client_diconnect_config() function.
+/// @code
+/// CC_Mqtt5DisconnectConfig config;
+///
+/// // Assign default values to the "config"
+/// client_disconnect_init_config(&config);
+///
+/// // Update the values if needed:
+/// config.m_reasonCode = CC_Mqtt5ReasonCode_DisconnectWithWill;
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Disconnect configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+///
+/// @subsection cc_mqtt5_client_disconnect_user_prop Adding "User Properties"
+/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// the @b DISCONNECT message. The library allows such assignment using multiple invocations of
+/// the @b cc_mqtt5_client_disconnect_add_user_prop() function.
+/// @code
+/// CC_Mqtt5UserProp prop;
+/// prop.m_key = "some_key";
+/// prop.m_value = "some_value";
+/// ec = cc_mqtt5_client_disconnect_add_user_prop(disconnect, &prop);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: User property configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UserProp structure.
+///
+/// @subsection cc_mqtt5_client_disconnect_send Sending Disconnection Request
+/// When the necessary configuration is performed for the allocated "disconnect"
+/// operation it can be sent to the broker. To initiate sending
+/// use the @b cc_mqtt5_client_disconnect_send() function.
+/// @code
+/// ec = cc_mqtt5_client_disconnect_send(disconnect);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to send disconnect request with ec=%d\n", ec);
+///     ...
+///     return;
+/// }
+/// assert(!cc_mqtt5_client_is_connected(client)); // Expect immediate disconnection after the successful send
+/// @endcode
+/// @b NOTE that the @b cc_mqtt5_client_disconnect_send() function doesn't receive
+/// any callback because there is no expected response to the @b DISCONNECT message
+/// from the broker. The disconnection effect is immediate. The application is
+/// expected to terminate the network connection and go through
+/// @ref cc_mqtt5_client_init "re-initialization" process if necessary.
+///
+/// In case there are other asynchronous operations that hasn't been completed yet,
+/// their completion callback is automatically invoked with @ref CC_Mqtt5AsyncOpStatus_Aborted
+/// status.
+///
+/// @b IMPORTANT: In case of sending the explicit disconnection request the
+/// @ref cc_mqtt5_client_callbacks_broker_disconnect "registered unsolicited disconnection callback"
+/// is @b NOT invoked.
+///
+/// @subsection cc_mqtt5_client_disconnect_cancel Cancel the "Disconnect" Operation.
+/// While the handle returned by the @b cc_mqtt5_client_disconnect_prepare() is still
+/// valid it is possible to cancel / discard the operation.
+/// @code
+/// ec = cc_mqtt5_client_disconnect_cancel(disconnect);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to cancel disconnect with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+///
+/// @section cc_mqtt5_client_subscribe Subscribing to Receive Messages
+/// To subscribe to receive incoming messages use "subscribe" operation.
+/// The application can issue multiple "subscribe" operations in parallel.
+///
+/// @subsection cc_mqtt5_client_subscribe_prepare Preparing "Subscribe" Operation.
+/// @code
+/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+/// CC_Mqtt5SubscribeHandle subscribe = cc_mqtt5_client_subscribe_prepare(client, &ec);
+/// if (subscribe == NULL) {
+///     printf("ERROR: Subscribe allocation failed with ec=%d\n", ec);
+/// }
+/// @endcode
+///
+/// @subsection cc_mqtt5_client_subscribe_response_timeout Configuring "Subscribe" Response Timeout
+/// When created the "subscribe" operation inherits the @ref cc_mqtt5_client_response_timeout
+/// configuration. It can be changed for the allocated operation using the
+/// @b cc_mqtt5_client_subscribe_set_response_timeout() function.
+/// @code
+/// ec = cc_mqtt5_client_subscribe_set_response_timeout(subscribe, 1000);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     ... /* Something went wrong */
+/// }
+/// @endcode
+/// To retrieve the configured response timeout use the @b cc_mqtt5_client_subscribe_get_response_timeout() function.
+///
+/// @subsection cc_mqtt5_client_subscribe_topic Topic Configuration
+/// Single @b SUBSCRIBE message can carry multiple topic subscriptions. Use
+/// @b cc_mqtt5_client_subscribe_config_topic() function to configure each
+/// such subscription.
+/// @code
+/// CC_Mqtt5SubscribeTopicConfig topicConfig;
+///
+/// // Assign default values to the configuration
+/// cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);
+///
+/// // Update values if needed
+/// topicConfig.m_topic = "some/topic";
+/// topicConfig.m_noLocal = true;
+/// ...
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Topic configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5SubscribeTopicConfig structure.
+///
+/// By default the library will perform the analysis of the submitted topic format and
+/// reject it if topic format is incorrect. However, for performance reasons
+/// it is possible to disable such verification when client application
+/// ensures that no invalid topics are used. That includes not submitting
+/// topics with wildcards when the broker doesn't support them (see @ref CC_Mqtt5ConnectResponse),
+/// or not using shared subscription for the same reason.
+/// @code
+/// ec = cc_mqtt5_client_set_verify_outgoing_topic_enabled(client, false);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     ... /* Something is wrong */
+/// }
+/// @endcode
+/// @b NOTE that the configuration is global per client and not per "subscribe"
+/// operation.
+///
+/// To retrieve the current configuration use @b cc_mqtt5_client_get_verify_outgoing_topic_enabled()
+/// function.
+///
+/// @subsection cc_mqtt5_client_subscribe_extra Extra Properties Configuration
+/// To add extra MQTT5 specific properties to the subscription request use
+/// @b cc_mqtt5_client_subscribe_config_extra() function.
+/// @code
+/// CC_Mqtt5SubscribeExtraConfig extraConfig;
+///
+/// // Assign default values to the configuration
+/// cc_mqtt5_client_subscribe_init_config_extra(&extraConfig);
+///
+/// // Assign necessary properties:
+/// extraConfig.m_subId = ...;
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_subscribe_config_extra(subscribe, &extraConfig);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Extra properties configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5SubscribeExtraConfig structure.
+///
+/// @b Note that explicitly initializing the @ref CC_Mqtt5SubscribeExtraConfig
+/// configuration object is not really necessary, because it has only a single @ref CC_Mqtt5SubscribeExtraConfig::m_subId member,
+/// which is going to be overwritten as part of the configuration. However, calling
+/// the @b cc_mqtt5_client_subscribe_init_config_extra() is still recommended to make the
+/// application's code future updates proof. Potentially the MQTT5 specification and as the
+/// result this library can be updated by adding new property to the @ref
+/// CC_Mqtt5SubscribeExtraConfig struct. Having the "unnecessary" call to the
+/// @b cc_mqtt5_client_subscribe_init_config_extra() function makes sure
+/// that newly added property gets initialized to the default value without
+/// any need to update the application's code.
+///
+/// Also note that allocating and managing the "Subscription Identifier" property values is
+/// completely application's responsibility. The broker is responsible to report
+/// the assigned value when sending relevant message, and the client can use the
+/// reported value for easier dispatching of the received message to appropriate
+/// handling functionality.
+///
+/// @subsection cc_mqtt5_client_subscribe_user_prop Adding "User Properties"
+/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// the @b SUBSCRIBE message. The library allows such assignment using multiple invocations of
+/// the @b cc_mqtt5_client_subscribe_add_user_prop() function.
+/// @code
+/// CC_Mqtt5UserProp prop;
+/// prop.m_key = "some_key";
+/// prop.m_value = "some_value";
+/// ec = cc_mqtt5_client_subscribe_add_user_prop(subscribe, &prop);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: User property configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UserProp structure.
+///
+/// @subsection cc_mqtt5_client_subscribe_send Sending Subscription Request
+/// When all the necessary configurations are performed for the allocated "subscribe"
+/// operation it can actually be sent to the broker. To initiate sending
+/// use the @b cc_mqtt5_client_subscribe_send() function.
+/// @code
+/// void my_subscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+/// {
+///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+///         printf("ERROR: The subscription operation has failed with status=%d\n", status);
+///         ... // handle error.
+///         return;
+///     }
+///
+///     // "response" is not NULL when status is CC_Mqtt5AsyncOpStatus_Complete.
+///     assert(response != NULL);
+///     ... // Analyze response values.
+/// }
+///
+/// ec = cc_mqtt5_client_subscribe_send(subscribe, &my_subscribe_complete_cb, data);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to send subscribe request with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// The provided callback will be invoked when the "subscribe" operation is complete
+/// <b> if and only if</b> the function returns @ref CC_Mqtt5ErrorCode_Success.
+///
+/// The handle returned by the @b cc_mqtt5_client_subscribe_prepare() function
+/// can be discarded (there is no free / de-allocation) right after the
+/// @b cc_mqtt5_client_subscribe_send() invocation
+/// regardless of the returned error code. However, the handle remains valid until
+/// the callback is called (in case the @ref CC_Mqtt5ErrorCode_Success was returned).
+/// The valid handle can be used to @ref cc_mqtt5_client_subscribe_cancel "cancel"
+/// the operation before the completion callback is invoked.
+///
+/// When the "subscribe" operation completion callback is invoked the reported
+/// response information is present <b>if and only if</b> the "status" is
+/// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @subsection cc_mqtt5_client_subscribe_cancel Cancel the "Subscribe" Operation.
+/// While the handle returned by the @b cc_mqtt5_client_subscribe_prepare() is still
+/// valid it is possible to cancel / discard the operation.
+/// @code
+/// ec = cc_mqtt5_client_subscribe_cancel(subscribe);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to cancel subscribe with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// In case the @b cc_mqtt5_client_subscribe_send() function was successfully
+/// called before the @b cc_mqtt5_client_subscribe_cancel(), the operation is
+/// cancelled @b without callback invocation.
+///
+/// @section cc_mqtt5_client_unsubscribe Unsubscribing from Message Reception
+/// To unsubscribe from receiving incoming messages use "unsubscribe" operation.
+/// The application can issue multiple "unsubscribe" operations in parallel.
+///
+/// @subsection cc_mqtt5_client_unsubscribe_prepare Preparing "Unsubscribe" Operation.
+/// @code
+/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+/// CC_Mqtt5UnsubscribeHandle unsubscribe = cc_mqtt5_client_unsubscribe_prepare(client, &ec);
+/// if (unsubscribe == NULL) {
+///     printf("ERROR: Unsubscribe allocation failed with ec=%d\n", ec);
+/// }
+/// @endcode
+///
+/// @subsection cc_mqtt5_client_unsubscribe_response_timeout Configuring "Unsubscribe" Response Timeout
+/// When created the "unsubscribe" operation inherits the @ref cc_mqtt5_client_response_timeout
+/// configuration. It can be changed for the allocated operation using the
+/// @b cc_mqtt5_client_unsubscribe_set_response_timeout() function.
+/// @code
+/// ec = cc_mqtt5_client_unsubscribe_set_response_timeout(unsubscribe, 1000);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     ... /* Something went wrong */
+/// }
+/// @endcode
+/// To retrieve the configured response timeout use the @b cc_mqtt5_client_unsubscribe_get_response_timeout() function.
+///
+/// @subsection cc_mqtt5_client_unsubscribe_topic Topic Configuration
+/// Single @b UNSUBSCRIBE message can carry multiple topic unsubscriptions. Use
+/// @b cc_mqtt5_client_unsubscribe_config_topic() function to configure each
+/// such unsubscription.
+/// @code
+/// CC_Mqtt5UnsubscribeTopicConfig topicConfig;
+///
+/// // Assign default values to the configuration
+/// cc_mqtt5_client_unsubscribe_init_config_topic(&topicConfig);
+///
+/// // Update values
+/// topicConfig.m_topic = "some/topic";
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_unsubscribe_config_topic(unsubscribe, &topicConfig);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Topic configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UnsubscribeTopicConfig structure.
+///
+/// @b Note that explicitly initializing the @ref CC_Mqtt5UnsubscribeTopicConfig
+/// configuration object is not really necessary, because it has only a single @ref CC_Mqtt5UnsubscribeTopicConfig::m_topic member,
+/// which is going to be overwritten as part of the configuration. However, calling
+/// the @b cc_mqtt5_client_unsubscribe_init_config_topic() is still recommended to make the
+/// application's code future updates proof. Potentially the MQTT5 specification and as the
+/// result this library can be updated by adding new fields to the @ref
+/// CC_Mqtt5UnsubscribeTopicConfig struct. Having the "unnecessary" call to the
+/// @b cc_mqtt5_client_unsubscribe_init_config_topic() function makes sure
+/// that newly added field gets initialized to the default value without
+/// any need to update the application's code.
+///
+/// By default the library will perform the analysis of the submitted topic format and
+/// reject it if topic format is incorrect. However, for performance reasons
+/// it is possible to disable such verification when client application
+/// ensures that no invalid topics are used.
+/// @code
+/// ec = cc_mqtt5_client_set_verify_outgoing_topic_enabled(client, false);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     ... /* Something is wrong */
+/// }
+/// @endcode
+/// @b NOTE that the configuration is global per client and not per "unsubscribe"
+/// operation.
+///
+/// To retrieve the current configuration use @b cc_mqtt5_client_get_verify_outgoing_topic_enabled()
+/// function.
+///
+/// @subsection cc_mqtt5_client_unsubscribe_user_prop Adding "User Properties"
+/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// the @b UNSUBSCRIBE message. The library allows such assignment using multiple invocations of
+/// the @b cc_mqtt5_client_unsubscribe_add_user_prop() function.
+/// @code
+/// CC_Mqtt5UserProp prop;
+/// prop.m_key = "some_key";
+/// prop.m_value = "some_value";
+/// ec = cc_mqtt5_client_unsubscribe_add_user_prop(unsubscribe, &prop);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: User property configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UserProp structure.
+///
+/// @subsection cc_mqtt5_client_unsubscribe_send Sending Unsubscription Request
+/// When all the necessary configurations are performed for the allocated "unsubscribe"
+/// operation it can actually be sent to the broker. To initiate sending
+/// use the @b cc_mqtt5_client_unsubscribe_send() function.
+/// @code
+/// void my_unsubscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+/// {
+///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+///         printf("ERROR: The unsubscription operation has failed with status=%d\n", status);
+///         ... // handle error.
+///         return;
+///     }
+///
+///     // "response" is not NULL when status is CC_Mqtt5AsyncOpStatus_Complete.
+///     assert(response != NULL);
+///     ... // Analyze response values.
+/// }
+///
+/// ec = cc_mqtt5_client_unsubscribe_send(unsubscribe, &my_unsubscribe_complete_cb, data);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to send unsubscribe request with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// The provided callback will be invoked when the "unsubscribe" operation is complete
+/// <b> if and only if</b> the function returns @ref CC_Mqtt5ErrorCode_Success.
+///
+/// The handle returned by the @b cc_mqtt5_client_unsubscribe_prepare() function
+/// can be discarded (there is no free / de-allocation) right after the
+/// @b cc_mqtt5_client_unsubscribe_send() invocation
+/// regardless of the returned error code. However, the handle remains valid until
+/// the callback is called (in case the @ref CC_Mqtt5ErrorCode_Success was returned).
+/// The valid handle can be used to @ref cc_mqtt5_client_unsubscribe_cancel "cancel"
+/// the operation before the completion callback is invoked.
+///
+/// When the "unsubscribe" operation completion callback is invoked the reported
+/// response information is present <b>if and only if</b> the "status" is
+/// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @subsection cc_mqtt5_client_unsubscribe_cancel Cancel the "Unsubscribe" Operation.
+/// While the handle returned by the @b cc_mqtt5_client_unsubscribe_prepare() is still
+/// valid it is possible to cancel / discard the operation.
+/// @code
+/// ec = cc_mqtt5_client_unsubscribe_cancel(unsubscribe);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to cancel unsubscribe with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// In case the @b cc_mqtt5_client_unsubscribe_send() function was successfully
+/// called before the @b cc_mqtt5_client_unsubscribe_cancel(), the operation is
+/// cancelled @b without callback invocation.
+///
+/// @section cc_mqtt5_client_publish Publishing Messages
+///
+/// @section cc_mqtt5_client_receive Receiving Messages
+///
+/// @section cc_mqtt5_client_reauth Re-Authenticating
+///
+/// @section cc_mqtt5_client_unsolicited_disconnect Unsolicited Disconnection
+///
+/// @section cc_mqtt5_client_network_disconnect Network Disconnection
+///
+/// @section cc_mqtt5_client_thread_safety Thread Safety

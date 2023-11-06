@@ -27,8 +27,8 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
     comms::cast_assign(m_disconnectMsg.field_reasonCode().field().value()) = config.m_reasonCode;
 
     auto& propsField = m_disconnectMsg.field_propertiesList().field();
-    if (config.m_expiryInterval != nullptr) {
-        if ((*config.m_expiryInterval > 0) && (client().sessionState().m_connectSessionExpiryInterval == 0U)) {
+    if (config.m_sessionExpiryInterval != nullptr) {
+        if ((*config.m_sessionExpiryInterval > 0) && (client().sessionState().m_connectSessionExpiryInterval == 0U)) {
             errorLog("Non-zero expiry interval in DISCONNECT is not allowed when zero expiry interval used in CONNECT.");
             return CC_Mqtt5ErrorCode_BadParam;
         }
@@ -41,7 +41,7 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_sessionExpiryInterval();
         auto& valueField = propBundle.field_value();        
-        comms::units::setSeconds(valueField, *config.m_expiryInterval);                
+        comms::units::setSeconds(valueField, *config.m_sessionExpiryInterval);                
     }
 
     if (config.m_reasonStr != nullptr) {

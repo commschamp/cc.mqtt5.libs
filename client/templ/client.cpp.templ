@@ -198,7 +198,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_M
     }
 }
 
-bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic(CC_Mqtt5ClientHandle handle)
+bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle)
 {
     if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         COMMS_ASSERT(handle != nullptr);
@@ -493,6 +493,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_set_response_timeout(CC_Mqtt
     return CC_Mqtt5ErrorCode_Success;
 }
 
+unsigned cc_mqtt5_##NAME##client_subscribe_get_response_timeout(CC_Mqtt5SubscribeHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return subscribeOpFromHandle(handle)->getResponseTimeout();
+}
+
 void cc_mqtt5_##NAME##client_subscribe_init_config_topic(CC_Mqtt5SubscribeTopicConfig* config)
 {
     *config = CC_Mqtt5SubscribeTopicConfig();
@@ -569,6 +578,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_set_response_timeout(CC_Mq
 
     unsubscribeOpFromHandle(handle)->setResponseTimeout(ms);
     return CC_Mqtt5ErrorCode_Success;    
+}
+
+unsigned cc_mqtt5_##NAME##client_unsubscribe_get_response_timeout(CC_Mqtt5UnsubscribeHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return unsubscribeOpFromHandle(handle)->getResponseTimeout();
 }
 
 void cc_mqtt5_##NAME##client_unsubscribe_init_config_topic(CC_Mqtt5UnsubscribeTopicConfig* config)

@@ -80,7 +80,7 @@ void UnitTestDisconnect::test3()
     cc_mqtt5_client_disconnect_init_config(&config);
 
     unsigned expiryInterval = 10;
-    config.m_expiryInterval = &expiryInterval;
+    config.m_sessionExpiryInterval = &expiryInterval;
 
     auto* disconnect = cc_mqtt5_client_disconnect_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(disconnect, nullptr);

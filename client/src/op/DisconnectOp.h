@@ -25,6 +25,7 @@ public:
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5DisconnectConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send();
+    CC_Mqtt5ErrorCode cancel();
 
 protected:
     virtual Type typeImpl() const override;    

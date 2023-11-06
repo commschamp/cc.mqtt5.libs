@@ -328,6 +328,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_set_response_timeout(CC_Mqtt5C
     return CC_Mqtt5ErrorCode_Success;
 }
 
+unsigned cc_mqtt5_##NAME##client_connect_get_response_timeout(CC_Mqtt5ConnectHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return connectOpFromHandle(handle)->getResponseTimeout();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectBasicConfig* config)
 {
     if ((handle == nullptr) || (config == nullptr)) {
@@ -397,8 +406,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle h
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    connectOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return connectOpFromHandle(handle)->cancel();       
 }
 
 bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle)
@@ -460,8 +468,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_cancel(CC_Mqtt5DisconnectHa
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    disconnectOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return disconnectOpFromHandle(handle)->cancel();       
 }
 
 CC_Mqtt5SubscribeHandle cc_mqtt5_##NAME##client_subscribe_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -539,8 +546,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHand
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    subscribeOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return subscribeOpFromHandle(handle)->cancel();       
 }
 
 CC_Mqtt5UnsubscribeHandle cc_mqtt5_##NAME##client_unsubscribe_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -603,8 +609,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5Unsubscribe
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    unsubscribeOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return unsubscribeOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -699,8 +704,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle h
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    sendOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return sendOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5ReauthHandle cc_mqtt5_##NAME##client_reauth_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -763,8 +767,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_cancel(CC_Mqtt5ReauthHandle han
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    reauthOpFromHandle(handle)->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);       
-    return CC_Mqtt5ErrorCode_Success;
+    return reauthOpFromHandle(handle)->cancel();       
 }
 
 // --------------------- Callbacks ---------------------

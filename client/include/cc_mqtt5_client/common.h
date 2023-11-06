@@ -221,6 +221,7 @@ struct CC_Mqtt5Reauth;
 typedef CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
 
 /// @brief Wraping structre of the single "User Property".
+/// @see @b cc_mqtt5_client_init_user_prop()
 typedef struct
 {
     const char* m_key; ///< Key string
@@ -228,6 +229,7 @@ typedef struct
 } CC_Mqtt5UserProp;
 
 /// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_basic().
+/// @see @b cc_mqtt5_client_connect_init_config_basic()
 typedef struct
 {
     const char* m_clientId; ///< Zero terminated Client ID string, can be NULL. When NULL means empty "Client ID".
@@ -239,6 +241,7 @@ typedef struct
 } CC_Mqtt5ConnectBasicConfig;
 
 /// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_will().
+/// @see @b cc_mqtt5_client_connect_init_config_will()
 typedef struct
 {
     const char* m_topic; ///< Zero terminated will topic, must NOT be NULL or empty.
@@ -256,47 +259,56 @@ typedef struct
 } CC_Mqtt5ConnectWillConfig;
 
 /// @brief Extra properties configuration of the "connect" operation.
+/// @see @b cc_mqtt5_client_connect_init_config_extra()
 typedef struct
 {
-    unsigned m_sessionExpiryInterval; //!< "Session Expiry Interval" property.
-    unsigned m_receiveMaximum;
-    unsigned m_maxPacketSize;
-    unsigned m_topicAliasMaximum;
-    bool m_requestResponseInfo;
-    bool m_requestProblemInfo;
+    unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property. 
+                                      ///< When equals to @b 0 (default) no property is added.
+    unsigned m_receiveMaximum; ///< "Receive Maximum" property - allowed amount of incomplete Qos1 and Qos2 publishes.
+                               ///< When equals to @b 0 (default) no property is added, which defaults to 65,535 on the broker side.
+    unsigned m_maxPacketSize; ///< "Maximum Packet Size" property.
+                              ///< When equals to @b 0 (default) no property is added, which means "no limit".
+    unsigned m_topicAliasMaximum; ///< "Topic Alias Maximum" property.
+                                  ///< When equals to @b 0 (default) no property is added, which defaults to 0 on the broker side.
+    bool m_requestResponseInfo; ///< "Request Response Information" property.
+                                ///< When equals to @b false (default) no property is added, which also defaults to @b false on the broker side.
+    bool m_requestProblemInfo; ///< "Request Problem Information" property.
+                               ///< When equals to @b false (default) no property is added, which also defaults to @b false on the broker side.
 } CC_Mqtt5ConnectExtraConfig;
 
 /// @brief Response information from broker to "connect" request
 typedef struct 
 {
-    CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_assignedClientId;
-    const char* m_responseInfo;
-    const char* m_reasonStr;
-    const char* m_serverRef;
-    const unsigned char* m_authData;
-    unsigned m_authDataLen;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;
-    unsigned m_sessionExpiryInterval; //!< "Session Expiry Interval" property.
-    unsigned m_highQosSendLimit;
-    unsigned m_maxPacketSize;
-    unsigned m_topicAliasMax;
-    CC_Mqtt5QoS m_maxQos;
-    bool m_sessionPresent;
-    bool m_retainAvailable;
-    bool m_wildcardSubAvailable;
-    bool m_subIdsAvailable;
-    bool m_sharedSubsAvailable;
+    CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" reported by the broker
+    const char* m_assignedClientId; ///< "Assigned Client Identifier" property, NULL if not reported
+    const char* m_responseInfo; ///< "Response Information" property, NULL if not reported
+    const char* m_reasonStr; ///< "Reason String" property, NULL if not reported
+    const char* m_serverRef; ///< "Server Reference" property, NULL if not reported
+    const unsigned char* m_authData; ///< Final "Authentication Data" property buffer, NULL if not reported
+    unsigned m_authDataLen; ///< Amount of bytes in the "Authentication Data" property buffer
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to array containing "User Properties", NULL if none
+    unsigned m_userPropsCount; ///< Amount of "User Properties" in the array
+    unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property, 0 if not reported.
+    unsigned m_highQosSendLimit; ///< "Receive Maximum" property, 0 if not reported.
+    unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, 0 if not reported.
+    unsigned m_topicAliasMax; ///< "Topic Alias Maximum" property, 0 if not reported.
+    CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" property, 
+    bool m_sessionPresent; ///< "Session Present" indication.
+    bool m_retainAvailable; ///< "Retain Available" indication.
+    bool m_wildcardSubAvailable; ///< "Wildcard Subscription Available" indication.
+    bool m_subIdsAvailable; ///< "Subscription Identifiers Available" indication.
+    bool m_sharedSubsAvailable; ///< "Shared Subscription Available" indication.
 } CC_Mqtt5ConnectResponse;
 
+/// @brief  Authentication handshake information
+/// @see @b cc_mqtt5_client_connect_init_auth_info()
 typedef struct
 {
-    const unsigned char* m_authData;
-    unsigned m_authDataLen;
-    const char* m_reasonStr;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;    
+    const unsigned char* m_authData; ///< Pointer to the authentication data buffer, can be NULL
+    unsigned m_authDataLen; ///< Amount of bytes in the authentication data buffer.
+    const char* m_reasonStr; ///< "Reason String" property, can be NULL
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
 } CC_Mqtt5AuthInfo;
 
 typedef struct
@@ -452,6 +464,13 @@ typedef void (*CC_Mqtt5MessageReceivedReportCb)(void* data, const CC_Mqtt5Messag
 /// @param[in] msg Error log message.
 typedef void (*CC_Mqtt5ErrorLogCb)(void* data, const char* msg);
 
+/// @brief Callback used to report completion of the "connect" operation.
+/// @param[in] data Pointer to user data object passed as last parameter to the
+///     @b cc_mqtt5_client_connect_send().
+/// @param[in] status Status of the "connect" operation.
+/// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
+///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @post The data members of the reported response can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 /// @brief Callback used to report incoming authentication data.
@@ -468,14 +487,16 @@ typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus stat
 
 typedef void (*CC_Mqtt5ReauthCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
 
-
+/// @brief Authentication Configuration.
+/// @see @b cc_mqtt5_client_connect_init_config_auth()
 typedef struct
 {
-    const char* m_authMethod;
-    const unsigned char* m_authData;
-    unsigned m_authDataLen;
-    CC_Mqtt5AuthCb m_authCb;
-    void* m_authCbData;
+    const char* m_authMethod; ///< Authentication method string, must NOT be NULL.
+    const unsigned char* m_authData; ///< Pointer to the authentication data buffer, can be NULL
+    unsigned m_authDataLen; ///< Amount of bytes in the authentication data buffer.
+    CC_Mqtt5AuthCb m_authCb; ///< Callback to be invoked during the authentication handshake
+    void* m_authCbData; ///< Pointer to user data object, passed as first parameter to the "m_authCb" callback.
+
 } CC_Mqtt5AuthConfig;
 
 #ifdef __cplusplus

@@ -495,6 +495,12 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode ConnectOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 void ConnectOp::handle(ConnackMsg& msg)
 {
     m_timer.cancel();

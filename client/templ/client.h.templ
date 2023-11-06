@@ -94,6 +94,8 @@ bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle hand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle, bool enabled);
 bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle);
 
+/// @brief Intialize the @ref CC_Mqtt5UserProp structure.
+/// @param[out] prop User property info. Must not be NULL.
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
 /// @brief Prepare "connect" operation.
@@ -107,36 +109,76 @@ void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
 
 /// @brief Intialize the @ref CC_Mqtt5ConnectBasicConfig configuration structure.
+/// @param[out] config Configuration structure. Must not be NULL.
 void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfig* config);
 
 /// @brief Intialize the @ref CC_Mqtt5ConnectWillConfig configuration structure.
+/// @param[out] config Configuration structure. Must not be NULL.
 void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config);
 
+/// @brief Intialize the @ref CC_Mqtt5ConnectWillConfig configuration structure.
+/// @param[out] config Configuration structure. Must not be NULL.
 void cc_mqtt5_##NAME##client_connect_init_config_extra(CC_Mqtt5ConnectExtraConfig* config);
+
+/// @brief Intialize the @ref CC_Mqtt5AuthConfig configuration structure.
+/// @param[out] config Configuration structure. Must not be NULL.
 void cc_mqtt5_##NAME##client_connect_init_config_auth(CC_Mqtt5AuthConfig* config);
+
+/// @brief Intialize the @ref CC_Mqtt5AuthInfo configuration structure.
+/// @param[out] info Authentication information structure. Must not be NULL.
 void cc_mqtt5_##NAME##client_connect_init_auth_info(CC_Mqtt5AuthInfo* info);
+
+/// @brief Configure the broker response timeout for the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @param[in] ms Response timeout duration in @b milliseconds.
+/// @return Result code of the call.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_set_response_timeout(CC_Mqtt5ConnectHandle handle, unsigned ms);
+
+/// @brief Retrieve the configured the broker response timeout for the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @return Response timeout duration in @b milliseconds.
+unsigned cc_mqtt5_##NAME##client_connect_get_response_timeout(CC_Mqtt5ConnectHandle handle);
 
 /// @brief Perform basic configuratin of the "connect" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
-/// @param[in] config Basic configuration structure, must NOT be NULL.
+/// @param[in] config Basic configuration structure. Must NOT be NULL. Does not need to be preserved after invocation.
 /// @return Result code of the call.
+/// @post Some of the properties can still be assigned regardless of the return value.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_basic(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectBasicConfig* config);
 
 /// @brief Perform will configuratin of the "connect" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
-/// @param[in] config Will configuration structure, must NOT be NULL.
+/// @param[in] config Will configuration structure. Must NOT be NULL. Does not need to be preserved after invocation.
 /// @return Result code of the call.
 /// @pre Mustn't be called more than once for a single "connect" operation.
+/// @post Some of the properties can still be assigned regardless of the return value.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectWillConfig* config);
 
+/// @brief Perform extra properties configuratin of the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @param[in] config Extra properties configuration structure. Must NOT be NULL. Does not need to be preserved after invocation.
+/// @return Result code of the call.
+/// @pre Mustn't be called more than once for a single "connect" operation.
+/// @post Some of the properties can still be assigned regardless of the return value.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_extra(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectExtraConfig* config);
+
+/// @brief Perform authentication handshake configuratin of the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @param[in] config Authentication configuration structure. Must NOT be NULL. Does not need to be preserved after invocation.
+/// @return Result code of the call.
+/// @pre Mustn't be called more than once for a single "connect" operation.
+/// @post Some of the properties can still be assigned regardless of the return value.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5AuthConfig* config);
+
+/// @brief Add user property to the configuratin of the "connect" operation.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
+/// @param[in] prop Single user property info. Must NOT be NULL. Does not need to be preserved after invocation.
+/// @return Result code of the call.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
 
 /// @brief Add user property to the will configuratin of the "connect" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
-/// @param[in] prop Single user property info.
+/// @param[in] prop Single user property info. Must NOT be NULL. Does not need to be preserved after invocation.
 /// @return Result code of the call.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
 
@@ -147,6 +189,8 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5Con
 ///     of the parameters in callback invocation. May be NULL.
 /// @return Result code of the call.
 /// @post The handle of the "connect" operation can be discarded.
+/// @post The provided callback will be invoked when the "connect" operation is complete <b> if and only if</b>
+///     the function returns @ref CC_Mqtt5ErrorCode_Success.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle handle, CC_Mqtt5ConnectCompleteCb cb, void* cbData);
 
 /// @brief Cancel the allocated "connect" operation
@@ -154,6 +198,8 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle han
 /// @return Result code of the call.
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle handle);
 
+/// @brief Check the inner state of the library of whether it's connected to the broker.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
 bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 
 CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);

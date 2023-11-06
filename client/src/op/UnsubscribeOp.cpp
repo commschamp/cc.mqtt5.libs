@@ -149,6 +149,12 @@ CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cb
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode UnsubscribeOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 void UnsubscribeOp::handle(UnsubackMsg& msg)
 {
     if (msg.field_packetId().value() != m_unsubMsg.field_packetId().value()) {

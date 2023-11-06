@@ -29,6 +29,7 @@ public:
     CC_Mqtt5ErrorCode configAuth(const CC_Mqtt5AuthConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5ReauthCompleteCb cb, void* cbData);
+    CC_Mqtt5ErrorCode cancel();
 
     using Base::handle;
     virtual void handle(AuthMsg& msg) override;

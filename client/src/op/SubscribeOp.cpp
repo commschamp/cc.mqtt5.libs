@@ -175,6 +175,12 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode SubscribeOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 void SubscribeOp::handle(SubackMsg& msg)
 {
     auto packetId = msg.field_packetId().value();

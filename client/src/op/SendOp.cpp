@@ -618,6 +618,12 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode SendOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 Op::Type SendOp::typeImpl() const
 {
     return Type_Send;

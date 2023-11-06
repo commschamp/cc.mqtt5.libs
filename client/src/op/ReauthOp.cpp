@@ -147,6 +147,12 @@ CC_Mqtt5ErrorCode ReauthOp::send(CC_Mqtt5ReauthCompleteCb cb, void* cbData)
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode ReauthOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 void ReauthOp::handle(AuthMsg& msg)
 {
     m_timer.cancel();

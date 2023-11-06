@@ -88,6 +88,12 @@ CC_Mqtt5ErrorCode DisconnectOp::send()
     return CC_Mqtt5ErrorCode_Success;
 }
 
+CC_Mqtt5ErrorCode DisconnectOp::cancel()
+{
+    opComplete();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 Op::Type DisconnectOp::typeImpl() const
 {
     return Type_Disconnect;

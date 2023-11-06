@@ -188,6 +188,28 @@
 /// }
 /// @endcode
 ///
+/// @section cc_mqtt5_client_data Reporting Incoming Data
+/// It is the responsibility of the application to receive data from the broker
+/// and report it to the library. The report is performed using the
+/// @b cc_mqtt5_client_process_data() function.
+/// @code
+/// uint8_t buf[MAX_BUF_SIZE];
+/// ... // Receive data into buffer
+/// unsigned bufLen = ...; // Amount of received bytes in the buffer.
+/// unsigned consumed = cc_mqtt5_client_process_data(client, buf, bufLen);
+/// ... // Remove the first "consumed" bytes from the buffer and retain the rest
+///     // until the new data chunk arrives.
+/// @endcode
+/// The application is responsible to maintain the input buffer. The
+/// value returned from the @b cc_mqtt5_client_process_data() function reports
+/// amount of consumed bytes. In case not all of the reported bytes were consumed
+/// the application is responsible to keep them and report again with new appended
+/// data when such arrives.
+///
+/// When new data chunk is reported the library may invoke several callbacks,
+/// such as reporting received message, sending new data out, as well as canceling
+/// the old and programming new tick timeout.
+///
 /// @section cc_mqtt5_client_concepts Operating Concepts
 /// The library abstracts away multiple MQTT5 protocol based "operations". Every such operation
 /// has multiple stages:
@@ -196,10 +218,20 @@
 /// @li @b send - Send the configured operation message to the broker.
 ///
 /// During the @b send stage the application is expected to provide the callback to
-/// report to the application when the operation is complete.
+/// report to the application when the operation is complete. The first parameter
+/// of the callback is always "status" of the @ref CC_Mqtt5AsyncOpStatus type. It
+/// indicates whether the operation was successfully complete. In addition to the
+/// status it reports some extra information reported by the broker. The information
+/// from the broker is available <b>if and only if</b> the status is
+/// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// The @b send stage function also returns @ref CC_Mqtt5ErrorCode value to indicate
+/// whether the @b send was successfully performed. The provided callback will
+/// be invoked <b>if and only if</b> the @b send returns @ref CC_Mqtt5ErrorCode_Success.
 ///
 /// After the @b send stage the handle returned in the @b prepare stage can be discarded
-/// (no explicit de-allocation is needed / supported), although it is still valid and can be used
+/// (no explicit de-allocation is needed / supported) regardless of the return code.
+/// After successful @b send the handle still remains valid until the callback invocation and can be used
 /// to @b cancel the operation. Note that in case the appropriate message has already be
 /// @b sent to the broker, cancelling the outstanding operation can be dangerous. When
 /// broker sends a response and client is not expecting it any more, unexpected
@@ -207,7 +239,8 @@
 /// from the broker) may happen.
 ///
 /// In case something went wrong during the @b configure stage, it is possible to de-allocate
-/// the prepared operation using the @b cancel request.
+/// the prepared operation using the @b cancel request. After performing the @b cancel
+/// stage the allocated handle is not longer valid.
 ///
 /// @section cc_mqtt5_client_response_timeout Default Response Timeout
 /// After sending any operation request to the broker, the client library has to allow
@@ -236,6 +269,18 @@
 /// }
 /// @endcode
 ///
+/// @subsection cc_mqtt5_client_connect_response_timeout Configuring "Connect" Response Timeout
+/// When created the "connect" operation inherits the @ref cc_mqtt5_client_response_timeout
+/// configuration. It can be changed for the allocated operation using the
+/// @b cc_mqtt5_client_connect_set_response_timeout() function.
+/// @code
+/// ec = cc_mqtt5_client_connect_set_response_timeout(connect, 1000);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     ... /* Something went wrong */
+/// }
+/// @endcode
+/// To retrieve the configured response timeout use the @b cc_mqtt5_client_connect_get_response_timeout() function.
+///
 /// @subsection cc_mqtt5_client_connect_basic Basic Configuration of "Connect" Operation
 /// The "basic" configuration means no extra MQTT5 properties assigned to the message.
 /// @code
@@ -252,6 +297,7 @@
 /// ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Basic configuration failed with ec=%d\n", ec);
+///     ...
 /// }
 /// @endcode
 ///
@@ -281,7 +327,8 @@
 /// // Perform the configuration
 /// ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
-///     printf("ERROR: Basic configuration failed with ec=%d\n", ec);
+///     printf("ERROR: Will configuration failed with ec=%d\n", ec);
+///     ...
 /// }
 /// @endcode
 /// See also documentation of the @ref CC_Mqtt5ConnectWillConfig structure.
@@ -291,4 +338,180 @@
 /// it may result in setting multiple will properties of the same type, which
 /// is the "Protocol Error" according to the MQTT5 specification.
 ///
-/// TODO: will user properties.
+/// The MQTT5 specification allows adding several "User Properties" specific to
+/// the will. The library allows such assignment using multiple invocations of
+/// the @b cc_mqtt5_client_connect_add_will_user_prop() function.
+/// @code
+/// CC_Mqtt5UserProp prop;
+/// prop.m_key = "some_key";
+/// prop.m_value = "some_value";
+/// ec = cc_mqtt5_client_connect_add_will_user_prop(connect, &prop);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Will user property configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UserProp structure.
+///
+/// @subsection cc_mqtt5_client_connect_extra Extra Properties Configuration
+/// To add extra MQTT5 specific properties to the connection request use
+/// @b cc_mqtt5_client_connect_config_extra() function.
+/// @code
+/// CC_Mqtt5ConnectExtraConfig extraConfig;
+///
+/// // Initialize the configuration structure to the default values
+/// cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+///
+/// // Assign necessary properties:
+/// extraConfig.m_sessionExpiryInterval = 5;
+/// extraConfig.m_topicAliasMaximum = 20;
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_connect_config_extra(connect, &extraConfig);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Extra properties configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5ConnectExtraConfig structure.
+///
+/// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_extra() function
+/// mustn't be called more than once for a single "connect" operation. Otherwise
+/// it may result in setting multiple properties of the same type, which
+/// is the "Protocol Error" according to the MQTT5 specification.
+///
+/// @subsection cc_mqtt5_client_connect_auth Extended Authentication Handshake Configuration
+/// In case the extended authentication handshake is needed use @b cc_mqtt5_client_connect_config_auth() function.
+/// @code
+/// CC_Mqtt5AuthErrorCode my_auth_handshake_cb(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)
+/// {
+///     ... // Analyse authInfoIn
+///     ... // Populate authInfoOut
+///     if (auth_failed) {
+///         return CC_Mqtt5AuthErrorCode_Disconnect; // terminate handshake with error
+///     }
+///
+///     return CC_Mqtt5AuthErrorCode_Continue; // continue handshake
+/// }
+///
+/// CC_Mqtt5AuthConfig authConfig;
+///
+/// // Initialize the configuration structure to the default values
+/// cc_mqtt5_client_connect_init_config_auth(&authConfig);
+///
+/// // Assign all the necessary values
+/// authConfig.m_authMethod = "some_method"
+/// authConfig.m_authData = ...;
+/// authConfig.m_authDataLen = ...;
+/// authConfig.m_authCb = &my_auth_handshake_cb;
+/// authConfig.m_authCbData = ...;
+///
+/// // Perform the configuration
+/// ec = cc_mqtt5_client_connect_config_auth(connect, &authConfig);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Authentication handshake configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// During the "connect" operation, both client and the broker can exchange multiple
+/// @b AUTH messages. When such message arrive the library will invoke provided
+/// handshake callback. The responsibility of the callback is to analyze the
+/// incoming authentication data and populate the response information. The client
+/// can fail the handshake by returning the @ref CC_Mqtt5AuthErrorCode_Disconnect instead
+/// of the @ref CC_Mqtt5AuthErrorCode_Continue.
+///
+/// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_auth() function
+/// mustn't be called more than once for a single "connect" operation. Otherwise
+/// it may result in setting multiple properties of the same type, which
+/// is the "Protocol Error" according to the MQTT5 specification.
+///
+/// @subsection cc_mqtt5_client_connect_user_prop Adding "User Properties"
+/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// the @b CONNECT message. The library allows such assignment using multiple invocations of
+/// the @b cc_mqtt5_client_connect_add_user_prop() function.
+/// @code
+/// CC_Mqtt5UserProp prop;
+/// prop.m_key = "some_key";
+/// prop.m_value = "some_value";
+/// ec = cc_mqtt5_client_connect_add_user_prop(connect, &prop);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: User property configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// See also documentation of the @ref CC_Mqtt5UserProp structure.
+///
+/// @subsection cc_mqtt5_client_connect_send Sending Connection Request
+/// When all the necessary configuration is performed for the allocated "connect"
+/// operation it can actually be sent to the broker. To initiate sending
+/// use the @b cc_mqtt5_client_connect_send() function.
+/// @code
+/// void my_connect_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+/// {
+///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+///         printf("ERROR: The connection operation has failed with status=%d\n", status);
+///         ... // handle error.
+///         return;
+///     }
+///
+///     // "response" is not NULL when status is CC_Mqtt5AsyncOpStatus_Complete.
+///     assert(response != NULL);
+///     ... // Analyze response values.
+/// }
+///
+/// ec = cc_mqtt5_client_connect_send(connect, &my_connect_complete_cb, data);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to send connect request with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// The provided callback will be invoked when the "connect" operation is complete
+/// <b> if and only if</b> the function returns @ref CC_Mqtt5ErrorCode_Success.
+///
+/// The handle returned by the @b cc_mqtt5_client_connect_prepare() function
+/// can be discarded (there is not free / de-allocation) right after the
+/// @b cc_mqtt5_client_connect_send() invocation
+/// regardless of the returned error code. However, the handle remains valid until
+/// the callback is called (in case the @ref CC_Mqtt5ErrorCode_Success was returned).
+/// The valid handle can be used to @ref cc_mqtt5_client_connect_cancel "cancel"
+/// the operation before the completion callback is invoked.
+///
+/// When the "connect" operation completion callback is invoked the reported
+/// response information is present <b>if and only if</b> the "status" is
+/// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @b IMPORTANT: The @ref CC_Mqtt5ConnectResponse "response" information from
+/// the broker may report that some features on the broker side are disabled.
+/// The library will reject any subsequent operation configuration which contradict
+/// the broker's capabilities. For example, attempt to subscribe to the topic
+/// containing wildcards, when the reported @ref CC_Mqtt5ConnectResponse::m_wildcardSubAvailable
+/// is @b false, will be rejected with @ref CC_Mqtt5ErrorCode_BadParam.
+///
+/// Quote from the MQTT5 specification:
+/// @code
+/// If a Server sends a CONNACK packet containing a Reason code of 128 or greater
+/// it MUST then close the Network Connection [MQTT-3.2.2-7]
+/// @endcode
+/// When the callback reporting the connection status is invoked, it is responsibility
+/// of the application to check the @ref CC_Mqtt5ConnectResponse::m_reasonCode value.
+/// If it's @ref CC_Mqtt5ReasonCode_UnspecifiedError or greater, the application
+/// is responsible to close the network connection and go through the
+/// @ref cc_mqtt5_client_init "re-initialization" process.
+///
+/// @subsection cc_mqtt5_client_connect_cancel Cancel the "Connect" Operation.
+/// While the handle returned by the @b cc_mqtt5_client_connect_prepare() is still
+/// valid it is possible to cancel / discard the operation.
+/// @code
+/// ec = cc_mqtt5_client_connect_cancel(connect);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to cancel connect with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+///
+/// @subsection cc_mqtt5_client_connect_check Check The Library Remains Connected
+/// At any time it is possible to check the internal state of the library of
+/// whether it's properly connected to the broker.
+/// @code
+/// bool isConnected = cc_mqtt5_client_is_connected(client);
+/// @endcode

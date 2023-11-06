@@ -662,6 +662,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5P
     return CC_Mqtt5ErrorCode_Success;       
 }
 
+unsigned cc_mqtt5_##NAME##client_publish_get_response_timeout(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return sendOpFromHandle(handle)->getResponseTimeout();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_resend_attempts(CC_Mqtt5PublishHandle handle, unsigned attempts)
 {
     if (handle == nullptr) {

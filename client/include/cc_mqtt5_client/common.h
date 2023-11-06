@@ -16,33 +16,41 @@ extern "C" {
 #endif // #ifdef __cplusplus
 
 /// @brief Major verion of the library
+/// @ingroup global
 #define CC_MQTT5_CLIENT_MAJOR_VERSION 0U
 
 /// @brief Minor verion of the library
+/// @ingroup global
 #define CC_MQTT5_CLIENT_MINOR_VERSION 1U
 
 /// @brief Patch level of the library
+/// @ingroup global
 #define CC_MQTT5_CLIENT_PATCH_VERSION 0U
 
 /// @brief Macro to create numeric version as single unsigned number
+/// @ingroup global
 #define CC_MQTT5_CLIENT_MAKE_VERSION(major_, minor_, patch_) \
     ((static_cast<unsigned>(major_) << 24) | \
      (static_cast<unsigned>(minor_) << 8) | \
      (static_cast<unsigned>(patch_)))
 
 /// @brief Version of the library as single numeric value
+/// @ingroup global
 #define CC_MQTT5_CLIENT_VERSION CC_MQTT5_CLIENT_MAKE_VERSION(CC_MQTT5_CLIENT_MAJOR_VERSION, CC_MQTT5_CLIENT_MINOR_VERSION, CC_MQTT5_CLIENT_PATCH_VERSION)
 
 /// @brief Special value for "Session Expiry Interval" property to specify that session never expires.
 /// @see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval
 /// @see @ref CC_Mqtt5ConnectResponse::m_sessionExpiryInterval
+/// @ingroup global
 #define CC_MQTT5_SESSION_NEVER_EXPIRES 0xffffffff
 
 /// @brief MQTT5 protocol limit to topic alias.
 /// @details The application is expected not to allocate more than 65535 topic aliases.
+/// @ingroup global
 #define CC_MQTT5_MAX_TOPIC_ALIASES_LIMIT 0xffff
 
 /// @brief Quality of Service
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5QoS_AtMostOnceDelivery = 0, ///< QoS=0. At most once delivery.
@@ -52,6 +60,7 @@ typedef enum
 } CC_Mqtt5QoS;
 
 /// @brief Error code returned by various API functions.
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5ErrorCode_Success, ///< The requested function executed successfully.
@@ -73,6 +82,7 @@ typedef enum
 } CC_Mqtt5ErrorCode;
 
 /// @brief Payload Format Indicator values as defined by the MQTT5 protocol
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5PayloadFormat_Unspecified = 0, ///< Unspecified format
@@ -81,6 +91,7 @@ typedef enum
 } CC_Mqtt5PayloadFormat;
 
 /// @brief Status of the asynchronous operation.
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5AsyncOpStatus_Complete, ///< The requested operation has been completed, refer to reported extra details for information.
@@ -95,6 +106,7 @@ typedef enum
 } CC_Mqtt5AsyncOpStatus;
 
 /// @brief Error code returned by the @ref CC_Mqtt5AuthCb callback.
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5AuthErrorCode_Continue, ///< Continue the authentication process
@@ -102,6 +114,8 @@ typedef enum
     CC_Mqtt5AuthErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5AuthErrorCode;
 
+/// @brief "Reason Code" as defined in MQTT5 specification
+/// @ingroup global
 typedef enum
 {
     CC_Mqtt5ReasonCode_Success = 0, ///< value @b Success. 
@@ -153,6 +167,7 @@ typedef enum
 
 /// @brief "Retain Handling" option as defined by the MQTT5 specification.
 /// @details It is used during the "subscribe" operation topic configuration.
+/// @ingroup subscribe
 typedef enum
 {
     CC_Mqtt5RetainHandling_Send = 0, ///< Send retained messages at the time of the subscribe
@@ -162,6 +177,7 @@ typedef enum
 } CC_Mqtt5RetainHandling;
 
 /// @brief Preference of whether to use numeric "Topic Alias" instead of string topic during publish operation.
+/// @ingroup publish
 typedef enum
 {
     CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable, ///< Use topic alias if such is available
@@ -172,64 +188,80 @@ typedef enum
 } CC_Mqtt5TopicAliasPreference;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ClientHandle
+/// @ingroup client
 struct CC_Mqtt5Client;
 
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by cc_mqtt5_client_new() function.
+/// @ingroup client
 typedef CC_Mqtt5Client* CC_Mqtt5ClientHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ConnectHandle
+/// @ingroup connect
 struct CC_Mqtt5Connect;
 
 /// @brief Handle for "connect" operation.
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
+/// @ingroup connect
 typedef CC_Mqtt5Connect* CC_Mqtt5ConnectHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5DisconnectHandle
+/// @ingroup disconnect
 struct CC_Mqtt5Disconnect;
 
 /// @brief Handle for "disconnect" operation.
 /// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
+/// @ingroup disconnect
 typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5SubscribeHandle
+/// @ingroup subscribe
 struct CC_Mqtt5Subscribe;
 
 /// @brief Handle for "subscribe" operation.
 /// @details Returned by cc_mqtt5_client_subscribe_prepare() function.
+/// @ingroup subscribe
 typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5UnsubscribeHandle
+/// @ingroup unsubscribe
 struct CC_Mqtt5Unsubscribe;
 
 /// @brief Handle for "unsubscribe" operation.
 /// @details Returned by cc_mqtt5_client_unsubscribe_prepare() function.
+/// @ingroup unsubscribe
 typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5PublishHandle
+/// @ingroup publish
 struct CC_Mqtt5Publish;
 
 /// @brief Handle for "publish" operation.
 /// @details Returned by cc_mqtt5_client_publish_prepare() function.
+/// @ingroup publish
 typedef CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ReauthHandle
+/// @ingroup reauth
 struct CC_Mqtt5Reauth;
 
 /// @brief Handle for "reauth" operation.
 /// @details Returned by cc_mqtt5_client_reauth_prepare() function.
+/// @ingroup reauth
 typedef CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
 
 /// @brief Wraping structre of the single "User Property".
 /// @see @b cc_mqtt5_client_init_user_prop()
+/// @ingroup global
 typedef struct
 {
-    const char* m_key; ///< Key string
-    const char* m_value; ///< Value string
+    const char* m_key; ///< Key string, mustn't be NULL
+    const char* m_value; ///< Value string, can be NULL
 } CC_Mqtt5UserProp;
 
 /// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_basic().
 /// @see @b cc_mqtt5_client_connect_init_config_basic()
+/// @ingroup connect
 typedef struct
 {
     const char* m_clientId; ///< Zero terminated Client ID string, can be NULL. When NULL means empty "Client ID".
@@ -242,41 +274,39 @@ typedef struct
 
 /// @brief Configuration structure to be passed to the @b cc_mqtt5_client_connect_config_will().
 /// @see @b cc_mqtt5_client_connect_init_config_will()
+/// @ingroup connect
 typedef struct
 {
-    const char* m_topic; ///< Zero terminated will topic, must NOT be NULL or empty.
+    const char* m_topic; ///< Will topic string, must NOT be NULL or empty.
     const unsigned char* m_data; /// Will message data, can be NULL
     unsigned m_dataLen; ///< Number of will data bytes. When 0 means no data.
-    const char* m_contentType; ///< "Content Type" will property, can be NULL.
-    const char* m_responseTopic; ///< "Response Topic" will property, can be NULL.
+    const char* m_contentType; ///< "Content Type" will property, not added when NULL.
+    const char* m_responseTopic; ///< "Response Topic" will property, not added when NULL.
     const unsigned char* m_correlationData; ///< "Correlation Data" will property, can be NULL.
-    unsigned m_correlationDataLen; ///< Number of bytes in the "Correlation Data" buffer. When 0 means no "Correlation Data".
-    unsigned m_delayInterval; ///< "Will Delay Interval" will property. 
-    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" will property. 
-    CC_Mqtt5QoS m_qos; ///< QoS value of the will message.
-    CC_Mqtt5PayloadFormat m_format; ///< "Payload Format Indicator" will property. 
+    unsigned m_correlationDataLen; ///< Number of bytes in the "Correlation Data" buffer. Not added when 0.
+    unsigned m_delayInterval; ///< "Will Delay Interval" will property, not added when 0.
+    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" will property, not added when 0.
+    CC_Mqtt5QoS m_qos; ///< QoS value of the will message, defaults to CC_Mqtt5QoS_AtMostOnceDelivery.
+    CC_Mqtt5PayloadFormat m_format; ///< "Payload Format Indicator" will property, defaults to CC_Mqtt5PayloadFormat_Unspecified, not added when CC_Mqtt5PayloadFormat_Unspecified.
     bool m_retain; ///< "Retain" flag.
 } CC_Mqtt5ConnectWillConfig;
 
 /// @brief Extra properties configuration of the "connect" operation.
 /// @see @b cc_mqtt5_client_connect_init_config_extra()
+/// @ingroup connect
 typedef struct
 {
-    unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property. 
-                                      ///< When equals to @b 0 (default) no property is added.
-    unsigned m_receiveMaximum; ///< "Receive Maximum" property - allowed amount of incomplete Qos1 and Qos2 publishes.
+    unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property, defaults to 0, not added when 0.
+    unsigned m_receiveMaximum; ///< "Receive Maximum" property - allowed amount of incomplete Qos1 and Qos2 publishes, defaults to 0, not added when 0.
                                ///< When equals to @b 0 (default) no property is added, which defaults to 65,535 on the broker side.
-    unsigned m_maxPacketSize; ///< "Maximum Packet Size" property.
-                              ///< When equals to @b 0 (default) no property is added, which means "no limit".
-    unsigned m_topicAliasMaximum; ///< "Topic Alias Maximum" property.
-                                  ///< When equals to @b 0 (default) no property is added, which defaults to 0 on the broker side.
-    bool m_requestResponseInfo; ///< "Request Response Information" property.
-                                ///< When equals to @b false (default) no property is added, which also defaults to @b false on the broker side.
-    bool m_requestProblemInfo; ///< "Request Problem Information" property.
-                               ///< When equals to @b false (default) no property is added, which also defaults to @b false on the broker side.
+    unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, defaults to 0, not added when 0, which means "no limit".
+    unsigned m_topicAliasMaximum; ///< "Topic Alias Maximum" property, defaults to 0, not added when 0.
+    bool m_requestResponseInfo; ///< "Request Response Information" property, defaults to @b false, not added when @b false.
+    bool m_requestProblemInfo; ///< "Request Problem Information" property, defaults to @b false, not added when @b false.
 } CC_Mqtt5ConnectExtraConfig;
 
 /// @brief Response information from broker to "connect" request
+/// @ingroup connect
 typedef struct 
 {
     CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" reported by the broker
@@ -301,14 +331,15 @@ typedef struct
 } CC_Mqtt5ConnectResponse;
 
 /// @brief  Authentication handshake information
+/// @ingroup global
 /// @see @b cc_mqtt5_client_connect_init_auth_info()
 typedef struct
 {
     const unsigned char* m_authData; ///< Pointer to the authentication data buffer, can be NULL
-    unsigned m_authDataLen; ///< Amount of bytes in the authentication data buffer.
-    const char* m_reasonStr; ///< "Reason String" property, can be NULL
+    unsigned m_authDataLen; ///< Amount of bytes in the authentication data buffer, defaults to 0, not added when 0.
+    const char* m_reasonStr; ///< "Reason String" property, defaults to NULL, not added when NULL.
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
-    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.
 } CC_Mqtt5AuthInfo;
 
 typedef struct
@@ -321,15 +352,17 @@ typedef struct
 } CC_Mqtt5DisconnectInfo;
 
 /// @brief Configuration structure of the "disconnect" operation.
+/// @ingroup disconnect
 /// @see @b cc_mqtt5_client_disconnect_init_config()
 typedef struct
 {
     CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" to report to the broker
-    const char* m_reasonStr; ///< "Reason String" property, can be NULL when missing.
-    unsigned* m_sessionExpiryInterval; ///< Pointer to "Session Expiry Interval" property value, can be NULL when missing.
+    const char* m_reasonStr; ///< "Reason String" property, defaults to NULL, not added when NULL.
+    unsigned* m_sessionExpiryInterval; ///< Pointer to "Session Expiry Interval" property value, defaults to NULL, not added when NULL.
 } CC_Mqtt5DisconnectConfig;
 
 /// @brief Topic filter configuration structure of the "subscribe" operation.
+/// @ingroup subscribe
 /// @see @b cc_mqtt5_client_subscribe_init_config_topic()
 typedef struct
 {
@@ -341,6 +374,7 @@ typedef struct
 } CC_Mqtt5SubscribeTopicConfig;
 
 /// @brief Extra subscription properties configuration structure.
+/// @ingroup subscribe
 /// @see @b cc_mqtt5_client_subscribe_init_config_extra()
 typedef struct
 {
@@ -348,6 +382,7 @@ typedef struct
 } CC_Mqtt5SubscribeExtraConfig;
 
 /// @brief Response information from broker to "subscribe" request
+/// @ingroup subscribe
 typedef struct 
 {
     const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic subscription reason codes.
@@ -359,12 +394,14 @@ typedef struct
 
 /// @brief Topic filter configuration structure of the "unsubscribe" operation.
 /// @see @b cc_mqtt5_client_unsubscribe_init_config_topic()
+/// @ingroup unsubscribe
 typedef struct
 {
     const char* m_topic; ///< "Topic Filter" string, mustn't be NULL
 } CC_Mqtt5UnsubscribeTopicConfig;
 
 /// @brief Response information from broker to "unsubscribe" request
+/// @ingroup unsubscribe
 typedef struct 
 {
     const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic unsubscription reason codes.
@@ -375,6 +412,7 @@ typedef struct
 } CC_Mqtt5UnsubscribeResponse;
 
 /// @brief Received message information
+/// @ingroup global
 typedef struct
 {
     const char* m_topic; ///< Topic used to publish the message
@@ -394,32 +432,40 @@ typedef struct
     bool m_retained; ///< Indication of whether the received message was "retained".
 } CC_Mqtt5MessageInfo;
 
+/// @brief Configuration structure to be passed to the @b cc_mqtt5_client_publish_config_basic().
+/// @see @b cc_mqtt5_client_publish_init_config_basic()
+/// @ingroup publish
 typedef struct
 {
-    const char* m_topic;
-    const unsigned char* m_data;
-    unsigned m_dataLen;    
-    CC_Mqtt5QoS m_qos;
-    CC_Mqtt5TopicAliasPreference m_topicAliasPref;
-    bool m_retain;
+    const char* m_topic; ///< Publish topic, cannot be NULL.
+    const unsigned char* m_data; ///< Pointer to publish data buffer
+    unsigned m_dataLen; ///< Amount of bytes in the publish data buffer.
+    CC_Mqtt5QoS m_qos; ///< Publish QoS value, defaults to @ref CC_Mqtt5QoS_AtMostOnceDelivery.
+    CC_Mqtt5TopicAliasPreference m_topicAliasPref; ///< Topic alias usage preference, defaults to CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable.
+    bool m_retain; ///< "Retain" flag
 } CC_Mqtt5PublishBasicConfig;
 
+/// @brief Configuration structure to be passed to the @b cc_mqtt5_client_publish_config_extra().
+/// @see @b cc_mqtt5_client_publish_init_config_extra()
+/// @ingroup publish
 typedef struct
 {
-    const char* m_contentType;
-    const char* m_responseTopic;
-    const unsigned char* m_correlationData;
-    unsigned m_correlationDataLen;
-    unsigned m_messageExpiryInterval;
-    CC_Mqtt5PayloadFormat m_format;
+    const char* m_contentType; ///< "Content Type" property, not added NULL.
+    const char* m_responseTopic; ///< "Response Topic" property, not added when NULL.
+    const unsigned char* m_correlationData; ///< "Correlation Data" property, can be NULL.
+    unsigned m_correlationDataLen; ///< Length of the "Correlation Data", not added when 0.
+    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" property, not added when 0.
+    CC_Mqtt5PayloadFormat m_format; ///< ///< "Payload Format Indicator" property, defaults to CC_Mqtt5PayloadFormat_Unspecified, not added when CC_Mqtt5PayloadFormat_Unspecified.
 } CC_Mqtt5PublishExtraConfig;
 
+/// @brief Response information from broker to "publish" request
+/// @ingroup publish
 typedef struct 
 {
-    CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_reasonStr;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;
+    CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" of the operation
+    const char* m_reasonStr; ///< "Reason String" property, can be NULL.
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to array of "User Properties", can be NULL
+    unsigned m_userPropsCount; ///< Number of elements in "User Properties" array.
 } CC_Mqtt5PublishResponse;
 
 /// @brief Callback used to request time measurement.
@@ -506,6 +552,13 @@ typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus st
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
+/// @brief Callback used to report completion of the "publish" operation.
+/// @param[in] data Pointer to user data object passed as last parameter to the
+///     @b cc_mqtt5_client_publish_send().
+/// @param[in] status Status of the "publish" operation.
+/// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
+///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @post The data members of the reported response can NOT be accessed after the function returns.
 typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
 typedef void (*CC_Mqtt5ReauthCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);

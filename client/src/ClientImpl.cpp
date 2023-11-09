@@ -624,6 +624,38 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
     }        
 }
 
+unsigned ClientImpl::pubTopicAliasCount() const
+{
+    if constexpr (Config::HasTopicAliases) {
+        return static_cast<unsigned>(m_sessionState.m_sendTopicAliases.size());
+    }
+    else {
+        return 0U;
+    }  
+}
+
+bool ClientImpl::pubTopicAliasIsAllocated(const char* topic) const
+{
+    if constexpr (Config::HasTopicAliases) {
+        if (topic == nullptr) {
+            return false;
+        }
+        
+        auto iter = 
+            std::lower_bound(
+                m_sessionState.m_sendTopicAliases.begin(), m_sessionState.m_sendTopicAliases.end(), topic,
+                [](auto& info, const char* topicParam)
+                {
+                    return info.m_topic < topicParam;
+                });
+
+        return ((iter != m_sessionState.m_sendTopicAliases.end()) && (iter->m_topic == topic));
+    }
+    else {
+        return false;
+    }  
+}
+
 void ClientImpl::handle(PublishMsg& msg)
 {
     if (m_sessionState.m_terminating) {

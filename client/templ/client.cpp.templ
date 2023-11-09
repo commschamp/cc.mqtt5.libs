@@ -183,6 +183,24 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHan
     return clientFromHandle(handle)->freePubTopicAlias(topic);
 }
 
+unsigned cc_mqtt5_##NAME##client_pub_topic_alias_count(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }         
+
+    return clientFromHandle(handle)->pubTopicAliasCount();
+}
+
+bool cc_mqtt5_##NAME##client_pub_topic_alias_is_allocated(CC_Mqtt5ClientHandle handle, const char* topic)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }         
+
+    return clientFromHandle(handle)->pubTopicAliasIsAllocated(topic);    
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled)
 {
     if (handle == nullptr) {
@@ -225,7 +243,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_M
     }
 }
 
-bool cc_mqtt5_##NAME##client_get_verify_incoming_topic(CC_Mqtt5ClientHandle handle)
+bool cc_mqtt5_##NAME##client_get_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle)
 {
     if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         COMMS_ASSERT(handle != nullptr);
@@ -751,7 +769,7 @@ void cc_mqtt5_##NAME##client_reauth_init_config_auth(CC_Mqtt5AuthConfig* config)
     *config = CC_Mqtt5AuthConfig();
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reaut_set_response_timeout(CC_Mqtt5ReauthHandle handle, unsigned ms)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_set_response_timeout(CC_Mqtt5ReauthHandle handle, unsigned ms)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
@@ -759,6 +777,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reaut_set_response_timeout(CC_Mqtt5Rea
 
     reauthOpFromHandle(handle)->setResponseTimeout(ms);
     return CC_Mqtt5ErrorCode_Success;  
+}
+
+unsigned cc_mqtt5_##NAME##client_reauth_get_response_timeout(CC_Mqtt5ReauthHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }
+
+    return reauthOpFromHandle(handle)->getResponseTimeout();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_config_auth(CC_Mqtt5ReauthHandle handle, const CC_Mqtt5AuthConfig* config)

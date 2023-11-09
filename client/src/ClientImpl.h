@@ -75,6 +75,8 @@ public:
     
     CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
+    unsigned pubTopicAliasCount() const;
+    bool pubTopicAliasIsAllocated(const char* topic) const;
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {

@@ -438,11 +438,11 @@ typedef struct
 typedef struct
 {
     const char* m_topic; ///< Publish topic, cannot be NULL.
-    const unsigned char* m_data; ///< Pointer to publish data buffer
-    unsigned m_dataLen; ///< Amount of bytes in the publish data buffer.
+    const unsigned char* m_data; ///< Pointer to publish data buffer, defaults to NULL.
+    unsigned m_dataLen; ///< Amount of bytes in the publish data buffer, defaults to 0.
     CC_Mqtt5QoS m_qos; ///< Publish QoS value, defaults to @ref CC_Mqtt5QoS_AtMostOnceDelivery.
-    CC_Mqtt5TopicAliasPreference m_topicAliasPref; ///< Topic alias usage preference, defaults to CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable.
-    bool m_retain; ///< "Retain" flag
+    CC_Mqtt5TopicAliasPreference m_topicAliasPref; ///< Topic alias usage preference, defaults to @ref CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable.
+    bool m_retain; ///< "Retain" flag, defaults to false.
 } CC_Mqtt5PublishBasicConfig;
 
 /// @brief Configuration structure to be passed to the @b cc_mqtt5_client_publish_config_extra().
@@ -475,6 +475,7 @@ typedef struct
 ///     cc_mqtt5_client_set_next_tick_program_callback() function.
 /// @param[in] duration Time duration in @b milliseconds. After the requested
 ///     time expires, the cc_mqtt5_client_tick() function is expected to be invoked.
+/// @ingroup client
 typedef void (*CC_Mqtt5NextTickProgramCb)(void* data, unsigned duration);
 
 /// @brief Callback used to request termination of existing time measurement.
@@ -483,6 +484,7 @@ typedef void (*CC_Mqtt5NextTickProgramCb)(void* data, unsigned duration);
 /// @param[in] data Pointer to user data object, passed as last parameter to
 ///     cc_mqtt5_client_set_cancel_next_tick_wait_callback() function.
 /// @return Number of elapsed milliseconds since last time measurement request.
+/// @ingroup client
 typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 
 /// @brief Callback used to request to send data to the broker.
@@ -497,6 +499,7 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 /// @param[in] buf Pointer to the buffer containing data to send
 /// @param[in] bufLen Number of bytes in the buffer
 /// @post The buffer data can be deallocated / overwritten after the callback function returns.
+/// @ingroup client
 typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Callback used to report unsolicited disconnection of the broker.
@@ -504,6 +507,7 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 ///     the request call.
 /// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 
 /// @post The data members of the reported info can NOT be accessed after the function returns.
+/// @ingroup client
 typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5DisconnectInfo* info);
 
 /// @brief Callback used to report new message received of the broker.
@@ -511,12 +515,14 @@ typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5Disco
 ///     the request call.
 /// @param[in] info Message information. Will NOT be NULL.
 /// @post The data members of the reported info can NOT be accessed after the function returns.
+/// @ingroup client
 typedef void (*CC_Mqtt5MessageReceivedReportCb)(void* data, const CC_Mqtt5MessageInfo* info);
 
 /// @brief Callback used to report discovered errors.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
 /// @param[in] msg Error log message.
+/// @ingroup client
 typedef void (*CC_Mqtt5ErrorLogCb)(void* data, const char* msg);
 
 /// @brief Callback used to report completion of the "connect" operation.
@@ -526,6 +532,7 @@ typedef void (*CC_Mqtt5ErrorLogCb)(void* data, const char* msg);
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
+/// @ingroup connect
 typedef void (*CC_Mqtt5ConnectCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
 /// @brief Callback used to report incoming authentication data.
@@ -541,6 +548,7 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
+/// @ingroup subscribe
 typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "unsubscribe" operation.
@@ -550,6 +558,7 @@ typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus st
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
+/// @ingroup unsubscribe
 typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "publish" operation.
@@ -559,12 +568,22 @@ typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus 
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
+/// @ingroup publish
 typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
+/// @brief Callback used to report completion of the "reauth" operation.
+/// @param[in] data Pointer to user data object passed as last parameter to the
+///     @b cc_mqtt5_client_reauth_send().
+/// @param[in] status Status of the "reauth" operation.
+/// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
+///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @post The data members of the reported response can NOT be accessed after the function returns.
+/// @ingroup reauth
 typedef void (*CC_Mqtt5ReauthCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
 
 /// @brief Authentication Configuration.
 /// @see @b cc_mqtt5_client_connect_init_config_auth()
+/// @ingroup global
 typedef struct
 {
     const char* m_authMethod; ///< Authentication method string, must NOT be NULL.

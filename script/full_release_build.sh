@@ -5,7 +5,7 @@ if [ -z "${CC}" -o -z "${CXX}" ]; then
     exit 1
 fi
 
-export BUILD_TYPE="Debug"
+export BUILD_TYPE="Release"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ${SCRIPT_DIR}/full_build.sh "$@"
 

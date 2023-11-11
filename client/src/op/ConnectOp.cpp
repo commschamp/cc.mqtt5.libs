@@ -452,6 +452,11 @@ CC_Mqtt5ErrorCode ConnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 
 CC_Mqtt5ErrorCode ConnectOp::addWillUserProp(const CC_Mqtt5UserProp& prop)
 {
+    if (!m_connectMsg.field_flags().field_low().getBitValue_willFlag()) {
+        errorLog("Cannot add will user property before will configuration");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     auto& propsField = m_connectMsg.field_willProperties().field();
     return addUserPropToList(propsField, prop);
 }

@@ -181,6 +181,11 @@
 /// All previously registered callbacks configuration persists and doesn't need to be
 /// performed between the re-initialization requests.
 ///
+/// @b NOTE that the @b cc_mqtt5_client_init() cannot be called from within a callback.
+/// For example, if the broker disconnection is reported via @ref cc_mqtt5_client_callbacks_broker_disconnect "callback"
+/// then the @ref cc_mqtt5_client_init "re-initialization" cannot be executed right away.
+/// It needs to be postponed until the next event loop iteration.
+///
 /// To check whether the client has gone through the initialization procedure or still
 /// needs to be (re)-initialized, the @b cc_mqtt5_client_is_initialized() function
 /// can be used.
@@ -221,7 +226,7 @@
 /// @li @b send - Send the configured operation message to the broker.
 ///
 /// During the @b send stage the application is expected to provide the callback to
-/// report to the application when the operation is complete. The first parameter
+/// report to the application when the operation is complete. The second parameter
 /// of the callback is always "status" of the @ref CC_Mqtt5AsyncOpStatus type. It
 /// indicates whether the operation was successfully complete. In addition to the
 /// status it reports some extra information reported by the broker. The information
@@ -243,7 +248,7 @@
 ///
 /// In case something went wrong during the @b configure stage, it is possible to de-allocate
 /// the prepared operation using the @b cancel request. After performing the @b cancel
-/// stage the allocated handle is not longer valid.
+/// stage the allocated handle is no longer valid.
 ///
 /// @section cc_mqtt5_client_response_timeout Default Response Timeout
 /// After sending any operation request to the broker, the client library has to allow
@@ -315,6 +320,7 @@
 /// See also documentation of the @ref CC_Mqtt5ConnectBasicConfig structure.
 ///
 /// @subsection cc_mqtt5_client_connect_will Will Configuration
+/// To perform will configuration use the @b cc_mqtt5_client_connect_config_will() function.
 /// @code
 /// CC_Mqtt5ConnectWillConfig willConfig;
 ///
@@ -389,11 +395,11 @@
 /// CC_Mqtt5AuthErrorCode my_auth_handshake_cb(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)
 /// {
 ///     ... // Analyse authInfoIn
-///     ... // Populate authInfoOut
 ///     if (auth_failed) {
 ///         return CC_Mqtt5AuthErrorCode_Disconnect; // terminate handshake with error
 ///     }
 ///
+///     ... // Populate authInfoOut
 ///     return CC_Mqtt5AuthErrorCode_Continue; // continue handshake
 /// }
 ///
@@ -422,6 +428,12 @@
 /// incoming authentication data and populate the response information. The client
 /// can fail the handshake by returning the @ref CC_Mqtt5AuthErrorCode_Disconnect instead
 /// of the @ref CC_Mqtt5AuthErrorCode_Continue.
+///
+/// When client side fails the authentication, the @b DISCONNECT message is
+/// sent to the broker and "connect" operation callback (see @ref cc_mqtt5_client_connect_send below)
+/// will be invoked with @ref CC_Mqtt5AsyncOpStatus_Aborted as status report. The
+/// broker disconnection report @ref cc_mqtt5_client_callbacks_broker_disconnect "callback"
+/// will @b NOT be invoked, because the connection hasn't really happened yet.
 ///
 /// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_auth() function
 /// mustn't be called more than once for a single "connect" operation. Otherwise
@@ -499,7 +511,9 @@
 /// of the application to check the @ref CC_Mqtt5ConnectResponse::m_reasonCode value.
 /// If it's @ref CC_Mqtt5ReasonCode_UnspecifiedError or greater, the application
 /// is responsible to close the network connection and go through the
-/// @ref cc_mqtt5_client_init "re-initialization" process.
+/// @ref cc_mqtt5_client_init "re-initialization" process. The same should be
+/// done when the "connect" operation is not properly completed, i.e. the
+/// reported status is @b NOT @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
 /// @subsection cc_mqtt5_client_connect_cancel Cancel the "Connect" Operation.
 /// While the handle returned by the @b cc_mqtt5_client_connect_prepare() is still
@@ -589,7 +603,8 @@
 /// any callback because there is no expected response to the @b DISCONNECT message
 /// from the broker. The disconnection effect is immediate. The application is
 /// expected to terminate the network connection and go through
-/// @ref cc_mqtt5_client_init "re-initialization" process if necessary.
+/// @ref cc_mqtt5_client_init "re-initialization" process if necessary. The
+/// handle returned by the @b cc_mqtt5_client_disconnect_prepare() must be discarded.
 ///
 /// In case there are other asynchronous operations that hasn't been completed yet,
 /// their completion callback is automatically invoked with @ref CC_Mqtt5AsyncOpStatus_Aborted
@@ -637,7 +652,7 @@
 ///
 /// @subsection cc_mqtt5_client_subscribe_topic Topic Configuration
 /// Single @b SUBSCRIBE message can carry multiple topic subscriptions. Use
-/// @b cc_mqtt5_client_subscribe_config_topic() function to configure each
+/// separate @b cc_mqtt5_client_subscribe_config_topic() function invocation to configure each
 /// such subscription.
 /// @code
 /// CC_Mqtt5SubscribeTopicConfig topicConfig;
@@ -1008,11 +1023,14 @@
 ///     ... /* Something is wrong */
 /// }
 /// @endcode
+/// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_outgoing_topic_enabled()
+/// function.
+///
 /// @b NOTE that the configuration is global per client and not per "publish"
 /// operation.
 ///
 /// Also @b note that the same function controls the verification of the
-/// "subscribe" topic filter format.
+/// "subscribe" and "unsubscribe" topic filter format.
 ///
 /// @subsection cc_mqtt5_client_publish_extra Extra Properties Configuration
 /// To add extra MQTT5 specific properties to the publish request use
@@ -1055,7 +1073,7 @@
 /// @subsection cc_mqtt5_client_publish_send Sending Publish Request
 /// When all the necessary configurations are performed for the allocated "publish"
 /// operation it can actually be sent to the broker. To initiate sending
-/// use the @b cc_mqtt5_client_connect_send() function.
+/// use the @b cc_mqtt5_client_publish_send() function.
 /// @code
 /// void my_publish_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 /// {
@@ -1268,11 +1286,11 @@
 /// CC_Mqtt5AuthErrorCode my_auth_handshake_cb(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)
 /// {
 ///     ... // Analyse authInfoIn
-///     ... // Populate authInfoOut
 ///     if (auth_failed) {
 ///         return CC_Mqtt5AuthErrorCode_Disconnect; // terminate handshake with error
 ///     }
 ///
+///     ... // Populate authInfoOut
 ///     return CC_Mqtt5AuthErrorCode_Continue; // continue handshake
 /// }
 ///
@@ -1301,6 +1319,15 @@
 /// incoming authentication data and populate the response information. The client
 /// can fail the handshake by returning the @ref CC_Mqtt5AuthErrorCode_Disconnect instead
 /// of the @ref CC_Mqtt5AuthErrorCode_Continue.
+///
+/// In case the application fails the re-authentication handshake by returning the
+/// @ref CC_Mqtt5AuthErrorCode_Disconnect value library preforms the following steps:
+/// @li Sends @b DISCONNECT message to the broker.
+/// @li Invokes the operation completion callback (see @ref cc_mqtt5_client_reauth_send below)
+///     with the @ref CC_Mqtt5AsyncOpStatus_Aborted "status" value report.
+/// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
+///     to report disconnection from the broker. See also @ref cc_mqtt5_client_unsolicited_disconnect
+///     section below for details on how to proceed after the callback invocation.
 ///
 /// @b IMPORTANT: The @b cc_mqtt5_client_reauth_config_auth() function
 /// mustn't be called more than once for a single "reauth" operation. Otherwise
@@ -1366,7 +1393,91 @@
 /// callback will be invoked with the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status.
 ///
 /// @section cc_mqtt5_client_unsolicited_disconnect Unsolicited Broker Disconnection
+/// The unsolicited broker disconnection can happen in one of the following cases.
+///
+/// @subsection cc_mqtt5_client_unsolicited_disconnect_msg Receiving DISCONNECT message
+/// The broker can initiate disconnection any time by simply sending @b DISCONNECT message.
+/// In such case the library responds in the following way:
+/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations passing
+/// the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
+/// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
+///     registered using the @ref cc_mqtt5_client_set_broker_disconnect_report_callback() function.
+///     The information passed in the @b DISCONNECT message is used to populate reported
+///     disconnection information.
+///
+/// @subsection cc_mqtt5_client_unsolicited_disconnect_protocol_error Detecting Protocol Error
+/// In case the broker doesn't fully comply with the MQTT5 specification or there is
+/// some unexpected data corruption the library responds in the following way:
+/// @li Sends @b DISCONNECT message to the broker reporting error.
+/// @li Terminates and invokes the callback of the operation that detected the protocol error with
+///     the @ref CC_Mqtt5AsyncOpStatus_ProtocolError status report.
+/// @li Terminates and invokes the callbacks of all other previously initiated but incomplete operations passing
+///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
+/// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
+///     registered using the @ref cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     without any disconnection information.
+///
+/// With all said above it means that if application receives @ref CC_Mqtt5AsyncOpStatus_ProtocolError or
+/// @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status in one of its callback, then
+/// the application is expected to wait for the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
+///     which will follow.
+///
+/// When the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback" is called the application is
+/// expected to go through the following steps:
+/// @li Close network connection.
+/// @li Re-establish network connection to the broker.
+/// @li Go through the  @ref cc_mqtt5_client_init "re-initialization" process.
+/// @li Perform the @ref cc_mqtt5_client_connect "\"connect\"" operation.
 ///
 /// @section cc_mqtt5_client_network_disconnect Network Disconnection
+/// The MQTT5 specification also tries to support intermittent network connection by
+/// setting the "Session Expiry Interval" property during the @ref cc_mqtt5_client_connect "\"connect\""
+/// operation (see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval). Such
+/// network disconnection is usually detected by the failing @b read or @b write
+/// operations. When the application detects such network disconnection, it
+/// is expected to report it to the library using @b cc_mqtt5_client_notify_network_disconnected()
+/// function.
+/// @code
+/// // Report network disconnected
+/// cc_mqtt5_client_notify_network_disconnected(client, true);
+/// @endcode
+/// When network disconnection is reported some internal timers such as waiting for
+/// QoS1/QoS2 publish responses get suspended for the period of configured "Session Expiry Interval".
+///
+/// If the application manages to re-establish connection by repeating failing @b read / @b write
+/// operations for several times until they succeed, then the application is expected to report
+/// the network re-connection by invoking the same @b cc_mqtt5_client_notify_network_disconnected() function.
+/// @code
+/// // Report network reconnected
+/// cc_mqtt5_client_notify_network_disconnected(client, false);
+/// @endcode
+/// After such network re-connection is reported, the library will resume its timers and continue
+/// functioning as usual (as if network disconnection hasn't happened).
+///
+/// However, if the network re-connection is not reported until the "Session Expiry Interval" is over,
+/// then the library will proceed to the @ref cc_mqtt5_client_unsolicited_disconnect logic.
+///
+/// @b Note that if the "Session Expiry Interval" was not configured during the
+/// @ref cc_mqtt5_client_connect "\"connect\"" operation, invocation of the
+/// @b cc_mqtt5_client_notify_network_disconnected() will result in the
+/// @ref cc_mqtt5_client_unsolicited_disconnect report right away.
+///
+/// Inquiry about current network disconnection status can be done using the
+/// @b cc_mqtt5_client_is_network_disconnected() function.
+/// @code
+/// bool disconnected = cc_mqtt5_client_is_network_disconnected(client);
+/// @endcode
+///
+/// Also @b note that invocation of the @b cc_mqtt5_client_init() function (see @ref cc_mqtt5_client_init)
+/// will result in library "assuming" network is connected, i.e.
+/// invocation of the @b cc_mqtt5_client_is_network_disconnected() will
+/// return @b false.
 ///
 /// @section cc_mqtt5_client_thread_safety Thread Safety
+/// In general the library is @b NOT thread safe. However, if each thread operates on a separate allocated
+/// @ref cc_mqtt5_client_allocation "client", then the locking is required only
+/// for the @ref cc_mqtt5_client_allocation "client allocation logic".
+///
+/// If multiple threads work with the same @ref cc_mqtt5_client_allocation "client"
+/// object (such as performing "publish" operations, or handling incoming messages in parallel),
+/// then explicit locking logic needs to be implemented by the application itself.

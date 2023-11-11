@@ -85,7 +85,18 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 /// @ingroup client
 unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const unsigned char* buf, unsigned bufLen);
 
+/// @brief Report network disconnected status
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] disconnected Flag for network disconnection: @b true when disconnected, @b false when (re)connected.
+/// @ingroup client
 void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected);
+
+/// @brief Check current network disconnected status
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @return @b true when disconnected, @b false when0 connected.
+/// @note After invocation of the @ref cc_mqtt5_##NAME##client_init, this function will return @b false, i.e.
+/// after (re)initializaiton network is assumend connected.
+/// @ingroup client
 bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Configure default response timeout period
@@ -268,6 +279,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectH
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_connect_prepare() function.
 /// @param[in] prop Single user property info. Must NOT be NULL. Does not need to be preserved after invocation.
 /// @return Result code of the call.
+/// @pre The will has been previously configured using the @ref cc_mqtt5_##NAME##client_connect_config_will().
 /// @ingroup connect
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
 

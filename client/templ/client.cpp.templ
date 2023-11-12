@@ -98,7 +98,7 @@ inline CC_Mqtt5ReauthHandle handleFromReauthOp(cc_mqtt5_client::op::ReauthOp* op
 
 } // namespace
 
-CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new()
+CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_alloc()
 {
     auto client = getClientAllocator().alloc();
     return handleFromClient(client.release());    

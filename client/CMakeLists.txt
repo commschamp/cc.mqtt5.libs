@@ -257,3 +257,4 @@ if (NOT "${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES}" STREQUAL "")
 endif ()
 
 add_subdirectory(test)
+add_subdirectory(app)

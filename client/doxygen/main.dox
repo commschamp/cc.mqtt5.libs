@@ -22,9 +22,9 @@
 /// @section cc_mqtt5_client_allocation Client Allocation
 /// The library supports multiple independent MQTT5 client sessions. The
 /// allocation of data structures relevant to a single client is performed
-/// using cc_mqtt5_client_new() function.
+/// using cc_mqtt5_client_alloc() function.
 /// @code
-/// CC_Mqtt5ClientHandle client = cc_mqtt5_client_new();
+/// CC_Mqtt5ClientHandle client = cc_mqtt5_client_alloc();
 /// @endcode
 /// All other functions are client specific, the receive the returned handle
 /// as their first parameter.
@@ -47,7 +47,7 @@
 ///
 /// using MyClientPtr = std::unique_ptr<CC_Mqtt5Client, MyDeleter>;
 ///
-/// MyClientPtr clientPtr(::cc_mqtt5_client_new());
+/// MyClientPtr clientPtr(::cc_mqtt5_client_alloc());
 /// CC_Mqtt5ClientHandle client = clientPtr.get();
 /// @endcode
 ///

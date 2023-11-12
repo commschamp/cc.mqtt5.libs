@@ -31,12 +31,12 @@ extern "C" {
 /// @return Handle to allocated client object. This handle needs to be passed
 ///     as first parameter to all other API functions.
 /// @ingroup client
-CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_new();
+CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_alloc();
 
 /// @brief Free previously allocated client.
 /// @details The callbacks of the incomplete operations will be invoked with 
 ///     @ref CC_Mqtt5AsyncOpStatus_Aborted status.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @post The client handler becomes invalid and cannot be used any longer.
 /// @ingroup client
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
@@ -45,13 +45,13 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 /// @details Re-initializes all internal data structures into their default variables
 ///     and checks that all the required callbacks have been set. If there are old
 ///     outstanding operations they are all aborted.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @pre Mustn't be called from within a callback, use fresh event loop iteration.
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
 
 /// @brief Check that the client has been (re)initialized
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true if cc_mqtt5_##NAME##client_init() has been invoked before, @b false otherwise.
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
@@ -66,7 +66,7 @@ bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
 ///     new measurement if needed.
 ///     This call may cause invocation of some other callbacks, such as a request
 ///     to send new data to the broker.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] ms Number of elapsed @b milliseconds.
 /// @ingroup client
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
@@ -76,7 +76,7 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 ///     request to cancel the currently running time measurement, send some messages to
 ///     the broker, report incoming application message, and (re)start time
 ///     measurement.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] buf Pointer to the buffer of data to process.
 /// @param[in] bufLen Number of bytes in the data buffer.
 /// @return Number of processed bytes.
@@ -86,13 +86,13 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Report network disconnected status
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] disconnected Flag for network disconnection: @b true when disconnected, @b false when (re)connected.
 /// @ingroup client
 void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected);
 
 /// @brief Check current network disconnected status
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true when disconnected, @b false when0 connected.
 /// @note After invocation of the @ref cc_mqtt5_##NAME##client_init, this function will return @b false, i.e.
 /// after (re)initializaiton network is assumend connected.
@@ -100,20 +100,20 @@ void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle ha
 bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Configure default response timeout period
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] ms Response timeout duration in @b milliseconds.
 /// @return Error code of the operation
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_default_response_timeout(CC_Mqtt5ClientHandle handle, unsigned ms);
 
 /// @brief Retrieved currently configured default response timeout period
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return Response timeout duration in @b milliseconds.
 /// @ingroup client
 unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHandle handle);
 
 /// @brief Allocate alias for topic.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] topic Topic string for which the alias needs to be allocated.
 /// @param[in] qos0RegsCount Amount of times to report topic alias to the broker when QoS0 messages are used.
 /// @return Error code of the operation
@@ -121,60 +121,60 @@ unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount);
 
 /// @brief Free alias for topic for another use.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] topic Topic string for which the alias was allocated before.
 /// @return Error code of the operation
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHandle handle, const char* topic);
 
 /// @brief Get amount of allocated topic aliases.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return Amount of allocated topic aliases
 /// @ingroup client
 unsigned cc_mqtt5_##NAME##client_pub_topic_alias_count(CC_Mqtt5ClientHandle handle);
 
 /// @brief Check if topic alias is allocated for topic.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] topic Topic string .
 /// @return @b true in case of allocated, @b false otherwise
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_pub_topic_alias_is_allocated(CC_Mqtt5ClientHandle handle, const char* topic);
 
 /// @brief Control outgoing topic format verification
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] enabled @b true to enable topic format verification, @b false to disable.
 /// @return Error code of the operation
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled);
 
 /// @brief Retrieve current outgoing topic format verification control
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true when enabled, @b false when disabled
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle);
 
 /// @brief Control incoming topic format verification
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] enabled @b true to enable topic format verification, @b false to disable.
 /// @return Error code of the operation
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled);
 
 /// @brief Retrieve current incoming topic format verification control
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true when enabled, @b false when disabled
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_get_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle);
 
 /// @brief Control verification of the incoming message being correctly subscribed.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] enabled @b true to enable topic format verification, @b false to disable.
 /// @return Error code of the operation
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle, bool enabled);
 
 /// @brief Retrieve current incoming message being correctly subscribed control.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true when enabled, @b false when disabled
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHandle handle);
@@ -185,7 +185,7 @@ bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHa
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
 /// @brief Prepare "connect" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "connect" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @pre There were no other prepared or complete "connect" operation since last invocation of 
@@ -305,12 +305,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle han
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle handle);
 
 /// @brief Check the inner state of the library of whether it's connected to the broker.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @ingroup connect
 bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Prepare "disconnect" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "disconnect" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @pre There were no other prepared or complete "disconnect" operation since last "connect" operation.
@@ -355,7 +355,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_cancel(CC_Mqtt5DisconnectHandle handle);
 
 /// @brief Prepare "subscribe" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "subscribe" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @post The "subscribe" operation is allocated, use either @ref cc_mqtt5_##NAME##client_subscribe_send()
@@ -431,7 +431,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHandle handle);
 
 /// @brief Prepare "unsubscribe" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "unsubscribe" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @post The "unsubscribe" operation is allocated, use either @ref cc_mqtt5_##NAME##client_unsubscribe_send()
@@ -494,7 +494,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHa
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5UnsubscribeHandle handle);
 
 /// @brief Prepare "publish" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "publish" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @post The "publish" operation is allocated, use either @ref cc_mqtt5_##NAME##client_publish_send()
@@ -586,7 +586,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle);
 
 /// @brief Prepare "reauth" operation.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "reauth" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @pre There is no other incomplete "reauth" operation.
@@ -657,7 +657,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_cancel(CC_Mqtt5ReauthHandle han
 ///     measurement is required, the provided callback will be invoked with
 ///     the timeout duration in milliseconds. After requested time expires,
 ///     the @ref cc_mqtt5_##NAME##client_tick() function must be invoked.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -672,7 +672,7 @@ void cc_mqtt5_##NAME##client_set_next_tick_program_callback(
 ///     @ref cc_mqtt5_##NAME##client_set_next_tick_program_callback() function. This function
 ///     sets appropriate callback. When invoked, it must return number of
 ///     elapsed milliseconds since previoius time measurement request.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -685,7 +685,7 @@ void cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(
 /// @details The callback is invoked when there is a need to send data
 ///     to the broker. The callback is invoked for every single message
 ///     that need to be sent. 
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -695,7 +695,7 @@ void cc_mqtt5_##NAME##client_set_send_output_data_callback(
     void* data);
 
 /// @brief Set callback to report unsolicited disconnection of the broker.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -705,7 +705,7 @@ void cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(
     void* data);
 
 /// @brief Set callback to report received message from the broker.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.
@@ -715,7 +715,7 @@ void cc_mqtt5_##NAME##client_set_message_received_report_callback(
     void* data);
 
 /// @brief Set callback to report error messages.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_new() function.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[in] cb Callback function.
 /// @param[in] data Pointer to any user data structure. It will passed as one 
 ///     of the parameters in callback invocation. May be NULL.

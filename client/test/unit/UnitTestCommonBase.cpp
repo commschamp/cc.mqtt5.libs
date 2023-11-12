@@ -162,7 +162,7 @@ void UnitTestCommonBase::unitTestTearDown()
 UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient(bool addLog)
 {
     test_assert(!m_client);
-    m_client.reset(cc_mqtt5_client_new());
+    m_client.reset(cc_mqtt5_client_alloc());
     test_assert(!::cc_mqtt5_client_is_initialized(m_client.get()));
     if (addLog) {
         cc_mqtt5_client_set_error_log_callback(m_client.get(), &UnitTestCommonBase::unitTestErrorLogCb, nullptr);

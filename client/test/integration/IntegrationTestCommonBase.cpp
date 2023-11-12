@@ -43,7 +43,7 @@ IntegrationTestCommonBase::IntegrationTestCommonBase(boost::asio::io_context& io
     m_socket(io),
     m_tickTimer(io),
     m_timeoutTimer(io),
-    m_client(::cc_mqtt5_client_new()),
+    m_client(::cc_mqtt5_client_alloc()),
     m_host(DefaultHost),
     m_port(DefaultPort),
     m_clientId(clientId)

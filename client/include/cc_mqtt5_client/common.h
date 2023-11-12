@@ -192,7 +192,7 @@ typedef enum
 struct CC_Mqtt5Client;
 
 /// @brief Handle used to access client specific data structures.
-/// @details Returned by cc_mqtt5_client_new() function.
+/// @details Returned by cc_mqtt5_client_alloc() function.
 /// @ingroup client
 typedef CC_Mqtt5Client* CC_Mqtt5ClientHandle;
 

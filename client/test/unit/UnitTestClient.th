@@ -49,7 +49,7 @@ private:
 
 void UnitTestClient::test1()
 {
-    UnitTestClientPtr client(cc_mqtt5_client_new());
+    UnitTestClientPtr client(cc_mqtt5_client_alloc());
     TS_ASSERT(client);
 
     auto ec = cc_mqtt5_client_init(client.get());
@@ -70,7 +70,7 @@ void UnitTestClient::test1()
 
 void UnitTestClient::test2()
 {
-    UnitTestClientPtr client(cc_mqtt5_client_new());
+    UnitTestClientPtr client(cc_mqtt5_client_alloc());
     TS_ASSERT(client);
 
     cc_mqtt5_client_set_broker_disconnect_report_callback(client.get(), &UnitTestClient::brokerDisconnectedCb, this);

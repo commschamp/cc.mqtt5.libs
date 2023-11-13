@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "ProgramOptions.h"
+#include "Session.h"
+
 #include "client.h"
 
 #include <boost/asio.hpp>
@@ -27,6 +30,9 @@ class AppClient
         }
     };
 
+public:
+    bool start(int argc, const char* argv[]);    
+
 protected:
     explicit AppClient(boost::asio::io_context& io);
     ~AppClient() = default;
@@ -41,6 +47,11 @@ protected:
         return m_io;
     }
 
+    ProgramOptions& opts()
+    {
+        return m_opts;
+    }
+
     using ConnectCompleteCb = std::function<void (CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)>;
     bool asyncConnect(
         CC_Mqtt5ConnectBasicConfig* basic,
@@ -51,13 +62,29 @@ protected:
 
 private:
     using ClientPtr = std::unique_ptr<CC_Mqtt5Client, ClientDeleter>;
+    using Timer = boost::asio::steady_timer;
+    using Clock = Timer::clock_type;
+    using Timestamp = Timer::time_point;
+
+    void nextTickProgramInternal(unsigned duration);
+    unsigned cancelNextTickWaitInternal();
 
     static std::ostream& logError();
 
+    static void sendDataCb(void* data, const unsigned char* buf, unsigned bufLen);
+    static void brokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info);
+    static void messageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info);
+    static void logMessageCb(void* data, const char* msg);
+    static void nextTickProgramCb(void* data, unsigned duration);
+    static unsigned cancelNextTickWaitCb(void* data);
     static void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
     boost::asio::io_context& m_io;
+    Timer m_timer;
+    Timestamp m_lastWaitProgram;
+    ProgramOptions m_opts;
     ClientPtr m_client;
+    SessionPtr m_session;
     ConnectCompleteCb m_connectCompleteCb;
 };
 

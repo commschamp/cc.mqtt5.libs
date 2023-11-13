@@ -9,20 +9,40 @@
 
 #include <boost/program_options.hpp>
 
+#include <cstdint>
+#include <string>
+
 namespace cc_mqtt5_client_app
 {
 
 class ProgramOptions
 {
 public:
-    static void addCommon(boost::program_options::options_description& desc);
+    using OptDesc = boost::program_options::options_description;
+    static constexpr std::uint16_t DefaultPort = 1883U;
 
-    bool parseArgs(int argc, const char* argv[], const boost::program_options::options_description& desc);
+    enum ConnectionType
+    {
+        ConnectionType_Tcp,
+        ConnectionType_ValuesLimit
+    };
+
+    void addCommon();
+    void addNetwork(std::uint16_t port = DefaultPort);
+
+    void printHelp();
+
+    bool parseArgs(int argc, const char* argv[]);
 
     bool helpRequested() const;
+    ConnectionType connectionType() const;
+    std::string networkAddress() const;
+    std::uint16_t networkPort() const;
+
 
 private:
     boost::program_options::variables_map m_vm;
+    OptDesc m_desc;
 };
 
 } // namespace cc_mqtt5_client_app

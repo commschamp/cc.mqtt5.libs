@@ -20,8 +20,6 @@ class Pub : public AppClient
     using Base = AppClient;
 public:
     Pub(boost::asio::io_context& io);
-
-    bool start(int argc, const char* argv[]);
 private:
     ProgramOptions m_opts;
 };

@@ -1,6 +1,8 @@
 set (src
     AppClient.cpp
     ProgramOptions.cpp
+    Session.cpp
+    TcpSession.cpp
 )
 
 add_library(${COMMON_APPS_LIB} STATIC ${src})

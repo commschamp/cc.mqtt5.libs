@@ -17,25 +17,8 @@ namespace cc_mqtt5_client_app
 Pub::Pub(boost::asio::io_context& io) : 
     Base(io)
 {
+    opts().addCommon();
+    opts().addNetwork();
 }    
-
-bool Pub::start(int argc, const char* argv[])
-{
-    po::options_description desc;
-    m_opts.addCommon(desc);
-    if (!m_opts.parseArgs(argc, argv, desc)) {
-        return false;
-    }
-
-    if (m_opts.helpRequested()) {
-        std::cout << desc << std::endl;
-        io().stop();
-        return true;
-    }
-
-    static_cast<void>(argc);
-    static_cast<void>(argv);    
-    return true;
-}
 
 } // namespace cc_mqtt5_client_app

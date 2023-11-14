@@ -31,11 +31,23 @@ public:
         return startImpl();
     }
 
+    void sendData(const std::uint8_t* buf, std::size_t bufLen)
+    {
+        sendDataImpl(buf, bufLen);
+    }
+
     using DataReportCb = std::function<unsigned (const std::uint8_t* buf, std::size_t bufLen)>;
     template <typename TFunc>
     void setDataReportCb(TFunc&& func)
     {
         m_dataReportCb = std::forward<TFunc>(func);
+    }
+
+    using NetworkDisconnectedReportCb = std::function<void (bool)>;
+    template <typename TFunc>
+    void setNetworkDisconnectedReportCb(TFunc&& func)
+    {
+        m_networkDisconnectedReportCb = std::forward<TFunc>(func);
     }
 
 
@@ -54,13 +66,17 @@ protected:
 
     static std::ostream& logError();
     unsigned reportData(const std::uint8_t* buf, std::size_t bufLen);
+    void reportNetworkDisconnected(bool disconnected);
 
     virtual bool startImpl() = 0;
+    virtual void sendDataImpl(const std::uint8_t* buf, std::size_t bufLen) = 0;
 
 private:
     boost::asio::io_context& m_io; 
     const ProgramOptions& m_opts;
     DataReportCb m_dataReportCb;
+    NetworkDisconnectedReportCb m_networkDisconnectedReportCb;
+    bool m_networkDisconnected = false;
 };
 
 using SessionPtr = Session::Ptr;

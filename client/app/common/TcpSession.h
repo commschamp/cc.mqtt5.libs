@@ -24,21 +24,26 @@ public:
 
 protected:    
     virtual bool startImpl() override;
+    virtual void sendDataImpl(const std::uint8_t* buf, std::size_t bufLen) override;
 
 private:
     using Socket = boost::asio::ip::tcp::socket;
+    using Timer = boost::asio::steady_timer;
     using InDataBuf = std::array<std::uint8_t, 4096>;
     using DataBuf = std::vector<std::uint8_t>;
 
     TcpSession(boost::asio::io_context& io, const ProgramOptions& opts) : 
         Base(io, opts),
-        m_socket(io)
+        m_socket(io),
+        m_readTimer(io)
     {
     }
 
     void doRead();
+    void doReadLater();
 
     Socket m_socket;
+    Timer m_readTimer;
     InDataBuf m_inData;
     DataBuf m_buf;
 };

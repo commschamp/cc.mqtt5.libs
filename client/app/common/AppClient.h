@@ -60,6 +60,17 @@ protected:
         ConnectCompleteCb&& cb
     );
 
+    static std::ostream& logError();
+
+    void doTerminate();
+
+    virtual bool startImpl();
+    virtual void brokerConnectedImpl();
+    virtual void brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);
+
+    static void print(const CC_Mqtt5DisconnectInfo& info);
+    static void print(const CC_Mqtt5ConnectResponse& response);
+
 private:
     using ClientPtr = std::unique_ptr<CC_Mqtt5Client, ClientDeleter>;
     using Timer = boost::asio::steady_timer;
@@ -68,8 +79,8 @@ private:
 
     void nextTickProgramInternal(unsigned duration);
     unsigned cancelNextTickWaitInternal();
-
-    static std::ostream& logError();
+    void sendDataInternal(const unsigned char* buf, unsigned bufLen);
+    bool createSession();
 
     static void sendDataCb(void* data, const unsigned char* buf, unsigned bufLen);
     static void brokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info);

@@ -37,6 +37,32 @@ bool TcpSession::startImpl()
     return true;
 }
 
+void TcpSession::sendDataImpl(const std::uint8_t* buf, std::size_t bufLen)
+{
+    boost::system::error_code ec;
+    auto written = boost::asio::write(m_socket, boost::asio::buffer(buf, bufLen), ec);
+    do {
+
+        if (ec) {
+            if (ec == boost::asio::error::operation_aborted) {
+                return;
+            }
+
+            logError() << "Failed to write data: " << ec.message() << std::endl;
+            break;
+        }
+
+        if (written != bufLen) {
+            logError() << "Not all data has been written." << std::endl;
+            break;
+        }
+
+        return;
+    } while (false);
+
+    reportNetworkDisconnected(true);
+}
+
 void TcpSession::doRead()
 {
     m_socket.async_read_some(
@@ -49,9 +75,12 @@ void TcpSession::doRead()
 
             if (ec) {
                 logError() << "Failed to read data: " << ec.message();
-                // TODO: report disconnected
+                reportNetworkDisconnected(true);
+                doReadLater();
                 return;
             }
+
+            reportNetworkDisconnected(false);
 
             auto buf = &m_inData[0];
             auto bufLen = bytesCount;
@@ -81,6 +110,27 @@ void TcpSession::doRead()
             doRead();
         }
     );
+}
+
+void TcpSession::doReadLater()
+{
+    m_readTimer.expires_after(std::chrono::seconds(1U));
+    m_readTimer.async_wait(
+        [this](const boost::system::error_code& ec)
+        {
+            if (ec == boost::asio::error::operation_aborted) {
+                return;
+            }
+
+            if (ec) {
+                logError() << "Timer error: " << ec.message();
+                io().stop();
+                return;
+            }
+
+            doRead();
+        }
+    );    
 }
 
 } // namespace cc_mqtt5_client_app

@@ -19,7 +19,8 @@ void ProgramOptions::addCommon()
     po::options_description opts("Common Options");
     opts.add_options()
         ("help,h", "Display help message")
-        ("client-id,i", po::value<std::string>(), "Client ID")
+        ("verbose,v", "Verbose output")
+        ("client-id,i", po::value<std::string>()->default_value(std::string()), "Client ID")
     ;    
 
     m_desc.add(opts);
@@ -54,6 +55,16 @@ bool ProgramOptions::parseArgs(int argc, const char* argv[])
 bool ProgramOptions::helpRequested() const
 {
     return m_vm.count("help") > 0U;
+}
+
+bool ProgramOptions::verbose() const
+{
+    return m_vm.count("verbose") > 0U;
+}
+
+std::string ProgramOptions::clientId() const
+{
+    return m_vm["client-id"].as<std::string>();
 }
 
 ProgramOptions::ConnectionType ProgramOptions::connectionType() const

@@ -50,4 +50,14 @@ unsigned Session::reportData(const std::uint8_t* buf, std::size_t bufLen)
     return m_dataReportCb(buf, bufLen);
 }
 
+void Session::reportNetworkDisconnected(bool disconnected)
+{
+    if (disconnected == m_networkDisconnected) {
+        return;
+    }
+    
+    assert(m_networkDisconnectedReportCb);
+    m_networkDisconnectedReportCb(disconnected);
+}
+
 } // namespace cc_mqtt5_client_app

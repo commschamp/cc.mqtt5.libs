@@ -35,6 +35,9 @@ public:
     bool parseArgs(int argc, const char* argv[]);
 
     bool helpRequested() const;
+    bool verbose() const;
+    std::string clientId() const;
+
     ConnectionType connectionType() const;
     std::string networkAddress() const;
     std::uint16_t networkPort() const;

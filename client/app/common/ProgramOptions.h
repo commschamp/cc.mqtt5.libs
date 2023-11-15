@@ -28,20 +28,31 @@ public:
     };
 
     void addCommon();
+    void addConnect();
     void addNetwork(std::uint16_t port = DefaultPort);
+    void addPublish();
 
     void printHelp();
 
     bool parseArgs(int argc, const char* argv[]);
 
+    // Common options
     bool helpRequested() const;
     bool verbose() const;
+    ConnectionType connectionType() const;
+
+    // Connect Options
     std::string clientId() const;
 
-    ConnectionType connectionType() const;
+    // Network Options
     std::string networkAddress() const;
     std::uint16_t networkPort() const;
 
+    // Publish Options
+    std::string pubTopic() const;
+    std::string pubMessage() const;
+    unsigned pubQos() const;
+    bool pubRetain() const;
 
 private:
     boost::program_options::variables_map m_vm;

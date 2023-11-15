@@ -19,9 +19,14 @@ class Pub : public AppClient
 {
     using Base = AppClient;
 public:
-    Pub(boost::asio::io_context& io);
+    Pub(boost::asio::io_context& io, int& result);
+
+protected:
+    virtual void brokerConnectedImpl() override;    
 private:
-    ProgramOptions m_opts;
+    void publishCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+
+    static void publishCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 };
 
 } // namespace cc_mqtt5_client_app

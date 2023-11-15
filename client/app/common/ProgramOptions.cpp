@@ -20,6 +20,15 @@ void ProgramOptions::addCommon()
     opts.add_options()
         ("help,h", "Display help message")
         ("verbose,v", "Verbose output")
+    ;    
+
+    m_desc.add(opts);
+}
+
+void ProgramOptions::addConnect()
+{
+    po::options_description opts("Connect Options");
+    opts.add_options()
         ("client-id,i", po::value<std::string>()->default_value(std::string()), "Client ID")
     ;    
 
@@ -30,8 +39,22 @@ void ProgramOptions::addNetwork(std::uint16_t port)
 {
     po::options_description opts("Network Options");
     opts.add_options()
-        ("host,t", po::value<std::string>()->default_value("127.0.0.1"), "Broker address to connect to")
+        ("broker,b", po::value<std::string>()->default_value("127.0.0.1"), "Broker address to connect to")
         ("port,p", po::value<std::uint16_t>()->default_value(port), "Network port")
+    ;    
+
+    m_desc.add(opts);
+}
+
+void ProgramOptions::addPublish()
+{
+    po::options_description opts("Publish Options");
+    opts.add_options()
+        ("pub-topic,t", po::value<std::string>()->default_value(std::string()), "Publish topic")
+        ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify single byte, "
+            "such as \"\\x01\\xb9\\xaf\".")
+        ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")
+        ("pub-retain", po::value<bool>()->default_value(false), "Retain the publish message");
     ;    
 
     m_desc.add(opts);
@@ -62,25 +85,45 @@ bool ProgramOptions::verbose() const
     return m_vm.count("verbose") > 0U;
 }
 
-std::string ProgramOptions::clientId() const
-{
-    return m_vm["client-id"].as<std::string>();
-}
-
 ProgramOptions::ConnectionType ProgramOptions::connectionType() const
 {
     // Hardcoded for now
     return ConnectionType_Tcp;
 }
 
+std::string ProgramOptions::clientId() const
+{
+    return m_vm["client-id"].as<std::string>();
+}
+
 std::string ProgramOptions::networkAddress() const
 {
-    return m_vm["host"].as<std::string>();
+    return m_vm["broker"].as<std::string>();
 }
 
 std::uint16_t ProgramOptions::networkPort() const
 {
     return m_vm["port"].as<std::uint16_t>();
+}
+
+std::string ProgramOptions::pubTopic() const
+{
+    return m_vm["pub-topic"].as<std::string>();
+}
+
+std::string ProgramOptions::pubMessage() const
+{
+    return m_vm["pub-msg"].as<std::string>();
+}
+
+unsigned ProgramOptions::pubQos() const
+{
+    return m_vm["pub-qos"].as<unsigned>();
+}
+
+bool ProgramOptions::pubRetain() const
+{
+    return m_vm["pub-retain"].as<bool>();
 }
 
 } // namespace cc_mqtt5_client_app

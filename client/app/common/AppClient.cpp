@@ -191,8 +191,9 @@ bool AppClient::start(int argc, const char* argv[])
     return true;
 }    
 
-AppClient::AppClient(boost::asio::io_context& io) : 
+AppClient::AppClient(boost::asio::io_context& io, int& result) : 
     m_io(io),
+    m_result(result),
     m_timer(io),
     m_client(::cc_mqtt5_client_alloc())
 {
@@ -219,14 +220,14 @@ bool AppClient::asyncConnect(
     auto ec = CC_Mqtt5ErrorCode_Success;
     auto connect = ::cc_mqtt5_client_connect_prepare(m_client.get(), &ec);
     if (!connect) {
-        logError() << "Failed to allocate client with ec=" << ec << std::endl;
+        logError() << "Failed to allocate client with ec=" << toString(ec) << std::endl;
         return false;
     }
     
     if (basic != nullptr) {
         ec = ::cc_mqtt5_client_connect_config_basic(connect, basic);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply basic connect configuration with ec=" << ec << std::endl;
+            logError() << "Failed to apply basic connect configuration with ec=" << toString(ec) << std::endl;
             return false;
         }
     }
@@ -234,7 +235,7 @@ bool AppClient::asyncConnect(
     if (will != nullptr) {
         ec = ::cc_mqtt5_client_connect_config_will(connect, will);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply will connect configuration with ec=" << ec << std::endl;
+            logError() << "Failed to apply will connect configuration with ec=" << toString(ec) << std::endl;
             return false;
         }        
     }
@@ -242,14 +243,14 @@ bool AppClient::asyncConnect(
     if (extra != nullptr) {
         ec = ::cc_mqtt5_client_connect_config_extra(connect, extra);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply extra connect configuration with ec=" << ec << std::endl;
+            logError() << "Failed to apply extra connect configuration with ec=" << toString(ec) << std::endl;
             return false;
         }        
     }    
 
     ec = ::cc_mqtt5_client_connect_send(connect, &AppClient::connectCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to send connect request with ec=" << ec << std::endl;
+        logError() << "Failed to send connect request with ec=" << toString(ec) << std::endl;
         return false;
     }    
 
@@ -262,10 +263,15 @@ std::ostream& AppClient::logError()
     return std::cerr << "ERROR: ";
 }
 
-void AppClient::doTerminate()
+void AppClient::doTerminate(int result)
 {
-    m_session.reset();
+    m_result = result;
     m_io.stop();
+}
+
+void AppClient::doComplete()
+{
+    doTerminate(0);
 }
 
 bool AppClient::startImpl()
@@ -336,6 +342,123 @@ void AppClient::brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info)
     print(*info);
 }
 
+std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)
+{
+    std::vector<std::uint8_t> result;
+    result.reserve(val.size());
+    auto pos = 0U;
+    while (pos < val.size()) {
+        auto ch = val[pos];
+        auto addChar = 
+            [&result, &pos, ch]()
+            {
+                result.push_back(static_cast<std::uint8_t>(ch));
+                ++pos;
+            };
+
+        if (ch != '\\') {
+            addChar();
+            continue;
+        }
+
+        auto nextPos = pos + 1U;
+        if ((val.size() <= nextPos)) {
+            addChar();
+            continue;
+        }
+
+        auto nextChar = val[nextPos];
+        if (nextChar == '\\') {
+            // Double backslash (\\) is treated as single one
+            addChar();
+            ++pos;
+            continue;
+        }
+
+        if (nextChar != 'x') {
+            // Not hex byte prefix, treat backslash as regular character
+            addChar();
+            continue;
+        }
+
+        auto bytePos = nextPos + 1U;
+        auto byteLen = 2U;
+        if (val.size() < bytePos + byteLen) {
+            // Bad hex byte encoding, add characters as is
+            addChar();
+            continue;
+        }
+
+        try {
+            auto byte = static_cast<std::uint8_t>(stoul(val.substr(bytePos, byteLen), nullptr, 16));
+            result.push_back(byte);
+            pos = bytePos + byteLen;
+            continue;
+        }
+        catch (...) {
+            addChar();
+            continue;
+        }
+    }
+
+    return result;
+}
+
+std::string AppClient::toString(CC_Mqtt5ErrorCode val)
+{
+    static const std::string Map[] = {
+        "CC_Mqtt5ErrorCode_Success",
+        "CC_Mqtt5ErrorCode_InternalError",
+        "CC_Mqtt5ErrorCode_NotIntitialized",
+        "CC_Mqtt5ErrorCode_Busy",
+        "CC_Mqtt5ErrorCode_NotConnected",
+        "CC_Mqtt5ErrorCode_AlreadyConnected",
+        "CC_Mqtt5ErrorCode_BadParam",
+        "CC_Mqtt5ErrorCode_InsufficientConfig",
+        "CC_Mqtt5ErrorCode_OutOfMemory",
+        "CC_Mqtt5ErrorCode_BufferOverflow",
+        "CC_Mqtt5ErrorCode_NotSupported",
+        "CC_Mqtt5ErrorCode_RetryLater",
+        "CC_Mqtt5ErrorCode_Terminating",
+        "CC_Mqtt5ErrorCode_NetworkDisconnected",
+        "CC_Mqtt5ErrorCode_NotAuthenticated",
+    };
+    static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
+    static_assert(MapSize == CC_Mqtt5ErrorCode_ValuesLimit);
+
+    auto idx = static_cast<unsigned>(val);
+    if (MapSize <= idx) {
+        assert(false); // Should not happen
+        return std::to_string(val);
+    }
+
+    return Map[idx] + " (" + std::to_string(val) + ')';
+}
+
+std::string AppClient::toString(CC_Mqtt5AsyncOpStatus val)
+{
+    static const std::string Map[] = {
+        "CC_Mqtt5AsyncOpStatus_Complete",
+        "CC_Mqtt5AsyncOpStatus_InternalError",
+        "CC_Mqtt5AsyncOpStatus_Timeout",
+        "CC_Mqtt5AsyncOpStatus_ProtocolError",
+        "CC_Mqtt5AsyncOpStatus_Aborted",
+        "CC_Mqtt5AsyncOpStatus_BrokerDisconnected",
+        "CC_Mqtt5AsyncOpStatus_OutOfMemory",
+        "CC_Mqtt5AsyncOpStatus_BadParam",
+    };
+    static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
+    static_assert(MapSize == CC_Mqtt5AsyncOpStatus_ValuesLimit);
+
+    auto idx = static_cast<unsigned>(val);
+    if (MapSize <= idx) {
+        assert(false); // Should not happen
+        return std::to_string(val);
+    }
+
+    return Map[idx] + " (" + std::to_string(val) + ')';
+}
+
 void AppClient::print(const CC_Mqtt5DisconnectInfo& info)
 {
     std::cout << "Disconnect Info:\n";
@@ -366,6 +489,14 @@ void AppClient::print(const CC_Mqtt5ConnectResponse& response)
     printBool("Wildcard Subscriptions Available", response.m_wildcardSubAvailable);
     printBool("Subscription IDs Available", response.m_subIdsAvailable);
     printBool("Shared Subscription Available", response.m_sharedSubsAvailable);
+}
+
+void AppClient::print(const CC_Mqtt5PublishResponse& response)
+{
+    std::cout << "Publish Response:\n";
+    printReasonCode(response.m_reasonCode);
+    printReasonString(response.m_reasonStr);
+    printUserProperties(response.m_userProps, response.m_userPropsCount);
 }
 
 void AppClient::nextTickProgramInternal(unsigned duration)

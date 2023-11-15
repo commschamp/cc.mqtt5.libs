@@ -34,7 +34,7 @@ public:
     bool start(int argc, const char* argv[]);    
 
 protected:
-    explicit AppClient(boost::asio::io_context& io);
+    explicit AppClient(boost::asio::io_context& io, int& result);
     ~AppClient() = default;
 
     CC_Mqtt5ClientHandle client()
@@ -62,14 +62,19 @@ protected:
 
     static std::ostream& logError();
 
-    void doTerminate();
+    void doTerminate(int result = 1);
+    void doComplete();
 
     virtual bool startImpl();
     virtual void brokerConnectedImpl();
     virtual void brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);
 
+    static std::vector<std::uint8_t> parseBinaryData(const std::string& val);
+    static std::string toString(CC_Mqtt5ErrorCode val);
+    static std::string toString(CC_Mqtt5AsyncOpStatus val);
     static void print(const CC_Mqtt5DisconnectInfo& info);
     static void print(const CC_Mqtt5ConnectResponse& response);
+    static void print(const CC_Mqtt5PublishResponse& response);
 
 private:
     using ClientPtr = std::unique_ptr<CC_Mqtt5Client, ClientDeleter>;
@@ -91,6 +96,7 @@ private:
     static void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
     boost::asio::io_context& m_io;
+    int& m_result;
     Timer m_timer;
     Timestamp m_lastWaitProgram;
     ProgramOptions m_opts;

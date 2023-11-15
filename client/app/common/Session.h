@@ -65,6 +65,7 @@ protected:
     }
 
     static std::ostream& logError();
+
     unsigned reportData(const std::uint8_t* buf, std::size_t bufLen);
     void reportNetworkDisconnected(bool disconnected);
 

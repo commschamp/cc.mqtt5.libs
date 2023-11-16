@@ -9,8 +9,6 @@
 
 #include <iostream>
 
-namespace po = boost::program_options;
-
 namespace cc_mqtt5_client_app
 {
 

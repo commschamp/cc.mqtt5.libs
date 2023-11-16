@@ -60,6 +60,19 @@ void ProgramOptions::addPublish()
     m_desc.add(opts);
 }
 
+void ProgramOptions::addSubscribe()
+{
+    po::options_description opts("Subscribe Options");
+    opts.add_options()
+        ("sub-topic,t", po::value<StringsList>(), "Subscribe topic filter. Can be used multiple times.")
+        ("sub-qos,q", po::value<UnsignedsList>(), "Subscribe max QoS: 0, 1, or 2. Defaults to 2. Can be used multiple times "
+            "(for each topic filter correspondingly).")
+        ("sub-binary", "Force binary output of the received message data")
+    ;    
+
+    m_desc.add(opts);
+}
+
 void ProgramOptions::printHelp()
 {
     std::cout << m_desc << std::endl;
@@ -124,6 +137,33 @@ unsigned ProgramOptions::pubQos() const
 bool ProgramOptions::pubRetain() const
 {
     return m_vm["pub-retain"].as<bool>();
+}
+
+ProgramOptions::StringsList ProgramOptions::subTopics() const
+{
+    StringsList result;
+    auto* id = "sub-topic";
+    if (m_vm.count(id) > 0) {
+        result = m_vm[id].as<StringsList>();
+    }
+
+    return result;
+}
+
+ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
+{
+    UnsignedsList result;
+    auto* id = "sub-qos";
+    if (m_vm.count(id) > 0) {
+        result = m_vm[id].as<UnsignedsList>();
+    }
+
+    return result;    
+}
+
+bool ProgramOptions::subBinary() const
+{
+    return m_vm.count("sub-binary") > 0U;
 }
 
 } // namespace cc_mqtt5_client_app

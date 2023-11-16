@@ -13,3 +13,4 @@ set (COMMON_APPS_LIB "cc_mqtt5_client_apps_lib")
 
 add_subdirectory (common)
 add_subdirectory (pub)
+add_subdirectory (sub)

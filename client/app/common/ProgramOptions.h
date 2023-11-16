@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace cc_mqtt5_client_app
 {
@@ -19,6 +20,9 @@ class ProgramOptions
 {
 public:
     using OptDesc = boost::program_options::options_description;
+    using StringsList = std::vector<std::string>;
+    using UnsignedsList = std::vector<unsigned>;
+
     static constexpr std::uint16_t DefaultPort = 1883U;
 
     enum ConnectionType
@@ -31,6 +35,7 @@ public:
     void addConnect();
     void addNetwork(std::uint16_t port = DefaultPort);
     void addPublish();
+    void addSubscribe();
 
     void printHelp();
 
@@ -53,6 +58,11 @@ public:
     std::string pubMessage() const;
     unsigned pubQos() const;
     bool pubRetain() const;
+
+    // Subscribe Options
+    StringsList subTopics() const;
+    UnsignedsList subQoses() const;
+    bool subBinary() const;
 
 private:
     boost::program_options::variables_map m_vm;

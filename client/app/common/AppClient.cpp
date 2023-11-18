@@ -387,55 +387,13 @@ AppClient::AppClient(boost::asio::io_context& io, int& result) :
     ::cc_mqtt5_client_set_cancel_next_tick_wait_callback(m_client.get(), &AppClient::cancelNextTickWaitCb, this);
 }
 
-bool AppClient::asyncConnect(
-    CC_Mqtt5ConnectBasicConfig* basic,
-    CC_Mqtt5ConnectWillConfig* will,
-    CC_Mqtt5ConnectExtraConfig* extra,
-    ConnectCompleteCb&& cb)
+bool AppClient::sendConnect(CC_Mqtt5ConnectHandle connect)
 {
-    if (!cb) {
-        logError() << "Connection complete callback is not provided" << std::endl;
-        return false;
-    }
-
-    auto ec = CC_Mqtt5ErrorCode_Success;
-    auto connect = ::cc_mqtt5_client_connect_prepare(m_client.get(), &ec);
-    if (!connect) {
-        logError() << "Failed to allocate client with ec=" << toString(ec) << std::endl;
-        return false;
-    }
-    
-    if (basic != nullptr) {
-        ec = ::cc_mqtt5_client_connect_config_basic(connect, basic);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply basic connect configuration with ec=" << toString(ec) << std::endl;
-            return false;
-        }
-    }
-
-    if (will != nullptr) {
-        ec = ::cc_mqtt5_client_connect_config_will(connect, will);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply will connect configuration with ec=" << toString(ec) << std::endl;
-            return false;
-        }        
-    }
-
-    if (extra != nullptr) {
-        ec = ::cc_mqtt5_client_connect_config_extra(connect, extra);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply extra connect configuration with ec=" << toString(ec) << std::endl;
-            return false;
-        }        
-    }    
-
-    ec = ::cc_mqtt5_client_connect_send(connect, &AppClient::connectCompleteCb, this);
+    auto ec = ::cc_mqtt5_client_connect_send(connect, &AppClient::connectCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to send connect request with ec=" << toString(ec) << std::endl;
         return false;
     }    
-
-    m_connectCompleteCb = std::move(cb);    
     return true;
 }
 
@@ -452,59 +410,164 @@ void AppClient::doTerminate(int result)
 
 void AppClient::doComplete()
 {
-    doTerminate(0);
+    auto ec = CC_Mqtt5ErrorCode_Success;
+    auto disconnect = ::cc_mqtt5_client_disconnect_prepare(m_client.get(), &ec);
+    if (disconnect == nullptr) {
+        logError() << "Failed to prepare disconnect with ec=" << toString(ec) << std::endl;
+        doTerminate();
+        return;
+    }
+
+    auto config = CC_Mqtt5DisconnectConfig();
+    ::cc_mqtt5_client_disconnect_init_config(&config);
+
+    if (!m_opts.willTopic().empty()) {
+        config.m_reasonCode = CC_Mqtt5ReasonCode_DisconnectWithWill;
+    }
+
+    ec = ::cc_mqtt5_client_disconnect_config(disconnect, &config);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        logError() << "Failed to apply disconnect configuration with ec=" << toString(ec) << std::endl;
+        doTerminate();
+        return;
+    }        
+
+    ec = ::cc_mqtt5_client_disconnect_send(disconnect);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        logError() << "Failed to send disconnect with ec=" << toString(ec) << std::endl;
+        doTerminate();
+        return;
+    }       
+
+    boost::asio::post(
+        m_io,
+        [this]()
+        {
+            doTerminate(0);
+        });
 }
 
 bool AppClient::startImpl()
 {
+    auto ec = CC_Mqtt5ErrorCode_Success;
+    auto connect = ::cc_mqtt5_client_connect_prepare(m_client.get(), &ec);
+    if (connect == nullptr) {
+        logError() << "Failed to prepare connect with ec=" << toString(ec) << std::endl;
+        return false;
+    }
+
     auto clientId = m_opts.clientId();
+    auto username = m_opts.username();
+    auto password = parseBinaryData(m_opts.password());
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    basicConfig.m_keepAlive = m_opts.keepAlive();
     basicConfig.m_cleanStart = true;
 
     if (!clientId.empty()) {
         basicConfig.m_clientId = clientId.c_str();
     }
 
-    auto willConfig = CC_Mqtt5ConnectWillConfig();
-    CC_Mqtt5ConnectWillConfig* willConfigPtr = nullptr;
+    if (!username.empty()) {
+        basicConfig.m_username = username.c_str();
+    }
 
-    ::cc_mqtt5_client_connect_init_config_will(&willConfig);
+    if (!password.empty()) {
+        basicConfig.m_password = &password[0];
+        basicConfig.m_passwordLen = static_cast<decltype(basicConfig.m_passwordLen)>(password.size());
+    }
+
+    ec = ::cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        logError() << "Failed to apply basic connect configuration with ec=" << toString(ec) << std::endl;
+        return false;
+    }    
+
+    auto willTopic = m_opts.willTopic();
+    if (!willTopic.empty()) {
+        auto willData = parseBinaryData(m_opts.willMessage());
+        auto willContentType = m_opts.willContentType();
+        auto willResponseTopic = m_opts.willResponseTopic();
+        auto willCorrelationData = parseBinaryData(m_opts.willCorrelationData());
+        
+        auto willConfig = CC_Mqtt5ConnectWillConfig();
+        ::cc_mqtt5_client_connect_init_config_will(&willConfig);
+
+        willConfig.m_topic = willTopic.c_str();
+        if (!willData.empty()) {
+            willConfig.m_data = &willData[0];
+            willConfig.m_dataLen = static_cast<decltype(willConfig.m_dataLen)>(willData.size());
+        }
+
+        if (!willContentType.empty()) {
+            willConfig.m_contentType = willContentType.c_str();
+        }
+
+        if (!willResponseTopic.empty()) {
+            willConfig.m_responseTopic = willResponseTopic.c_str();
+        }
+
+        if (!willCorrelationData.empty()) {
+            willConfig.m_correlationData = &willCorrelationData[0];
+            willConfig.m_correlationDataLen = static_cast<decltype(willConfig.m_correlationDataLen)>(willCorrelationData.size());
+        }
+
+        willConfig.m_delayInterval = m_opts.willDelay();
+        willConfig.m_messageExpiryInterval = m_opts.willMessageExpiry();
+        willConfig.m_qos = static_cast<decltype(willConfig.m_qos)>(m_opts.willQos());
+        willConfig.m_format = static_cast<decltype(willConfig.m_format)>(m_opts.willMessageFormat());
+        willConfig.m_retain = m_opts.willRetain();
+
+        ec = ::cc_mqtt5_client_connect_config_will(connect, &willConfig);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to apply will configuration with ec=" << toString(ec) << std::endl;
+            return false;
+        }      
+
+        auto willProps = parseUserProps(m_opts.willUserProps());
+        for (auto& p : willProps) {
+            auto info = CC_Mqtt5UserProp();
+            info.m_key = p.m_key.c_str();
+            info.m_value = p.m_value.c_str();
+
+            ec = ::cc_mqtt5_client_connect_add_will_user_prop(connect, &info);
+            if (ec != CC_Mqtt5ErrorCode_Success) {
+                logError() << "Failed to add connect user property with ec=" << toString(ec) << std::endl;
+                return false;
+            }         
+        }        
+    }
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    CC_Mqtt5ConnectExtraConfig* extraConfigPtr = nullptr;
-
     ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    extraConfig.m_sessionExpiryInterval = m_opts.sessionExpiry();
+    extraConfig.m_receiveMaximum = m_opts.receiveMax();
+    extraConfig.m_maxPacketSize = m_opts.maxPacketSize();
+    extraConfig.m_topicAliasMaximum = m_opts.topicAliasMax();
+    extraConfig.m_requestResponseInfo = m_opts.reqResponseInfo();
+    extraConfig.m_requestProblemInfo = m_opts.reqProblemInfo();
 
-    bool result = asyncConnect(
-        &basicConfig, willConfigPtr, extraConfigPtr,
-        [this](CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
-        {
-            do {
-                if (status != CC_Mqtt5AsyncOpStatus_Complete) {
-                    logError() << "Connection operation was not properly completed: status=" << status << std::endl;
-                    break;
-                }
+    ec = ::cc_mqtt5_client_connect_config_extra(connect, &extraConfig);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        logError() << "Failed to apply extra connect configuration with ec=" << toString(ec) << std::endl;
+        return false;
+    }      
 
-                assert(response != nullptr);
-                if (m_opts.verbose()) {
-                    print(*response);
-                }
-                
-                if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCode) {
-                    logError() << "Connection attempt was rejected" << std::endl;
-                    break;
-                }
+    auto props = parseUserProps(m_opts.connectUserProps());
+    for (auto& p : props) {
+        auto info = CC_Mqtt5UserProp();
+        info.m_key = p.m_key.c_str();
+        info.m_value = p.m_value.c_str();
 
-                brokerConnectedImpl();
-                return;
-            } while (false);
-
-            doTerminate();
-        });
-
-    return result;
+        ec = ::cc_mqtt5_client_connect_add_user_prop(connect, &info);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to add connect user property with ec=" << toString(ec) << std::endl;
+            return false;
+        }         
+    }
+    
+    return sendConnect(connect);
 }
 
 void AppClient::brokerConnectedImpl()
@@ -525,6 +588,31 @@ void AppClient::brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info)
 
 void AppClient::messageReceivedImpl([[maybe_unused]] const CC_Mqtt5MessageInfo* info)
 {
+}
+
+void AppClient::connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+{
+    do {
+        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            logError() << "Connection operation was not properly completed: status=" << status << std::endl;
+            break;
+        }
+
+        assert(response != nullptr);
+        if (m_opts.verbose()) {
+            print(*response);
+        }
+        
+        if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCode) {
+            logError() << "Connection attempt was rejected" << std::endl;
+            break;
+        }
+
+        brokerConnectedImpl();
+        return;
+    } while (false);
+
+    doTerminate();
 }
 
 std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)
@@ -586,6 +674,28 @@ std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)
         }
     }
 
+    return result;
+}
+
+std::vector<AppClient::UserPropInfo> AppClient::parseUserProps(const std::vector<std::string>& props)
+{
+    std::vector<UserPropInfo> result;
+    result.reserve(props.size());
+    std::transform(
+        props.begin(), props.end(), std::back_inserter(result),
+        [](auto& str)
+        {
+            auto eqPos = str.find_first_of('=');
+            eqPos = std::min(str.size(), eqPos);
+
+            UserPropInfo prop;
+            prop.m_key = str.substr(0, eqPos);
+            if (eqPos < str.size()) {
+                prop.m_value = str.substr(eqPos + 1U);
+            }
+            
+            return prop;
+        });
     return result;
 }
 
@@ -689,7 +799,7 @@ unsigned AppClient::cancelNextTickWaitCb(void* data)
 
 void AppClient::connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
 {
-    asThis(data)->m_connectCompleteCb(status, response);
+    asThis(data)->connectCompleteImpl(status, response);
 }
 
 } // namespace cc_mqtt5_client_app

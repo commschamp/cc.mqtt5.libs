@@ -768,7 +768,7 @@ void UnitTestCommonBase::unitTestPerformDisconnect(
     auto* disconnect = ::cc_mqtt5_client_disconnect_prepare(client, nullptr);
     test_assert(disconnect != nullptr);
     if (config != nullptr) {
-        [[maybe_unused]] auto ec = cc_mqtt5_client_diconnect_config(disconnect, config);
+        [[maybe_unused]] auto ec = cc_mqtt5_client_disconnect_config(disconnect, config);
         test_assert(ec == CC_Mqtt5ErrorCode_Success);
     }
 

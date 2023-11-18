@@ -453,7 +453,7 @@ void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* co
     *config = CC_Mqtt5DisconnectConfig();
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_config(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config)
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;

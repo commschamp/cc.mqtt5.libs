@@ -552,7 +552,7 @@
 ///
 /// @subsection cc_mqtt5_client_disconnect_config Configuration of "Disconnect" Operation
 /// The configuration of the "disconnect" operation is performed using a single
-/// @b cc_mqtt5_client_diconnect_config() function.
+/// @b cc_mqtt5_client_disconnect_config() function.
 /// @code
 /// CC_Mqtt5DisconnectConfig config;
 ///
@@ -563,7 +563,7 @@
 /// config.m_reasonCode = CC_Mqtt5ReasonCode_DisconnectWithWill;
 ///
 /// // Perform the configuration
-/// ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+/// ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Disconnect configuration failed with ec=%d\n", ec);
 ///     ...

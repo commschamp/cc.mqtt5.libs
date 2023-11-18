@@ -331,7 +331,7 @@ void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* co
 /// @pre Mustn't be called more than once for a single "disconnect" operation.
 /// @post Some of the properties can get assigned regardless of the return value.
 /// @ingroup disconnect
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_diconnect_config(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config);
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_config(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config);
 
 /// @brief Add user property to the configuration of the "disconnect" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_disconnect_prepare() function.

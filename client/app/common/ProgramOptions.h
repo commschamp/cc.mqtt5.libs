@@ -48,6 +48,27 @@ public:
 
     // Connect Options
     std::string clientId() const;
+    std::string username() const;
+    std::string password() const;
+    unsigned keepAlive() const;
+    unsigned sessionExpiry() const;
+    unsigned receiveMax() const;
+    unsigned maxPacketSize() const;
+    unsigned topicAliasMax() const;
+    bool reqResponseInfo() const;
+    bool reqProblemInfo() const;
+    StringsList connectUserProps() const;
+    std::string willTopic() const;
+    std::string willMessage() const;
+    unsigned willQos() const;
+    bool willRetain() const;
+    std::string willContentType() const;
+    std::string willResponseTopic() const;
+    std::string willCorrelationData() const;
+    unsigned willDelay() const;
+    unsigned willMessageExpiry() const;
+    unsigned willMessageFormat() const;
+    StringsList willUserProps() const;
 
     // Network Options
     std::string networkAddress() const;
@@ -65,6 +86,8 @@ public:
     bool subBinary() const;
 
 private:
+    StringsList stringListOpts(const std::string& name) const;
+
     boost::program_options::variables_map m_vm;
     OptDesc m_desc;
 };

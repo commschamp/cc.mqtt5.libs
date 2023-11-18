@@ -229,7 +229,7 @@ bool IntegrationTestCommonBase::integrationTestStartBasicDisconnect(CC_Mqtt5Reas
         return false;
     }
 
-    auto ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+    auto ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         integrationTestErrorLog() << "Failed to configure disconnect" << std::endl;
         return false;             

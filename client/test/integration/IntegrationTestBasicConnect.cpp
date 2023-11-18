@@ -52,7 +52,7 @@ protected:
 
         auto config = CC_Mqtt5DisconnectConfig();
         ::cc_mqtt5_client_disconnect_init_config(&config);
-        auto ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+        auto ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             std::cerr << "ERROR: Failed to configure disconnect" << std::endl;
             failTestInternal();

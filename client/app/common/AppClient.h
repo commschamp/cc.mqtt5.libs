@@ -44,6 +44,14 @@ public:
     static void print(const CC_Mqtt5SubscribeResponse& response);
 
 protected:
+    struct UserPropInfo
+    {
+        std::string m_key;
+        std::string m_value;
+    };
+
+    using UserPropInfosList = std::vector<UserPropInfo>;
+
     explicit AppClient(boost::asio::io_context& io, int& result);
     ~AppClient() = default;
 
@@ -62,13 +70,7 @@ protected:
         return m_opts;
     }
 
-    using ConnectCompleteCb = std::function<void (CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)>;
-    bool asyncConnect(
-        CC_Mqtt5ConnectBasicConfig* basic,
-        CC_Mqtt5ConnectWillConfig* will,
-        CC_Mqtt5ConnectExtraConfig* extra,
-        ConnectCompleteCb&& cb
-    );
+    bool sendConnect(CC_Mqtt5ConnectHandle connect);
 
     static std::ostream& logError();
 
@@ -79,8 +81,10 @@ protected:
     virtual void brokerConnectedImpl();
     virtual void brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);
     virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info);
+    virtual void connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
     static std::vector<std::uint8_t> parseBinaryData(const std::string& val);
+    static std::vector<UserPropInfo> parseUserProps(const std::vector<std::string>& props);
 
 private:
     using ClientPtr = std::unique_ptr<CC_Mqtt5Client, ClientDeleter>;
@@ -108,7 +112,6 @@ private:
     ProgramOptions m_opts;
     ClientPtr m_client;
     SessionPtr m_session;
-    ConnectCompleteCb m_connectCompleteCb;
 };
 
 } // namespace cc_mqtt5_client_app

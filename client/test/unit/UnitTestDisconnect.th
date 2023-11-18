@@ -84,7 +84,7 @@ void UnitTestDisconnect::test3()
 
     auto* disconnect = cc_mqtt5_client_disconnect_prepare(client, nullptr);
     TS_ASSERT_DIFFERS(disconnect, nullptr);
-    auto ec = cc_mqtt5_client_diconnect_config(disconnect, &config);
+    auto ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
 }

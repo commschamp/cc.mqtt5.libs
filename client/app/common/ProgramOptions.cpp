@@ -29,7 +29,42 @@ void ProgramOptions::addConnect()
 {
     po::options_description opts("Connect Options");
     opts.add_options()
-        ("client-id,i", po::value<std::string>()->default_value(std::string()), "Client ID")
+        ("client-id,i", po::value<std::string>()->default_value(std::string()), "Client ID.")
+        ("username", po::value<std::string>()->default_value(std::string()), "Username.")
+        ("password", po::value<std::string>()->default_value(std::string()), "Password, use \"\\x\" prefix to specify hexadecimal value of a single byte.")
+        ("keep-alive", po::value<unsigned>()->default_value(60), "Keep alive period in seconds.")
+        ("session-expiry", po::value<unsigned>()->default_value(0), "\"Session Expiry Interval\" property.")
+        ("receive-max", po::value<unsigned>()->default_value(0), "\"Receive Maximum\" property. 0 means not set.")
+        ("max-packet-size", po::value<unsigned>()->default_value(0), "\"Maximum Packet Size\" property. 0 means no limit.")
+        ("topic-alias-max", po::value<unsigned>()->default_value(0), "\"Topic Alias Maximum\" property.")
+        ("req-response-info", "Set \"Request Response Information\" property flag.")
+        ("req-problem-info", "Set \"Request Problem Information\" property flag.")
+        ("connect-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to CONNECT message.")
+        ("will-topic", po::value<std::string>()->default_value(std::string()), "Will topic.")
+        ("will-msg", po::value<std::string>()->default_value(std::string()), 
+            "Will message data, use \"\\x\" prefix to specify hexadecimal value of a single byte."
+            "Applicable only if will-topic is set.")
+        ("will-qos", po::value<unsigned>()->default_value(0U), "Will Message QoS: 0, 1, or 2")            
+        ("will-retain", "Set \"retain\" flag on the will message.")            
+        ("will-content-type", po::value<std::string>()->default_value(std::string()), 
+            "Will \"Content Type\" property."
+            "Applicable only if will-topic is set.")
+        ("will-response-topic", po::value<std::string>()->default_value(std::string()), 
+            "Will \"Response Topic\" property."
+            "Applicable only if will-topic is set.")    
+        ("will-correlation-data", po::value<std::string>()->default_value(std::string()), 
+            "Will \"Correlation Data\" property, use \"\\x\" prefix to specify hexadecimal value of a single byte."
+            "Applicable only if will-topic is set.")        
+        ("will-delay", po::value<unsigned>()->default_value(0), 
+            "Will \"Delay Interval\" property."
+            "Applicable only if will-topic is set.") 
+        ("will-message-expiry", po::value<unsigned>()->default_value(0), 
+            "Will \"Message Expiry Interval\" property."
+            "Applicable only if will-topic is set.") 
+        ("will-message-format", po::value<unsigned>()->default_value(0), 
+            "Will \"Payload Format Indicator\" property."
+            "Applicable only if will-topic is set.")      
+        ("will-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the will message.")
     ;    
 
     m_desc.add(opts);
@@ -51,7 +86,7 @@ void ProgramOptions::addPublish()
     po::options_description opts("Publish Options");
     opts.add_options()
         ("pub-topic,t", po::value<std::string>()->default_value(std::string()), "Publish topic")
-        ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify single byte, "
+        ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify hexadecimal value of a single byte, "
             "such as \"\\x01\\xb9\\xaf\".")
         ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")
         ("pub-retain", po::value<bool>()->default_value(false), "Retain the publish message");
@@ -109,6 +144,111 @@ std::string ProgramOptions::clientId() const
     return m_vm["client-id"].as<std::string>();
 }
 
+std::string ProgramOptions::username() const
+{
+    return m_vm["username"].as<std::string>();
+}
+
+std::string ProgramOptions::password() const
+{
+    return m_vm["password"].as<std::string>();
+}
+
+unsigned ProgramOptions::keepAlive() const
+{
+    return m_vm["keep-alive"].as<unsigned>();
+}
+
+unsigned ProgramOptions::sessionExpiry() const
+{
+    return m_vm["session-expiry"].as<unsigned>();
+}
+
+unsigned ProgramOptions::receiveMax() const
+{
+    return m_vm["receive-max"].as<unsigned>();
+}
+
+unsigned ProgramOptions::maxPacketSize() const
+{
+    return m_vm["max-packet-size"].as<unsigned>();
+}
+
+unsigned ProgramOptions::topicAliasMax() const
+{
+    return m_vm["topic-alias-max"].as<unsigned>();
+}
+
+bool ProgramOptions::reqResponseInfo() const
+{
+    return m_vm.count("req-response-info") > 0U;
+}
+
+bool ProgramOptions::reqProblemInfo() const
+{
+    return m_vm.count("req-problem-info") > 0U;
+}
+
+ProgramOptions::StringsList ProgramOptions::connectUserProps() const
+{
+    return stringListOpts("connect-user-prop");
+}
+
+std::string ProgramOptions::willTopic() const
+{
+    return m_vm["will-topic"].as<std::string>();
+}
+
+std::string ProgramOptions::willMessage() const
+{
+    return m_vm["will-msg"].as<std::string>();
+}
+
+unsigned ProgramOptions::willQos() const
+{
+    return m_vm["will-qos"].as<unsigned>();
+}
+
+bool ProgramOptions::willRetain() const
+{
+    return m_vm.count("will-retain") > 0U;
+}
+
+std::string ProgramOptions::willContentType() const
+{
+    return m_vm["will-content-type"].as<std::string>();
+}
+
+std::string ProgramOptions::willResponseTopic() const
+{
+    return m_vm["will-response-topic"].as<std::string>();
+}
+
+std::string ProgramOptions::willCorrelationData() const
+{
+    return m_vm["will-correlation-data"].as<std::string>();
+}
+
+unsigned ProgramOptions::willDelay() const
+{
+    return m_vm["will-delay"].as<unsigned>();
+}
+
+unsigned ProgramOptions::willMessageExpiry() const
+{
+    return m_vm["will-message-expiry"].as<unsigned>();
+}
+
+unsigned ProgramOptions::willMessageFormat() const
+{
+    return m_vm["will-message-format"].as<unsigned>();
+}
+
+ProgramOptions::StringsList ProgramOptions::willUserProps() const
+{
+    return stringListOpts("will-user-prop");
+}
+
 std::string ProgramOptions::networkAddress() const
 {
     return m_vm["broker"].as<std::string>();
@@ -141,13 +281,7 @@ bool ProgramOptions::pubRetain() const
 
 ProgramOptions::StringsList ProgramOptions::subTopics() const
 {
-    StringsList result;
-    auto* id = "sub-topic";
-    if (m_vm.count(id) > 0) {
-        result = m_vm[id].as<StringsList>();
-    }
-
-    return result;
+    return stringListOpts("sub-topic");
 }
 
 ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
@@ -164,6 +298,16 @@ ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
 bool ProgramOptions::subBinary() const
 {
     return m_vm.count("sub-binary") > 0U;
+}
+
+ProgramOptions::StringsList ProgramOptions::stringListOpts(const std::string& name) const
+{
+    StringsList result;
+    if (m_vm.count(name) > 0) {
+        result = m_vm[name].as<StringsList>();
+    }
+
+    return result;    
 }
 
 } // namespace cc_mqtt5_client_app

@@ -27,8 +27,8 @@ Pub::Pub(boost::asio::io_context& io, int& result) :
     Base(io, result)
 {
     opts().addCommon();
-    opts().addConnect();
     opts().addNetwork();
+    opts().addConnect();
     opts().addPublish();
 }    
 
@@ -36,6 +36,9 @@ void Pub::brokerConnectedImpl()
 {
     auto topic = opts().pubTopic();
     auto data = parseBinaryData(opts().pubMessage());
+    auto contentType = opts().pubContentType();
+    auto responseTopic = opts().pubResponseTopic();
+    auto correlationData = parseBinaryData(opts().pubCorrelationData());    
 
     auto basicConfig = CC_Mqtt5PublishBasicConfig();
     ::cc_mqtt5_client_publish_init_config_basic(&basicConfig);
@@ -61,6 +64,45 @@ void Pub::brokerConnectedImpl()
         doTerminate();
         return;
     }
+
+    auto extraConfig = CC_Mqtt5PublishExtraConfig();
+    ::cc_mqtt5_client_publish_init_config_extra(&extraConfig);
+    if (!contentType.empty()) {
+        extraConfig.m_contentType = contentType.c_str();
+    }
+
+    if (!responseTopic.empty()) {
+        extraConfig.m_responseTopic = responseTopic.c_str();
+    }
+
+    if (!correlationData.empty()) {
+        extraConfig.m_correlationData = &correlationData[0];
+        extraConfig.m_correlationDataLen = static_cast<decltype(extraConfig.m_correlationDataLen)>(correlationData.size());
+    }
+
+    extraConfig.m_messageExpiryInterval = opts().pubMessageExpiry();
+    extraConfig.m_format = static_cast<decltype(extraConfig.m_format)>(opts().pubMessageFormat());
+
+    ec = ::cc_mqtt5_client_publish_config_extra(publish, &extraConfig);
+    if (ec != CC_Mqtt5ErrorCode_Success) {
+        logError() << "Failed to perform extra publish configuration with ec=" << toString(ec) << std::endl;
+        doTerminate();
+        return;
+    }    
+
+    auto props = parseUserProps(opts().pubUserProps());
+    for (auto& p : props) {
+        auto info = CC_Mqtt5UserProp();
+        info.m_key = p.m_key.c_str();
+        info.m_value = p.m_value.c_str();
+
+        ec = ::cc_mqtt5_client_publish_add_user_prop(publish, &info);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to add publish user property with ec=" << toString(ec) << std::endl;
+            doTerminate();
+            return;
+        }         
+    }    
 
     ec = ::cc_mqtt5_client_publish_send(publish, &Pub::publishCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {

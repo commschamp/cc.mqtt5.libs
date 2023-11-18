@@ -121,7 +121,7 @@ void printUserProperties(const CC_Mqtt5UserProp* props, unsigned propsCount)
 {
     for (auto idx = 0U; idx < propsCount; ++idx) {
         auto& p = props[idx];
-        std::cout << "\tUser Property: " << p.m_key << " = " << p.m_value << '\n';
+        std::cout << "\tUser Property: " << p.m_key << "=" << p.m_value << '\n';
     }    
 }
 

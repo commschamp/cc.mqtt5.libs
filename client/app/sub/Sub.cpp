@@ -27,8 +27,8 @@ Sub::Sub(boost::asio::io_context& io, int& result) :
     Base(io, result)
 {
     opts().addCommon();
-    opts().addConnect();
     opts().addNetwork();
+    opts().addConnect();
     opts().addSubscribe();
 }    
 
@@ -61,6 +61,34 @@ void Sub::brokerConnectedImpl()
             return;
         }        
     }
+
+    auto subId = opts().subId();
+    if (subId > 0U) {
+        auto extraConfig = CC_Mqtt5SubscribeExtraConfig();
+        ::cc_mqtt5_client_subscribe_init_config_extra(&extraConfig);
+        extraConfig.m_subId = subId;
+
+        ec = ::cc_mqtt5_client_subscribe_config_extra(subscribe, &extraConfig);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to configure extra subscribe properties with ec=" << toString(ec) << std::endl;
+            doTerminate();
+            return;
+        }           
+    }
+
+    auto props = parseUserProps(opts().subUserProps());
+    for (auto& p : props) {
+        auto info = CC_Mqtt5UserProp();
+        info.m_key = p.m_key.c_str();
+        info.m_value = p.m_value.c_str();
+
+        ec = ::cc_mqtt5_client_subscribe_add_user_prop(subscribe, &info);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to add subscribe user property with ec=" << toString(ec) << std::endl;
+            doTerminate();
+            return;
+        }         
+    }     
 
     ec = ::cc_mqtt5_client_subscribe_send(subscribe, &Sub::subscribeCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {

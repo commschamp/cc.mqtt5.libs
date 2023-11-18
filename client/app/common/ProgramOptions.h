@@ -79,11 +79,19 @@ public:
     std::string pubMessage() const;
     unsigned pubQos() const;
     bool pubRetain() const;
+    std::string pubContentType() const;
+    std::string pubResponseTopic() const;
+    std::string pubCorrelationData() const;
+    unsigned pubMessageExpiry() const;
+    unsigned pubMessageFormat() const;
+    StringsList pubUserProps() const;
 
     // Subscribe Options
     StringsList subTopics() const;
     UnsignedsList subQoses() const;
     bool subBinary() const;
+    unsigned subId() const;
+    StringsList subUserProps() const;
 
 private:
     StringsList stringListOpts(const std::string& name) const;

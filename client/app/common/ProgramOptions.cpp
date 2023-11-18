@@ -89,7 +89,14 @@ void ProgramOptions::addPublish()
         ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify hexadecimal value of a single byte, "
             "such as \"\\x01\\xb9\\xaf\".")
         ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")
-        ("pub-retain", po::value<bool>()->default_value(false), "Retain the publish message");
+        ("pub-retain", po::value<bool>()->default_value(false), "Retain the publish message")
+        ("pub-content-type", po::value<std::string>()->default_value(std::string()), "\"Content Type\" property.")
+        ("pub-response-topic", po::value<std::string>()->default_value(std::string()), "\"Response Topic\" property.")        
+        ("pub-correlation-data", po::value<std::string>()->default_value(std::string()), 
+            "\"Correlation Data\" property, use \"\\x\" prefix to specify hexadecimal value of a single byte.")        
+        ("pub-message-expiry", po::value<unsigned>()->default_value(0), "\"Message Expiry Interval\" property.") 
+        ("pub-message-format", po::value<unsigned>()->default_value(0), "\"Payload Format Indicator\" property.")      
+        ("pub-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the message.")
     ;    
 
     m_desc.add(opts);
@@ -103,6 +110,8 @@ void ProgramOptions::addSubscribe()
         ("sub-qos,q", po::value<UnsignedsList>(), "Subscribe max QoS: 0, 1, or 2. Defaults to 2. Can be used multiple times "
             "(for each topic filter correspondingly).")
         ("sub-binary", "Force binary output of the received message data")
+        ("sub-id", po::value<unsigned>()->default_value(0), "\"Subscription Identifier\" property.")
+        ("sub-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the SUBSCRIBE request.")
     ;    
 
     m_desc.add(opts);
@@ -117,8 +126,6 @@ bool ProgramOptions::parseArgs(int argc, const char* argv[])
 {
     po::store(po::parse_command_line(argc, argv, m_desc), m_vm);
     po::notify(m_vm);  
-
-    // TODO: check all set  
 
     return true;
 }
@@ -279,6 +286,36 @@ bool ProgramOptions::pubRetain() const
     return m_vm["pub-retain"].as<bool>();
 }
 
+std::string ProgramOptions::pubContentType() const
+{
+    return m_vm["pub-content-type"].as<std::string>();
+}
+
+std::string ProgramOptions::pubResponseTopic() const
+{
+    return m_vm["pub-response-topic"].as<std::string>();
+}
+
+std::string ProgramOptions::pubCorrelationData() const
+{
+    return m_vm["pub-correlation-data"].as<std::string>();
+}
+
+unsigned ProgramOptions::pubMessageExpiry() const
+{
+    return m_vm["pub-message-expiry"].as<unsigned>();
+}
+
+unsigned ProgramOptions::pubMessageFormat() const
+{
+    return m_vm["pub-message-format"].as<unsigned>();
+}
+
+ProgramOptions::StringsList ProgramOptions::pubUserProps() const
+{
+    return stringListOpts("pub-user-prop");
+}
+
 ProgramOptions::StringsList ProgramOptions::subTopics() const
 {
     return stringListOpts("sub-topic");
@@ -298,6 +335,16 @@ ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
 bool ProgramOptions::subBinary() const
 {
     return m_vm.count("sub-binary") > 0U;
+}
+
+unsigned ProgramOptions::subId() const
+{
+    return m_vm["sub-id"].as<unsigned>();
+}
+
+ProgramOptions::StringsList ProgramOptions::subUserProps() const
+{
+    return stringListOpts("sub-user-prop");
 }
 
 ProgramOptions::StringsList ProgramOptions::stringListOpts(const std::string& name) const

@@ -338,12 +338,13 @@ void IntegrationTestCommonBase::integrationTestDoReadInternal()
             }
 
             auto consumed = ::cc_mqtt5_client_process_data(m_client.get(), buf, bufLen);
+            assert(consumed <= bufLen);
             if (useVector) {
                 m_inData.erase(m_inData.begin(), m_inData.begin() + consumed);
             }
             else {
                 auto begIter = buf + consumed;
-                auto endIter = begIter + (bufLen - consumed);
+                auto endIter = buf + bufLen;
                 m_inData.assign(begIter, endIter);
             }
 

@@ -97,6 +97,14 @@ void RecvOp::handle(PublishMsg& msg)
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
+    if ((qos == Qos::ExactlyOnceDelivery) && 
+        (m_packetId != 0U) && 
+        (msg.field_packetId().doesExist()) &&
+        (msg.field_packetId().field().value() != m_packetId)) {
+        // Applicable to other RecvOp being handled in parallel
+        return;
+    }
+
     if (qos > Qos::ExactlyOnceDelivery) {
         terminationWithReason(DisconnectReason::QosNotSupported);
         return;

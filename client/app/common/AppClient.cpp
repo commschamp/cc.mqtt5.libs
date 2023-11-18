@@ -352,6 +352,7 @@ void AppClient::print(const CC_Mqtt5ConnectResponse& response)
     printBool("Wildcard Subscriptions Available", response.m_wildcardSubAvailable);
     printBool("Subscription IDs Available", response.m_subIdsAvailable);
     printBool("Shared Subscription Available", response.m_sharedSubsAvailable);
+    std::cout << std::endl;
 }
 
 void AppClient::print(const CC_Mqtt5PublishResponse& response)
@@ -360,6 +361,7 @@ void AppClient::print(const CC_Mqtt5PublishResponse& response)
     printReasonCode(response.m_reasonCode);
     printReasonString(response.m_reasonStr);
     printUserProperties(response.m_userProps, response.m_userPropsCount);
+    std::cout << std::endl;
 }
 
 void AppClient::print(const CC_Mqtt5SubscribeResponse& response)
@@ -370,6 +372,7 @@ void AppClient::print(const CC_Mqtt5SubscribeResponse& response)
     }
     printReasonString(response.m_reasonStr);
     printUserProperties(response.m_userProps, response.m_userPropsCount);
+    std::cout << std::endl;
 }
 
 AppClient::AppClient(boost::asio::io_context& io, int& result) : 

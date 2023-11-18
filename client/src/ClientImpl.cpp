@@ -662,10 +662,14 @@ void ClientImpl::handle(PublishMsg& msg)
         return;
     }
 
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }       
+
     bool disconnectSent = false;
     do {
         auto createRecvOp = 
-            [this, &disconnectSent]()
+            [this, &disconnectSent, &msg]()
             {
                 auto ptr = m_recvOpsAlloc.alloc(*this);
                 if (!ptr) {
@@ -677,6 +681,7 @@ void ClientImpl::handle(PublishMsg& msg)
 
                 m_ops.push_back(ptr.get());
                 m_recvOps.push_back(std::move(ptr));
+                msg.dispatch(*m_recvOps.back());
             };
 
         using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
@@ -711,14 +716,13 @@ void ClientImpl::handle(PublishMsg& msg)
 
         // Duplicate attempt to deliver 
         (*iter)->reset();
+        msg.dispatch(**iter);
     } while (false);
 
     if (disconnectSent) {
         notifyDisconnected(true);
         return;
     }
-
-    handle(static_cast<ProtMessage&>(msg));
 }
 
 void ClientImpl::handle(PubackMsg& msg)

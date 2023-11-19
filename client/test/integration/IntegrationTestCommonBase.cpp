@@ -484,7 +484,7 @@ void IntegrationTestCommonBase::integrationTestSendDataCb(void* data, const unsi
 
     //std::cout << "DEBUG: Sending " << bufLen << " bytes." << std::endl;
 
-    auto written = 0U;
+    std::size_t written = 0U;
     while (written < bufLen) {
         boost::system::error_code ec;
         written += boost::asio::write(socket, boost::asio::buffer(buf, bufLen), ec);

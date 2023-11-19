@@ -244,7 +244,7 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(connectMsg->field_clientId().value(), ClientId);
     TS_ASSERT(connectMsg->field_flags().field_low().getBitValue_cleanStart());
     TS_ASSERT(connectMsg->field_flags().field_low().getBitValue_willFlag());
-    TS_ASSERT_EQUALS(static_cast<decltype(WillQos)>(connectMsg->field_flags().field_willQos().value()), WillQos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(connectMsg->field_flags().field_willQos().value()), WillQos);
     TS_ASSERT(connectMsg->field_flags().field_high().getBitValue_userNameFlag());
     TS_ASSERT(connectMsg->field_flags().field_high().getBitValue_passwordFlag());
     TS_ASSERT_EQUALS(connectMsg->field_keepAlive().value(), KeepAlive);

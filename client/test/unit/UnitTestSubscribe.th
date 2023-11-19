@@ -99,15 +99,15 @@ void UnitTestSubscribe::test1()
     auto& elem0 = subscribeMsg->field_list().value()[0];
     auto& elem1 = subscribeMsg->field_list().value()[1];
     TS_ASSERT_EQUALS(elem0.field_topic().value(), SubTopic1);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubQos1)>(elem0.field_options().field_qos().value()), SubQos1);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(elem0.field_options().field_qos().value()), SubQos1);
     TS_ASSERT_EQUALS(elem0.field_options().field_bits().getBitValue_NL(), SubNoLocal1);
     TS_ASSERT_EQUALS(elem0.field_options().field_bits().getBitValue_RAP(), SubRetainAsPublish1);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubRetainHandling1)>(elem0.field_options().field_retainHandling().value()), SubRetainHandling1);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5RetainHandling>(elem0.field_options().field_retainHandling().value()), SubRetainHandling1);
     TS_ASSERT_EQUALS(elem1.field_topic().value(), SubTopic2);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubQos2)>(elem1.field_options().field_qos().value()), SubQos2);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(elem1.field_options().field_qos().value()), SubQos2);
     TS_ASSERT_EQUALS(elem1.field_options().field_bits().getBitValue_NL(), SubNoLocal2);
     TS_ASSERT_EQUALS(elem1.field_options().field_bits().getBitValue_RAP(), SubRetainAsPublish2);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubRetainHandling2)>(elem1.field_options().field_retainHandling().value()), SubRetainHandling2);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5RetainHandling>(elem1.field_options().field_retainHandling().value()), SubRetainHandling2);
 
     unitTestTick(1000);
     UnitTestSubackMsg subackMsg;
@@ -791,9 +791,9 @@ void UnitTestSubscribe::test13()
     auto& elem0 = subscribeMsg->field_list().value()[0];
     auto& elem1 = subscribeMsg->field_list().value()[1];
     TS_ASSERT_EQUALS(elem0.field_topic().value(), SubTopic1);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubQos1)>(elem0.field_options().field_qos().value()), SubQos1);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(elem0.field_options().field_qos().value()), SubQos1);
     TS_ASSERT_EQUALS(elem1.field_topic().value(), SubTopic2);
-    TS_ASSERT_EQUALS(static_cast<decltype(SubQos2)>(elem1.field_options().field_qos().value()), SubQos2);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(elem1.field_options().field_qos().value()), SubQos2);
 
     unitTestTick(1000);
     UnitTestSubackMsg subackMsg;

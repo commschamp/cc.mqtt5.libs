@@ -128,7 +128,7 @@ void UnitTestPublish::test1()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
     TS_ASSERT_EQUALS(publishMsg->transportField_flags().field_retain().getBitValue_bit(), Retain);
     TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
@@ -142,7 +142,7 @@ void UnitTestPublish::test1()
     }
 
     TS_ASSERT_DIFFERS(propsHandler.m_payloadFormatIndicator, nullptr);
-    TS_ASSERT_EQUALS(static_cast<decltype(Format)>(propsHandler.m_payloadFormatIndicator->field_value().value()), Format);      
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5PayloadFormat>(propsHandler.m_payloadFormatIndicator->field_value().value()), Format);      
     TS_ASSERT_DIFFERS(propsHandler.m_messageExpiryInterval, nullptr);
     TS_ASSERT_EQUALS(propsHandler.m_messageExpiryInterval->field_value().value(), MsgExpiry);      
     TS_ASSERT_DIFFERS(propsHandler.m_responseTopic, nullptr);
@@ -192,7 +192,7 @@ void UnitTestPublish::test2()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
@@ -254,7 +254,7 @@ void UnitTestPublish::test3()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -298,7 +298,7 @@ void UnitTestPublish::test3()
     TS_ASSERT(unitTestIsPublishComplete());
     auto& pubackInfo = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(static_cast<decltype(NoSubscribers)>(pubackInfo.m_response.m_reasonCode), NoSubscribers);
+    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, static_cast<CC_Mqtt5ReasonCode>(NoSubscribers));
     TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonStr, ReasonStr);
     TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps.size(), 2U);
     TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_key, UserPropKey1);
@@ -408,7 +408,7 @@ void UnitTestPublish::test5()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
@@ -1331,7 +1331,7 @@ void UnitTestPublish::test16()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -1401,7 +1401,7 @@ void UnitTestPublish::test17()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -1474,7 +1474,7 @@ void UnitTestPublish::test18()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -1544,7 +1544,7 @@ void UnitTestPublish::test19()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -1617,7 +1617,7 @@ void UnitTestPublish::test20()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
@@ -1699,7 +1699,7 @@ void UnitTestPublish::test21()
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
-    TS_ASSERT_EQUALS(static_cast<decltype(Qos)>(publishMsg->transportField_flags().field_qos().value()), Qos);
+    TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(publishMsg->transportField_flags().field_qos().value()), Qos);
     TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);

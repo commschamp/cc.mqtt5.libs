@@ -356,9 +356,9 @@ void ReauthOp::handle(AuthMsg& msg)
             auto errorIter = 
                 std::find_if(
                     std::begin(Map), std::end(Map),
-                    [ec](auto& info)
+                    [ec](auto& ecInfo)
                     {
-                        return ec == info.first;
+                        return ec == ecInfo.first;
                     });
 
             if (errorIter != std::end(Map)) {

@@ -549,7 +549,7 @@ void ConnectOp::handle(ConnackMsg& msg)
     }
 
     PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
+    for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
     }
 
@@ -720,9 +720,9 @@ void ConnectOp::handle(DisconnectMsg& msg)
         comms::cast_assign(info.m_reasonCode) = msg.field_reasonCode().field().value();
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         } 
 
@@ -779,10 +779,10 @@ void ConnectOp::handle(AuthMsg& msg)
     UserPropsList userProps; // Will be referenced in inInfo
     auto inInfo = CC_Mqtt5AuthInfo();
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
 
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -852,8 +852,8 @@ void ConnectOp::handle(AuthMsg& msg)
     respMsg.field_reasonCode().setExists();
     respMsg.field_reasonCode().field().setValue(AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
 
-    respMsg.field_propertiesList().setExists();
-    auto& propsField = respMsg.field_propertiesList().field();
+    respMsg.field_properties().setExists();
+    auto& propsField = respMsg.field_properties().field();
     {
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect auth property, reached available limit.");

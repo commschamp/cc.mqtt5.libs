@@ -102,7 +102,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
 
 CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& config)
 {
-    auto& propsField = m_subMsg.field_propertiesList();
+    auto& propsField = m_subMsg.field_properties();
     if (config.m_subId > 0) {
         static constexpr unsigned MaxSubId = 268435455;
         if (MaxSubId <= config.m_subId) {
@@ -132,7 +132,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
 
 CC_Mqtt5ErrorCode SubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    auto& propsField = m_subMsg.field_propertiesList();
+    auto& propsField = m_subMsg.field_properties();
     return addUserPropToList(propsField, prop);
 }
 
@@ -217,7 +217,7 @@ void SubscribeOp::handle(SubackMsg& msg)
             });     
 
     PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
+    for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
     }
 

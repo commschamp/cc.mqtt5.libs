@@ -106,7 +106,7 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
 
 CC_Mqtt5ErrorCode UnsubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    auto& propsField = m_unsubMsg.field_propertiesList();
+    auto& propsField = m_unsubMsg.field_properties();
     return addUserPropToList(propsField, prop);
 }
 
@@ -198,7 +198,7 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     }
 
     PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
+    for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
     }
 

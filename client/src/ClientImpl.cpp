@@ -708,7 +708,7 @@ void ClientImpl::handle(PublishMsg& msg)
             PubrecMsg pubrecMsg;
             pubrecMsg.field_packetId().setValue(msg.field_packetId().field().value());
             pubrecMsg.field_reasonCode().setExists();
-            pubrecMsg.field_propertiesList().setExists();
+            pubrecMsg.field_properties().setExists();
             pubrecMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdInUse;
             sendMessage(pubrecMsg);
             return;
@@ -766,7 +766,7 @@ void ClientImpl::handle(PubrecMsg& msg)
         PubrelMsg pubrelMsg;
         pubrelMsg.field_packetId().setValue(msg.field_packetId().value());
         pubrelMsg.field_reasonCode().setExists();
-        pubrelMsg.field_propertiesList().setExists();        
+        pubrelMsg.field_properties().setExists();        
         pubrelMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubrelMsg);
         return;
@@ -794,7 +794,7 @@ void ClientImpl::handle(PubrelMsg& msg)
         PubcompMsg pubcompMsg;
         pubcompMsg.field_packetId().setValue(msg.field_packetId().value());
         pubcompMsg.field_reasonCode().setExists();
-        pubcompMsg.field_propertiesList().setExists();        
+        pubcompMsg.field_properties().setExists();        
         pubcompMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubcompMsg);
         return;
@@ -1050,7 +1050,7 @@ void ClientImpl::sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::Value
 {
     DisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
-    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_properties().setExists();
     disconnectMsg.field_reasonCode().field().setValue(reason);    
     sendMessage(disconnectMsg);
 }

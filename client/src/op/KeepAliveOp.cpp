@@ -70,9 +70,9 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
         comms::cast_assign(info.m_reasonCode) = msg.field_reasonCode().field().value();
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         } 
 

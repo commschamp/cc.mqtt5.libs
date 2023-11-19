@@ -59,8 +59,8 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
     m_authMsg.field_reasonCode().setExists();
     m_authMsg.field_reasonCode().field().value() = AuthMsg::Field_reasonCode::Field::ValueType::ReAuth;
     
-    m_authMsg.field_propertiesList().setExists();
-    auto& propsField = m_authMsg.field_propertiesList().field();
+    m_authMsg.field_properties().setExists();
+    auto& propsField = m_authMsg.field_properties().field();
 
     {
         if (!canAddProp(propsField)) {
@@ -104,8 +104,8 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
 
 CC_Mqtt5ErrorCode ReauthOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    m_authMsg.field_propertiesList().setExists();
-    auto& propsField = m_authMsg.field_propertiesList().field();
+    m_authMsg.field_properties().setExists();
+    auto& propsField = m_authMsg.field_properties().field();
     return addUserPropToList(propsField, prop);
 }
 
@@ -194,9 +194,9 @@ void ReauthOp::handle(AuthMsg& msg)
         return;
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -272,8 +272,8 @@ void ReauthOp::handle(AuthMsg& msg)
     respMsg.field_reasonCode().setExists();
     respMsg.field_reasonCode().field().setValue(AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
 
-    respMsg.field_propertiesList().setExists();
-    auto& propsField = respMsg.field_propertiesList().field();
+    respMsg.field_properties().setExists();
+    auto& propsField = respMsg.field_properties().field();
 
     {
         if (!canAddProp(propsField)) {

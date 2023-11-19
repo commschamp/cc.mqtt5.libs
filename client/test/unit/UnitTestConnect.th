@@ -298,8 +298,8 @@ void UnitTestConnect::test2()
     UnitTestConnackMsg connackMsg;
     connackMsg.field_flags().setBitValue_sp(false);
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    auto& propsVec = connackMsg.field_propertiesList().value();
-    using ConnackProperty = UnitTestConnackMsg::Field_propertiesList::ValueType::value_type;
+    auto& propsVec = connackMsg.field_properties().value();
+    using ConnackProperty = UnitTestConnackMsg::Field_properties::ValueType::value_type;
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& propVar = propsVec.back();
@@ -523,8 +523,8 @@ void UnitTestConnect::test3()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -576,9 +576,9 @@ void UnitTestConnect::test3()
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
 
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
     UnitTestPropsHandler authPropsHandler;
-    for (auto& p : authMsg->field_propertiesList().field().value()) {
+    for (auto& p : authMsg->field_properties().field().value()) {
         p.currentFieldExec(authPropsHandler);
     }    
 
@@ -596,7 +596,7 @@ void UnitTestConnect::test3()
     const UnitTestData ConnackAuthData = {0x44, 0x55, 0x44, 0x55};
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    auto& connackPropsVec = connackMsg.field_propertiesList().value();
+    auto& connackPropsVec = connackMsg.field_properties().value();
     do {
         connackPropsVec.resize(connackPropsVec.size() + 1U);
         auto& propVar = connackPropsVec.back();
@@ -670,8 +670,8 @@ void UnitTestConnect::test4()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -992,8 +992,8 @@ void UnitTestConnect::test12()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1067,8 +1067,8 @@ void UnitTestConnect::test13()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1174,7 +1174,7 @@ void UnitTestConnect::test15()
     unitTestTick(1000);
     UnitTestDisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
-    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_properties().setExists();
     disconnectMsg.field_reasonCode().field().value() = UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType::ImplSpecificError;
     unitTestReceiveMessage(disconnectMsg);
     TS_ASSERT(unitTestIsConnectComplete());
@@ -1536,7 +1536,7 @@ void UnitTestConnect::test24()
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    auto& propsVec = connackMsg.field_propertiesList().value();
+    auto& propsVec = connackMsg.field_properties().value();
     {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_assignedClientId();
@@ -1646,8 +1646,8 @@ void UnitTestConnect::test27()
     brokerAuthMsg.transportField_flags().field_qos().setValue(CC_Mqtt5QoS_AtLeastOnceDelivery);
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1709,8 +1709,8 @@ void UnitTestConnect::test28()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::Success;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1781,8 +1781,8 @@ void UnitTestConnect::test29()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1816,7 +1816,7 @@ void UnitTestConnect::test29()
 
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::NotAuthorized;
-    auto& connackPropsVec = connackMsg.field_propertiesList().value();
+    auto& connackPropsVec = connackMsg.field_properties().value();
     do {
         connackPropsVec.resize(connackPropsVec.size() + 1U);
         auto& propVar = connackPropsVec.back();
@@ -1880,8 +1880,8 @@ void UnitTestConnect::test30()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -1915,7 +1915,7 @@ void UnitTestConnect::test30()
 
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::NotAuthorized;
-    auto& connackPropsVec = connackMsg.field_propertiesList().value();
+    auto& connackPropsVec = connackMsg.field_properties().value();
     do {
         connackPropsVec.resize(connackPropsVec.size() + 1U);
         auto& propVar = connackPropsVec.back();
@@ -1980,8 +1980,8 @@ void UnitTestConnect::test31()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();
@@ -2044,8 +2044,8 @@ void UnitTestConnect::test32()
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
     brokerAuthMsg.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuthMsg.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuthMsg.field_propertiesList().field().value();
+    brokerAuthMsg.field_properties().setExists();
+    auto& authPropsVec = brokerAuthMsg.field_properties().field().value();
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& propVar = authPropsVec.back();

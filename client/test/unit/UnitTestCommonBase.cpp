@@ -540,8 +540,8 @@ void UnitTestCommonBase::unitTestPerformConnect(
         UnitTestAuthMsg brokerAuth;
         brokerAuth.field_reasonCode().setExists();
         brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-        brokerAuth.field_propertiesList().setExists();
-        auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+        brokerAuth.field_properties().setExists();
+        auto& authPropsVec = brokerAuth.field_properties().field().value();
 
         if (authConfig->m_authMethod != nullptr) {
             authPropsVec.resize(authPropsVec.size() + 1U);
@@ -575,7 +575,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     unitTestTick(1000);
     UnitTestConnackMsg connackMsg;
     connackMsg.field_reasonCode().value() = UnitTestConnackMsg::Field_reasonCode::ValueType::Success;
-    auto& propsVec = connackMsg.field_propertiesList().value();
+    auto& propsVec = connackMsg.field_properties().value();
 
     if (authConfig != nullptr) {
         if (authConfig->m_authMethod != nullptr) {
@@ -820,7 +820,7 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     test_assert(subscribeMsg != nullptr);
     if (subId > 0U) {
         UnitTestPropsHandler propsHandler;
-        for (auto& p : subscribeMsg->field_propertiesList().value()) {
+        for (auto& p : subscribeMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
 

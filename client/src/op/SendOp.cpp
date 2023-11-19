@@ -83,9 +83,9 @@ void SendOp::handle(PubackMsg& msg)
         confirmRegisteredAlias();
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -161,9 +161,9 @@ void SendOp::handle(PubrecMsg& msg)
         return;
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -272,9 +272,9 @@ void SendOp::handle(PubcompMsg& msg)
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
     }    
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -416,7 +416,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         }          
     }
 
-    auto& propsField = m_pubMsg.field_propertiesList();
+    auto& propsField = m_pubMsg.field_properties();
     if (alias > 0U) {
         if (!canAddProp(propsField)) {
             errorLog("Cannot add topic alias property, reached available limit.");
@@ -447,7 +447,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
 CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
 {
-    auto& propsField = m_pubMsg.field_propertiesList();
+    auto& propsField = m_pubMsg.field_properties();
 
     if (config.m_contentType != nullptr) {
         if (!canAddProp(propsField)) {
@@ -550,7 +550,7 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
 
 CC_Mqtt5ErrorCode SendOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    auto& propsField = m_pubMsg.field_propertiesList();
+    auto& propsField = m_pubMsg.field_properties();
     return addUserPropToList(propsField, prop);
 }
 

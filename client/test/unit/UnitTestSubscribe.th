@@ -94,7 +94,7 @@ void UnitTestSubscribe::test1()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
-    TS_ASSERT(subscribeMsg->field_propertiesList().value().empty());
+    TS_ASSERT(subscribeMsg->field_properties().value().empty());
     TS_ASSERT_EQUALS(subscribeMsg->field_list().value().size(), 2U);
     auto& elem0 = subscribeMsg->field_list().value()[0];
     auto& elem1 = subscribeMsg->field_list().value()[1];
@@ -182,7 +182,7 @@ void UnitTestSubscribe::test2()
     auto* subscribeMsg1 = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg1.get());
 
     UnitTestPropsHandler propsHandler1;
-    for (auto& p : subscribeMsg1->field_propertiesList().value()) {
+    for (auto& p : subscribeMsg1->field_properties().value()) {
         p.currentFieldExec(propsHandler1);
     }
 
@@ -477,7 +477,7 @@ void UnitTestSubscribe::test6()
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = subackMsg.field_propertiesList().value();
+    auto& propsVec = subackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -541,7 +541,7 @@ void UnitTestSubscribe::test7()
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = subackMsg.field_propertiesList().value();
+    auto& propsVec = subackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -597,7 +597,7 @@ void UnitTestSubscribe::test8()
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = subackMsg.field_propertiesList().value();
+    auto& propsVec = subackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_userProperty();
@@ -786,7 +786,7 @@ void UnitTestSubscribe::test13()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
-    TS_ASSERT(subscribeMsg->field_propertiesList().value().empty());
+    TS_ASSERT(subscribeMsg->field_properties().value().empty());
     TS_ASSERT_EQUALS(subscribeMsg->field_list().value().size(), 2U);
     auto& elem0 = subscribeMsg->field_list().value()[0];
     auto& elem1 = subscribeMsg->field_list().value()[1];

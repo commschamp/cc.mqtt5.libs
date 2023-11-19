@@ -137,7 +137,7 @@ void UnitTestPublish::test1()
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
 
     UnitTestPropsHandler propsHandler;
-    for (auto& p : publishMsg->field_propertiesList().value()) {
+    for (auto& p : publishMsg->field_properties().value()) {
         p.currentFieldExec(propsHandler);
     }
 
@@ -271,8 +271,8 @@ void UnitTestPublish::test3()
     pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubackMsg.field_reasonCode().setExists();
     pubackMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubackMsg.field_propertiesList().setExists();
-    auto& propsVec = pubackMsg.field_propertiesList().field().value();
+    pubackMsg.field_properties().setExists();
+    auto& propsVec = pubackMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -426,8 +426,8 @@ void UnitTestPublish::test5()
     pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubrecMsg.field_reasonCode().setExists();
     pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubrecMsg.field_propertiesList().setExists();
-    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+    pubrecMsg.field_properties().setExists();
+    auto& propsVec = pubrecMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -463,8 +463,8 @@ void UnitTestPublish::test5()
     pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
     pubcompMsg.field_reasonCode().setExists();
     pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubcompMsg.field_propertiesList().setExists();
-    auto& compPropsVec = pubcompMsg.field_propertiesList().field().value();
+    pubcompMsg.field_properties().setExists();
+    auto& compPropsVec = pubcompMsg.field_properties().field().value();
     do {
         compPropsVec.resize(compPropsVec.size() + 1U);
         auto& field = compPropsVec.back().initField_reasonStr();
@@ -621,7 +621,7 @@ void UnitTestPublish::test7()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -650,7 +650,7 @@ void UnitTestPublish::test7()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -678,7 +678,7 @@ void UnitTestPublish::test7()
         TS_ASSERT(publishMsg->field_topic().value().empty());
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -728,7 +728,7 @@ void UnitTestPublish::test8()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -765,7 +765,7 @@ void UnitTestPublish::test8()
         TS_ASSERT(publishMsg->field_topic().value().empty());
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -821,7 +821,7 @@ void UnitTestPublish::test9()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -872,7 +872,7 @@ void UnitTestPublish::test9()
         TS_ASSERT(publishMsg->field_topic().value().empty());
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -1344,8 +1344,8 @@ void UnitTestPublish::test16()
     pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubackMsg.field_reasonCode().setExists();
     pubackMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubackMsg.field_propertiesList().setExists();
-    auto& propsVec = pubackMsg.field_propertiesList().field().value();
+    pubackMsg.field_properties().setExists();
+    auto& propsVec = pubackMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -1415,8 +1415,8 @@ void UnitTestPublish::test17()
     pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubackMsg.field_reasonCode().setExists();
     pubackMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubackMsg.field_propertiesList().setExists();
-    auto& propsVec = pubackMsg.field_propertiesList().field().value();
+    pubackMsg.field_properties().setExists();
+    auto& propsVec = pubackMsg.field_properties().field().value();
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -1487,8 +1487,8 @@ void UnitTestPublish::test18()
     pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubrecMsg.field_reasonCode().setExists();
     pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubrecMsg.field_propertiesList().setExists();
-    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+    pubrecMsg.field_properties().setExists();
+    auto& propsVec = pubrecMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -1558,8 +1558,8 @@ void UnitTestPublish::test19()
     pubrecMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
     pubrecMsg.field_reasonCode().setExists();
     pubrecMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubrecMsg.field_propertiesList().setExists();
-    auto& propsVec = pubrecMsg.field_propertiesList().field().value();
+    pubrecMsg.field_properties().setExists();
+    auto& propsVec = pubrecMsg.field_properties().field().value();
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -1642,8 +1642,8 @@ void UnitTestPublish::test20()
     pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
     pubcompMsg.field_reasonCode().setExists();
     pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubcompMsg.field_propertiesList().setExists();
-    auto& propsVec = pubcompMsg.field_propertiesList().field().value();
+    pubcompMsg.field_properties().setExists();
+    auto& propsVec = pubcompMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -1725,8 +1725,8 @@ void UnitTestPublish::test21()
     pubcompMsg.field_packetId().value() = pubrecMsg.field_packetId().value();
     pubcompMsg.field_reasonCode().setExists();
     pubcompMsg.field_reasonCode().field().value() = NoSubscribers;
-    pubcompMsg.field_propertiesList().setExists();
-    auto& propsVec = pubcompMsg.field_propertiesList().field().value();
+    pubcompMsg.field_properties().setExists();
+    auto& propsVec = pubcompMsg.field_properties().field().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_userProperty();
@@ -1983,7 +1983,7 @@ void UnitTestPublish::test26()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         
@@ -2012,7 +2012,7 @@ void UnitTestPublish::test26()
         TS_ASSERT(publishMsg->field_topic().value().empty());
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
 
@@ -2044,7 +2044,7 @@ void UnitTestPublish::test26()
         TS_ASSERT_EQUALS(publishMsg->field_topic().value(), Topic);
 
         UnitTestPropsHandler propsHandler;
-        for (auto& p : publishMsg->field_propertiesList().value()) {
+        for (auto& p : publishMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
         

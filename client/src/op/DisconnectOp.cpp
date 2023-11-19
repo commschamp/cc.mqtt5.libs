@@ -26,7 +26,7 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
     // Don't update existance of the optional fields right away, do it during send.
     comms::cast_assign(m_disconnectMsg.field_reasonCode().field().value()) = config.m_reasonCode;
 
-    auto& propsField = m_disconnectMsg.field_propertiesList().field();
+    auto& propsField = m_disconnectMsg.field_properties().field();
     if (config.m_sessionExpiryInterval != nullptr) {
         if ((*config.m_sessionExpiryInterval > 0) && (client().sessionState().m_connectSessionExpiryInterval == 0U)) {
             errorLog("Non-zero expiry interval in DISCONNECT is not allowed when zero expiry interval used in CONNECT.");
@@ -67,17 +67,17 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
 CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 {
-    m_disconnectMsg.field_propertiesList().setExists();
-    auto& propsField = m_disconnectMsg.field_propertiesList().field();
+    m_disconnectMsg.field_properties().setExists();
+    auto& propsField = m_disconnectMsg.field_properties().field();
     return addUserPropToList(propsField, prop);
 }
 
 CC_Mqtt5ErrorCode DisconnectOp::send()
 {
     if ((m_disconnectMsg.field_reasonCode().field().value() != DisconnectReason::Success) || 
-        (!m_disconnectMsg.field_propertiesList().field().value().empty())) {
+        (!m_disconnectMsg.field_properties().field().value().empty())) {
         m_disconnectMsg.field_reasonCode().setExists();
-        m_disconnectMsg.field_propertiesList().setExists();
+        m_disconnectMsg.field_properties().setExists();
     }
 
     auto guard = client().apiEnter();

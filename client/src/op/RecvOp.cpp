@@ -128,7 +128,7 @@ void RecvOp::handle(PublishMsg& msg)
                     outMsg.field_packetId().value() = msg.field_packetId().field().value();
                     outMsg.field_reasonCode().setExists();
                     outMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized;
-                    outMsg.field_propertiesList().setExists();
+                    outMsg.field_properties().setExists();
                     sendMessage(outMsg);
                 };    
 
@@ -165,7 +165,7 @@ void RecvOp::handle(PublishMsg& msg)
     }
 
     PropsHandler propsHandler;
-    for (auto& p : msg.field_propertiesList().value()) {
+    for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
     }
 
@@ -385,9 +385,9 @@ void RecvOp::handle(PubrelMsg& msg)
         return;
     }
 
-    if (msg.field_propertiesList().doesExist()) {
+    if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
-        for (auto& p : msg.field_propertiesList().field().value()) {
+        for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
         }
 

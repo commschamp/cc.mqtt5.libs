@@ -42,12 +42,12 @@ protected:
     virtual void networkConnectivityChangedImpl() override;
 
 private:
-    using UserPropKeyStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_userProperty::Field_value::Field_first::ValueType;
-    using UserPropValueStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_userProperty::Field_value::Field_second::ValueType;
+    using UserPropKeyStorage = PublishMsg::Field_properties::ValueType::value_type::Field_userProperty::Field_value::Field_first::ValueType;
+    using UserPropValueStorage = PublishMsg::Field_properties::ValueType::value_type::Field_userProperty::Field_value::Field_second::ValueType;
     using DataStorage = PublishMsg::Field_payload::ValueType;
-    using ResponseTopicStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_responseTopic::Field_value::ValueType;
-    using CorrelationDataStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_correlationData::Field_value::ValueType;
-    using ContentTypeStorage = PublishMsg::Field_propertiesList::ValueType::value_type::Field_contentType::Field_value::ValueType;
+    using ResponseTopicStorage = PublishMsg::Field_properties::ValueType::value_type::Field_responseTopic::Field_value::ValueType;
+    using CorrelationDataStorage = PublishMsg::Field_properties::ValueType::value_type::Field_correlationData::Field_value::ValueType;
+    using ContentTypeStorage = PublishMsg::Field_properties::ValueType::value_type::Field_contentType::Field_value::ValueType;
 
     struct UserPropInfo
     {

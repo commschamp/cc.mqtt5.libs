@@ -78,7 +78,7 @@ void UnitTestUnsubscribe::test1()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
-    TS_ASSERT(unsubscribeMsg->field_propertiesList().value().empty());
+    TS_ASSERT(unsubscribeMsg->field_properties().value().empty());
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value().size(), 2U);
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value()[0].value(), Topic1);
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value()[1].value(), Topic2);
@@ -137,7 +137,7 @@ void UnitTestUnsubscribe::test2()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
     auto* unsubscribeMsg1 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg1, nullptr);
-    TS_ASSERT(unsubscribeMsg1->field_propertiesList().value().empty());
+    TS_ASSERT(unsubscribeMsg1->field_properties().value().empty());
     TS_ASSERT_EQUALS(unsubscribeMsg1->field_list().value().size(), 1U);
     TS_ASSERT_EQUALS(unsubscribeMsg1->field_list().value()[0].value(), Topic1);
     auto packetId1 = unsubscribeMsg1->field_packetId().value();
@@ -161,7 +161,7 @@ void UnitTestUnsubscribe::test2()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
     auto* unsubscribeMsg2 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg2, nullptr);
-    TS_ASSERT(unsubscribeMsg2->field_propertiesList().value().empty());
+    TS_ASSERT(unsubscribeMsg2->field_properties().value().empty());
     TS_ASSERT_EQUALS(unsubscribeMsg2->field_list().value().size(), 1U);
     TS_ASSERT_EQUALS(unsubscribeMsg2->field_list().value()[0].value(), Topic2);
     auto packetId2 = unsubscribeMsg2->field_packetId().value();
@@ -420,7 +420,7 @@ void UnitTestUnsubscribe::test6()
     unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
     unsubackMsg.field_list().value().resize(1);
     unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    auto& propsVec = unsubackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -485,7 +485,7 @@ void UnitTestUnsubscribe::test7()
     unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
     unsubackMsg.field_list().value().resize(1);
     unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    auto& propsVec = unsubackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_reasonStr();
@@ -542,7 +542,7 @@ void UnitTestUnsubscribe::test8()
     unsubackMsg.field_packetId().value() = unsubscribeMsg->field_packetId().value();
     unsubackMsg.field_list().value().resize(1);
     unsubackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    auto& propsVec = unsubackMsg.field_propertiesList().value();
+    auto& propsVec = unsubackMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_userProperty();
@@ -629,7 +629,7 @@ void UnitTestUnsubscribe::test10()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
-    TS_ASSERT(unsubscribeMsg->field_propertiesList().value().empty());
+    TS_ASSERT(unsubscribeMsg->field_properties().value().empty());
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value().size(), 2U);
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value()[0].value(), Topic1);
     TS_ASSERT_EQUALS(unsubscribeMsg->field_list().value()[1].value(), Topic2);

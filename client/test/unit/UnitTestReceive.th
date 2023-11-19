@@ -72,7 +72,7 @@ void UnitTestReceive::test1()
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
 
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_payloadFormatIndicator();
@@ -162,7 +162,7 @@ void UnitTestReceive::test2()
     TS_ASSERT_DIFFERS(pubackMsg, nullptr);
     TS_ASSERT_EQUALS(pubackMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubackMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubackMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubackMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -217,7 +217,7 @@ void UnitTestReceive::test3()
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
 
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_payloadFormatIndicator();
@@ -272,7 +272,7 @@ void UnitTestReceive::test3()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     const std::string PubrelReasonStr("ReasonStr");
     const std::string PubrelUserPropKey("PubrelKey1");
@@ -282,8 +282,8 @@ void UnitTestReceive::test3()
     UnitTestPubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(PacketId);
     pubrelMsg.field_reasonCode().setExists();
-    pubrelMsg.field_propertiesList().setExists();
-    auto& pubrelPropsVec = pubrelMsg.field_propertiesList().field().value();
+    pubrelMsg.field_properties().setExists();
+    auto& pubrelPropsVec = pubrelMsg.field_properties().field().value();
     do {
         pubrelPropsVec.resize(pubrelPropsVec.size() + 1U);
         auto& field = pubrelPropsVec.back().initField_reasonStr();
@@ -306,7 +306,7 @@ void UnitTestReceive::test3()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -363,7 +363,7 @@ void UnitTestReceive::test4()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
 
@@ -389,7 +389,7 @@ void UnitTestReceive::test4()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -431,7 +431,7 @@ void UnitTestReceive::test5()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
 
@@ -634,7 +634,7 @@ void UnitTestReceive::test9()
     publishMsg.field_packetId().field().setValue(PacketId);
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -660,8 +660,8 @@ void UnitTestReceive::test9()
     UnitTestPubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(PacketId);
     pubrelMsg.field_reasonCode().setExists();
-    pubrelMsg.field_propertiesList().setExists();
-    auto& pubrelPropsVec = pubrelMsg.field_propertiesList().field().value();
+    pubrelMsg.field_properties().setExists();
+    auto& pubrelPropsVec = pubrelMsg.field_properties().field().value();
     do {
         pubrelPropsVec.resize(pubrelPropsVec.size() + 1U);
         auto& field = pubrelPropsVec.back().initField_userProperty();
@@ -699,7 +699,7 @@ void UnitTestReceive::test10()
     publishMsg.field_packetId().field().setValue(PacketId);
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -724,8 +724,8 @@ void UnitTestReceive::test10()
     UnitTestPubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(PacketId);
     pubrelMsg.field_reasonCode().setExists();
-    pubrelMsg.field_propertiesList().setExists();
-    auto& pubrelPropsVec = pubrelMsg.field_propertiesList().field().value();
+    pubrelMsg.field_properties().setExists();
+    auto& pubrelPropsVec = pubrelMsg.field_properties().field().value();
     do {
         pubrelPropsVec.resize(pubrelPropsVec.size() + 1U);
         auto& field = pubrelPropsVec.back().initField_reasonStr();
@@ -772,7 +772,7 @@ void UnitTestReceive::test11()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
 
@@ -798,7 +798,7 @@ void UnitTestReceive::test11()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -842,7 +842,7 @@ void UnitTestReceive::test12()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
 
@@ -857,7 +857,7 @@ void UnitTestReceive::test12()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -959,7 +959,7 @@ void UnitTestReceive::test14()
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
 
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_topicAlias();
@@ -1057,7 +1057,7 @@ void UnitTestReceive::test15()
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
 
-    auto& propsVec = publishMsg.field_propertiesList().value();
+    auto& propsVec = publishMsg.field_properties().value();
     do {
         propsVec.resize(propsVec.size() + 1U);
         auto& field = propsVec.back().initField_topicAlias();
@@ -1115,7 +1115,7 @@ void UnitTestReceive::test16()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());    
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());    
 
     // Send again with different PacketId
     publishMsg.field_packetId().field().setValue(PacketId + 1U);
@@ -1160,7 +1160,7 @@ void UnitTestReceive::test17()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());  
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());  
 
     UnitTestPubrelMsg pubrelMsg;
     pubrelMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
@@ -1208,7 +1208,7 @@ void UnitTestReceive::test18()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestPerformBasicSubscribe(client, "#", SubId);
 
@@ -1223,7 +1223,7 @@ void UnitTestReceive::test18()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -1383,7 +1383,7 @@ void UnitTestReceive::test21()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
     UnitTestPubrelMsg pubrelMsg;
@@ -1397,7 +1397,7 @@ void UnitTestReceive::test21()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -1415,7 +1415,7 @@ void UnitTestReceive::test21()
     TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
     TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubrecMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(1000);
     unitTestReceiveMessage(pubrelMsg);
@@ -1427,7 +1427,7 @@ void UnitTestReceive::test21()
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-    TS_ASSERT(pubcompMsg->field_propertiesList().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo2 = unitTestReceivedMessageInfo();

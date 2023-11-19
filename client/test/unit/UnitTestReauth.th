@@ -84,10 +84,10 @@ void UnitTestReauth::test1()
     TS_ASSERT_DIFFERS(authMsg, nullptr);
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ReAuth);
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
 
     UnitTestPropsHandler propsHandler;
-    for (auto& p : authMsg->field_propertiesList().field().value()) {
+    for (auto& p : authMsg->field_properties().field().value()) {
         p.currentFieldExec(propsHandler);
     }
 
@@ -114,8 +114,8 @@ void UnitTestReauth::test1()
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuth.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+    brokerAuth.field_properties().setExists();
+    auto& authPropsVec = brokerAuth.field_properties().field().value();
 
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -162,10 +162,10 @@ void UnitTestReauth::test1()
     TS_ASSERT_DIFFERS(authMsg, nullptr);
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
 
     UnitTestPropsHandler propsHandler2;
-    for (auto& p : authMsg->field_propertiesList().field().value()) {
+    for (auto& p : authMsg->field_properties().field().value()) {
         p.currentFieldExec(propsHandler2);
     }
 
@@ -239,7 +239,7 @@ void UnitTestReauth::test2()
     TS_ASSERT_DIFFERS(authMsg, nullptr);
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ReAuth);
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
     TS_ASSERT(!unitTestIsReauthComplete());
 
     const UnitTestData AuthData = {0x11, 0x22, 0x33, 0x44};
@@ -247,8 +247,8 @@ void UnitTestReauth::test2()
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::GrantedQos1;
-    brokerAuth.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+    brokerAuth.field_properties().setExists();
+    auto& authPropsVec = brokerAuth.field_properties().field().value();
 
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -329,8 +329,8 @@ void UnitTestReauth::test3()
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuth.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+    brokerAuth.field_properties().setExists();
+    auto& authPropsVec = brokerAuth.field_properties().field().value();
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authMethod();
@@ -413,8 +413,8 @@ void UnitTestReauth::test4()
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuth.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+    brokerAuth.field_properties().setExists();
+    auto& authPropsVec = brokerAuth.field_properties().field().value();
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authMethod();
@@ -496,7 +496,7 @@ void UnitTestReauth::test6()
     TS_ASSERT_DIFFERS(authMsg, nullptr);
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ReAuth);
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
 
     TS_ASSERT(!unitTestIsReauthComplete());
 
@@ -504,8 +504,8 @@ void UnitTestReauth::test6()
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
-    brokerAuth.field_propertiesList().setExists();
-    auto& authPropsVec = brokerAuth.field_propertiesList().field().value();
+    brokerAuth.field_properties().setExists();
+    auto& authPropsVec = brokerAuth.field_properties().field().value();
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authMethod();
@@ -576,7 +576,7 @@ void UnitTestReauth::test7()
     TS_ASSERT_DIFFERS(authMsg, nullptr);
     TS_ASSERT(authMsg->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ReAuth);
-    TS_ASSERT(authMsg->field_propertiesList().doesExist());
+    TS_ASSERT(authMsg->field_properties().doesExist());
 
     TS_ASSERT(!unitTestIsReauthComplete());    
 

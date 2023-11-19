@@ -121,7 +121,7 @@ void Op::sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason)
 {
     DisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
-    disconnectMsg.field_propertiesList().setExists();
+    disconnectMsg.field_properties().setExists();
     disconnectMsg.field_reasonCode().field().setValue(reason);    
     client.sendMessage(disconnectMsg);
 }

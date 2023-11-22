@@ -24,30 +24,8 @@ set (CC_MQTT5_EXTERNALS_DIR "${PROJECT_SOURCE_DIR}/externals")
 find_package(LibComms REQUIRED)
 find_package(cc_mqtt5 REQUIRED)
 
-set (compile_opts)
-if (CC_MQTT5_USE_CCACHE)
-    list (APPEND compile_opts USE_CCACHE)
-endif ()
-
-if (CC_MQTT5_WARN_AS_ERR)
-    list (APPEND compile_opts WARN_AS_ERR)
-endif ()
-
-if (CC_MQTT5_WITH_SANITIZERS)
-    list (APPEND compile_opts DEFAULT_SANITIZERS)
-
-    #if (CMAKE_COMPILER_IS_GNUCC)
-        # gcc gives false pasitive on vptr sanitizer
-        #list (APPEND compile_opts EXTRA -fno-sanitize=vptr)
-    #endif ()
-endif ()
-
-if (EXISTS ${LibComms_DIR}/CC_Compile.cmake)
-    include (${LibComms_DIR}/CC_Compile.cmake)
-    cc_compile(${compile_opts})
-else ()
-    message (WARNING "Unexpected COMMS cmake scripts installation path, cannot reuse compilation options")
-endif ()
+include (${PROJECT_SOURCE_DIR}/cmake/Compile.cmake)
+cc_mqttsn_compile ()
 
 while (TRUE)
     if ((NOT CC_MQTT5_BUILD_UNIT_TESTS) AND (NOT CC_MQTT5_BUILD_INTEGRATION_TESTS))

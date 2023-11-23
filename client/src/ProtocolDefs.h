@@ -10,6 +10,7 @@
 #include "ProtocolOptions.h"
 
 #include "cc_mqtt5/Message.h"
+#include "cc_mqtt5/Version.h"
 #include "cc_mqtt5/frame/Frame.h"
 #include "cc_mqtt5/input/AllMessages.h"
 #include "cc_mqtt5/input/ClientInputMessages.h"
@@ -17,6 +18,9 @@
 #include "comms/GenericHandler.h"
 
 #include <cstdint>
+
+static_assert(CC_MQTT5_VERSION <= COMMS_MAKE_VERSION(2, 5, 0), 
+    "The version of the cc_mqtt5 library is too low.");
 
 namespace cc_mqtt5_client
 {

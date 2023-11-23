@@ -29,9 +29,10 @@ class IntegrationTestBasicPubSub_Client1: public IntegrationTestCommonBase
 {
     using Base = IntegrationTestCommonBase;
 public:
-    IntegrationTestBasicPubSub_Client1(boost::asio::io_context& io, int& exitCode) :
+    IntegrationTestBasicPubSub_Client1(boost::asio::io_context& io, int& exitCode, unsigned& opCount) :
         Base(io, "IntegrationTestBasicPubSub_Client1"),
-        m_exitCode(exitCode)
+        m_exitCode(exitCode),
+        m_opCount(opCount)
     {
     }
 
@@ -50,6 +51,8 @@ public:
             return false;
         }
 
+        ++m_opCount;
+
         return true;       
     }
 
@@ -64,6 +67,7 @@ protected:
     {
         // Echo all incoming messages
         std::string data(reinterpret_cast<const char*>(info->m_data), info->m_dataLen);
+        ++m_opCount;
         if (!integrationTestStartBasicPublish(info->m_topic, data.c_str(), info->m_qos)) {
             failTestInternal();
             return;
@@ -72,6 +76,8 @@ protected:
 
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;
         if (!integrationTestVerifyConnectSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -83,10 +89,14 @@ protected:
             failTestInternal();
             return;            
         }
+
+        ++m_opCount;
     }
 
     virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;        
         if (!integrationTestVerifySubscribeSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -97,6 +107,9 @@ protected:
 
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;  
+
         if (!integrationTestVerifyPublishSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -112,15 +125,17 @@ private:
     }
 
     int& m_exitCode; 
+    unsigned& m_opCount;
 };
 
 class IntegrationTestBasicPubSub_Client2: public IntegrationTestCommonBase
 {
     using Base = IntegrationTestCommonBase;
 public:
-    IntegrationTestBasicPubSub_Client2(boost::asio::io_context& io, int& exitCode) :
+    IntegrationTestBasicPubSub_Client2(boost::asio::io_context& io, int& exitCode, unsigned& opCount) :
         Base(io, "IntegrationTestBasicPubSub_Client2"),
-        m_exitCode(exitCode)
+        m_exitCode(exitCode),
+        m_opCount(opCount)
     {
     }
 
@@ -139,6 +154,7 @@ public:
             return false;
         }
 
+        ++m_opCount;
         return true;       
     }
 
@@ -179,6 +195,9 @@ protected:
 
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;
+
         if (!integrationTestVerifyConnectSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -190,10 +209,15 @@ protected:
             failTestInternal();
             return;            
         }
+
+        ++m_opCount;
     }
 
     virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;
+
         if (!integrationTestVerifySubscribeSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -204,6 +228,9 @@ protected:
 
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
+        assert(m_opCount > 0U);
+        --m_opCount;
+
         if (!integrationTestVerifyPublishSuccessful(status, response)) {
             failTestInternal();
             return;
@@ -222,19 +249,35 @@ private:
     {
         if (PubInfoMapSize <= m_pubCount) {
             integrationTestInfoLog() << "All publishes are complete" << std::endl;
-            //stopIoPosted();
-            io().stop();
+            stopTestWhenReady();
             return;
         }
 
         auto& info = PubInfoMap[m_pubCount];
+        ++m_opCount;   
         if (!integrationTestStartBasicPublish(info.m_topic.c_str(), info.m_data.c_str(), info.m_qos)) {
             failTestInternal();
             return;            
-        }        
+        }     
+    }
+
+    void stopTestWhenReady()
+    {
+        if (m_opCount == 0U) {
+            io().stop();
+            return;
+        }
+
+        boost::asio::post(
+            io(),
+            [this]()
+            {
+                stopTestWhenReady();
+            });
     }
 
     int& m_exitCode;
+    unsigned& m_opCount;
     unsigned m_pubCount = 0U; 
 };
 
@@ -242,10 +285,12 @@ private:
 int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
 {
     int exitCode = 0;
+    unsigned opCount = 0U;
     try {
         boost::asio::io_context io;
-        IntegrationTestBasicPubSub_Client1 client1(io, exitCode);
-        IntegrationTestBasicPubSub_Client2 client2(io, exitCode);
+
+        IntegrationTestBasicPubSub_Client1 client1(io, exitCode, opCount);
+        IntegrationTestBasicPubSub_Client2 client2(io, exitCode, opCount);
 
         if ((!client1.start()) || 
             (!client2.start())) {
@@ -253,13 +298,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
         }
 
         io.run();
-        std::cout << "Out of event loop" << std::endl;
     }
     catch (const std::exception& e) {
         std::cerr << "ERROR: Unexpected exception: " << e.what() << std::endl;
         return -1;
     }
 
-    std::cout << "Out of main: exitCode=" << exitCode << std::endl;
     return exitCode;
 }

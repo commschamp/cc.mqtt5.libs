@@ -9,6 +9,12 @@ endif ()
 
 find_package (Boost REQUIRED COMPONENTS system program_options)
 
+set (EXTRA_BOOST_TARGETS)
+if (WIN32)
+    find_package (Boost REQUIRED COMPONENTS date_time regex)
+    set (EXTRA_BOOST_TARGETS Boost::date_time Boost::regex)
+endif ()
+
 set (COMMON_APPS_LIB "cc_mqtt5_client_apps_lib")
 
 add_subdirectory (common)

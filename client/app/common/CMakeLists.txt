@@ -6,7 +6,7 @@ set (src
 )
 
 add_library(${COMMON_APPS_LIB} STATIC ${src})
-target_link_libraries(${COMMON_APPS_LIB} PUBLIC cc::cc_mqtt5_client Boost::system Boost::program_options)
+target_link_libraries(${COMMON_APPS_LIB} PUBLIC cc::cc_mqtt5_client Boost::system Boost::program_options ${EXTRA_BOOST_TARGETS})
 target_include_directories(
     ${COMMON_APPS_LIB} BEFORE
         PUBLIC

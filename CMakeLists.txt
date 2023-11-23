@@ -4,7 +4,7 @@ project ("cc_mqtt5_libs")
 # Options
 option (CC_MQTT5_CLIENT_DEFAULT_LIB "Build and install default variant of MQTT5 client library" ON)
 option (CC_MQTT5_CLIENT_APPS "Build and install client applications" ${CC_MQTT5_CLIENT_DEFAULT_LIB})
-option (CC_MQTT5_WARN_AS_ERR "Do NOT treat warning as error" ON)
+option (CC_MQTT5_WARN_AS_ERR "Treat warning as error" ON)
 option (CC_MQTT5_USE_CCACHE "Use ccache on unix system" ON)
 option (CC_MQTT5_BUILD_UNIT_TESTS "Build unit tests" OFF)
 option (CC_MQTT5_BUILD_INTEGRATION_TESTS "Build integration tests which require MQTT broker on local port 1883." OFF)

@@ -311,6 +311,16 @@ bool IntegrationTestCommonBase::integrationTestVerifyPublishSuccessful(CC_Mqtt5A
     return true;
 }
 
+void IntegrationTestCommonBase::stopIoPosted()
+{
+    boost::asio::post(
+        m_io,
+        [&io = m_io]()
+        {
+            io.stop();
+        });
+}
+
 void IntegrationTestCommonBase::integrationTestDoReadInternal()
 {
     assert(m_socket.is_open());

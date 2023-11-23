@@ -71,6 +71,8 @@ protected:
     virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
+    void stopIoPosted();
+
 private:
     void integrationTestDoReadInternal();
     void integrationTestDoTestTimeoutInternal();

@@ -37,6 +37,7 @@ CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_alloc();
 /// @details The callbacks of the incomplete operations will be invoked with 
 ///     @ref CC_Mqtt5AsyncOpStatus_Aborted status.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
+/// @pre Mustn't be called from within a callback, use next event loop iteration.
 /// @post The client handler becomes invalid and cannot be used any longer.
 /// @ingroup client
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
@@ -46,7 +47,7 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 ///     and checks that all the required callbacks have been set. If there are old
 ///     outstanding operations they are all aborted.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
-/// @pre Mustn't be called from within a callback, use fresh event loop iteration.
+/// @pre Mustn't be called from within a callback, use next event loop iteration.
 /// @ingroup client
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
 

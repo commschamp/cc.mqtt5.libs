@@ -35,6 +35,11 @@ public:
     {
     }
 
+    ~IntegrationTestBasicPubSub_Client1()
+    {
+        std::cout << __FUNCTION__ << std::endl;
+    }
+
     bool start()
     {
         if (!integrationTestStart()) {
@@ -117,6 +122,11 @@ public:
         Base(io, "IntegrationTestBasicPubSub_Client2"),
         m_exitCode(exitCode)
     {
+    }
+
+    ~IntegrationTestBasicPubSub_Client2()
+    {
+        std::cout << __FUNCTION__ << std::endl;
     }
 
     bool start()
@@ -212,6 +222,7 @@ private:
     {
         if (PubInfoMapSize <= m_pubCount) {
             integrationTestInfoLog() << "All publishes are complete" << std::endl;
+            //stopIoPosted();
             io().stop();
             return;
         }
@@ -242,11 +253,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
         }
 
         io.run();
+        std::cout << "Out of event loop" << std::endl;
     }
     catch (const std::exception& e) {
         std::cerr << "ERROR: Unexpected exception: " << e.what() << std::endl;
         return -1;
     }
 
+    std::cout << "Out of main: exitCode=" << exitCode << std::endl;
     return exitCode;
 }

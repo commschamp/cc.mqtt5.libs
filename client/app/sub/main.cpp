@@ -3,6 +3,7 @@
 
 #include <boost/asio.hpp>
 
+#include <csignal>
 #include <iostream>
 #include <stdexcept>
 
@@ -12,7 +13,7 @@ int main(int argc, const char* argv[])
     try {
         boost::asio::io_context io;
 
-        boost::asio::signal_set signals(io, SIGINT, SIGTERM, SIGQUIT);
+        boost::asio::signal_set signals(io, SIGINT, SIGTERM);
         signals.async_wait(
             [&io, &result](const boost::system::error_code& ec, int sigNum)
             {

@@ -131,7 +131,7 @@ void Op::sendDisconnectWithReason(DisconnectReason reason)
     sendDisconnectWithReason(m_client, reason);
 }
 
-void Op::terminationWithReason(ClientImpl& client, DisconnectReason reason)
+void Op::terminationWithReasonStatic(ClientImpl& client, DisconnectReason reason)
 {
     sendDisconnectWithReason(client, reason);
     client.notifyDisconnected(true);
@@ -139,12 +139,12 @@ void Op::terminationWithReason(ClientImpl& client, DisconnectReason reason)
 
 void Op::terminationWithReason(DisconnectReason reason)
 {
-    terminationWithReason(m_client, reason);
+    terminationWithReasonStatic(m_client, reason);
 }
 
 void Op::protocolErrorTermination(ClientImpl& client)
 {
-    terminationWithReason(client, DisconnectReason::ProtocolError);
+    terminationWithReasonStatic(client, DisconnectReason::ProtocolError);
 }
 
 void Op::protocolErrorTermination()

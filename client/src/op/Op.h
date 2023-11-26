@@ -90,7 +90,7 @@ protected:
 
     static void sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason);
     void sendDisconnectWithReason(DisconnectReason reason);
-    static void terminationWithReason(ClientImpl& client, DisconnectReason reason);
+    static void terminationWithReasonStatic(ClientImpl& client, DisconnectReason reason);
     void terminationWithReason(DisconnectReason reason);
     static void protocolErrorTermination(ClientImpl& client);
     void protocolErrorTermination();

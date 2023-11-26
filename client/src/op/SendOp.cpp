@@ -50,7 +50,7 @@ void SendOp::handle(PubackMsg& msg)
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
-                terminationWithReason(cl, DisconnectReason::ProtocolError);
+                terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
         );      
 
@@ -131,7 +131,7 @@ void SendOp::handle(PubrecMsg& msg)
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
-                terminationWithReason(cl, DisconnectReason::ProtocolError);
+                terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
         );      
 
@@ -236,7 +236,7 @@ void SendOp::handle(PubcompMsg& msg)
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
-                terminationWithReason(cl, DisconnectReason::ProtocolError);
+                terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
         );      
 

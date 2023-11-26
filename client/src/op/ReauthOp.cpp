@@ -166,7 +166,7 @@ void ReauthOp::handle(AuthMsg& msg)
         comms::util::makeScopeGuard(
             [&cl = client(), &disconnectReason]()
             {
-                terminationWithReason(cl, disconnectReason);
+                terminationWithReasonStatic(cl, disconnectReason);
             });     
 
     auto completeOpOnExit = 

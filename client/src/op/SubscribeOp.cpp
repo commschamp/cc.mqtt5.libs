@@ -201,7 +201,7 @@ void SubscribeOp::handle(SubackMsg& msg)
         comms::util::makeScopeGuard(
             [&cl = client(), &terminationReason]()
             {
-                terminationWithReason(cl, terminationReason);
+                terminationWithReasonStatic(cl, terminationReason);
             }
         );    
 

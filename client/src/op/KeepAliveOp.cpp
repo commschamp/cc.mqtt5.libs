@@ -124,7 +124,7 @@ void KeepAliveOp::networkConnectivityChangedImpl()
         return;
     }
 
-    if (sessionExpiryInterval == (CC_MQTT5_SESSION_NEVER_EXPIRES * 1000U)) {
+    if (sessionExpiryInterval == (static_cast<decltype(sessionExpiryInterval)>(CC_MQTT5_SESSION_NEVER_EXPIRES) * 1000U)) {
         // Session never expires
         return;
     }

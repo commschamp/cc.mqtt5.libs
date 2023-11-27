@@ -28,7 +28,7 @@ use the [client library](#client-library) described above.
 * **cc_mqtt5_client_pub** - Publish client application
 * **cc_mqtt5_client_sub** - Subscribe client application
 
-These applications are using [Boost](https://www.boost.org/doc/libs/1_83_0/) libraries,
+These applications are using [Boost](https://www.boost.org) libraries,
 ([boost::program_options](https://www.boost.org/doc/libs/1_83_0/doc/html/program_options.html)
 to parse the command line arguments and
 [boost::asio](https://www.boost.org/doc/libs/1_83_0/doc/html/boost_asio.html) to run

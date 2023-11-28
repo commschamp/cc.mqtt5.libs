@@ -40,10 +40,66 @@ public:
                 ##FIELD_STRING##,
                 BaseImpl::field::String
             >;
+
+        using Topic = 
+            std::tuple<
+                ##FIELD_TOPIC##,
+                BaseImpl::field::Topic
+            >;
+
     }; // struct field   
 
     struct message : public BaseImpl::message
     {
+
+        struct ConnectFields : public BaseImpl::message::ConnectFields
+        {
+            // using Properties = comms::option::EmptyOption;
+
+            using ClientId = 
+                std::tuple<
+                    ##MESSAGE_CONNECT_FIELDS_CLIENT_ID##,
+                    BaseImpl::message::ConnectFields::ClientId
+                >;
+
+            //struct WillPropertiesMembers
+            //{
+            //    using ActWillProperties = comms::option::EmptyOption;
+            //}; // struct WillPropertiesMembers
+
+            struct WillTopicMembers : public BaseImpl::message::ConnectFields::WillTopicMembers
+            {
+                using WillTopic = 
+                    std::tuple<
+                        ##MESSAGE_CONNECT_FIELDS_WILL_TOPIC##,
+                        BaseImpl::message::ConnectFields::WillTopicMembers::WillTopic
+                    >;
+            }; // struct WillTopicMembers
+
+            //struct WillMessageMembers
+            //{
+            //    using WillMessage = comms::option::EmptyOption;
+            //}; // struct WillMessageMembers
+
+            struct UserNameMembers : public BaseImpl::message::ConnectFields::UserNameMembers
+            {
+                using UserName = 
+                    std::tuple<
+                        ##MESSAGE_CONNECT_FIELDS_USERNAME##,
+                        BaseImpl::message::ConnectFields::UserNameMembers::UserName
+                    >;
+            }; // struct UserNameMembers
+
+            struct PasswordMembers : public BaseImpl::message::ConnectFields::PasswordMembers
+            {
+                using Password = 
+                    std::tuple<
+                        ##MESSAGE_CONNECT_FIELDS_PASSWORD##,
+                        BaseImpl::message::ConnectFields::PasswordMembers::Password
+                    >;
+            }; // struct PasswordMembers
+        };
+
         struct SubscribeFields : public BaseImpl::message::SubscribeFields
         {
             using List =
@@ -51,7 +107,7 @@ public:
                     ##MESSAGE_SUBSCRIBE_FIELDS_LIST##,
                     BaseImpl::message::SubscribeFields::List
                 >;
-        };
+        }; // struct SubscribeFields
 
         struct SubackFields : public BaseImpl::message::SubackFields
         {
@@ -60,7 +116,7 @@ public:
                     ##MESSAGE_SUBSCRIBE_FIELDS_LIST##,
                     BaseImpl::message::SubackFields::List
                 >;
-        };        
+        }; // struct SubackFields        
 
         struct UnsubscribeFields : public BaseImpl::message::UnsubscribeFields
         {
@@ -69,7 +125,7 @@ public:
                     ##MESSAGE_UNSUBSCRIBE_FIELDS_LIST##,
                     BaseImpl::message::UnsubscribeFields::List
                 >;
-        };
+        }; // struct UnsubscribeFields
 
         struct UnsubackFields : public BaseImpl::message::UnsubackFields
         {
@@ -78,7 +134,7 @@ public:
                     ##MESSAGE_UNSUBSCRIBE_FIELDS_LIST##,
                     BaseImpl::message::UnsubackFields::List
                 >;
-        };           
+        }; // struct UnsubackFields
 
     }; // struct message
     

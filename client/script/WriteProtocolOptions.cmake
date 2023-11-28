@@ -35,7 +35,12 @@ set_default_opt (FIELD_BIN_DATA)
 set_default_opt (FIELD_PROPERTIES_LIST)
 set_default_opt (FIELD_PROTOCOL_NAME)
 set_default_opt (FIELD_STRING)
+set_default_opt (FIELD_TOPIC)
 
+set_default_opt (MESSAGE_CONNECT_FIELDS_CLIENT_ID)
+set_default_opt (MESSAGE_CONNECT_FIELDS_USERNAME)
+set_default_opt (MESSAGE_CONNECT_FIELDS_PASSWORD)
+set_default_opt (MESSAGE_CONNECT_FIELDS_WILL_TOPIC)
 set_default_opt (MESSAGE_SUBSCRIBE_FIELDS_LIST)
 set_default_opt (MESSAGE_UNSUBSCRIBE_FIELDS_LIST)
 
@@ -67,6 +72,23 @@ if (NOT ${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE} EQUAL 0)
     set (MAX_PACKET_SIZE "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE}>")
 endif ()
 
+if (NOT ${CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN} EQUAL 0)
+    set (MESSAGE_CONNECT_FIELDS_CLIENT_ID "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN}>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_USERNAME_FIELD_FIXED_LEN} EQUAL 0)
+    set (MESSAGE_CONNECT_FIELDS_USERNAME "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_USERNAME_FIELD_FIXED_LEN}>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_PASSWORD_FIELD_FIXED_LEN} EQUAL 0)
+    set (MESSAGE_CONNECT_FIELDS_PASSWORD "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_PASSWORD_FIELD_FIXED_LEN}>")
+endif ()
+
+if (NOT ${CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN} EQUAL 0)
+    set (FIELD_TOPIC "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN}>")    
+    set (MESSAGE_CONNECT_FIELDS_WILL_TOPIC "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN}>")
+endif ()
+
 if (NOT ${CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT} EQUAL 0)
     set (MESSAGE_SUBSCRIBE_FIELDS_LIST "comms::option::app::FixedSizeStorage<${CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT}>")
 endif ()
@@ -82,17 +104,17 @@ replace_in_text (FIELD_BIN_DATA)
 replace_in_text (FIELD_PROPERTIES_LIST)
 replace_in_text (FIELD_PROTOCOL_NAME)
 replace_in_text (FIELD_STRING)
+replace_in_text (FIELD_TOPIC)
 
+replace_in_text (MESSAGE_CONNECT_FIELDS_CLIENT_ID)
+replace_in_text (MESSAGE_CONNECT_FIELDS_USERNAME)
+replace_in_text (MESSAGE_CONNECT_FIELDS_PASSWORD)
+replace_in_text (MESSAGE_CONNECT_FIELDS_WILL_TOPIC)
 replace_in_text (MESSAGE_SUBSCRIBE_FIELDS_LIST)
 replace_in_text (MESSAGE_UNSUBSCRIBE_FIELDS_LIST)
 
 replace_in_text (MAX_PACKET_SIZE)
 replace_in_text (MSG_ALLOC_OPT)
-
-#string (REPLACE "##FIELD_BIN_DATA##" "${FIELD_BIN_DATA}" text "${text}")
-#string (REPLACE "##FIELD_PROPERTIES_LIST##" "${FIELD_PROPERTIES_LIST}" text "${text}")
-#string (REPLACE "##FIELD_PROTOCOL_NAME##" "${FIELD_PROTOCOL_NAME}" text "${text}")
-#string (REPLACE "##FIELD_STRING##" "${FIELD_STRING}" text "${text}")
 
 file (WRITE "${OUT_FILE}.tmp" "${text}")
 

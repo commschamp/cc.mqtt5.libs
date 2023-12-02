@@ -1,5 +1,4 @@
-#include "UnitTestCommonBase.h"
-#include "UnitTestDefs.h"
+#include "UnitTestDefaultBase.h"
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
@@ -7,7 +6,7 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestDisconnect : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestDisconnect : public CxxTest::TestSuite, public UnitTestDefaultBase
 {
 public:
     void test1();
@@ -30,7 +29,7 @@ private:
 void UnitTestDisconnect::test1()
 {
     // Simple disconnect from broker
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -49,7 +48,7 @@ void UnitTestDisconnect::test2()
 {
     // Bad reserved bits DISCONNECT from broker
     // [MQTT-3.14.1-1]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -71,20 +70,20 @@ void UnitTestDisconnect::test3()
     // If the Session Expiry Interval in the CONNECT packet was zero, then it is a Protocol Error to set a non-
     // zero Session Expiry Interval in the DISCONNECT packet sent by the Client
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
     auto config = CC_Mqtt5DisconnectConfig();
-    cc_mqtt5_client_disconnect_init_config(&config);
+    unitTestDisconnectInitConfig(&config);
 
     unsigned expiryInterval = 10;
     config.m_sessionExpiryInterval = &expiryInterval;
 
-    auto* disconnect = cc_mqtt5_client_disconnect_prepare(client, nullptr);
+    auto* disconnect = unitTestDisconnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(disconnect, nullptr);
-    auto ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
+    auto ec = unitTestDisconnectConfig(disconnect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
 }
@@ -94,36 +93,36 @@ void UnitTestDisconnect::test4()
     // Testing rejection any operation after disconnect
     // [MQTT-3.14.4-1]
 
-        auto* client = unitTestAllocClient();
+        auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     auto config = CC_Mqtt5DisconnectConfig();
-    cc_mqtt5_client_disconnect_init_config(&config);
+    unitTestDisconnectInitConfig(&config);
     unitTestPerformDisconnect(client, &config);
 
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 
     CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
-    auto* connect = ::cc_mqtt5_client_connect_prepare(client, &ec);
+    auto* connect = unitTestConnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(connect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);
 
-    auto* subscribe = ::cc_mqtt5_client_subscribe_prepare(client, &ec);
+    auto* subscribe = unitTestSubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(subscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);
 
-    auto* unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, &ec);
+    auto* unsubscribe = unitTestUnsubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(unsubscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);    
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, &ec);
+    auto* publish = unitTestPublishPrepare(client, &ec);
     TS_ASSERT_EQUALS(publish, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);       
 
-    auto* disconnect = ::cc_mqtt5_client_disconnect_prepare(client, &ec);
+    auto* disconnect = unitTestDisconnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(disconnect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotIntitialized);       
 }

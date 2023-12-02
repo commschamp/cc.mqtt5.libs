@@ -1,5 +1,4 @@
-#include "UnitTestCommonBase.h"
-#include "UnitTestDefs.h"
+#include "UnitTestDefaultBase.h"
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
@@ -7,7 +6,7 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestConnect : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestConnect : public CxxTest::TestSuite, public UnitTestDefaultBase
 {
 public:
     void test1();
@@ -64,23 +63,23 @@ void UnitTestConnect::test1()
     // [MQTT-3.1.2-13]
     // [MQTT-3.1.2-16]
     // [MQTT-3.1.2-18]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
 
     const std::string ClientId("bla");
     const unsigned KeepAlive = 50;
     connectBasicConfig.m_clientId = ClientId.c_str();
     connectBasicConfig.m_keepAlive = KeepAlive;
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -143,15 +142,15 @@ void UnitTestConnect::test2()
     // [MQTT-3.1.2-21]
     // [MQTT-3.2.2-9]
     // [MQTT-3.2.2-21]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
 
     const std::string ClientId("bla");
     const std::string Username("username");
@@ -163,7 +162,7 @@ void UnitTestConnect::test2()
     connectBasicConfig.m_passwordLen = static_cast<decltype(connectBasicConfig.m_passwordLen)>(Password.size());
     connectBasicConfig.m_keepAlive = KeepAlive;
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string WillTopic = "/will/topic";
@@ -178,7 +177,7 @@ void UnitTestConnect::test2()
     const bool WillRetain = true;
 
     auto connectWillConfig = CC_Mqtt5ConnectWillConfig();
-    cc_mqtt5_client_connect_init_config_will(&connectWillConfig);
+    unitTestConnectInitConfigWill(&connectWillConfig);
 
     connectWillConfig.m_topic = WillTopic.c_str();
     connectWillConfig.m_data = &WillData[0];
@@ -193,7 +192,7 @@ void UnitTestConnect::test2()
     connectWillConfig.m_format = WillFormat;
     connectWillConfig.m_retain = WillRetain;    
 
-    ec = cc_mqtt5_client_connect_config_will(connect, &connectWillConfig);
+    ec = unitTestConnectConfigWill(connect, &connectWillConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const unsigned SessionExpiryInterval = 50;
@@ -204,7 +203,7 @@ void UnitTestConnect::test2()
     const bool RequestProblemInfo = true;
 
     auto connectExtraConfig = CC_Mqtt5ConnectExtraConfig();
-    cc_mqtt5_client_connect_init_config_extra(&connectExtraConfig);
+    unitTestConnectInitConfigExtra(&connectExtraConfig);
 
     connectExtraConfig.m_sessionExpiryInterval = SessionExpiryInterval;
     connectExtraConfig.m_receiveMaximum = ReceiveMaximum;
@@ -213,7 +212,7 @@ void UnitTestConnect::test2()
     connectExtraConfig.m_requestResponseInfo = RequestResponseInfo;
     connectExtraConfig.m_requestProblemInfo = RequestProblemInfo;    
 
-    ec = cc_mqtt5_client_connect_config_extra(connect, &connectExtraConfig);
+    ec = unitTestConnectConfigExtra(connect, &connectExtraConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string UserPropKey1 = "key1";
@@ -221,7 +220,7 @@ void UnitTestConnect::test2()
     auto prop1 = CC_Mqtt5UserProp();
     prop1.m_key = UserPropKey1.c_str();
     prop1.m_value = UserPropVal1.c_str();
-    ec = cc_mqtt5_client_connect_add_user_prop(connect, &prop1);
+    ec = unitTestConnectAddUserProp(connect, &prop1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
 
@@ -230,7 +229,7 @@ void UnitTestConnect::test2()
     auto prop2 = CC_Mqtt5UserProp();
     prop2.m_key = UserPropKey2.c_str();
     prop2.m_value = UserPropVal2.c_str();
-    ec = cc_mqtt5_client_connect_add_user_prop(connect, &prop2);    
+    ec = unitTestConnectAddUserProp(connect, &prop2);    
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -451,17 +450,17 @@ void UnitTestConnect::test3()
     // Connect with authentication
     // [MQTT-4.12.0-2]
     // [MQTT-4.12.0-3]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -471,9 +470,9 @@ void UnitTestConnect::test3()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto connectExtraConfig = CC_Mqtt5ConnectExtraConfig();
-    cc_mqtt5_client_connect_init_config_extra(&connectExtraConfig);
+    unitTestConnectInitConfigExtra(&connectExtraConfig);
     connectExtraConfig.m_requestProblemInfo = true;    
-    ec = cc_mqtt5_client_connect_config_extra(connect, &connectExtraConfig);    
+    ec = unitTestConnectConfigExtra(connect, &connectExtraConfig);    
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -634,17 +633,17 @@ void UnitTestConnect::test3()
 void UnitTestConnect::test4()
 {
     // Testing change of the Auth method, protocol error is expected
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -703,19 +702,19 @@ void UnitTestConnect::test5()
     // Keep alive test
     // [MQTT-3.1.2-20]
     // [MQTT-3.12.4-1]
-    auto* client = unitTestAllocClient();
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* client = unitTestAllocAndInitClient();
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
 
     const std::string ClientId("bla");
     const unsigned KeepAlive = 30;
     connectBasicConfig.m_clientId = ClientId.c_str();
     connectBasicConfig.m_keepAlive = KeepAlive;
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -779,26 +778,26 @@ void UnitTestConnect::test6()
 {
     // Testing inability to send any message before CONNECT.
     // [MQTT-3.1.0-1]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
-    auto* disconnect = ::cc_mqtt5_client_disconnect_prepare(client, &ec);
+    auto* disconnect = unitTestDisconnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(disconnect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* subscribe = ::cc_mqtt5_client_subscribe_prepare(client, &ec);    
+    auto* subscribe = unitTestSubscribePrepare(client, &ec);    
     TS_ASSERT_EQUALS(subscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* unsubscribe = ::cc_mqtt5_client_unsubscribe_prepare(client, &ec);    
+    auto* unsubscribe = unitTestUnsubscribePrepare(client, &ec);    
     TS_ASSERT_EQUALS(unsubscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);    
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, &ec);    
+    auto* publish = unitTestPublishPrepare(client, &ec);    
     TS_ASSERT_EQUALS(publish, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);        
 
-    auto* reauth = ::cc_mqtt5_client_reauth_prepare(client, &ec);    
+    auto* reauth = unitTestReauthPrepare(client, &ec);    
     TS_ASSERT_EQUALS(reauth, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);      
 }
@@ -808,15 +807,15 @@ void UnitTestConnect::test7()
     // Testing attempt to send connect message second time
     // [MQTT-3.1.0-2]
 
-    auto* client = unitTestAllocClient();
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT(!unitTestIsConnected(client));
 
     const std::string ClientId(__FUNCTION__);
     unitTestPerformBasicConnect(client, ClientId.c_str());
 
     // Second connection attempt
     auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
-    auto* connect = cc_mqtt5_client_connect_prepare(client, &ec);
+    auto* connect = unitTestConnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(connect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_AlreadyConnected);        
 }
@@ -826,18 +825,18 @@ void UnitTestConnect::test8()
     // Testing rejection of the non "clean start" on the first attempt to connect
     // [MQTT-3.1.2-4]
 
-    auto* client = unitTestAllocClient();
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT(!unitTestIsConnected(client));
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
     
     auto config = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&config);
+    unitTestConnectInitConfigBasic(&config);
 
     config.m_clientId = __FUNCTION__;
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    auto ec = unitTestConnectConfigBasic(connect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -846,30 +845,30 @@ void UnitTestConnect::test9()
     // Testing invalid will Qos
     // [MQTT-3.1.2-12]
 
-    auto* client = unitTestAllocClient();
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT(!unitTestIsConnected(client));
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
     
     auto config = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&config);
+    unitTestConnectInitConfigBasic(&config);
 
     config.m_clientId = __FUNCTION__;
     config.m_cleanStart = true;
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    auto ec = unitTestConnectConfigBasic(connect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto willConfig = CC_Mqtt5ConnectWillConfig();
-    cc_mqtt5_client_connect_init_config_will(&willConfig);
+    unitTestConnectInitConfigWill(&willConfig);
 
     const UnitTestData WillData = {0x1, 0x2, 0x3};
     willConfig.m_topic = "will/topic";
     willConfig.m_data = &WillData[0];
     willConfig.m_dataLen = static_cast<decltype(willConfig.m_dataLen)>(WillData.size());
     willConfig.m_qos = static_cast<decltype(willConfig.m_qos)>(3);
-    ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
+    ec = unitTestConnectConfigWill(connect, &willConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -878,19 +877,19 @@ void UnitTestConnect::test10()
     // Testing network disconnection during connect
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT(!unitTestIsConnected(client));
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
     
     auto config = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&config);
+    unitTestConnectInitConfigBasic(&config);
 
     config.m_clientId = __FUNCTION__;
     config.m_cleanStart = true;
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &config);
+    auto ec = unitTestConnectConfigBasic(connect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -901,15 +900,15 @@ void UnitTestConnect::test10()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
 
     unitTestTick(1000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     TS_ASSERT(unitTestIsConnectComplete());
     auto& connackInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 
     // New connection attempt when network is disconnected
-    connect = cc_mqtt5_client_connect_prepare(client, &ec);
+    connect = unitTestConnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(connect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
 }
@@ -919,8 +918,8 @@ void UnitTestConnect::test11()
     // Delaying keep alive ping when network is disconnected
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
-    TS_ASSERT(!::cc_mqtt5_client_is_connected(client));
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT(!unitTestIsConnected(client));
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
@@ -930,19 +929,19 @@ void UnitTestConnect::test11()
 
     unitTestTick(10000); // 10 seconds
 
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000); // 5 seconds
-    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+    unitTestNotifyClientDisconnected(client, false);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 50000); // Remaining period of the keep alive
 
     unitTestTick(45000); // 45 seconds
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
@@ -957,20 +956,20 @@ void UnitTestConnect::test12()
     // Testing rejection of "Reason String" in AUTH
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     const std::string AuthMethod("AuthMethod");
     const UnitTestData AuthData = {0x11, 0x22, 0x33};
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1032,20 +1031,20 @@ void UnitTestConnect::test13()
     // Testing rejection of "User properties" in AUTH
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     const std::string AuthMethod("AuthMethod");
     const UnitTestData AuthData = {0x11, 0x22, 0x33};
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1108,16 +1107,16 @@ void UnitTestConnect::test14()
     // Testing rejection of connection with "Client ID not valid"
     // [MQTT-3.1.3-8]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_cleanStart = true;
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -1141,7 +1140,7 @@ void UnitTestConnect::test14()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_ClientIdInvalid);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 }
 
 void UnitTestConnect::test15()
@@ -1149,17 +1148,17 @@ void UnitTestConnect::test15()
     // Testing reception of DISCONNECT instead of CONNACK
     // [MQTT-3.1.4-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -1183,7 +1182,7 @@ void UnitTestConnect::test15()
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 
     TS_ASSERT(unitTestIsDisconnected());
     TS_ASSERT(unitTestHasDisconnectInfo());
@@ -1197,24 +1196,24 @@ void UnitTestConnect::test16()
     // Testing network disconnection after rejecting connect
     // [MQTT-3.1.4-2]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    unitTestConnectInitConfigExtra(&extraConfig);
     extraConfig.m_sessionExpiryInterval = 10;
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = cc_mqtt5_client_connect_config_extra(connect, &extraConfig);
+    ec = unitTestConnectConfigExtra(connect, &extraConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -1237,10 +1236,10 @@ void UnitTestConnect::test16()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 
     TS_ASSERT(unitTestCheckNoTicks());
-    ::cc_mqtt5_client_notify_network_disconnected(client, true); 
+    unitTestNotifyClientDisconnected(client, true); 
 }
 
 void UnitTestConnect::test17()
@@ -1248,7 +1247,7 @@ void UnitTestConnect::test17()
     // Testing session taken over disconnection after successful connection.
     // [MQTT-3.1.4-3]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
@@ -1263,7 +1262,7 @@ void UnitTestConnect::test17()
     auto& disconnectInfo = unitTestDisconnectInfo();
     TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_SessionTakenOver);
 
-    TS_ASSERT(!cc_mqtt5_client_is_initialized(client)); // Re-init is required.
+    TS_ASSERT(!unitTestIsInitialized(client)); // Re-init is required.
 }
 
 void UnitTestConnect::test18()
@@ -1271,17 +1270,17 @@ void UnitTestConnect::test18()
     // Testing reception of the session present when clean was requested
     // [MQTT-3.2.2-4]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -1304,7 +1303,7 @@ void UnitTestConnect::test18()
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 }
 
 void UnitTestConnect::test19()
@@ -1312,7 +1311,7 @@ void UnitTestConnect::test19()
     // Testing cleared subscription when clean state is reported.
     // [MQTT-3.2.2-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     unitTestPerformBasicSubscribe(client, "#");
@@ -1336,7 +1335,7 @@ void UnitTestConnect::test19()
 
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto ec = ::cc_mqtt5_client_init(client);
+    auto ec = unitTestInit(client);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     // Reconnecting requesting non clean start, while broker reports session is not present
@@ -1352,10 +1351,10 @@ void UnitTestConnect::test20()
     // Testing rejecting CONNACK with network disconnection
     // [MQTT-3.2.2-7]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -1363,12 +1362,12 @@ void UnitTestConnect::test20()
     responseConfig.m_reasonCode = CC_Mqtt5ReasonCode_UnspecifiedError;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
-    TS_ASSERT(!cc_mqtt5_client_is_network_disconnected(client));
-    cc_mqtt5_client_notify_network_disconnected(client, true);
-    TS_ASSERT(cc_mqtt5_client_is_network_disconnected(client));
-    cc_mqtt5_client_init(client);
-    TS_ASSERT(!cc_mqtt5_client_is_network_disconnected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
+    TS_ASSERT(!unitTestIsNetworkDisconnected(client));
+    unitTestNotifyClientDisconnected(client, true);
+    TS_ASSERT(unitTestIsNetworkDisconnected(client));
+    [[maybe_unused]] auto ec = unitTestInit(client);
+    TS_ASSERT(!unitTestIsNetworkDisconnected(client));
 }
 
 void UnitTestConnect::test21()
@@ -1376,17 +1375,17 @@ void UnitTestConnect::test21()
     // Testing report of the max Qos by the broker
     // [MQTT-3.2.2-9]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     UnitTestConnectResponseConfig responseConfig;
     responseConfig.m_maxQos = CC_Mqtt5QoS_AtMostOnceDelivery;
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
-    TS_ASSERT(cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 }
 
 void UnitTestConnect::test22()
@@ -1394,28 +1393,28 @@ void UnitTestConnect::test22()
     // Testing rejection of connection with "QoS not supported"
     // [MQTT-3.2.2-12]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_cleanStart = true;
 
     const std::string WillTopic = "will/topic";
     const UnitTestData WillData = {0x1, 0x2, 0x3};
     auto willConfig = CC_Mqtt5ConnectWillConfig();
-    cc_mqtt5_client_connect_init_config_will(&willConfig);
+    unitTestConnectInitConfigWill(&willConfig);
     willConfig.m_topic = WillTopic.c_str();
     willConfig.m_data = &WillData[0];
     willConfig.m_dataLen = static_cast<unsigned>(WillData.size());
     willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;    
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
+    ec = unitTestConnectConfigWill(connect, &willConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 
     ec = unitTestSendConnect(connect);
@@ -1442,7 +1441,7 @@ void UnitTestConnect::test22()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_QosNotSupported);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 }
 
 void UnitTestConnect::test23()
@@ -1450,29 +1449,29 @@ void UnitTestConnect::test23()
     // Testing rejection of connection with "QoS not supported"
     // [MQTT-3.2.2-13]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_cleanStart = true;
 
     const std::string WillTopic = "will/topic";
     const UnitTestData WillData = {0x1, 0x2, 0x3};
     auto willConfig = CC_Mqtt5ConnectWillConfig();
-    cc_mqtt5_client_connect_init_config_will(&willConfig);
+    unitTestConnectInitConfigWill(&willConfig);
     willConfig.m_topic = WillTopic.c_str();
     willConfig.m_data = &WillData[0];
     willConfig.m_dataLen = static_cast<unsigned>(WillData.size());
     willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;    
     willConfig.m_retain = true;
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = cc_mqtt5_client_connect_config_will(connect, &willConfig);
+    ec = unitTestConnectConfigWill(connect, &willConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 
     ec = unitTestSendConnect(connect);
@@ -1499,7 +1498,7 @@ void UnitTestConnect::test23()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_RetainNotSupported);
     unitTestPopConnectResponseInfo();
 
-    TS_ASSERT(!cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(!unitTestIsConnected(client));
 }
 
 void UnitTestConnect::test24()
@@ -1508,16 +1507,16 @@ void UnitTestConnect::test24()
     // Require clean start for empty client id
     // [MQTT-3.2.2-16]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_cleanStart = true;   
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -1550,25 +1549,25 @@ void UnitTestConnect::test24()
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_assignedClientId, BrokerClientId);
     unitTestPopConnectResponseInfo();
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     unitTestPerformBasicDisconnect(client);
 
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = ::cc_mqtt5_client_init(client);
+    ec = unitTestInit(client);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     basicConfig.m_cleanStart = false;   
     
-    connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
-    ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     basicConfig.m_clientId = BrokerClientId.c_str();
-    ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 }
 
@@ -1577,21 +1576,21 @@ void UnitTestConnect::test25()
     // Testing topic alias allocation
     // [MQTT-3.2.2-17]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
-    auto ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "topic1", 1);
+    auto ec = unitTestPubTopicAliasAlloc(client, "topic1", 1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 2);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "topic1", 1);
+    ec = unitTestPubTopicAliasAlloc(client, "topic1", 1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "topic2", 1);
+    ec = unitTestPubTopicAliasAlloc(client, "topic2", 1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "topic3", 1);
+    ec = unitTestPubTopicAliasAlloc(client, "topic3", 1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -1600,12 +1599,12 @@ void UnitTestConnect::test26()
     // Testing topic alias allocation when broker doesn't support aliases
     // [MQTT-3.2.2-18]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "topic1", 1);
+    auto ec = unitTestPubTopicAliasAlloc(client, "topic1", 1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -1614,16 +1613,16 @@ void UnitTestConnect::test27()
     // Testing invalid flags for AUTH message.
     // [MQTT-3.15.1-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1678,16 +1677,16 @@ void UnitTestConnect::test28()
     // Testing bad reason code in AUTH message.
     // [MQTT-3.15.2-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &basicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1741,17 +1740,17 @@ void UnitTestConnect::test29()
     // Testing authentication rejection by broker
     // [MQTT-4.12.0-4]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1839,17 +1838,17 @@ void UnitTestConnect::test30()
     // Testing wrong AuthMethod in CONNACK
     // [MQTT-4.12.0-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -1939,17 +1938,17 @@ void UnitTestConnect::test31()
     // Testing wrong AuthMethod in AUTH
     // [MQTT-4.12.0-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ConnectAuthMethod = "AuthMethod";
@@ -2013,17 +2012,17 @@ void UnitTestConnect::test32()
     // Testing unexpected AUTH message from broker
     // [MQTT-4.12.0-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto* connect = cc_mqtt5_client_connect_prepare(client, nullptr);
+    auto* connect = unitTestConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
     auto connectBasicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&connectBasicConfig);
+    unitTestConnectInitConfigBasic(&connectBasicConfig);
     connectBasicConfig.m_cleanStart = true;
-    auto ec = cc_mqtt5_client_connect_config_basic(connect, &connectBasicConfig);
+    auto ec = unitTestConnectConfigBasic(connect, &connectBasicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);

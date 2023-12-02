@@ -19,8 +19,12 @@ library will use [comms::util::StaticString](https://github.com/commschamp/comms
 and [comms::util::StaticVector](https://github.com/commschamp/comms/blob/master/include/comms/util/StaticVector.h)
 from the [COMMS library](https://github.com/commschamp/comms)
 instead. These classes don't use exceptions and/or dynamic memory allocation
-and can be suitable for bare-metal systems.
+and can be suitable for bare-metal systems. The variables below allow
+data storae types customization for selected fields as well as disable some
+features of the library to reduce the code size as well as improve runtime 
+performance.
 
+---
 ### CC_MQTT5_CLIENT_CUSTOM_NAME
 This variable specifies the name of the custom client library.
 It will influence the names of the API functions. The **default** client build
@@ -37,6 +41,7 @@ the custom build of the client library won't be possible.
 set (CC_MQTT5_CLIENT_CUSTOM_NAME "my_name")
 ```
 
+---
 ### CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC
 Specify whether usage of the dynamic memory allocation is allowed. The value
 defaults to **TRUE**. Setting the configuration to **FALSE** will ensure
@@ -49,6 +54,7 @@ set property.
 set (CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC FALSE)
 ```
 
+---
 ### CC_MQTT5_CLIENT_ALLOC_LIMIT
 The client library allows allocation of multiple client managing objects
 (**cc_mqtt5_client_alloc()** function). By default the value is **0**,
@@ -65,6 +71,7 @@ set(CC_MQTT5_CLIENT_ALLOC_LIMIT 1)
 Having **CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC** set to **FALSE** requires setting
 of the **CC_MQTT5_CLIENT_ALLOC_LIMIT** to a non-**0** value.
 
+---
 ### CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN
 By default the storage type of any string field defined using the
 [COMMS Library](https://github.com/commschamp/comms) is `std::string`, which
@@ -88,7 +95,8 @@ The **CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN** variable sets a global default
 for **all** the string fields. It is possible to refine the static length of
 other strings fields using other variables
 
-#### CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN
+---
+### CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN
 To limit the length of the string used to store the "Client ID" information, use
 the **CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN** variable. When it is set to **0** (default)
 the global fixed length of a string field set by the **CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN** is used.
@@ -98,76 +106,83 @@ the global fixed length of a string field set by the **CC_MQTT5_CLIENT_STRING_FI
 set(CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN 50)
 ```
 
-#### CC_MQTT5_CLIENT_USERNAME_FIELD_FIXED_LEN
+---
+### CC_MQTT5_CLIENT_USERNAME_FIELD_FIXED_LEN
 
-#### CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN
+---
+### CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN
 
+---
 ### CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN
 
+---
 #### CC_MQTT5_CLIENT_PASSWORD_FIELD_FIXED_LEN
 
+---
 ### CC_MQTT5_CLIENT_PROPERTIES_LIST_FIELD_FIXED_LEN
 
+---
 ### CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE
 
+---
 ### CC_MQTT5_CLIENT_HAS_USER_PROPS
 
+---
 ### CC_MQTT5_CLIENT_USER_PROPS_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_SEND_MAX_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES
 
+---
 ### CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_HAS_SUB_IDS
 
+---
 ### CC_MQTT5_CLIENT_SUB_IDS_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT
 
+---
 ### CC_MQTT5_CLIENT_HAS_ERROR_LOG
 
+---
 ### CC_MQTT5_CLIENT_HAS_TOPIC_FORMAT_VERIFICATION
 
+---
 ### CC_MQTT5_CLIENT_HAS_SUB_TOPIC_VERIFICATION
 
+---
 ### CC_MQTT5_CLIENT_SUB_FILTERS_LIMIT
 
+---
 ## Example for Bare-Metal Without Heap Configuration 
 The content of the custom client configuration file, which explicitly specifies
-all unknown compile time limits and constants to prevent usage of dynamic 
+all compile time limits and constants to prevent usage of dynamic 
 memory allocation and STL types like [std::string](http://en.cppreference.com/w/cpp/string/basic_string)
 and [std::vector](http://en.cppreference.com/w/cpp/container/vector), may look
-like this:
-```
-# Name of the client API
-set (CC_MQTT5_CLIENT_CUSTOM_NAME "bare_metal")
+like [this](../client/script/BareMetalConfig.cmake):
 
-# Allow only a single client
-set(CC_MQTT5_CLIENT_ALLOC_LIMIT 1)
-
-# Allow up to 256 bytes for the string field storage
-set(CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN 256)
-
-# Allow up to 50 bytes for the "client ID" storage
-set(CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN 50)
-
-```
-As the result of such configuration, the static library `cc_mqtt5_bare_metal_client`
-will be generated, which will contain functions defined in 
-`include/cc_mqtt5_client/bare_metal_client.h" header file:
+Setting "bm" as a custom client name results in having a static library called `cc_mqtt5_bm_client`.
+All the API functions are defined in `include/cc_mqtt5_client/bm_client.h` header file:
 ```c
-CC_Mqtt5ClientHandle cc_mqtt5_bare_metal_client_alloc();
+CC_Mqtt5ClientHandle cc_mqtt5_bm_client_alloc();
 
-void mqtt5_bare_metal_client_free(CC_Mqtt5ClientHandle client);
+void cc_mqtt5_bm_client_free(CC_Mqtt5ClientHandle client);
 
 ...
     
 ```
-**NOTE**, that all the functions have `cc_mqtt5_bare_metal_client_` prefix due to the
-fact of setting value of **CC_MQTT5_CLIENT_CUSTOM_NAME** variable to "bare_metal" string.
+**NOTE**, that all the functions have `cc_mqtt5_bm_client_` prefix due to the
+fact of setting value of **CC_MQTT5_CLIENT_CUSTOM_NAME** variable to "bm" string.

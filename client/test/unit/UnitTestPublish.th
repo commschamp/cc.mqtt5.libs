@@ -1,5 +1,4 @@
-#include "UnitTestCommonBase.h"
-#include "UnitTestDefs.h"
+#include "UnitTestDefaultBase.h"
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
@@ -7,7 +6,7 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestPublish : public CxxTest::TestSuite, public UnitTestCommonBase
+class UnitTestPublish : public CxxTest::TestSuite, public UnitTestDefaultBase
 {
 public:
     void test1();
@@ -64,11 +63,11 @@ void UnitTestPublish::test1()
     // [MQTT-3.3.2-4]
     // [MQTT-3.3.2-5]
     // [MQTT-4.3.1-1]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -77,7 +76,7 @@ void UnitTestPublish::test1()
     const bool Retain = true;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
@@ -86,7 +85,7 @@ void UnitTestPublish::test1()
     TS_ASSERT_EQUALS(config.m_topicAliasPref, CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable);
     config.m_retain = Retain;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string ContentType("ContentType");
@@ -96,14 +95,14 @@ void UnitTestPublish::test1()
     const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
 
     auto extra = CC_Mqtt5PublishExtraConfig();
-    ::cc_mqtt5_client_publish_init_config_extra(&extra);
+    unitTestPublishInitConfigExtra(&extra);
     extra.m_contentType = ContentType.c_str();
     extra.m_responseTopic = ResponseTopic.c_str();
     extra.m_correlationData = &CorrelationData[0];
     extra.m_correlationDataLen = static_cast<decltype(extra.m_correlationDataLen)>(CorrelationData.size());
     extra.m_messageExpiryInterval = MsgExpiry;
     extra.m_format = Format;
-    ec = ::cc_mqtt5_client_publish_config_extra(publish, &extra);
+    ec = unitTestPublishConfigExtra(publish, &extra);
 
     const std::string PubUserPropKey1 = "Key1";
     const std::string PubUserPropVal1 = "Val1";    
@@ -111,7 +110,7 @@ void UnitTestPublish::test1()
     auto userProp1 = CC_Mqtt5UserProp();
     userProp1.m_key = PubUserPropKey1.c_str();
     userProp1.m_value = PubUserPropVal1.c_str();
-    ec = ::cc_mqtt5_client_publish_add_user_prop(publish, &userProp1);
+    ec = unitTestPublishAddUserProp(publish, &userProp1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -160,11 +159,11 @@ void UnitTestPublish::test2()
 {
     // Simple Qos1 publish
     // [MQTT-4.3.1-1]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -172,14 +171,14 @@ void UnitTestPublish::test2()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -212,21 +211,21 @@ void UnitTestPublish::test2()
 void UnitTestPublish::test3()
 {
     // Simple Qos1 publish with response properties
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    unitTestConnectInitConfigExtra(&extraConfig);
     extraConfig.m_requestProblemInfo = true;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -234,14 +233,14 @@ void UnitTestPublish::test3()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -312,11 +311,11 @@ void UnitTestPublish::test4()
 {
     // Timed out Qos1 publish
     // [MQTT-3.3.1-3]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -324,14 +323,14 @@ void UnitTestPublish::test4()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -368,20 +367,20 @@ void UnitTestPublish::test5()
     // Simple Qos2 publish
     // [MQTT-4.3.3-2]
     // [MQTT-4.3.3-4]
-    auto* client = unitTestAllocClient(true);
+    auto* client = unitTestAllocAndInitClient(true);
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    unitTestConnectInitConfigExtra(&extraConfig);
     extraConfig.m_requestProblemInfo = true;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -389,14 +388,14 @@ void UnitTestPublish::test5()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -505,11 +504,11 @@ void UnitTestPublish::test6()
     // Timed out Qos2 publish
     // [MQTT-3.3.1-3]
     // [MQTT-4.3.3-5]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -517,14 +516,14 @@ void UnitTestPublish::test6()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -583,18 +582,18 @@ void UnitTestPublish::test7()
 {
     // Qos0 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
-    auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 2U);
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 2U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
@@ -602,10 +601,10 @@ void UnitTestPublish::test7()
 
     unsigned alias = 0U;
     do {
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -633,9 +632,9 @@ void UnitTestPublish::test7()
     // Sending second time
     do {
         unitTestTick(1000);
-        auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
         ec = unitTestSendPublish(publish);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -661,9 +660,9 @@ void UnitTestPublish::test7()
     // Sending third time
     do {
         unitTestTick(1000);
-        auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
         ec = unitTestSendPublish(publish);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -691,18 +690,18 @@ void UnitTestPublish::test8()
 {
     // Qos1 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
-    auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 3U);
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 3U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
@@ -710,10 +709,10 @@ void UnitTestPublish::test8()
 
     unsigned alias = 0U;
     do {
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -747,10 +746,10 @@ void UnitTestPublish::test8()
     // Sending second time
     do {
         unitTestTick(1000);
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -784,18 +783,18 @@ void UnitTestPublish::test9()
 {
     // Qos2 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
-    auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 3U);
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 3U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
@@ -803,10 +802,10 @@ void UnitTestPublish::test9()
 
     unsigned alias = 0U;
     do {
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -854,10 +853,10 @@ void UnitTestPublish::test9()
     // Sending second time
     do {
         unitTestTick(1000);
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -908,30 +907,30 @@ void UnitTestPublish::test10()
     // [MQTT-4.7.2-1]
     // [MQTT-4.7.3-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = "hello/+/bla";
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "hello/#";
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     config.m_topic = "$hello";
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     config.m_topic = "";
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     ec = unitTestSendPublish(publish);
@@ -943,22 +942,22 @@ void UnitTestPublish::test11()
     // Testing invalid packet ID in PUBACK
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = "hello/bla";
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1001,22 +1000,22 @@ void UnitTestPublish::test12()
     // Testing invalid packet ID in PUBREC
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = "hello/bla";
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1073,22 +1072,22 @@ void UnitTestPublish::test13()
     // Testing invalid packet ID in PUBCOMP
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = "hello/bla";
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1147,28 +1146,28 @@ void UnitTestPublish::test14()
     // Suspending Qos1 publish operation when network is disconnected
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = "hello/bla";
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const unsigned ResponseTimeout = 2000;
-    auto ec = cc_mqtt5_client_publish_set_response_timeout(publish, ResponseTimeout);
+    auto ec = unitTestPublishSetResponseTimeout(publish, ResponseTimeout);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1184,20 +1183,20 @@ void UnitTestPublish::test14()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsPublishComplete());
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+    unitTestNotifyClientDisconnected(client, false);
     TS_ASSERT(!unitTestIsPublishComplete());
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout - 1000); // Resuming PUBACK timer
 
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsPublishComplete());
     tickReq = unitTestTickReq();
@@ -1216,28 +1215,28 @@ void UnitTestPublish::test15()
     // Suspending Qos2 publish operation when network is disconnected
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const UnitTestData Data = {0x11, 0x22, 0x33};
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = "hello/bla";
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());    
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const unsigned ResponseTimeout = 2000;
-    auto ec = cc_mqtt5_client_publish_set_response_timeout(publish, ResponseTimeout);
+    auto ec = unitTestPublishSetResponseTimeout(publish, ResponseTimeout);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1253,14 +1252,14 @@ void UnitTestPublish::test15()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsPublishComplete());
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+    unitTestNotifyClientDisconnected(client, false);
     TS_ASSERT(!unitTestIsPublishComplete());
 
     tickReq = unitTestTickReq();
@@ -1279,7 +1278,7 @@ void UnitTestPublish::test15()
     TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), pubrecMsg.field_packetId().value());
 
     unitTestTick(1000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
+    unitTestNotifyClientDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsPublishComplete());
     tickReq = unitTestTickReq();
@@ -1298,12 +1297,12 @@ void UnitTestPublish::test16()
     // Testing rejection of "Reason String" in PUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1311,14 +1310,14 @@ void UnitTestPublish::test16()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1368,12 +1367,12 @@ void UnitTestPublish::test17()
     // Testing rejection of "User Properties" in PUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1381,14 +1380,14 @@ void UnitTestPublish::test17()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1441,12 +1440,12 @@ void UnitTestPublish::test18()
     // Testing rejection of "Reason String" in PUBREC
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1454,14 +1453,14 @@ void UnitTestPublish::test18()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1511,12 +1510,12 @@ void UnitTestPublish::test19()
     // Testing rejection of "User Properties" in PUBREL
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1524,14 +1523,14 @@ void UnitTestPublish::test19()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1584,12 +1583,12 @@ void UnitTestPublish::test20()
     // Testing rejection of "Reason String" in PUBCOMP
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1597,14 +1596,14 @@ void UnitTestPublish::test20()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1666,12 +1665,12 @@ void UnitTestPublish::test21()
     // Testing rejection of "User Properties" in PUBCOMP
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
@@ -1679,14 +1678,14 @@ void UnitTestPublish::test21()
     const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = Qos;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1751,10 +1750,10 @@ void UnitTestPublish::test22()
     // [MQTT-3.2.2-11]
     // [MQTT-4.9.0-2]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -1762,31 +1761,31 @@ void UnitTestPublish::test22()
     responseConfig.m_maxQos = CC_Mqtt5QoS_AtMostOnceDelivery;
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1801,10 +1800,10 @@ void UnitTestPublish::test23()
     // Testing rejection of publish with retain when it's unavailable
     // [MQTT-3.2.2-14]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -1813,16 +1812,16 @@ void UnitTestPublish::test23()
     responseConfig.m_retainAvailable = &retainAvailable;
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const std::string Topic("some/topic");
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
@@ -1830,11 +1829,11 @@ void UnitTestPublish::test23()
     config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
     config.m_retain = true;
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_retain = false;
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -1849,10 +1848,10 @@ void UnitTestPublish::test24()
     // Testing rejection of publish exceeding max packet size
     // [MQTT-3.2.2-15]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -1861,34 +1860,34 @@ void UnitTestPublish::test24()
     responseConfig.m_maxPacketSize = MaxPacketSize;
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data(MaxPacketSize, 0x1);
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
     TS_ASSERT_EQUALS(publish, nullptr);
 
-    publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size() - 100U);
-    ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 
     ec = unitTestSendPublish(publish);
@@ -1903,27 +1902,27 @@ void UnitTestPublish::test25()
     // Testing rejection of invalid QoS value
     // [MQTT-3.3.1-4]
     
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = static_cast<decltype(config.m_qos)>(3);
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 }
 
@@ -1932,31 +1931,31 @@ void UnitTestPublish::test26()
     // Qos0 publish with topic alias with network disconnection
     // [MQTT-3.3.2-7]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    ::cc_mqtt5_client_connect_init_config_extra(&extraConfig);
+    unitTestConnectInitConfigExtra(&extraConfig);
     extraConfig.m_sessionExpiryInterval = 10;
 
     UnitTestConnectResponseConfig responseConfig;
     responseConfig.m_topicAliasMax = 10;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig, nullptr, &responseConfig);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
-    auto ec = ::cc_mqtt5_client_pub_topic_alias_alloc(client, Topic.c_str(), 1U);
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 1U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
@@ -1964,10 +1963,10 @@ void UnitTestPublish::test26()
 
     unsigned alias = 0U;
     do {
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -1995,9 +1994,9 @@ void UnitTestPublish::test26()
     // Sending second time
     do {
         unitTestTick(1000);
-        auto publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
         ec = unitTestSendPublish(publish);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -2021,14 +2020,14 @@ void UnitTestPublish::test26()
     } while (false);   
     
     unitTestTick(1000);
-    ::cc_mqtt5_client_notify_network_disconnected(client, true);
-    ::cc_mqtt5_client_notify_network_disconnected(client, false);
+    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyClientDisconnected(client, false);
      
     do {
-        auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+        auto* publish = unitTestPublishPrepare(client, nullptr);
         TS_ASSERT_DIFFERS(publish, nullptr);
 
-        ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+        ec = unitTestPublishConfigBasic(publish, &config);
         TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
         
         ec = unitTestSendPublish(publish);
@@ -2058,27 +2057,27 @@ void UnitTestPublish::test27()
     // Testing inability to use wildcards in "Response Topic"
     // [MQTT-3.3.2-14]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     auto extra = CC_Mqtt5PublishExtraConfig();
-    ::cc_mqtt5_client_publish_init_config_extra(&extra);
+    unitTestPublishInitConfigExtra(&extra);
     extra.m_responseTopic = "#";
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_extra(publish, &extra);
+    auto ec = unitTestPublishConfigExtra(publish, &extra);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     extra.m_responseTopic = "hello/+";
-    ec = ::cc_mqtt5_client_publish_config_extra(publish, &extra);
+    ec = unitTestPublishConfigExtra(publish, &extra);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     extra.m_responseTopic = "bla";
-    ec = ::cc_mqtt5_client_publish_config_extra(publish, &extra);
+    ec = unitTestPublishConfigExtra(publish, &extra);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 }
 
@@ -2087,26 +2086,26 @@ void UnitTestPublish::test28()
     // Testing incoming PUBREC instead of PUBACK
     // [MQTT-3.3.4-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -2140,26 +2139,26 @@ void UnitTestPublish::test29()
     // Testing incoming PUBACK instead of PUBREC
     // [MQTT-3.3.4-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -2193,10 +2192,10 @@ void UnitTestPublish::test30()
     // Testing limit of the outgoing high Qos publishes
     // [MQTT-3.3.4-7]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    ::cc_mqtt5_client_connect_init_config_basic(&basicConfig);
+    unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -2204,23 +2203,23 @@ void UnitTestPublish::test30()
     responseConfig.m_recvMaximum = 1;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));    
+    TS_ASSERT(unitTestIsConnected(client));    
 
     const std::string Topic("some/topic");
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto* publish1 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish1, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish1, &config);
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
     
     ec = unitTestSendPublish(publish1);
@@ -2234,11 +2233,11 @@ void UnitTestPublish::test30()
 
     TS_ASSERT(!unitTestIsPublishComplete());
 
-    auto* publish2 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish2, nullptr);
 
     config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
-    ec = ::cc_mqtt5_client_publish_config_basic(publish2, &config);
+    ec = unitTestPublishConfigBasic(publish2, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
     
     ec = unitTestSendPublish(publish2);
@@ -2253,11 +2252,11 @@ void UnitTestPublish::test30()
     TS_ASSERT(unitTestIsPublishComplete());
     unitTestPopPublishResponseInfo();    
 
-    auto* publish3 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish3, nullptr);
 
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
-    ec = ::cc_mqtt5_client_publish_config_basic(publish3, &config);
+    ec = unitTestPublishConfigBasic(publish3, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Busy); 
 }
 
@@ -2266,26 +2265,26 @@ void UnitTestPublish::test31()
     // Testing rejection of the Qos1 publish by the broker
     // [MQTT-4.4.0-2]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -2319,26 +2318,26 @@ void UnitTestPublish::test32()
     // Testing rejection of the Qos2 publish by the broker
     // [MQTT-4.4.0-2]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic("some/topic");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto* publish = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish, &config);
+    auto ec = unitTestPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -2372,27 +2371,27 @@ void UnitTestPublish::test33()
     // Testing re-publish of not acked Qos1 messages in the same order.
     // [MQTT-4.6.0-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic1("some/topic1");
     const std::string Topic2("some/topic2");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic1.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto* publish1 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish1, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish1, &config);
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish1);
@@ -2409,10 +2408,10 @@ void UnitTestPublish::test33()
     // Not delay between publishes.
     config.m_topic = Topic2.c_str();
 
-    auto* publish2 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish2, nullptr);
 
-    ec = ::cc_mqtt5_client_publish_config_basic(publish2, &config);
+    ec = unitTestPublishConfigBasic(publish2, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish2);
@@ -2457,27 +2456,27 @@ void UnitTestPublish::test34()
     // Testing re-publish of not acked Qos1 and Qos2 messages in the same order.
     // [MQTT-4.6.0-1]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocAndInitClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(::cc_mqtt5_client_is_connected(client));
+    TS_ASSERT(unitTestIsConnected(client));
 
     const std::string Topic1("some/topic1");
     const std::string Topic2("some/topic2");
     const UnitTestData Data = {0x1, 0x2, 0x3};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    ::cc_mqtt5_client_publish_init_config_basic(&config);
+    unitTestPublishInitConfigBasic(&config);
 
     config.m_topic = Topic1.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto* publish1 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish1, nullptr);
 
-    auto ec = ::cc_mqtt5_client_publish_config_basic(publish1, &config);
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish1);
@@ -2495,10 +2494,10 @@ void UnitTestPublish::test34()
     config.m_topic = Topic2.c_str();
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
-    auto* publish2 = ::cc_mqtt5_client_publish_prepare(client, nullptr);
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish2, nullptr);
 
-    ec = ::cc_mqtt5_client_publish_config_basic(publish2, &config);
+    ec = unitTestPublishConfigBasic(publish2, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish2);

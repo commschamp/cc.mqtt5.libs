@@ -1,4 +1,4 @@
-#include "UnitTestDefs.h"
+#include "UnitTestDefaultBase.h"
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
@@ -6,17 +6,25 @@
 
 #include <cxxtest/TestSuite.h>
 
-class UnitTestClient : public CxxTest::TestSuite
+class UnitTestClient : public CxxTest::TestSuite, public UnitTestDefaultBase
 {
 public:
     void test1();
     void test2();
 
+
 private:
-    void setUp()
+    virtual void setUp() override
     {
         m_tickReqs.clear();
+        unitTestSetUp();
     }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+
 
     static void brokerDisconnectedCb([[maybe_unused]] void* obj, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
     {
@@ -49,40 +57,40 @@ private:
 
 void UnitTestClient::test1()
 {
-    UnitTestClientPtr client(cc_mqtt5_client_alloc());
+    auto client = unitTestAlloc();
     TS_ASSERT(client);
 
-    auto ec = cc_mqtt5_client_init(client.get());
+    auto ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
-    cc_mqtt5_client_set_broker_disconnect_report_callback(client.get(), &UnitTestClient::brokerDisconnectedCb, this);
-    ec = cc_mqtt5_client_init(client.get());
+    unitTestSetBrokerDisconnectReportCb(client.get(), &UnitTestClient::brokerDisconnectedCb, this);
+    ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
-    cc_mqtt5_client_set_send_output_data_callback(client.get(), &UnitTestClient::sendOutputDataCb, this);
-    ec = cc_mqtt5_client_init(client.get());
+    unitTestSetSendOutputDataCb(client.get(), &UnitTestClient::sendOutputDataCb, this);
+    ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
-    cc_mqtt5_client_set_message_received_report_callback(client.get(), &UnitTestClient::messageReceivedCb, this);
-    ec = cc_mqtt5_client_init(client.get());
+    unitTestSetMessageReceivedReportCb(client.get(), &UnitTestClient::messageReceivedCb, this);
+    ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 }
 
 void UnitTestClient::test2()
 {
-    UnitTestClientPtr client(cc_mqtt5_client_alloc());
-    TS_ASSERT(client);
+    auto client = unitTestAlloc();
+    TS_ASSERT_DIFFERS(client.get(), nullptr);
 
-    cc_mqtt5_client_set_broker_disconnect_report_callback(client.get(), &UnitTestClient::brokerDisconnectedCb, this);
-    cc_mqtt5_client_set_message_received_report_callback(client.get(), &UnitTestClient::messageReceivedCb, this);
-    cc_mqtt5_client_set_send_output_data_callback(client.get(), &UnitTestClient::sendOutputDataCb, this);
-    cc_mqtt5_client_set_next_tick_program_callback(client.get(), &UnitTestClient::programNextTickCb, this);
+    unitTestSetBrokerDisconnectReportCb(client.get(), &UnitTestClient::brokerDisconnectedCb, this);
+    unitTestSetMessageReceivedReportCb(client.get(), &UnitTestClient::messageReceivedCb, this);
+    unitTestSetSendOutputDataCb(client.get(), &UnitTestClient::sendOutputDataCb, this);
+    unitTestSetNextTickProgramCb(client.get(), &UnitTestClient::programNextTickCb, this);
 
-    auto ec = cc_mqtt5_client_init(client.get());
+    auto ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
-    cc_mqtt5_client_set_cancel_next_tick_wait_callback(client.get(), &UnitTestClient::cancelNextTickWaitCb, this);
-    ec = cc_mqtt5_client_init(client.get());
+    unitTestSetCancelNextTickWaitCb(client.get(), &UnitTestClient::cancelNextTickWaitCb, this);
+    ec = unitTestInit(client.get());
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
 
 }

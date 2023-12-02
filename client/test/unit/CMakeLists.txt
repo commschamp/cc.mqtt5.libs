@@ -4,7 +4,9 @@ endif ()
 
 ##################################
 set (COMMON_BASE_LIB_NAME "UnitTestCommonBase")
-set (COMMON_BASE_SRC "UnitTestCommonBase.cpp")
+set (COMMON_BASE_SRC 
+    "UnitTestCommonBase.cpp"
+    "UnitTestDefaultBase.cpp")
 add_library(${COMMON_BASE_LIB_NAME} ${COMMON_BASE_SRC})
 target_link_libraries(${COMMON_BASE_LIB_NAME} PUBLIC cc::cc_mqtt5_client cc::cc_mqtt5)
 target_include_directories(

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "UnitTestDefs.h"
+#include "cc_mqtt5_client/common.h"
+
 #include "UnitTestProtocolDefs.h"
 
 #include <algorithm>
@@ -15,7 +16,122 @@ class UnitTestCommonBase
 public:
     using UnitTestData = std::vector<std::uint8_t>;
 
+    struct LibFuncs
+    {
+        CC_Mqtt5ClientHandle (*m_alloc)() = nullptr;
+        void (*m_free)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_init)(CC_Mqtt5ClientHandle) = nullptr;
+        bool (*m_is_initialized)(CC_Mqtt5ClientHandle) = nullptr;
+        void (*m_tick)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
+        unsigned (*m_process_data)(CC_Mqtt5ClientHandle, const unsigned char*, unsigned) = nullptr;
+        void (*m_notify_network_disconnected)(CC_Mqtt5ClientHandle, bool) = nullptr;
+        bool (*m_is_network_disconnected)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_set_default_response_timeout)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
+        unsigned (*m_get_default_response_timeout)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_pub_topic_alias_alloc)(CC_Mqtt5ClientHandle, const char*, unsigned char) = nullptr;
+        CC_Mqtt5ErrorCode (*m_pub_topic_alias_free)(CC_Mqtt5ClientHandle, const char*) = nullptr;
+        unsigned (*m_pub_topic_alias_count)(CC_Mqtt5ClientHandle) = nullptr;
+        bool (*m_pub_topic_alias_is_allocated)(CC_Mqtt5ClientHandle, const char*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_set_verify_outgoing_topic_enabled)(CC_Mqtt5ClientHandle, bool) = nullptr;
+        bool (*m_get_verify_outgoing_topic_enabled)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_set_verify_incoming_topic_enabled)(CC_Mqtt5ClientHandle, bool) = nullptr;
+        bool (*m_get_verify_incoming_topic_enabled)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_set_verify_incoming_msg_subscribed)(CC_Mqtt5ClientHandle, bool) = nullptr;
+        bool (*m_get_verify_incoming_msg_subscribed)(CC_Mqtt5ClientHandle) = nullptr;
+        void (*m_init_user_prop)(CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ConnectHandle (*m_connect_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        void (*m_connect_init_config_basic)(CC_Mqtt5ConnectBasicConfig*) = nullptr;
+        void (*m_connect_init_config_will)(CC_Mqtt5ConnectWillConfig*) = nullptr;
+        void (*m_connect_init_config_extra)(CC_Mqtt5ConnectExtraConfig*) = nullptr;
+        void (*m_connect_init_config_auth)(CC_Mqtt5AuthConfig*) = nullptr;
+        void (*m_connect_init_auth_info)(CC_Mqtt5AuthInfo*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_set_response_timeout)(CC_Mqtt5ConnectHandle, unsigned) = nullptr;
+        unsigned (*m_connect_get_response_timeout)(CC_Mqtt5ConnectHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_config_basic)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectBasicConfig*) = nullptr;        
+        CC_Mqtt5ErrorCode (*m_connect_config_will)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectWillConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_config_extra)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectExtraConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_config_auth)(CC_Mqtt5ConnectHandle, const CC_Mqtt5AuthConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_add_user_prop)(CC_Mqtt5ConnectHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_add_will_user_prop)(CC_Mqtt5ConnectHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_send)(CC_Mqtt5ConnectHandle, CC_Mqtt5ConnectCompleteCb, void*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_connect_cancel)(CC_Mqtt5ConnectHandle) = nullptr;
+        bool (*m_is_connected)(CC_Mqtt5ClientHandle) = nullptr;
+        CC_Mqtt5DisconnectHandle (*m_disconnect_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr; 
+        void (*m_disconnect_init_config)(CC_Mqtt5DisconnectConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_disconnect_config)(CC_Mqtt5DisconnectHandle, const CC_Mqtt5DisconnectConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_disconnect_add_user_prop)(CC_Mqtt5DisconnectHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_disconnect_send)(CC_Mqtt5DisconnectHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_disconnect_cancel)(CC_Mqtt5DisconnectHandle) = nullptr;
+        CC_Mqtt5SubscribeHandle (*m_subscribe_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_set_response_timeout)(CC_Mqtt5SubscribeHandle, unsigned) = nullptr;
+        unsigned (*m_subscribe_get_response_timeout)(CC_Mqtt5SubscribeHandle) = nullptr;
+        void (*m_subscribe_init_config_topic)(CC_Mqtt5SubscribeTopicConfig*) = nullptr;
+        void (*m_subscribe_init_config_extra)(CC_Mqtt5SubscribeExtraConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_config_topic)(CC_Mqtt5SubscribeHandle, const CC_Mqtt5SubscribeTopicConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_config_extra)(CC_Mqtt5SubscribeHandle, const CC_Mqtt5SubscribeExtraConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_add_user_prop)(CC_Mqtt5SubscribeHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_send)(CC_Mqtt5SubscribeHandle, CC_Mqtt5SubscribeCompleteCb, void*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_subscribe_cancel)(CC_Mqtt5SubscribeHandle) = nullptr;
+        CC_Mqtt5UnsubscribeHandle (*m_unsubscribe_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_unsubscribe_set_response_timeout)(CC_Mqtt5UnsubscribeHandle, unsigned) = nullptr;
+        unsigned (*m_unsubscribe_get_response_timeout)(CC_Mqtt5UnsubscribeHandle) = nullptr;
+        void (*m_unsubscribe_init_config_topic)(CC_Mqtt5UnsubscribeTopicConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_unsubscribe_config_topic)(CC_Mqtt5UnsubscribeHandle, const CC_Mqtt5UnsubscribeTopicConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_unsubscribe_add_user_prop)(CC_Mqtt5UnsubscribeHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_unsubscribe_send)(CC_Mqtt5UnsubscribeHandle, CC_Mqtt5UnsubscribeCompleteCb, void*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_unsubscribe_cancel)(CC_Mqtt5UnsubscribeHandle) = nullptr;
+        CC_Mqtt5PublishHandle (*m_publish_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        void (*m_publish_init_config_basic)(CC_Mqtt5PublishBasicConfig*) = nullptr;
+        void (*m_publish_init_config_extra)(CC_Mqtt5PublishExtraConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_set_response_timeout)(CC_Mqtt5PublishHandle, unsigned) = nullptr;
+        unsigned (*m_publish_get_response_timeout)(CC_Mqtt5PublishHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_set_resend_attempts)(CC_Mqtt5PublishHandle, unsigned) = nullptr;
+        unsigned (*m_publish_get_resend_attempts)(CC_Mqtt5PublishHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_config_basic)(CC_Mqtt5PublishHandle, const CC_Mqtt5PublishBasicConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_config_extra)(CC_Mqtt5PublishHandle, const CC_Mqtt5PublishExtraConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_add_user_prop)(CC_Mqtt5PublishHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_send)(CC_Mqtt5PublishHandle, CC_Mqtt5PublishCompleteCb, void*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_publish_cancel)(CC_Mqtt5PublishHandle) = nullptr;
+        CC_Mqtt5ReauthHandle (*m_reauth_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        void (*m_reauth_init_config_auth)(CC_Mqtt5AuthConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_reauth_set_response_timeout)(CC_Mqtt5ReauthHandle, unsigned) = nullptr;
+        unsigned (*m_reauth_get_response_timeout)(CC_Mqtt5ReauthHandle) = nullptr;
+        CC_Mqtt5ErrorCode (*m_reauth_config_auth)(CC_Mqtt5ReauthHandle, const CC_Mqtt5AuthConfig*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_reauth_add_user_prop)(CC_Mqtt5ReauthHandle, const CC_Mqtt5UserProp*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_reauth_send)(CC_Mqtt5ReauthHandle, CC_Mqtt5ReauthCompleteCb, void*) = nullptr;
+        CC_Mqtt5ErrorCode (*m_reauth_cancel)(CC_Mqtt5ReauthHandle) = nullptr;
+        void (*m_set_next_tick_program_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5NextTickProgramCb, void*) = nullptr;
+        void (*m_set_cancel_next_tick_wait_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5CancelNextTickWaitCb, void*) = nullptr;        
+        void (*m_set_send_output_data_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5SendOutputDataCb, void*) = nullptr;
+        void (*m_set_broker_disconnect_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5BrokerDisconnectReportCb, void*) = nullptr;        
+        void (*m_set_message_received_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5MessageReceivedReportCb, void*) = nullptr;        
+        void (*m_set_error_log_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorLogCb, void*) = nullptr;        
+    };
+
+    struct UnitTestDeleter
+    {
+        UnitTestDeleter() = default;
+        explicit UnitTestDeleter(const LibFuncs& ops) : 
+            m_free(ops.m_free)
+        {
+        }
+
+        void operator()(CC_Mqtt5Client* ptr)
+        {
+            m_free(ptr);
+        }
+
+    private:
+        void (*m_free)(CC_Mqtt5ClientHandle) = nullptr;
+    }; 
+
+    using UnitTestClientPtr = std::unique_ptr<CC_Mqtt5Client, UnitTestDeleter>;
+
+
 protected:
+
+    explicit UnitTestCommonBase(const LibFuncs& funcs);
+
     static constexpr unsigned UnitTestDefaultOpTimeoutMs = 2000;
 
     struct UnitTestUserProp
@@ -229,7 +345,7 @@ protected:
 
     void unitTestSetUp();
     void unitTestTearDown();
-    UnitTestClientPtr::pointer unitTestAllocClient(bool addLog = false);
+    UnitTestClientPtr::pointer unitTestAllocAndInitClient(bool addLog = false);
 
     decltype(auto) unitTestSentData()
     {
@@ -315,6 +431,56 @@ protected:
     using UnitTestDisconnectReason = UnitTestDisconnectMsg::Field_reasonCode::Field::ValueType;
     void unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason = UnitTestDisconnectReason::Success);
 
+    UnitTestClientPtr unitTestAlloc();
+    CC_Mqtt5ErrorCode unitTestInit(CC_Mqtt5Client* client);
+    bool unitTestIsInitialized(CC_Mqtt5Client* client) const;
+    void unitTestNotifyClientDisconnected(CC_Mqtt5Client* client, bool disconnected);
+    bool unitTestIsNetworkDisconnected(CC_Mqtt5Client* client);
+    CC_Mqtt5ErrorCode unitTestSetDefaultResponseTimeout(CC_Mqtt5Client* client, unsigned ms);
+    CC_Mqtt5ErrorCode unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount);
+    CC_Mqtt5ConnectHandle unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    void unitTestConnectInitConfigBasic(CC_Mqtt5ConnectBasicConfig* config);
+    void unitTestConnectInitConfigWill(CC_Mqtt5ConnectWillConfig* config);
+    void unitTestConnectInitConfigExtra(CC_Mqtt5ConnectExtraConfig* config);
+    void unitTestConnectInitConfigAuth(CC_Mqtt5AuthConfig* config);
+    CC_Mqtt5ErrorCode unitTestConnectConfigBasic(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectBasicConfig* config);
+    CC_Mqtt5ErrorCode unitTestConnectConfigWill(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectWillConfig* config);
+    CC_Mqtt5ErrorCode unitTestConnectConfigExtra(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5ConnectExtraConfig* config);
+    CC_Mqtt5ErrorCode unitTestConnectConfigAuth(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5AuthConfig* config);
+    CC_Mqtt5ErrorCode unitTestConnectAddUserProp(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
+    CC_Mqtt5ErrorCode unitTestConnectAddWillUserProp(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5UserProp* prop);
+    bool unitTestIsConnected(CC_Mqtt5Client* client);
+    CC_Mqtt5DisconnectHandle unitTestDisconnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    void unitTestDisconnectInitConfig(CC_Mqtt5DisconnectConfig* config);
+    CC_Mqtt5ErrorCode unitTestDisconnectConfig(CC_Mqtt5DisconnectHandle handle, const CC_Mqtt5DisconnectConfig* config);
+    CC_Mqtt5SubscribeHandle unitTestSubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    CC_Mqtt5ErrorCode unitTestSubscribeSetResponseTimeout(CC_Mqtt5SubscribeHandle handle, unsigned ms);
+    void unitTestSubscribeInitConfigTopic(CC_Mqtt5SubscribeTopicConfig* config);
+    void unitTestSubscribeInitConfigExtra(CC_Mqtt5SubscribeExtraConfig* config);
+    CC_Mqtt5ErrorCode unitTestSubscribeConfigTopic(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeTopicConfig* config);
+    CC_Mqtt5ErrorCode unitTestSubscribeConfigExtra(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeExtraConfig* config);
+    CC_Mqtt5ErrorCode unitTestSubscribeAddUserProp(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5UserProp* prop);
+    CC_Mqtt5UnsubscribeHandle unitTestUnsubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    CC_Mqtt5ErrorCode unitTestUnsubscribeSetResponseTimeout(CC_Mqtt5UnsubscribeHandle handle, unsigned ms);
+    void unitTestUnsubscribeInitConfigTopic(CC_Mqtt5UnsubscribeTopicConfig* config);
+    CC_Mqtt5ErrorCode unitTestUnsubscribeConfigTopic(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UnsubscribeTopicConfig* config);
+    CC_Mqtt5ErrorCode unitTestUnsubscribeAddUserProp(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop);
+    CC_Mqtt5PublishHandle unitTestPublishPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    void unitTestPublishInitConfigBasic(CC_Mqtt5PublishBasicConfig* config);
+    void unitTestPublishInitConfigExtra(CC_Mqtt5PublishExtraConfig* config);
+    CC_Mqtt5ErrorCode unitTestPublishSetResponseTimeout(CC_Mqtt5PublishHandle handle, unsigned ms);
+    CC_Mqtt5ErrorCode unitTestPublishConfigBasic(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishBasicConfig* config);
+    CC_Mqtt5ErrorCode unitTestPublishConfigExtra(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishExtraConfig* config);
+    CC_Mqtt5ErrorCode unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop);
+    CC_Mqtt5ReauthHandle unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    void unitTestReauthInitConfigAuth(CC_Mqtt5AuthConfig* config);
+    CC_Mqtt5ErrorCode unitTestReauthAddUserProp(CC_Mqtt5ReauthHandle handle, const CC_Mqtt5UserProp* prop);
+    void unitTestSetNextTickProgramCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5NextTickProgramCb cb, void* data);    
+    void unitTestSetCancelNextTickWaitCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5CancelNextTickWaitCb cb, void* data);    
+    void unitTestSetSendOutputDataCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5SendOutputDataCb cb, void* data);    
+    void unitTestSetBrokerDisconnectReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5BrokerDisconnectReportCb cb, void* data);    
+    void unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data);    
+
 private:
 
     static void unitTestErrorLogCb(void* obj, const char* msg);
@@ -329,7 +495,8 @@ private:
     static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
     static void unitTestReauthCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
-    
+
+    LibFuncs m_funcs;  
     UnitTestClientPtr m_client;
     std::vector<TickInfo> m_tickReq;
     std::vector<std::uint8_t> m_sentData;

@@ -234,15 +234,17 @@ void ReauthOp::handle(AuthMsg& msg)
             }
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            if (!client().sessionState().m_problemInfoAllowed) {
-                errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
-                return; 
-            }
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                if (!client().sessionState().m_problemInfoAllowed) {
+                    errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
+                    return; 
+                }
 
-            fillUserProps(propsHandler, userProps);
-            info.m_userProps = &userProps[0];
-            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+                fillUserProps(propsHandler, userProps);
+                info.m_userProps = &userProps[0];
+                comms::cast_assign(info.m_userPropsCount) = userProps.size();
+            }
         }
     }
 

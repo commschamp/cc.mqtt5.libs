@@ -103,16 +103,18 @@ void SendOp::handle(PubackMsg& msg)
             response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            if (!client().sessionState().m_problemInfoAllowed) {
-                errorLog("Received user properties in PUBACK when \"problem information\" was disabled in CONNECT.");
-                return; 
-            }
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                if (!client().sessionState().m_problemInfoAllowed) {
+                    errorLog("Received user properties in PUBACK when \"problem information\" was disabled in CONNECT.");
+                    return; 
+                }
 
-            fillUserProps(propsHandler, userProps);
-            response.m_userProps = &userProps[0];
-            comms::cast_assign(response.m_userPropsCount) = userProps.size();
-        }        
+                fillUserProps(propsHandler, userProps);
+                response.m_userProps = &userProps[0];
+                comms::cast_assign(response.m_userPropsCount) = userProps.size();
+            }        
+        }
     }
 
     terminateOnExit.release();
@@ -181,16 +183,18 @@ void SendOp::handle(PubrecMsg& msg)
             response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            if (!client().sessionState().m_problemInfoAllowed) {
-                errorLog("Received user properties in PUBREC when \"problem information\" was disabled in CONNECT.");
-                return; 
-            }
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                if (!client().sessionState().m_problemInfoAllowed) {
+                    errorLog("Received user properties in PUBREC when \"problem information\" was disabled in CONNECT.");
+                    return; 
+                }
 
-            fillUserProps(propsHandler, userProps);
-            response.m_userProps = &userProps[0];
-            comms::cast_assign(response.m_userPropsCount) = userProps.size();
-        }        
+                fillUserProps(propsHandler, userProps);
+                response.m_userProps = &userProps[0];
+                comms::cast_assign(response.m_userPropsCount) = userProps.size();
+            }       
+        } 
     }
     
     if ((msg.field_reasonCode().doesExist()) && 

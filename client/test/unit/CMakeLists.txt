@@ -64,4 +64,5 @@ if (TARGET cc::cc_mqtt5_bm_client)
     )
 
     cc_mqtt5_client_add_unit_test(UnitTestBmClient ${BM_BASE_LIB_NAME})
+    cc_mqtt5_client_add_unit_test(UnitTestBmConnect ${BM_BASE_LIB_NAME})
 endif ()  

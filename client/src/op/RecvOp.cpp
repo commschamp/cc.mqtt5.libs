@@ -259,10 +259,12 @@ void RecvOp::handle(PublishMsg& msg)
         }
     }
 
-    if ((!propsHandler.m_userProps.empty()) && (qos < Qos::ExactlyOnceDelivery)) {
-        fillUserProps(propsHandler, m_userProps);
-        comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
-        m_info.m_userProps = &m_userProps[0];
+    if constexpr (Config::HasUserProps) {
+        if ((!propsHandler.m_userProps.empty()) && (qos < Qos::ExactlyOnceDelivery)) {
+            fillUserProps(propsHandler, m_userProps);
+            comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+            m_info.m_userProps = &m_userProps[0];
+        }
     }    
 
     if (propsHandler.m_contentType != nullptr) {
@@ -336,24 +338,26 @@ void RecvOp::handle(PublishMsg& msg)
         }
     }    
 
-    if (!propsHandler.m_userProps.empty()) {
-        m_userPropsCpy.resize(propsHandler.m_userProps.size());
-        m_userProps.resize(propsHandler.m_userProps.size());
-        for (auto idx = 0U; idx < propsHandler.m_userProps.size(); ++idx) {
-            auto* srcFieldPtr = propsHandler.m_userProps[idx];
-            auto& srcKey = srcFieldPtr->field_value().field_first().value();
-            auto& srcValue = srcFieldPtr->field_value().field_second().value();
-            auto& tgtStorage = m_userPropsCpy[idx];
+    if constexpr (Config::HasUserProps) {
+        if (!propsHandler.m_userProps.empty()) {
+            m_userPropsCpy.resize(propsHandler.m_userProps.size());
+            m_userProps.resize(propsHandler.m_userProps.size());
+            for (auto idx = 0U; idx < propsHandler.m_userProps.size(); ++idx) {
+                auto* srcFieldPtr = propsHandler.m_userProps[idx];
+                auto& srcKey = srcFieldPtr->field_value().field_first().value();
+                auto& srcValue = srcFieldPtr->field_value().field_second().value();
+                auto& tgtStorage = m_userPropsCpy[idx];
 
-            comms::util::assign(tgtStorage.m_key, srcKey.begin(), srcKey.end());
-            comms::util::assign(tgtStorage.m_value, srcValue.begin(), srcValue.end());
+                comms::util::assign(tgtStorage.m_key, srcKey.begin(), srcKey.end());
+                comms::util::assign(tgtStorage.m_value, srcValue.begin(), srcValue.end());
 
-            m_userProps[idx].m_key = tgtStorage.m_key.c_str();
-            m_userProps[idx].m_value = tgtStorage.m_value.c_str();
-        }
+                m_userProps[idx].m_key = tgtStorage.m_key.c_str();
+                m_userProps[idx].m_value = tgtStorage.m_value.c_str();
+            }
 
-        comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
-        m_info.m_userProps = &m_userProps[0];
+            comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+            m_info.m_userProps = &m_userProps[0];
+        }            
     }     
 
     if (propsHandler.m_contentType != nullptr) {
@@ -402,16 +406,18 @@ void RecvOp::handle(PubrelMsg& msg)
             errorLog(propsHandler.m_reasonStr->field_value().value().c_str());
         }    
 
-        if (!propsHandler.m_userProps.empty()) {
-            if (!client().sessionState().m_problemInfoAllowed) {
-                errorLog("Received user properties in PUBREL when \"problem information\" was disabled in CONNECT.");
-                protocolErrorTermination();
-                return; 
-            }
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                if (!client().sessionState().m_problemInfoAllowed) {
+                    errorLog("Received user properties in PUBREL when \"problem information\" was disabled in CONNECT.");
+                    protocolErrorTermination();
+                    return; 
+                }
 
-            fillUserProps(propsHandler, m_userProps);
-            comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
-            m_info.m_userProps = &m_userProps[0];
+                fillUserProps(propsHandler, m_userProps);
+                comms::cast_assign(m_info.m_userPropsCount) = m_userProps.size();
+                m_info.m_userProps = &m_userProps[0];
+            }
         }     
     }   
 

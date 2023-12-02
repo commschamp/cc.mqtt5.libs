@@ -258,16 +258,18 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
         response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
     }       
 
-    if (!propsHandler.m_userProps.empty()) {
-        if (!client().sessionState().m_problemInfoAllowed) {
-            errorLog("Received user properties in UNSUBACK when \"problem information\" was disabled in CONNECT.");
-            return; 
-        }
+    if constexpr (Config::HasUserProps) {
+        if (!propsHandler.m_userProps.empty()) {
+            if (!client().sessionState().m_problemInfoAllowed) {
+                errorLog("Received user properties in UNSUBACK when \"problem information\" was disabled in CONNECT.");
+                return; 
+            }
 
-        fillUserProps(propsHandler, userProps);
-        response.m_userProps = &userProps[0];
-        comms::cast_assign(response.m_userPropsCount) = userProps.size();
-    }    
+            fillUserProps(propsHandler, userProps);
+            response.m_userProps = &userProps[0];
+            comms::cast_assign(response.m_userPropsCount) = userProps.size();
+        }   
+    } 
 
     if (response.m_reasonCodesCount != m_unsubMsg.field_list().value().size()) {
         return;

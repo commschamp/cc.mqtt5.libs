@@ -602,10 +602,12 @@ void ConnectOp::handle(ConnackMsg& msg)
         }
     }
 
-    if (!propsHandler.m_userProps.empty()) {
-        fillUserProps(propsHandler, userProps);
-        response.m_userProps = &userProps[0];
-        comms::cast_assign(response.m_userPropsCount) = userProps.size();
+    if constexpr (Config::HasUserProps) {
+        if (!propsHandler.m_userProps.empty()) {
+            fillUserProps(propsHandler, userProps);
+            response.m_userProps = &userProps[0];
+            comms::cast_assign(response.m_userPropsCount) = userProps.size();
+        }
     }
 
     if (propsHandler.m_sessionExpiryInterval != nullptr) {
@@ -734,11 +736,13 @@ void ConnectOp::handle(DisconnectMsg& msg)
             info.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            UserPropsList userProps;
-            fillUserProps(propsHandler, userProps);
-            info.m_userProps = &userProps[0];
-            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                UserPropsList userProps;
+                fillUserProps(propsHandler, userProps);
+                info.m_userProps = &userProps[0];
+                comms::cast_assign(info.m_userPropsCount) = userProps.size();
+            }
         }        
     }
 
@@ -817,16 +821,19 @@ void ConnectOp::handle(AuthMsg& msg)
             inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            if (!m_requestProblemInfo) {
-                errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
-                protocolErrorCompletion();
-                return;
-            }
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                if (!m_requestProblemInfo) {
+                    errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
+                    protocolErrorCompletion();
+                    return;
+                }
 
-            fillUserProps(propsHandler, userProps);
-            inInfo.m_userProps = &userProps[0];
-            comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
+                
+                fillUserProps(propsHandler, userProps);
+                inInfo.m_userProps = &userProps[0];
+                comms::cast_assign(inInfo.m_userPropsCount) = userProps.size();
+            }
         }
     }
 

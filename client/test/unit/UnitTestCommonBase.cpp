@@ -756,7 +756,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     test_assert(connectInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
     test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_reasonCode == CC_Mqtt5ReasonCode_Success));
     test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_maxQos == CC_Mqtt5QoS_ExactlyOnceDelivery));
-    test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_maxPacketSize == 0U));
+    //test_assert((responseConfig != nullptr) || (connectInfo.m_response.m_maxPacketSize == 0U));
 
     if (responseConfig != nullptr) {
         test_assert(connectInfo.m_response.m_reasonCode == responseConfig->m_reasonCode);

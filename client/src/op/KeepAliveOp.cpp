@@ -84,11 +84,13 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
             info.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
         }
 
-        if (!propsHandler.m_userProps.empty()) {
-            UserPropsList userProps;
-            fillUserProps(propsHandler, userProps);
-            info.m_userProps = &userProps[0];
-            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+        if constexpr (Config::HasUserProps) {
+            if (!propsHandler.m_userProps.empty()) {
+                UserPropsList userProps;
+                fillUserProps(propsHandler, userProps);
+                info.m_userProps = &userProps[0];
+                comms::cast_assign(info.m_userPropsCount) = userProps.size();
+            }
         }        
     }
 

@@ -5,7 +5,7 @@ set (CC_MQTT5_CLIENT_CUSTOM_NAME "bm")
 set (CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC FALSE)
 
 # Allow only a single client
-set(CC_MQTT5_CLIENT_ALLOC_LIMIT 2)
+set(CC_MQTT5_CLIENT_ALLOC_LIMIT 1)
 
 # Limit the length of all the string fields
 set(CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN 256)
@@ -44,10 +44,10 @@ set (CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT 4)
 set (CC_MQTT5_CLIENT_SEND_MAX_LIMIT 6)
 
 # Disable usage of topic aliases
-#set (CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES FALSE)
+set (CC_MQTT5_CLIENT_HAS_TOPIC_ALIASES FALSE)
 
 # Limit the amount topic aliases the client is allowed to record when topic aliases are enabled
-set (CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT 10)
+#set (CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT 10)
 
 # Disable usage of the "Subscription IDs"
 set (CC_MQTT5_CLIENT_HAS_SUB_IDS FALSE)

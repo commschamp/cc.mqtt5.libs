@@ -1,7 +1,5 @@
 #include "UnitTestCommonBase.h"
 
-#include "client.h" // TODO: remove
-
 #include "UnitTestPropsHandler.h"
 
 #include <cstdlib>

@@ -2,8 +2,6 @@
 #include "UnitTestPropsHandler.h"
 #include "UnitTestProtocolDefs.h"
 
-#include "client.h"
-
 #include <cxxtest/TestSuite.h>
 
 class UnitTestConnect : public CxxTest::TestSuite, public UnitTestDefaultBase

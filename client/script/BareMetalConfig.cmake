@@ -5,7 +5,7 @@ set (CC_MQTT5_CLIENT_CUSTOM_NAME "bm")
 set (CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC FALSE)
 
 # Allow only a single client
-set(CC_MQTT5_CLIENT_ALLOC_LIMIT 1)
+set(CC_MQTT5_CLIENT_ALLOC_LIMIT 2)
 
 # Limit the length of all the string fields
 set(CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN 256)

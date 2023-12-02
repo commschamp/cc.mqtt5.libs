@@ -11,8 +11,11 @@ set (COMMON_BASE_SRC
 add_library(${COMMON_BASE_LIB_NAME} ${COMMON_BASE_SRC})
 target_link_libraries(${COMMON_BASE_LIB_NAME} PUBLIC cc::cc_mqtt5)
 target_include_directories(
-    ${COMMON_BASE_LIB_NAME} INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    ${COMMON_BASE_LIB_NAME} 
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/client/include>
 )
 
 if (TARGET cc::cc_mqtt5_client)

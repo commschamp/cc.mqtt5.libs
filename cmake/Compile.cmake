@@ -20,6 +20,14 @@ macro (cc_mqttsn_compile)
     endif ()
 
     set (extra_flags_list)
+    if ((CMAKE_COMPILER_IS_GNUCC OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")) AND
+        (NOT "${CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES}" STREQUAL ""))
+        # When features are disabled some functions may remain unused
+        list (APPEND extra_flags_list
+            "-Wno-unused-function"
+        )
+    endif ()
+
     if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND ("${CMAKE_CXX_STANDARD}" STREQUAL "20"))
         list (APPEND extra_flags_list
             "-Wno-tautological-constant-out-of-range-compare"

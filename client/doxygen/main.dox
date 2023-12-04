@@ -1187,20 +1187,20 @@
 /// to the broker with the same topic alias, then all the subsequent QoS0 message
 /// will use topic alias without the topic string.
 ///
-/// To stop using topic alias for the specific topic, use @ref cc_mqtt5_client_pub_topic_alias_free()
+/// To stop using topic alias for the specific topic, use @b cc_mqtt5_client_pub_topic_alias_free()
 /// function to free the allocated alias.
 /// @code
 /// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_pub_topic_alias_free(client, "some_topic");
 /// @endcode
 ///
 /// To inquire how many topic aliases have already been allocated, use the
-/// @ref cc_mqtt5_client_pub_topic_alias_count() function.
+/// @b cc_mqtt5_client_pub_topic_alias_count() function.
 /// @code
 /// unsigned count = cc_mqtt5_client_pub_topic_alias_count(client);
 /// @endcode
 ///
 /// To check whether a topic alias is allocated for specific topic use
-/// the @ref cc_mqtt5_client_pub_topic_alias_is_allocated() function.
+/// the @b cc_mqtt5_client_pub_topic_alias_is_allocated() function.
 /// @code
 /// bool allocated = cc_mqtt5_client_pub_topic_alias_is_allocated(client, "some_topic");
 /// @endcode
@@ -1234,19 +1234,19 @@
 ///
 /// However, if the broker is trusted to do the right thing, i.e. fully comply to
 /// the specification, it is possible to enable / disable the incoming topics check using the
-/// @ref cc_mqtt5_client_set_verify_incoming_msg_subscribed() for performance reasons.
+/// @b cc_mqtt5_client_set_verify_incoming_msg_subscribed() for performance reasons.
 /// @code
 /// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_set_verify_incoming_msg_subscribed(client, false);
 /// @endcode
-/// To retrieve the current configuration use the @ref cc_mqtt5_client_get_verify_incoming_msg_subscribed() function.
+/// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_msg_subscribed() function.
 ///
 /// Similarly, the library also <b>by default</b> verifies the incoming topic format, that it doesn't contain
-/// wildcard characters. To enable / disable such verification use the @ref cc_mqtt5_client_set_verify_incoming_topic_enabled()
+/// wildcard characters. To enable / disable such verification use the @b cc_mqtt5_client_set_verify_incoming_topic_enabled()
 /// function.
 /// @code
 /// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_set_verify_incoming_topic_enabled(client, false);
 /// @endcode
-/// To retrieve the current configuration use the @ref cc_mqtt5_client_get_verify_incoming_topic_enabled() function.
+/// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_topic_enabled() function.
 ///
 /// The @b QoS2 publish operation initiated by the broker requires exchange of multiple messages
 /// between the broker and the client. When the library responds with the @b PUBREC
@@ -1404,7 +1404,7 @@
 /// @li Terminates and invokes the callbacks of previously initiated but incomplete operations passing
 /// the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     registered using the @ref cc_mqtt5_client_set_broker_disconnect_report_callback() function.
+///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function.
 ///     The information passed in the @b DISCONNECT message is used to populate reported
 ///     disconnection information.
 ///
@@ -1417,7 +1417,7 @@
 /// @li Terminates and invokes the callbacks of all other previously initiated but incomplete operations passing
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     registered using the @ref cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
 ///     without any disconnection information.
 ///
 /// With all said above it means that if application receives @ref CC_Mqtt5AsyncOpStatus_ProtocolError or

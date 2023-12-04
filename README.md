@@ -19,7 +19,7 @@ refer to [doc/custom_client_build.md](doc/custom_client_build.md) for instructio
 how to do it. Such customization also allows removal some of the library features
 resulting in smaller code size and improved runtime performance. Initial set
 of features customization may be somewhat limited, but if needed please
-[get in touch](#contact-information) and request the missing functionality to be implemented.
+[get in touch](#contact-information) and request the missing customization to be added.
 It should not take long.
 
 The doxygen generated documentation of the library with its full tutorial can

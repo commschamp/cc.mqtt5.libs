@@ -17,7 +17,7 @@ set(CC_MQTT5_CLIENT_CLIENT_ID_FIELD_FIXED_LEN 50)
 set(CC_MQTT5_CLIENT_USERNAME_FIELD_FIXED_LEN 20)
 
 # Limit the max length of the topics
-#set(CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN 256)
+#set(CC_MQTT5_CLIENT_TOPIC_FIELD_FIXED_LEN 100)
 
 # Limit the length of all the binary data fields
 set (CC_MQTT5_CLIENT_BIN_DATA_FIELD_FIXED_LEN 512)
@@ -34,7 +34,7 @@ set (CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE 1024)
 # Disable usage of the user props
 set (CC_MQTT5_CLIENT_HAS_USER_PROPS FALSE)
 
-# Limit of user props in case they are enaled
+# Limit of user props in case they are enabled
 #set (CC_MQTT5_CLIENT_USER_PROPS_LIMIT 3) 
 
 # Limit the amount of incomplete QoS2 messages being received in parallel

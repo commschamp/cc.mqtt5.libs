@@ -7,7 +7,7 @@ raw data (such as encryption or extra framing).
 
 # Client Library
 The MQTT5 **client** library is implemented
-using C++(17) programming language, but provides **C** interface. The library's
+using **C++(17)** programming language, but provides **C** interface. The library's
 code doesn't use [RTTI](https://en.wikipedia.org/wiki/Run-time_type_information)
 or exceptions, but by default
 the library's implementation uses C++ STL data types, such as
@@ -16,7 +16,11 @@ the library's implementation uses C++ STL data types, such as
 it is possible to compile the library not to use any dynamic memory allocation,
 and make it suitable for bare-metal environment without any heap. Please
 refer to [doc/custom_client_build.md](doc/custom_client_build.md) for instructions on
-how to do it.
+how to do it. Such customization also allows removal some of the library features
+resulting in smaller code size and improved runtime performance. Initial set
+of features customization may be somewhat limited, but if needed please
+[get in touch](#contact-information) and request the missing functionality to be implemented.
+It should not take long.
 
 The doxygen generated documentation of the library with its full tutorial can
 be downloaded from the [release artefacts](releases).

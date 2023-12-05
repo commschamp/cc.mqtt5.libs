@@ -757,27 +757,27 @@ void ConnectOp::handle(AuthMsg& msg)
 {
     m_timer.cancel();
 
-    auto protocolErrorCompletion = 
-        [this](DisconnectReason reason = DisconnectReason::ProtocolError)
-        {
-            sendDisconnectWithReason(reason);
-            completeOpInternal(CC_Mqtt5AsyncOpStatus_ProtocolError);
-        };
+    auto disconnectReason = DisconnectReason::ProtocolError;
+    auto opStatus = CC_Mqtt5AsyncOpStatus_ProtocolError;
+    auto disconnectAndCompleteOnError = 
+        comms::util::makeScopeGuard(
+            [this, &disconnectReason, &opStatus]()
+            {
+                sendDisconnectWithReason(disconnectReason);
+                completeOpInternal(opStatus);
+            });    
 
     if (!msg.doValid()) {
         errorLog("Invalid flags received in AUTH message");
-        protocolErrorCompletion(DisconnectReason::MalformedPacket);
-        // No members access after this point, the op will be deleted
-        return;
+        disconnectReason = DisconnectReason::MalformedPacket;
+        return; // Disconnect is sent and op is competed
     }        
 
     if ((m_authMethod.empty()) || 
         (msg.field_reasonCode().isMissing()) ||
         (msg.field_reasonCode().field().value() != AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth)) {
         errorLog("Invalid reason code received received in AUTH message");
-        protocolErrorCompletion();
-        // No members access after this point, the op will be deleted
-        return;
+        return; // Disconnect is sent and op is competed
     }
 
     UserPropsList userProps; // Will be referenced in inInfo
@@ -791,16 +791,12 @@ void ConnectOp::handle(AuthMsg& msg)
         }
 
         if (propsHandler.isProtocolError()) {
-            protocolErrorCompletion();
-            // No members access after this point, the op will be deleted
-            return;
+            return; // Disconnect is sent and op is competed
         }
 
         if ((propsHandler.m_authMethod == nullptr) || 
             (m_authMethod != propsHandler.m_authMethod->field_value().value().c_str())) {
-            protocolErrorCompletion();
-            // No members access after this point, the op will be deleted
-            return;        
+            return; // Disconnect is sent and op is competed   
         }
 
         if (propsHandler.m_authData != nullptr) {
@@ -814,8 +810,7 @@ void ConnectOp::handle(AuthMsg& msg)
         if (propsHandler.m_reasonStr != nullptr) {
             if (!m_requestProblemInfo) {
                 errorLog("Received reason string in AUTH when \"problem information\" was disabled in CONNECT.");
-                protocolErrorCompletion();
-                return;
+                return; // Disconnect is sent and op is competed
             }
 
             inInfo.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
@@ -825,8 +820,7 @@ void ConnectOp::handle(AuthMsg& msg)
             if (!propsHandler.m_userProps.empty()) {
                 if (!m_requestProblemInfo) {
                     errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
-                    protocolErrorCompletion();
-                    return;
+                    return; // Disconnect is sent and op is competed
                 }
 
                 
@@ -837,23 +831,19 @@ void ConnectOp::handle(AuthMsg& msg)
         }
     }
 
+    disconnectAndCompleteOnError.release(); // No more automatic disconnect and completion
+
     auto outInfo = CC_Mqtt5AuthInfo();
     auto authEc = m_authCb(m_authCbData, &inInfo, &outInfo);
     if (authEc == CC_Mqtt5AuthErrorCode_Disconnect) {
-        sendDisconnectWithReason(DisconnectReason::NotAuthorized);
-        completeOpInternal(CC_Mqtt5AsyncOpStatus_Aborted);
-        // No members access after this point, the op will be deleted
-        return;
+        disconnectReason = DisconnectReason::NotAuthorized;
+        opStatus = CC_Mqtt5AsyncOpStatus_Aborted;
+        return; // Disconnect is sent and op is competed
     }
 
-    auto termStatus = CC_Mqtt5AsyncOpStatus_OutOfMemory;
-    auto termConnectOnExit = 
-        comms::util::makeScopeGuard(
-            [this, &termStatus]()
-            {
-                sendDisconnectWithReason(DisconnectReason::UnspecifiedError);
-                completeOpInternal(termStatus);
-            });
+    // Change the completion on error defaults
+    disconnectReason = DisconnectReason::UnspecifiedError;
+    opStatus = CC_Mqtt5AsyncOpStatus_OutOfMemory;
 
     AuthMsg respMsg;
     respMsg.field_reasonCode().setExists();
@@ -864,7 +854,7 @@ void ConnectOp::handle(AuthMsg& msg)
     {
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect auth property, reached available limit.");
-            return;
+            return; // Disconnect is sent and op is competed
         }
 
         auto& propVar = addProp(propsField);
@@ -875,13 +865,13 @@ void ConnectOp::handle(AuthMsg& msg)
 
     if (outInfo.m_authDataLen > 0U) {
         if (outInfo.m_authData == nullptr) {
-            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;
+            opStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return; // Disconnect is sent and op is competed
         }
 
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect auth property, reached available limit.");
-            return;
+            return; // Disconnect is sent and op is competed
         }
 
         auto& propVar = addProp(propsField);
@@ -892,15 +882,15 @@ void ConnectOp::handle(AuthMsg& msg)
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Auth data value is too long");
             discardLastProp(propsField);
-            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;            
+            opStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return; // Disconnect is sent and op is competed
         }        
     }    
 
     if (outInfo.m_reasonStr != nullptr) {
         if (!canAddProp(propsField)) {
             errorLog("Cannot add connect auth property, reached available limit.");
-            return;
+            return; // Disconnect is sent and op is competed
         }
 
         auto& propVar = addProp(propsField);
@@ -911,15 +901,15 @@ void ConnectOp::handle(AuthMsg& msg)
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Reason string in CONNECT auth info too long");
             discardLastProp(propsField);
-            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;               
+            opStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return; // Disconnect is sent and op is competed             
         }         
     }
 
     if (outInfo.m_userPropsCount > 0U) {
         if (outInfo.m_userProps == nullptr) {
-            termStatus = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;
+            opStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+            return; // Disconnect is sent and op is competed             
         }
 
         for (auto idx = 0U; idx < outInfo.m_userPropsCount; ++idx) {
@@ -944,15 +934,15 @@ void ConnectOp::handle(AuthMsg& msg)
                     });
 
             if (errorIter != std::end(Map)) {
-                termStatus = errorIter->second;
-                return;
+                opStatus = errorIter->second;
+                return; // Disconnect is sent and op is competed             
             }
 
             COMMS_ASSERT(false); // Should not happen
         }
     }
 
-    termConnectOnExit.release();
+    disconnectAndCompleteOnError.release();
     restartTimer();
     client().sendMessage(respMsg);
 }

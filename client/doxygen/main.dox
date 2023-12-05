@@ -13,8 +13,15 @@
 /// The library allows the application to have a full control over the raw data for
 /// any extra analysis and/or manipulation, such as encryption.
 ///
+/// @section cc_mqtt5_client_version Version of the Library
+/// The version is of the library applicable to this documentation is defined in 
+/// the @ref common.h "cc_mqtt5_client/common.h" file using the following defines:
+/// @li @ref CC_MQTT5_CLIENT_MAJOR_VERSION
+/// @li @ref CC_MQTT5_CLIENT_MINOR_VERSION
+/// @li @ref CC_MQTT5_CLIENT_PATCH_VERSION
+///
 /// @section cc_mqtt5_client_header Header
-/// To use this <b>MQTT5 Client Library</b> use the following include statement:
+/// To use this <b>MQTT5 Client Library</b> use the following single include statement:
 /// @code
 /// #include "cc_mqtt5_client/client.h"
 /// @endcode
@@ -119,11 +126,18 @@
 /// @code
 /// void my_tick_program_cb(void* data, unsigned ms)
 /// {
-///     ... /* program timer to expire in "ms" milliseconds and invoke cc_mqtt5_client_tick() when it does. */
+///     ... 
+///     cc_mqtt5_client_tick(client, ms); 
 /// }
 ///
 /// cc_mqtt5_client_set_next_tick_program_callback(client, &my_tick_program_cb, data);
 /// @endcode
+/// It is allowed to invoke the @b cc_mqtt5_client_tick() before the actual requested timeout has 
+/// expired, just make sure that the correct amount of elapsed milliseconds is reported. When 
+/// the @b cc_mqtt5_client_tick() is invoked, it is assumed that the previously requested tick
+/// programming has been cancelled and the registered callback may be invoked again from within the
+/// @b cc_mqtt5_client_tick().
+///
 /// See also the documentation of the @ref CC_Mqtt5NextTickProgramCb callback function definition.
 ///
 /// In case of callback approach for time measurement is chosen, another callback function
@@ -1484,3 +1498,12 @@
 /// If multiple threads work with the same @ref cc_mqtt5_client_allocation "client"
 /// object (such as performing "publish" operations, or handling incoming messages in parallel),
 /// then explicit locking logic needs to be implemented by the application itself.
+///
+/// @section cc_mqtt5_client_debug_build Debug Build
+/// The client library uses <a href="https://commschamp.github.io/comms_doc/page_use_prot.html#page_use_prot_error_handling">COMMS_ASSERT()</a>
+/// macro to check some internal pre- and post-conditions. It is a bug if the assertion fails, please report if
+/// encountered. By default it is like standard 
+/// <a href="https://en.cppreference.com/w/cpp/error/assert">assert()</a> but allows overriding 
+/// the default failure behavour, which can be more suitable for bare-metal systems. Please
+/// refer to the <a href="https://commschamp.github.io/comms_doc/page_assert.html">documentation</a> for details.
+

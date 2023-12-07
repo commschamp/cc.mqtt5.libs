@@ -1,0 +1,90 @@
+#include "UnitTestBmBase.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestBmPublish : public CxxTest::TestSuite, public UnitTestBmBase
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestBmPublish::test1()
+{
+    // Qos0 publish with properties
+    auto* client = unitTestAllocAndInitClient();
+    unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
+    TS_ASSERT(unitTestIsConnected(client));
+
+    const std::string Topic("some/topic");
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 1U);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);
+
+    auto* publish = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+    const CC_Mqtt5QoS Qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    const bool Retain = true;
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = Qos;
+    TS_ASSERT_EQUALS(config.m_topicAliasPref, CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable);
+    config.m_retain = Retain;
+
+    ec = unitTestPublishConfigBasic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    const std::string PubUserPropKey1 = "Key1";
+    const std::string PubUserPropVal1 = "Val1";
+    auto userProp1 = CC_Mqtt5UserProp();
+    userProp1.m_key = PubUserPropKey1.c_str();
+    userProp1.m_value = PubUserPropVal1.c_str();
+    ec = unitTestPublishAddUserProp(publish, &userProp1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);    
+
+    const std::string ContentType("ContentType");
+    const std::string ResponseTopic("ResponseTopic");
+    const UnitTestData CorrelationData = {0x11, 0x22, 0x33, 0x44};
+    const unsigned MsgExpiry = 10;
+    const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
+
+    auto extra = CC_Mqtt5PublishExtraConfig();
+    unitTestPublishInitConfigExtra(&extra);
+    extra.m_contentType = ContentType.c_str();
+    extra.m_responseTopic = ResponseTopic.c_str();
+    extra.m_correlationData = &CorrelationData[0];
+    extra.m_correlationDataLen = static_cast<decltype(extra.m_correlationDataLen)>(CorrelationData.size());
+    extra.m_messageExpiryInterval = MsgExpiry;
+    extra.m_format = Format;
+    ec = unitTestPublishConfigExtra(publish, &extra);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+}

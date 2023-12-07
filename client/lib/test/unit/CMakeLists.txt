@@ -15,7 +15,7 @@ target_include_directories(
         INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/client/include>
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/client/lib/include>
 )
 
 if (TARGET cc::cc_mqtt5_client)

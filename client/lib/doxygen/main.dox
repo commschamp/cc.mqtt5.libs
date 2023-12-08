@@ -58,7 +58,7 @@
 /// CC_Mqtt5ClientHandle client = clientPtr.get();
 /// @endcode
 ///
-/// @b IMPORTANT: The functino @b cc_mqtt5_client_free() must @b NOT
+/// @b IMPORTANT: The function @b cc_mqtt5_client_free() must @b NOT
 /// be called from within a callback. Use next event loop iteration.
 ///
 /// @section cc_mqtt5_client_callbacks "Must Have" Callbacks Registration

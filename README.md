@@ -23,7 +23,7 @@ of features customization may be somewhat limited, but if needed please
 It should not take long.
 
 The doxygen generated documentation of the library with its full tutorial can
-be downloaded from the [release artefacts](releases) or browsed
+be downloaded from the [release artefacts](https://github.com/commschamp/cc.mqtt5.libs/releases) or browsed
 [online](https://commschamp.github.io/cc_mqtt5_client_doc).
 
 # Client Applications

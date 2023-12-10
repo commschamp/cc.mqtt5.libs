@@ -7,6 +7,7 @@ if (NOT CC_MQTT5_CLIENT_DEFAULT_LIB)
     return ()
 endif ()
 
+find_package (Threads REQUIRED)
 find_package (Boost REQUIRED COMPONENTS system program_options)
 
 set (EXTRA_BOOST_TARGETS)

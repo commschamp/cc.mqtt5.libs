@@ -34,6 +34,13 @@ macro (cc_mqttsn_compile)
         )
     endif ()
 
+    if (CC_MQTT5_CLIENT_AFL_FUZZ AND 
+        (CMAKE_COMPILER_IS_GNUCC OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")))
+        list (APPEND extra_flags_list
+            "-Wno-old-style-cast"
+        )
+    endif()
+
     string(REPLACE ";" " " extra_flags "${extra_flags_list}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${extra_flags}")
 endmacro()

@@ -1,0 +1,192 @@
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+
+#include <unistd.h>
+
+#include "##NAME##client.h"
+
+
+namespace 
+{
+
+const std::size_t BufSize = 1024000;
+const unsigned IterCount = 10000;
+
+struct AflFuzzDeleter
+{
+    void operator()(CC_Mqtt5Client* ptr)
+    {
+        cc_mqtt5_##NAME##client_free(ptr);
+    }
+}; 
+
+using AflFuzzClientPtr = std::unique_ptr<CC_Mqtt5Client, AflFuzzDeleter>;
+
+struct State
+{
+    CC_Mqtt5ClientHandle m_client = nullptr;
+    std::vector<std::uint8_t> m_inData;
+    unsigned m_nextTickDuration = 0U;
+    bool m_reinitRequired = true;
+    bool m_connected = false;
+    bool m_subscribed = false;
+    bool m_firstConnect = true;
+};
+
+State* asState(void* data)
+{
+    return reinterpret_cast<State*>(data);
+}
+
+void nextTickProgramCb(void* data, unsigned duration)
+{
+    asState(data)->m_nextTickDuration = duration;
+}
+
+unsigned cancelNextTickWaitCb(void* data)
+{
+    auto diff = std::min(asState(data)->m_nextTickDuration, 1U);
+    asState(data)->m_nextTickDuration -= diff;
+    return diff;
+}
+
+void sendOutputDataCb([[maybe_unused]] void* data, [[maybe_unused]] const unsigned char* buf, unsigned bufLen)
+{
+    std::cout << "Sending " << bufLen << " bytes." << std::endl;
+}
+
+void brokerDisconnectReportCb(void* data, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
+{
+    auto* state = asState(data);
+    state->m_connected = false;
+    state->m_reinitRequired = true;
+}
+
+void messageReceivedReportCb([[maybe_unused]] void* data, [[maybe_unused]] const CC_Mqtt5MessageInfo* info)
+{
+    std::cout << "Message Received!!!\n" << std::endl;
+}
+
+void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
+{
+    auto* state = asState(data);
+
+    do {
+        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            break;
+        }
+
+        assert(response != nullptr);
+        if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCode) {
+            break;
+        }
+
+        state->m_connected = true;
+        state->m_firstConnect = false;
+    } while (false);
+
+    state->m_connected = false;
+    state->m_reinitRequired = true;    
+}
+
+} // namespace 
+
+int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[]) 
+{
+
+    AflFuzzClientPtr client(cc_mqtt5_##NAME##client_alloc());
+    State state;
+    state.m_client = client.get();
+
+    cc_mqtt5_##NAME##client_set_next_tick_program_callback(client.get(), &nextTickProgramCb, &state);
+    cc_mqtt5_##NAME##client_set_cancel_next_tick_wait_callback(client.get(), &cancelNextTickWaitCb, &state);
+    cc_mqtt5_##NAME##client_set_send_output_data_callback(client.get(), &sendOutputDataCb, &state);
+    cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(client.get(), &brokerDisconnectReportCb, &state);
+    cc_mqtt5_##NAME##client_set_message_received_report_callback(client.get(), &messageReceivedReportCb, &state);
+
+    sync();
+
+    CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+    std::uint8_t buf[BufSize] = {0};
+    for (auto i = 0U; i < IterCount; ++i) {
+        if (state.m_reinitRequired) {
+            state.m_reinitRequired = false;
+            ec = cc_mqtt5_##NAME##client_init(client.get());
+            assert(ec == CC_Mqtt5ErrorCode_Success);
+            if (ec != CC_Mqtt5ErrorCode_Success) {
+                exit(-1);
+            }
+
+            state.m_inData.clear();
+        }
+
+        do {
+            if (!state.m_connected) {
+                auto connect = cc_mqtt5_##NAME##client_connect_prepare(client.get(), &ec);
+                assert(connect != nullptr);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (connect == nullptr) {
+                    exit(-1);
+                }
+
+                CC_Mqtt5ConnectBasicConfig basicConfig;
+                cc_mqtt5_##NAME##client_connect_init_config_basic(&basicConfig);
+                basicConfig.m_cleanStart = state.m_firstConnect;
+                
+                ec = cc_mqtt5_##NAME##client_connect_config_basic(connect, &basicConfig);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (ec != CC_Mqtt5ErrorCode_Success) {
+                    exit(-1);
+                }   
+
+                // TODO: extra configuration
+
+                ec = cc_mqtt5_##NAME##client_connect_send(connect, &connectCompleteCb, &state);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (ec != CC_Mqtt5ErrorCode_Success) {
+                    exit(-1);
+                }                 
+            }
+        } while (false);
+
+        auto len = read(0, buf, BufSize);
+        if (len <= 0) {
+            break;
+        }
+
+        auto dataPtr = &buf[0];
+        auto dataLen = static_cast<std::size_t>(len);
+        if (!state.m_inData.empty()) {
+            state.m_inData.insert(state.m_inData.end(), dataPtr, dataPtr + dataLen);
+            static const auto MaxLen = std::numeric_limits<unsigned>::max();
+
+            if (MaxLen < state.m_inData.size()) {
+                state.m_inData.erase(state.m_inData.begin(), state.m_inData.begin() + (state.m_inData.size() - MaxLen));
+            }
+
+            dataPtr = state.m_inData.data();
+            dataLen = state.m_inData.size();
+        }
+
+        auto consumed = cc_mqtt5_##NAME##client_process_data(client.get(), dataPtr, static_cast<unsigned>(dataLen));
+        if (dataLen <= consumed) {
+            state.m_inData.clear();
+            continue;
+        }
+
+        if (state.m_inData.empty()) {
+            state.m_inData.assign(dataPtr + consumed, dataPtr + dataLen);
+            continue;
+        }
+
+        state.m_inData.erase(state.m_inData.begin(), state.m_inData.begin() + consumed);
+    }
+
+    return 0U;
+}

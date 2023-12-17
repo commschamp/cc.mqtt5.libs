@@ -10,7 +10,7 @@ set (HEADER_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/templ/client.h.templ)
 set (SRC_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/templ/client.cpp.templ)
 set (CONFIG_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/templ/Config.h.templ)
 set (PROT_OPTS_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/templ/ProtocolOptions.h.templ)
-set (TEMPL_PROCESS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/ProcessTemplate.cmake)
+set (TEMPL_PROCESS_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/ProcessTemplate.cmake)
 set (WRITE_CONFIG_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/WriteConfigHeader.cmake)
 set (WRITE_PROT_OPTS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/WriteProtocolOptions.cmake)
 set (DEFAULT_CONFIG_VARS_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/script/DefineDefaultConfigVars.cmake)
@@ -170,15 +170,6 @@ function (gen_lib_mqtt5_client config_file)
     )
     add_dependencies(${lib_name} ${header_tgt_name} ${src_tgt_name} ${config_tgt_name} ${prot_opts_tgt_name})
     
-    if (NOT "${extra_flags}" STREQUAL "")
-        string(REPLACE ";" " " extra_flags "${extra_flags}")
-    
-        set_target_properties(
-            ${lib_name} PROPERTIES 
-            COMPILE_FLAGS ${extra_flags}
-        )
-    endif ()
-
     install (
         FILES ${header_output}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cc_mqtt5_client

@@ -34,7 +34,9 @@ struct State
     std::vector<std::uint8_t> m_inData;
     unsigned m_nextTickDuration = 0U;
     bool m_reinitRequired = true;
+    bool m_connectRequired = true;
     bool m_connected = false;
+    bool m_subscribeRequired = true;
     bool m_subscribed = false;
     bool m_firstConnect = true;
 };
@@ -64,13 +66,19 @@ void sendOutputDataCb([[maybe_unused]] void* data, [[maybe_unused]] const unsign
 void brokerDisconnectReportCb(void* data, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
 {
     auto* state = asState(data);
-    state->m_connected = false;
     state->m_reinitRequired = true;
+    state->m_connectRequired = true;
+    state->m_connected = false;
 }
 
 void messageReceivedReportCb([[maybe_unused]] void* data, [[maybe_unused]] const CC_Mqtt5MessageInfo* info)
 {
     std::cout << "Message Received!!!\n" << std::endl;
+}
+
+void errorLogCb([[maybe_unused]] void* data, const char* msg)
+{
+    std::cerr << "ERROR: " << msg << std::endl;
 }
 
 void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response)
@@ -87,12 +95,48 @@ void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5C
             break;
         }
 
+        if (!response->m_sessionPresent) {
+            state->m_subscribeRequired = false;
+            state->m_subscribed = false;
+        }
+
+        state->m_connectRequired = false;
         state->m_connected = true;
         state->m_firstConnect = false;
     } while (false);
 
+    state->m_connectRequired = true;
     state->m_connected = false;
     state->m_reinitRequired = true;    
+}
+
+void subscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+{
+    auto* state = asState(data);
+
+    do {
+        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            break;
+        }
+
+        assert(response != nullptr);
+        bool allOk = true;
+        for (auto idx = 0U; idx < response->m_reasonCodesCount; ++idx) {
+            if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCodes[idx]) {
+                allOk = false;
+                break;
+            }
+        }
+        
+        if (!allOk) {
+            break;
+        }
+
+        state->m_subscribed = true;
+    } while (false);
+
+    state->m_subscribeRequired = true;
+    state->m_subscribed = false;
 }
 
 } // namespace 
@@ -109,6 +153,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
     cc_mqtt5_##NAME##client_set_send_output_data_callback(client.get(), &sendOutputDataCb, &state);
     cc_mqtt5_##NAME##client_set_broker_disconnect_report_callback(client.get(), &brokerDisconnectReportCb, &state);
     cc_mqtt5_##NAME##client_set_message_received_report_callback(client.get(), &messageReceivedReportCb, &state);
+    cc_mqtt5_##NAME##client_set_error_log_callback(client.get(), &errorLogCb, nullptr);
 
     sync();
 
@@ -126,8 +171,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
             state.m_inData.clear();
         }
 
+        assert(cc_mqtt5_##NAME##client_is_initialized(client.get()));
+
         do {
-            if (!state.m_connected) {
+            if (state.m_connectRequired) {
+                state.m_connected = false;
+                
                 auto connect = cc_mqtt5_##NAME##client_connect_prepare(client.get(), &ec);
                 assert(connect != nullptr);
                 assert(ec == CC_Mqtt5ErrorCode_Success);
@@ -151,8 +200,44 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
                 assert(ec == CC_Mqtt5ErrorCode_Success);
                 if (ec != CC_Mqtt5ErrorCode_Success) {
                     exit(-1);
-                }                 
+                }   
+
+                state.m_connectRequired = false;
+                break;              
             }
+
+            assert(cc_mqtt5_##NAME##client_is_connected(client.get()));
+
+            if (state.m_subscribeRequired) {
+                state.m_subscribed = false;
+
+                auto subscribe = cc_mqtt5_##NAME##client_subscribe_prepare(client.get(), &ec);
+                assert(subscribe != nullptr);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (subscribe == nullptr) {
+                    exit(-1);
+                }     
+
+                CC_Mqtt5SubscribeTopicConfig config;
+                cc_mqtt5_##NAME##client_subscribe_init_config_topic(&config);
+                config.m_topic = "#";
+
+                ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subscribe, &config);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (ec != CC_Mqtt5ErrorCode_Success) {
+                    exit(-1);
+                }  
+
+                ec = cc_mqtt5_##NAME##client_subscribe_send(subscribe, &subscribeCompleteCb, &state);
+                assert(ec == CC_Mqtt5ErrorCode_Success);
+                if (ec != CC_Mqtt5ErrorCode_Success) {
+                    exit(-1);
+                }   
+
+                state.m_subscribeRequired = false;
+                break;                                
+            }
+
         } while (false);
 
         auto len = read(0, buf, BufSize);

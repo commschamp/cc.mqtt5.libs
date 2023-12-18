@@ -72,6 +72,7 @@ public:
         CC_Mqtt5ErrorCode (*m_subscribe_add_user_prop)(CC_Mqtt5SubscribeHandle, const CC_Mqtt5UserProp*) = nullptr;
         CC_Mqtt5ErrorCode (*m_subscribe_send)(CC_Mqtt5SubscribeHandle, CC_Mqtt5SubscribeCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_subscribe_cancel)(CC_Mqtt5SubscribeHandle) = nullptr;
+        unsigned (*m_subscribe_get_packet_id)(CC_Mqtt5SubscribeHandle) = nullptr;
         CC_Mqtt5UnsubscribeHandle (*m_unsubscribe_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
         CC_Mqtt5ErrorCode (*m_unsubscribe_set_response_timeout)(CC_Mqtt5UnsubscribeHandle, unsigned) = nullptr;
         unsigned (*m_unsubscribe_get_response_timeout)(CC_Mqtt5UnsubscribeHandle) = nullptr;
@@ -80,6 +81,7 @@ public:
         CC_Mqtt5ErrorCode (*m_unsubscribe_add_user_prop)(CC_Mqtt5UnsubscribeHandle, const CC_Mqtt5UserProp*) = nullptr;
         CC_Mqtt5ErrorCode (*m_unsubscribe_send)(CC_Mqtt5UnsubscribeHandle, CC_Mqtt5UnsubscribeCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_unsubscribe_cancel)(CC_Mqtt5UnsubscribeHandle) = nullptr;
+        unsigned (*m_unsubscribe_get_packet_id)(CC_Mqtt5UnsubscribeHandle) = nullptr;
         CC_Mqtt5PublishHandle (*m_publish_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
         void (*m_publish_init_config_basic)(CC_Mqtt5PublishBasicConfig*) = nullptr;
         void (*m_publish_init_config_extra)(CC_Mqtt5PublishExtraConfig*) = nullptr;
@@ -92,6 +94,7 @@ public:
         CC_Mqtt5ErrorCode (*m_publish_add_user_prop)(CC_Mqtt5PublishHandle, const CC_Mqtt5UserProp*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_send)(CC_Mqtt5PublishHandle, CC_Mqtt5PublishCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_cancel)(CC_Mqtt5PublishHandle) = nullptr;
+        unsigned (*m_publish_get_packet_id)(CC_Mqtt5PublishHandle) = nullptr;
         CC_Mqtt5ReauthHandle (*m_reauth_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
         void (*m_reauth_init_config_auth)(CC_Mqtt5AuthConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_reauth_set_response_timeout)(CC_Mqtt5ReauthHandle, unsigned) = nullptr;
@@ -460,11 +463,13 @@ protected:
     CC_Mqtt5ErrorCode unitTestSubscribeConfigTopic(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeTopicConfig* config);
     CC_Mqtt5ErrorCode unitTestSubscribeConfigExtra(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5SubscribeExtraConfig* config);
     CC_Mqtt5ErrorCode unitTestSubscribeAddUserProp(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5UserProp* prop);
+    unsigned unitTestSubscribeGetPacktId(CC_Mqtt5SubscribeHandle handle);
     CC_Mqtt5UnsubscribeHandle unitTestUnsubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     CC_Mqtt5ErrorCode unitTestUnsubscribeSetResponseTimeout(CC_Mqtt5UnsubscribeHandle handle, unsigned ms);
     void unitTestUnsubscribeInitConfigTopic(CC_Mqtt5UnsubscribeTopicConfig* config);
     CC_Mqtt5ErrorCode unitTestUnsubscribeConfigTopic(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UnsubscribeTopicConfig* config);
     CC_Mqtt5ErrorCode unitTestUnsubscribeAddUserProp(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop);
+    unsigned unitTestUnsubscribeGetPacktId(CC_Mqtt5UnsubscribeHandle handle);
     CC_Mqtt5PublishHandle unitTestPublishPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     void unitTestPublishInitConfigBasic(CC_Mqtt5PublishBasicConfig* config);
     void unitTestPublishInitConfigExtra(CC_Mqtt5PublishExtraConfig* config);
@@ -472,6 +477,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestPublishConfigBasic(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishBasicConfig* config);
     CC_Mqtt5ErrorCode unitTestPublishConfigExtra(CC_Mqtt5PublishHandle handle, const CC_Mqtt5PublishExtraConfig* config);
     CC_Mqtt5ErrorCode unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop);
+    unsigned unitTestPublishGetPacktId(CC_Mqtt5PublishHandle handle);
     CC_Mqtt5ReauthHandle unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     void unitTestReauthInitConfigAuth(CC_Mqtt5AuthConfig* config);
     CC_Mqtt5ErrorCode unitTestReauthAddUserProp(CC_Mqtt5ReauthHandle handle, const CC_Mqtt5UserProp* prop);

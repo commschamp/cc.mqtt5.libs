@@ -40,7 +40,8 @@ SendOp::~SendOp()
 
 void SendOp::handle(PubackMsg& msg)
 {
-    if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
+    auto packetId = msg.field_packetId().value();
+    if (m_pubMsg.field_packetId().field().value() != packetId) {
         return;
     }
 
@@ -57,6 +58,8 @@ void SendOp::handle(PubackMsg& msg)
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
+
+    response.m_packetId = packetId;
 
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
@@ -123,7 +126,8 @@ void SendOp::handle(PubackMsg& msg)
 
 void SendOp::handle(PubrecMsg& msg)
 {
-    if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
+    auto packetId = msg.field_packetId().value();
+    if (m_pubMsg.field_packetId().field().value() != packetId) {
         return;
     }
 
@@ -140,6 +144,8 @@ void SendOp::handle(PubrecMsg& msg)
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
+
+    response.m_packetId = packetId;
 
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
@@ -230,7 +236,8 @@ void SendOp::handle(PubrecMsg& msg)
 
 void SendOp::handle(PubcompMsg& msg)
 {
-    if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
+    auto packetId = msg.field_packetId().value();
+    if (m_pubMsg.field_packetId().field().value() != packetId) {
         return;
     }
 
@@ -247,6 +254,8 @@ void SendOp::handle(PubcompMsg& msg)
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
+
+    response.m_packetId = packetId;
 
     auto completeOpOnExit = 
         comms::util::makeScopeGuard(
@@ -408,6 +417,10 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
     m_pubMsg.transportField_flags().field_retain().setBitValue_bit(config.m_retain);
     m_pubMsg.transportField_flags().field_qos().setValue(config.m_qos);
+
+    if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
+        m_pubMsg.field_packetId().field().setValue(allocPacketId());
+    }    
     
     if (mustAssignTopic) {
         auto& topicStr = m_pubMsg.field_topic().value();
@@ -596,11 +609,6 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
     m_cb = cb;
     m_cbData = cbData;
 
-    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
-    if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
-        m_pubMsg.field_packetId().field().setValue(allocPacketId());
-    }
-
     m_pubMsg.doRefresh(); // Update packetId presence
 
     m_sendAttempts = 0U;
@@ -626,6 +634,11 @@ CC_Mqtt5ErrorCode SendOp::cancel()
 {
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
+}
+
+unsigned SendOp::getPacketId() const
+{
+    return m_pubMsg.field_packetId().field().getValue();
 }
 
 Op::Type SendOp::typeImpl() const

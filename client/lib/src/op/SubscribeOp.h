@@ -29,6 +29,7 @@ public:
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
     CC_Mqtt5ErrorCode send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
+    unsigned getPacketId() const;
 
     using Base::handle;
     virtual void handle(SubackMsg& msg) override;

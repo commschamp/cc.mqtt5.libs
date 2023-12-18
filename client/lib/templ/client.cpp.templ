@@ -576,6 +576,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHand
     return subscribeOpFromHandle(handle)->cancel();       
 }
 
+unsigned cc_mqtt5_##NAME##client_subscribe_get_packet_id(CC_Mqtt5SubscribeHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }        
+
+    return subscribeOpFromHandle(handle)->getPacketId();       
+}
+
 CC_Mqtt5UnsubscribeHandle cc_mqtt5_##NAME##client_unsubscribe_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
 {
     if (handle == nullptr) {
@@ -646,6 +655,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5Unsubscribe
     }    
 
     return unsubscribeOpFromHandle(handle)->cancel();
+}
+
+unsigned cc_mqtt5_##NAME##client_unsubscribe_get_packet_id(CC_Mqtt5UnsubscribeHandle handle)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return unsubscribeOpFromHandle(handle)->getPacketId();    
 }
 
 CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -750,6 +768,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle h
     }    
 
     return sendOpFromHandle(handle)->cancel();
+}
+
+unsigned cc_mqtt5_##NAME##client_publish_get_packet_id(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }    
+
+    return sendOpFromHandle(handle)->getPacketId();    
 }
 
 CC_Mqtt5ReauthHandle cc_mqtt5_##NAME##client_reauth_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)

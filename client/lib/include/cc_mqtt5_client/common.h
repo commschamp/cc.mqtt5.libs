@@ -390,6 +390,7 @@ typedef struct
     const char* m_reasonStr; ///< "Reason String" property, can be NULL
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
     unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
+    unsigned m_packetId; ///< "Packet Identifier" of the "subscribe" operation.
 } CC_Mqtt5SubscribeResponse;
 
 /// @brief Topic filter configuration structure of the "unsubscribe" operation.
@@ -409,6 +410,7 @@ typedef struct
     const char* m_reasonStr; ///< "Reason String" property, can be NULL
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
     unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array.
+    unsigned m_packetId; ///< "Packet Identifier" of the "unsubscribe" operation.
 } CC_Mqtt5UnsubscribeResponse;
 
 /// @brief Received message information
@@ -466,6 +468,7 @@ typedef struct
     const char* m_reasonStr; ///< "Reason String" property, can be NULL.
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to array of "User Properties", can be NULL
     unsigned m_userPropsCount; ///< Number of elements in "User Properties" array.
+    unsigned m_packetId; ///< "Packet Identifier" of the "publish" operation.
 } CC_Mqtt5PublishResponse;
 
 /// @brief Callback used to request time measurement.

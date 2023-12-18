@@ -93,6 +93,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_subscribe_add_user_prop != nullptr);
     test_assert(m_funcs.m_subscribe_send != nullptr);
     test_assert(m_funcs.m_subscribe_cancel != nullptr);
+    test_assert(m_funcs.m_subscribe_get_packet_id != nullptr);
     test_assert(m_funcs.m_unsubscribe_prepare != nullptr);
     test_assert(m_funcs.m_unsubscribe_set_response_timeout != nullptr);
     test_assert(m_funcs.m_unsubscribe_get_response_timeout != nullptr);
@@ -101,6 +102,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_unsubscribe_add_user_prop != nullptr);
     test_assert(m_funcs.m_unsubscribe_send != nullptr);
     test_assert(m_funcs.m_unsubscribe_cancel != nullptr);    
+    test_assert(m_funcs.m_unsubscribe_get_packet_id != nullptr);
     test_assert(m_funcs.m_publish_prepare != nullptr);    
     test_assert(m_funcs.m_publish_init_config_basic != nullptr);    
     test_assert(m_funcs.m_publish_init_config_extra != nullptr);    
@@ -113,6 +115,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_publish_add_user_prop != nullptr);  
     test_assert(m_funcs.m_publish_send != nullptr);  
     test_assert(m_funcs.m_publish_cancel != nullptr);  
+    test_assert(m_funcs.m_publish_get_packet_id != nullptr);
     test_assert(m_funcs.m_reauth_prepare != nullptr);  
     test_assert(m_funcs.m_reauth_init_config_auth != nullptr);  
     test_assert(m_funcs.m_reauth_set_response_timeout != nullptr);  
@@ -1101,6 +1104,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeAddUserProp(CC_Mqtt5Subsc
     return m_funcs.m_subscribe_add_user_prop(handle, prop);
 }
 
+unsigned UnitTestCommonBase::unitTestSubscribeGetPacktId(CC_Mqtt5SubscribeHandle handle)
+{
+    return m_funcs.m_subscribe_get_packet_id(handle);
+}
+
 CC_Mqtt5UnsubscribeHandle UnitTestCommonBase::unitTestUnsubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
 {
     return m_funcs.m_unsubscribe_prepare(client, ec);
@@ -1124,6 +1132,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestUnsubscribeConfigTopic(CC_Mqtt5Uns
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestUnsubscribeAddUserProp(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop)
 {
     return m_funcs.m_unsubscribe_add_user_prop(handle, prop);
+}
+
+unsigned UnitTestCommonBase::unitTestUnsubscribeGetPacktId(CC_Mqtt5UnsubscribeHandle handle)
+{
+    return m_funcs.m_unsubscribe_get_packet_id(handle);
 }
 
 CC_Mqtt5PublishHandle UnitTestCommonBase::unitTestPublishPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
@@ -1159,6 +1172,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishConfigExtra(CC_Mqtt5Publish
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop)
 {
     return m_funcs.m_publish_add_user_prop(handle, prop);
+}
+
+unsigned UnitTestCommonBase::unitTestPublishGetPacktId(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_get_packet_id(handle);
 }
 
 CC_Mqtt5ReauthHandle UnitTestCommonBase::unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

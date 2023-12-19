@@ -59,7 +59,6 @@ const UnitTestBmBase::LibFuncs& UnitTestBmBase::getFuncs()
     funcs.m_subscribe_add_user_prop = &cc_mqtt5_bm_client_subscribe_add_user_prop;
     funcs.m_subscribe_send = &cc_mqtt5_bm_client_subscribe_send;
     funcs.m_subscribe_cancel = &cc_mqtt5_bm_client_subscribe_cancel;
-    funcs.m_subscribe_get_packet_id = &cc_mqtt5_bm_client_subscribe_get_packet_id;
     funcs.m_unsubscribe_prepare = &cc_mqtt5_bm_client_unsubscribe_prepare;
     funcs.m_unsubscribe_set_response_timeout = &cc_mqtt5_bm_client_unsubscribe_set_response_timeout;
     funcs.m_unsubscribe_get_response_timeout = &cc_mqtt5_bm_client_unsubscribe_get_response_timeout;
@@ -68,7 +67,6 @@ const UnitTestBmBase::LibFuncs& UnitTestBmBase::getFuncs()
     funcs.m_unsubscribe_add_user_prop = &cc_mqtt5_bm_client_unsubscribe_add_user_prop;
     funcs.m_unsubscribe_send = &cc_mqtt5_bm_client_unsubscribe_send;
     funcs.m_unsubscribe_cancel = &cc_mqtt5_bm_client_unsubscribe_cancel;    
-    funcs.m_unsubscribe_get_packet_id = &cc_mqtt5_bm_client_unsubscribe_get_packet_id;
     funcs.m_publish_prepare = &cc_mqtt5_bm_client_publish_prepare;    
     funcs.m_publish_init_config_basic = &cc_mqtt5_bm_client_publish_init_config_basic;
     funcs.m_publish_init_config_extra = &cc_mqtt5_bm_client_publish_init_config_extra;
@@ -81,7 +79,6 @@ const UnitTestBmBase::LibFuncs& UnitTestBmBase::getFuncs()
     funcs.m_publish_add_user_prop = &cc_mqtt5_bm_client_publish_add_user_prop;
     funcs.m_publish_send = &cc_mqtt5_bm_client_publish_send;
     funcs.m_publish_cancel = &cc_mqtt5_bm_client_publish_cancel;    
-    funcs.m_publish_get_packet_id = &cc_mqtt5_bm_client_publish_get_packet_id;
     funcs.m_reauth_prepare = &cc_mqtt5_bm_client_reauth_prepare;    
     funcs.m_reauth_init_config_auth = &cc_mqtt5_bm_client_reauth_init_config_auth;
     funcs.m_reauth_set_response_timeout = &cc_mqtt5_bm_client_reauth_set_response_timeout;

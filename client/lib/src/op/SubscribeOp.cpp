@@ -48,7 +48,6 @@ SubscribeOp::SubscribeOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-    m_subMsg.field_packetId().setValue(allocPacketId());
 }  
 
 SubscribeOp::~SubscribeOp()
@@ -164,6 +163,7 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
     m_cb = cb;
     m_cbData = cbData;
 
+    m_subMsg.field_packetId().setValue(allocPacketId());
     auto result = client().sendMessage(m_subMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
@@ -181,11 +181,6 @@ CC_Mqtt5ErrorCode SubscribeOp::cancel()
     return CC_Mqtt5ErrorCode_Success;
 }
 
-unsigned SubscribeOp::getPacketId() const
-{
-    return m_subMsg.field_packetId().getValue();
-}
-
 void SubscribeOp::handle(SubackMsg& msg)
 {
     auto packetId = msg.field_packetId().value();
@@ -200,8 +195,6 @@ void SubscribeOp::handle(SubackMsg& msg)
     ReasonCodesList reasonCodes; // Will be referenced in response
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5SubscribeResponse();
-
-    response.m_packetId = packetId;
 
     auto terminationReason = DisconnectReason::ProtocolError;
     auto terminateOnExit = 

@@ -48,7 +48,6 @@ UnsubscribeOp::UnsubscribeOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-    m_unsubMsg.field_packetId().setValue(allocPacketId());
 }    
 
 UnsubscribeOp::~UnsubscribeOp()
@@ -138,6 +137,7 @@ CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cb
     m_cb = cb;
     m_cbData = cbData;
 
+    m_unsubMsg.field_packetId().setValue(allocPacketId());
     auto result = client().sendMessage(m_unsubMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
@@ -155,14 +155,8 @@ CC_Mqtt5ErrorCode UnsubscribeOp::cancel()
     return CC_Mqtt5ErrorCode_Success;
 }
 
-unsigned UnsubscribeOp::getPacketId() const
-{
-    return m_unsubMsg.field_packetId().getValue();
-}
-
 void UnsubscribeOp::handle(UnsubackMsg& msg)
 {
-    auto packetId = msg.field_packetId().value();
     if (msg.field_packetId().value() != m_unsubMsg.field_packetId().value()) {
         return;
     }
@@ -174,8 +168,6 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     ReasonCodesList reasonCodes; // Will be referenced in response
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5UnsubscribeResponse();
-
-    response.m_packetId = packetId;
 
     auto terminationReason = DisconnectReason::ProtocolError;
     auto terminateOnExit = 

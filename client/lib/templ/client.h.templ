@@ -305,7 +305,6 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_send(CC_Mqtt5ConnectHandle han
 /// @ingroup connect
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle handle);
 
-
 /// @brief Check the inner state of the library of whether it's connected to the broker.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @ingroup connect
@@ -432,16 +431,6 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle
 /// @ingroup subscribe
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHandle handle);
 
-/// @brief Retrieve "Packet Identifier" of the "subscribe" operation.
-/// @details The retrieved value can be used to differentiate between the "subscribe" operations
-///     in case they use the same callback when calling the 
-///     @ref cc_mqtt5_##NAME##client_subscribe_send() function.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_subscribe_prepare() function.
-/// @pre The function can be called while the handle is valid, i.e. until the callback 
-///     of the operation completion is called or until the operation is cancelled.
-/// @return "Packet Identifier" value
-unsigned cc_mqtt5_##NAME##client_subscribe_get_packet_id(CC_Mqtt5SubscribeHandle handle);
-
 /// @brief Prepare "unsubscribe" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
@@ -504,16 +493,6 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHa
 /// @post The handle of the "unsubscribe" operation is no longer valid and must be discarded.
 /// @ingroup unsubscribe
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5UnsubscribeHandle handle);
-
-/// @brief Retrieve "Packet Identifier" of the "unsubscribe" operation.
-/// @details The retrieved value can be used to differentiate between the "unsubscribe" operations
-///     in case they use the same callback when calling the 
-///     @ref cc_mqtt5_##NAME##client_unsubscribe_send() function.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_unsubscribe_prepare() function.
-/// @pre The function can be called while the handle is valid, i.e. until the callback 
-///     of the operation completion is called or until the operation is cancelled.
-/// @return "Packet Identifier" value
-unsigned cc_mqtt5_##NAME##client_unsubscribe_get_packet_id(CC_Mqtt5UnsubscribeHandle handle);
 
 /// @brief Prepare "publish" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
@@ -606,24 +585,6 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
 /// @post The handle of the "publish" operation is no longer valid and must be discarded.
 /// @ingroup publish
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle);
-
-/// @brief Retrieve "Packet Identifier" of the "publish" operation.
-/// @details The retrieved value can be used to differentiate between the "publish" operations
-///     in case they use the same callback when calling the 
-///     @ref cc_mqtt5_##NAME##client_publish_send() function.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
-/// @pre The function is expected to be called after the @ref cc_mqtt5_##NAME##client_publish_config_basic()
-///     which sets the QoS value. In case the QoS value is @ref CC_Mqtt5QoS_AtMostOnceDelivery the 
-///     "Packet Identifier" is not allocated and @b 0 is returned
-/// @pre The function can be called while the handle is valid, i.e. until the callback 
-///     of the operation completion is called or until the operation is cancelled.
-/// @note When QoS is @b 0 (@ref CC_Mqtt5QoS_AtMostOnceDelivery), the callback function is 
-////    invoked immediately from within the @ref cc_mqtt5_##NAME##client_publish_send()
-///     invocation immediatelly invalidating the handle, i.e. in such case the 
-///     @ref cc_mqtt5_##NAME##client_publish_get_packet_id() cannot be called after the 
-///     @ref cc_mqtt5_##NAME##client_publish_send().
-/// @return "Packet Identifier" value when allocated, @b 0 otherwise.
-unsigned cc_mqtt5_##NAME##client_publish_get_packet_id(CC_Mqtt5PublishHandle handle);
 
 /// @brief Prepare "reauth" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.

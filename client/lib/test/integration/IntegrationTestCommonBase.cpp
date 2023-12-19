@@ -265,7 +265,11 @@ bool IntegrationTestCommonBase::integrationTestVerifyConnectSuccessful(CC_Mqtt5A
     return true;
 }
 
-bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response, unsigned reasonCodesCount)
+bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(
+    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, 
+    CC_Mqtt5AsyncOpStatus status, 
+    const CC_Mqtt5SubscribeResponse* response, 
+    unsigned reasonCodesCount)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
         integrationTestErrorLog() << "Unexpected subscribe status: " << status << std::endl;
@@ -293,7 +297,10 @@ bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(CC_Mqtt
     return true;
 }
 
-bool IntegrationTestCommonBase::integrationTestVerifyPublishSuccessful(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+bool IntegrationTestCommonBase::integrationTestVerifyPublishSuccessful(
+    [[maybe_unused]] CC_Mqtt5PublishHandle handle, 
+    CC_Mqtt5AsyncOpStatus status, 
+    const CC_Mqtt5PublishResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
         integrationTestErrorLog() << "Unexpected publish status: " << status << std::endl;
@@ -402,12 +409,14 @@ void IntegrationTestCommonBase::integrationTestConnectCompleteImpl(
 }
 
 void IntegrationTestCommonBase::integrationTestSubscribeCompleteImpl(
+    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle,
     [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
     [[maybe_unused]] const CC_Mqtt5SubscribeResponse* response)
 {
 }
 
 void IntegrationTestCommonBase::integrationTestPublishCompleteImpl(
+    [[maybe_unused]] CC_Mqtt5PublishHandle handle, 
     [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
     [[maybe_unused]] const CC_Mqtt5PublishResponse* response)
 {
@@ -442,16 +451,16 @@ void IntegrationTestCommonBase::integrationTestConnectCompleteInternal(CC_Mqtt5A
     integrationTestConnectCompleteImpl(status, response);
 }
 
-void IntegrationTestCommonBase::integrationTestSubscribeCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void IntegrationTestCommonBase::integrationTestSubscribeCompleteInternal(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
     integrationTestInfoLog() << "Subscribe complete with status=" << status << std::endl;
-    integrationTestSubscribeCompleteImpl(status, response);
+    integrationTestSubscribeCompleteImpl(handle, status, response);
 }
 
-void IntegrationTestCommonBase::integrationTestPublishCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void IntegrationTestCommonBase::integrationTestPublishCompleteInternal(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
     integrationTestInfoLog() << "Publish complete with status=" << status << std::endl;
-    integrationTestPublishCompleteImpl(status, response);
+    integrationTestPublishCompleteImpl(handle, status, response);
 }
 
 void IntegrationTestCommonBase::integrationTestTickProgramCb(void* data, unsigned ms)
@@ -520,13 +529,13 @@ void IntegrationTestCommonBase::integrationTestConnectCompleteCb(void* data, CC_
     asObj(data)->integrationTestConnectCompleteInternal(status, response);
 }
 
-void IntegrationTestCommonBase::integrationTestSubscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void IntegrationTestCommonBase::integrationTestSubscribeCompleteCb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
-    asObj(data)->integrationTestSubscribeCompleteInternal(status, response);
+    asObj(data)->integrationTestSubscribeCompleteInternal(handle, status, response);
 }
 
-void IntegrationTestCommonBase::integrationTestPublishCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void IntegrationTestCommonBase::integrationTestPublishCompleteCb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
-    asObj(data)->integrationTestPublishCompleteInternal(status, response);
+    asObj(data)->integrationTestPublishCompleteInternal(handle, status, response);
 }
 

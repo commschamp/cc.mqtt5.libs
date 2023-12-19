@@ -509,8 +509,13 @@
 /// the operation before the completion callback is invoked.
 ///
 /// When the "connect" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @b NOTE that only single "connect" operation is allowed at a time, any attempt to
+/// prepare a new one via @b cc_mqtt5_client_connect_prepare() will be rejected
+/// until the "connect" operation completion callback is invoked or
+/// the operation is @ref cc_mqtt5_client_connect_cancel "cancelled".
 ///
 /// @b IMPORTANT: The @ref CC_Mqtt5ConnectResponse "response" information from
 /// the broker may report that some features on the broker side are disabled.
@@ -771,7 +776,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_subscribe_send() function.
 /// @code
-/// void my_subscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+/// void my_subscribe_complete_cb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The subscription operation has failed with status=%d\n", status);
@@ -801,8 +806,14 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_subscribe_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "subscribe" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "subscribe" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "subscribe" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
 /// @subsection cc_mqtt5_client_subscribe_cancel Cancel the "Subscribe" Operation.
@@ -914,7 +925,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_unsubscribe_send() function.
 /// @code
-/// void my_unsubscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+/// void my_unsubscribe_complete_cb(void* data, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The unsubscription operation has failed with status=%d\n", status);
@@ -944,8 +955,14 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_unsubscribe_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "unsubscribe" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "unsubscribe" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "unsubscribe" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
 /// @subsection cc_mqtt5_client_unsubscribe_cancel Cancel the "Unsubscribe" Operation.
@@ -1092,7 +1109,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_publish_send() function.
 /// @code
-/// void my_publish_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+/// void my_publish_complete_cb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The publish operation has failed with status=%d\n", status);
@@ -1133,11 +1150,17 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_publish_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "publish" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "publish" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "publish" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
-/// When the callback reporting the connection status is invoked, it is responsibility
+/// When the callback reporting the publish status is invoked, it is responsibility
 /// of the application to check the @ref CC_Mqtt5PublishResponse::m_reasonCode value.
 /// If it's @ref CC_Mqtt5ReasonCode_UnspecifiedError or greater means the "publish"
 /// operation wasn't successful.
@@ -1387,8 +1410,13 @@
 /// the operation before the completion callback is invoked.
 ///
 /// When the "reauth" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @b NOTE that only single "reauth" operation is allowed at a time, any attempt to
+/// prepare a new one via @b cc_mqtt5_client_reauth_prepare() will be rejected
+/// until the "reauth" operation completion callback is invoked or
+/// the operation is @ref cc_mqtt5_client_reauth_cancel "cancelled".
 ///
 /// @subsection cc_mqtt5_client_reauth_cancel Cancel the "Reauth" Operation.
 /// While the handle returned by the @b cc_mqtt5_client_reauth_prepare() is still
@@ -1451,7 +1479,7 @@
 /// setting the "Session Expiry Interval" property during the @ref cc_mqtt5_client_connect "\"connect\""
 /// operation (see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval). Such
 /// network disconnection is usually detected by the failing @b read or @b write
-/// operations. When the application detects such network disconnection, it
+/// operations on I/O socket. When the application detects such network disconnection, it
 /// is expected to report it to the library using @b cc_mqtt5_client_notify_network_disconnected()
 /// function.
 /// @code

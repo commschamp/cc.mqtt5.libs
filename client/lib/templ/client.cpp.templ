@@ -58,22 +58,22 @@ inline CC_Mqtt5DisconnectHandle handleFromDisconnectOp(cc_mqtt5_client::op::Disc
 
 inline cc_mqtt5_client::op::SubscribeOp* subscribeOpFromHandle(CC_Mqtt5SubscribeHandle handle)
 {
-    return reinterpret_cast<cc_mqtt5_client::op::SubscribeOp*>(handle);
+    return cc_mqtt5_client::op::SubscribeOp::fromHandle(handle);
 }
 
 inline CC_Mqtt5SubscribeHandle handleFromSubscribeOp(cc_mqtt5_client::op::SubscribeOp* op)
 {
-    return reinterpret_cast<CC_Mqtt5SubscribeHandle>(op);
+    return cc_mqtt5_client::op::SubscribeOp::asHandle(op);
 }
 
 inline cc_mqtt5_client::op::UnsubscribeOp* unsubscribeOpFromHandle(CC_Mqtt5UnsubscribeHandle handle)
 {
-    return reinterpret_cast<cc_mqtt5_client::op::UnsubscribeOp*>(handle);
+    return cc_mqtt5_client::op::UnsubscribeOp::fromHandle(handle);
 }
 
 inline CC_Mqtt5UnsubscribeHandle handleFromUnsubscribeOp(cc_mqtt5_client::op::UnsubscribeOp* op)
 {
-    return reinterpret_cast<CC_Mqtt5UnsubscribeHandle>(op);
+    return cc_mqtt5_client::op::UnsubscribeOp::asHandle(op);
 }
 
 inline cc_mqtt5_client::op::SendOp* sendOpFromHandle(CC_Mqtt5PublishHandle handle)

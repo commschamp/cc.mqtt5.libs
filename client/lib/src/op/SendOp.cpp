@@ -697,7 +697,7 @@ void SendOp::reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5Publi
         return;
     }
 
-    m_cb(m_cbData, status, response);
+    m_cb(m_cbData, toHandle(), status, response);
 }
 
 void SendOp::confirmRegisteredAlias()

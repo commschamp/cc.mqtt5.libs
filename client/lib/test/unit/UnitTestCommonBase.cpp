@@ -1258,7 +1258,7 @@ void UnitTestCommonBase::unitTestConnectCompleteCb(void* obj, CC_Mqtt5AsyncOpSta
     }
 }
 
-void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
     test_assert(realObj->m_subscribeResp.empty());
@@ -1270,7 +1270,7 @@ void UnitTestCommonBase::unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpS
     }
 }
 
-void UnitTestCommonBase::unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+void UnitTestCommonBase::unitTestUnsubscribeCompleteCb(void* obj, [[maybe_unused]] CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
 {
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
     test_assert(realObj->m_unsubscribeResp.empty());
@@ -1282,7 +1282,7 @@ void UnitTestCommonBase::unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncO
     }
 }
 
-void UnitTestCommonBase::unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void UnitTestCommonBase::unitTestPublishCompleteCb(void* obj, [[maybe_unused]] CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
     // test_assert(realObj->m_publishResp.empty());

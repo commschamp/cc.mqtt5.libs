@@ -32,6 +32,21 @@ public:
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
 
+    CC_Mqtt5PublishHandle toHandle()
+    {
+        return reinterpret_cast<CC_Mqtt5PublishHandle>(this);
+    }
+
+    static CC_Mqtt5PublishHandle asHandle(SendOp* obj)
+    {
+        return reinterpret_cast<CC_Mqtt5PublishHandle>(obj);
+    }    
+
+    static SendOp* fromHandle(CC_Mqtt5PublishHandle handle)
+    {
+        return reinterpret_cast<SendOp*>(handle);
+    }    
+
     unsigned packetId() const
     {
         return m_pubMsg.field_packetId().field().value();

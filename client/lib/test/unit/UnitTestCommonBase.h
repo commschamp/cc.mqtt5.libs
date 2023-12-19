@@ -490,9 +490,9 @@ private:
     static void unitTestProgramNextTickCb(void* obj, unsigned duration);
     static unsigned unitTestCancelNextTickWaitCb(void* obj);
     static void unitTestConnectCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
-    static void unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
-    static void unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
-    static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+    static void unitTestSubscribeCompleteCb(void* obj, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+    static void unitTestUnsubscribeCompleteCb(void* obj, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
+    static void unitTestPublishCompleteCb(void* obj, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
     static void unitTestReauthCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 

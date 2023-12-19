@@ -29,6 +29,21 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
 
+    CC_Mqtt5UnsubscribeHandle toHandle()
+    {
+        return reinterpret_cast<CC_Mqtt5UnsubscribeHandle>(this);
+    }
+
+    static CC_Mqtt5UnsubscribeHandle asHandle(UnsubscribeOp* obj)
+    {
+        return reinterpret_cast<CC_Mqtt5UnsubscribeHandle>(obj);
+    }    
+
+    static UnsubscribeOp* fromHandle(CC_Mqtt5UnsubscribeHandle handle)
+    {
+        return reinterpret_cast<UnsubscribeOp*>(handle);
+    }    
+
     using Base::handle;
     virtual void handle(UnsubackMsg& msg) override;
 

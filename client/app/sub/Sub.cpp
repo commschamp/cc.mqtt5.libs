@@ -111,7 +111,10 @@ void Sub::messageReceivedImpl(const CC_Mqtt5MessageInfo* info)
     }
 }
 
-void Sub::subscribeCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void Sub::subscribeCompleteInternal(
+    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, 
+    CC_Mqtt5AsyncOpStatus status, 
+    const CC_Mqtt5SubscribeResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
         logError() << "Subscribe failed with status=" << toString(status) << std::endl;
@@ -136,9 +139,9 @@ void Sub::subscribeCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5
     // Listening to the messages    
 }
 
-void Sub::subscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void Sub::subscribeCompleteCb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
-    asThis(data)->subscribeCompleteInternal(status, response);
+    asThis(data)->subscribeCompleteInternal(handle, status, response);
 }
 
 

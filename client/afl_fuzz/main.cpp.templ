@@ -110,7 +110,7 @@ void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5C
     state->m_reinitRequired = true;    
 }
 
-void subscribeCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+void subscribeCompleteCb(void* data, [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
     auto* state = asState(data);
 

@@ -544,32 +544,44 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 /// @brief Callback used to report completion of the "subscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_subscribe_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_subscribe_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "subscribe" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "subscribe" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup subscribe
-typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "unsubscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_unsubscribe_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_unsubscribe_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "unsubscribe" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "unsubscribe" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup unsubscribe
-typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
+typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "publish" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_publish_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_publish_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "publish" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "publish" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup publish
-typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
 /// @brief Callback used to report completion of the "reauth" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the

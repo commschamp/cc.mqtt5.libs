@@ -55,7 +55,7 @@ function (gen_mqtt5_client_afl_fuzz config_file)
     )
 
     add_executable(${app_name} ${src})
-    target_link_libraries(${app_name} PRIVATE cc::${lib_name})
+    target_link_libraries(${app_name} PRIVATE cc::${lib_name} cc::cc_mqtt5 cc::comms)
 
     add_dependencies(${app_name} ${src_tgt_name})
     

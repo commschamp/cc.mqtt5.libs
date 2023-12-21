@@ -545,6 +545,7 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     if (response.m_sessionPresent && m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) {
         errorLog("Session present when clean session is requested");
+        sendDisconnectWithReason(DisconnectReason::ProtocolError);
         return;
     }
 

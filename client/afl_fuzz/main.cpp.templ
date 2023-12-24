@@ -80,7 +80,10 @@ unsigned cancelNextTickWaitCb(void* data)
 void sendOutputDataCb([[maybe_unused]] void* data, [[maybe_unused]] const unsigned char* buf, unsigned bufLen)
 {
     auto* state = asState(data);
-    infoLog(state) << "Sending " << bufLen << " bytes." << std::endl;
+    auto& out = infoLog(state);
+    out << "Sending " << bufLen << " bytes: " << std::hex;
+    std::copy_n(buf, bufLen, std::ostream_iterator<unsigned>(out, " "));
+    out << std::dec << std::endl;
 }
 
 void brokerDisconnectReportCb(void* data, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
@@ -121,7 +124,7 @@ void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5C
 
         assert(cc_mqtt5_##NAME##client_is_connected(state->m_client));
 
-        if (!response->m_sessionPresent) {
+        if (response->m_sessionPresent) {
             state->m_subscribeRequired = false;
             state->m_subscribed = false;
         }
@@ -163,7 +166,6 @@ void subscribeCompleteCb(void* data, [[maybe_unused]] CC_Mqtt5SubscribeHandle ha
         infoLog(state) << "Subscribed" << std::endl;
         state->m_subscribed = true;
 
-        assert(false); // TODO: remove
         return;
     } while (false);
 
@@ -293,7 +295,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
         auto len = read(0, buf, BufSize);
         bool noMoreRead = (len <= 0);
         len = std::max(len, static_cast<decltype(len)>(0));
-        infoLog(&state) << "Read " << len << " bytes" << std::endl;
+        auto& out = infoLog(&state);
+        out << "Read " << len << " bytes: " << std::hex;
+        std::copy_n(buf, len, std::ostream_iterator<unsigned>(out, " "));
+        out << std::dec << std::endl;
 
         auto dataPtr = &buf[0];
         auto dataLen = static_cast<std::size_t>(len);

@@ -438,15 +438,31 @@ private:
     static void messageReceivedReportCb(void* data, const CC_Mqtt5MessageInfo* info)
     {
         auto* thisPtr = asThis(data);
+        auto* client = thisPtr->m_client.get();
         thisPtr->m_logger.infoLog() << "Message Received!!!\n";
 
         assert(info != nullptr);
+
+        do {
+            if (thisPtr->m_opts.topicAliasMax() == 0U) {
+                // Topic aliases are not in use
+                break;
+            }
+
+            if (cc_mqtt5_##NAME##client_pub_topic_alias_is_allocated(client, info->m_topic)) {
+                // already allocated
+                break;
+            }
+
+            [[maybe_unused]] auto allocEc = cc_mqtt5_##NAME##client_pub_topic_alias_alloc(client, info->m_topic, 1U);
+            // Don't care if really allocated
+        } while (false);
 
         CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
         auto* publish = ::cc_mqtt5_##NAME##client_publish_prepare(thisPtr->m_client.get(), &ec);
         assert(ec == CC_Mqtt5ErrorCode_Success);
         if (publish == nullptr) {
-            errorLog() << "Unexpected failure in publish allocation\n";
+            thisPtr->errorLog() << "Unexpected failure in publish allocation\n";
             return;
         }        
 
@@ -460,7 +476,7 @@ private:
 
         ec = cc_mqtt5_##NAME##client_publish_config_basic(publish, &basicConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog() << "Unexpected failure in publish configuration\n";
+            thisPtr->errorLog() << "Unexpected failure in publish configuration\n";
             ::cc_mqtt5_##NAME##client_publish_cancel(publish);
             return;
         }    
@@ -476,7 +492,7 @@ private:
 
         ec = cc_mqtt5_##NAME##client_publish_config_extra(publish, &extraConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog() << "Failure in publish extra configuration\n";
+            thisPtr->errorLog() << "Failure in publish extra configuration\n";
         }          
 
         for (auto idx = 0U; idx < info->m_userPropsCount; ++idx) {
@@ -487,13 +503,13 @@ private:
 
             ec = cc_mqtt5_##NAME##client_publish_add_user_prop(publish, &outProp);
             if (ec != CC_Mqtt5ErrorCode_Success) {
-                errorLog() << "Failure to add publish user property\n";
+                thisPtr->errorLog() << "Failure to add publish user property\n";
             }             
         }
 
         ec = cc_mqtt5_##NAME##client_publish_send(publish, nullptr, nullptr);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            errorLog() << "Failure to publish message\n";
+            thisPtr->errorLog() << "Failure to publish message\n";
         }    
     }
 

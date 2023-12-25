@@ -2,7 +2,7 @@ if (NOT CC_MQTT5_CLIENT_AFL_FUZZ)
     return ()
 endif ()
 
-set (SRC_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp.templ)
+set (SRC_TEMPL ${CMAKE_CURRENT_SOURCE_DIR}/AflFuzz.cpp.templ)
 set (TEMPL_PROCESS_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/ProcessTemplate.cmake)
 
 ######################################################################
@@ -27,7 +27,7 @@ function (gen_mqtt5_client_afl_fuzz config_file)
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${dir})    
 
-    set (src_output ${CMAKE_CURRENT_BINARY_DIR}/${dir}/${name}main.cpp)
+    set (src_output ${CMAKE_CURRENT_BINARY_DIR}/${dir}/${name}AflFuzz.cpp)
 
     add_custom_command(
         OUTPUT "${src_output}"
@@ -52,10 +52,14 @@ function (gen_mqtt5_client_afl_fuzz config_file)
 
     set (src
         ${src_output}
+        Logger.cpp
+        ProgramOptions.cpp
+        main.cpp
     )
 
     add_executable(${app_name} ${src})
-    target_link_libraries(${app_name} PRIVATE cc::${lib_name} cc::cc_mqtt5 cc::comms)
+    target_link_libraries(${app_name} PRIVATE cc::${lib_name} cc::cc_mqtt5 cc::comms Boost::program_options)
+    target_include_directories(${app_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_dependencies(${app_name} ${src_tgt_name})
     
@@ -66,6 +70,8 @@ function (gen_mqtt5_client_afl_fuzz config_file)
 endfunction()
 
 ######################################################################
+
+find_package (Boost REQUIRED COMPONENTS program_options)
 
 if (CC_MQTT5_CLIENT_DEFAULT_LIB) 
     gen_mqtt5_client_afl_fuzz("")

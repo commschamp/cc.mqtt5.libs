@@ -19,6 +19,7 @@
 #include <iterator>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -59,6 +60,9 @@ public:
 
     void handle(const Mqtt5ConnectMsg& msg);
     void handle(const Mqtt5SubscribeMsg& msg);
+    void handle(const Mqtt5PublishMsg& msg);
+    void handle(const Mqtt5PubrecMsg& msg);
+    void handle(const Mqtt5PubrelMsg& msg);
     void handle(const Mqtt5AuthMsg& msg);
     void handle(const Mqtt5Message& msg);
 
@@ -318,8 +322,11 @@ private:
         // }
     };
 
+    unsigned allocPacketId();
+    unsigned allocTopicAlias(const std::string& topic);
     void sendMessage(Mqtt5Message& msg);
     void sendConnack(const Mqtt5ConnectMsg& msg, const PropsHandler& propsHandler);
+    void sendPublish(const std::string& topic, unsigned qos);
     void sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType resonCode);
 
     Logger& m_logger;
@@ -327,7 +334,10 @@ private:
     DataReportCb m_dataReportCb;
     Mqtt5Frame m_frame;
     std::unique_ptr<Mqtt5ConnectMsg> m_cachedConnect;
-    bool m_connected = false;;
+    unsigned m_lastPacketId = 0U;
+    unsigned m_topicAliasLimit = 0U;
+    std::map<std::string, unsigned> m_topicAliases;
+    bool m_connected = false;
 };
 
 using GeneratorPtr = std::unique_ptr<Generator>;

@@ -165,12 +165,13 @@ public:
                 break;
             }
 
-            if (dataLen <= consumed) {
+            if ((dataLen <= consumed) && (dataPtr != m_inData.data())) {
+                infoLog() << "Consumed all available bytes\n";
                 m_inData.clear();
                 continue;
             }
 
-            if (m_inData.empty()) {
+            if (dataPtr != m_inData.data()) {
                 m_inData.assign(dataPtr + consumed, dataPtr + dataLen);
                 infoLog() << "Keeping " << m_inData.size() << " bytes for the next iteration\n";
                 continue;
@@ -179,6 +180,8 @@ public:
             m_inData.erase(m_inData.begin(), m_inData.begin() + consumed);
             infoLog() << "Keeping " << m_inData.size() << " bytes for the next iteration\n";        
         }
+
+        m_client.reset();
 
         infoLog() << "------------------------------------------------" << std::endl;
     }
@@ -259,7 +262,7 @@ private:
 
         CC_Mqtt5ConnectBasicConfig basicConfig;
         cc_mqtt5_##NAME##client_connect_init_config_basic(&basicConfig);
-        basicConfig.m_cleanStart = m_state.m_firstConnect;
+        basicConfig.m_cleanStart = m_state.m_firstConnect || m_opts.clientId().empty();
 
         auto clientId = m_opts.clientId();
         if (!clientId.empty()) {
@@ -341,20 +344,27 @@ private:
 
                 while (true) {
                     ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subInfo.m_handle, &config);
-                    assert(ec == CC_Mqtt5ErrorCode_Success);
-                    if (ec != CC_Mqtt5ErrorCode_Success) {
-                        if (config.m_maxQos > CC_Mqtt5QoS_AtMostOnceDelivery) {
-                            config.m_maxQos = 
-                                static_cast<decltype(config.m_maxQos)>(
-                                    static_cast<unsigned>(config.m_maxQos) - 1U);
-                            continue;
-                        }
+                    if (ec == CC_Mqtt5ErrorCode_Success) {
+                        break;
+                    }
 
-                        errorLog() << "Unexpected failure in topic subscribe configuration\n";
-                        exit(-1);
-                    }  
+                    if (config.m_maxQos > CC_Mqtt5QoS_AtMostOnceDelivery) {
+                        config.m_maxQos = 
+                            static_cast<decltype(config.m_maxQos)>(
+                                static_cast<unsigned>(config.m_maxQos) - 1U);
+                        continue;
+                    }
 
-                    break;
+                    auto whildcardPos = std::string(config.m_topic).find_first_of("#+");
+                    if (whildcardPos != std::string::npos) {
+                        config.m_topic = "some/topic";
+                        config.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+                        infoLog() << "Changing subscribe topic to " << config.m_topic << std::endl;
+                        continue;
+                    }
+
+                    errorLog() << "Unexpected failure in topic subscribe configuration\n";
+                    exit(-1);
                 }
             }
 
@@ -423,6 +433,7 @@ private:
             [this](const std::uint8_t* buf, std::size_t bufLen)
             {
                 m_inData.insert(m_inData.end(), buf, buf + bufLen);
+                infoLog() << "Appended " << bufLen << " bytes to buffer, totaling " << m_inData.size() << " bytes\n";
             });
 
         return true;

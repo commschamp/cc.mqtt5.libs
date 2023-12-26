@@ -27,7 +27,7 @@ ProgramOptions::ProgramOptions()
 
     po::options_description connectOpts("Connect Options");
     connectOpts.add_options()
-        ("client-id,i", po::value<std::string>()->default_value(std::string()), "Client ID")
+        ("client-id,i", po::value<std::string>()->default_value("afl_client"), "Client ID")
         ("receive-max", po::value<unsigned>()->default_value(0), "\"Receive Maximum\" property. 0 means not set.")
         ("max-packet-size", po::value<unsigned>()->default_value(0), "\"Maximum Packet Size\" property. 0 means no limit.")
         ("topic-alias-max", po::value<unsigned>()->default_value(0), "\"Topic Alias Maximum\" property.")

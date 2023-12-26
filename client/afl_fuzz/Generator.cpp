@@ -26,6 +26,36 @@ decltype(auto) addProp(TField& field)
     return vec.back();    
 }
 
+std::string pubTopicFromFilter(const std::string& filter)
+{
+    std::string result;
+    std::size_t pos = 0U;
+    while (pos < filter.size()) {
+        auto wildcardPos = filter.find_first_of("#+", pos);
+        if (wildcardPos == std::string::npos) {
+            break;
+        }
+
+        result.append(filter.substr(pos, wildcardPos - pos));
+        pos = wildcardPos + 1U;
+        
+        if (filter[wildcardPos] == '#') {
+            result.append("hash");
+            pos = filter.size();
+            break;
+        }
+
+        assert(filter[wildcardPos] == '+');
+        result.append("plus");
+    }
+
+    if (pos < filter.size()) {
+        result.append(filter.substr(pos));
+    }
+
+    return result;
+}
+
 } // namespace 
     
 
@@ -80,7 +110,54 @@ void Generator::handle(const Mqtt5SubscribeMsg& msg)
 
     sendMessage(outMsg);
 
-    // TODO: send publish
+    for (auto& subElemField : subsVec) {
+        auto topic = pubTopicFromFilter(subElemField.field_topic().value());
+        sendPublish(topic, 0);
+        sendPublish(topic, 1);
+        sendPublish(topic, 2);
+    }
+}
+
+void Generator::handle(const Mqtt5PublishMsg& msg)
+{
+    m_logger.infoLog() << "Processing " << msg.name() << "\n";
+
+    using QosValueType = Mqtt5PublishMsg::TransportField_flags::Field_qos::ValueType;
+    auto qos = msg.transportField_flags().field_qos().value();
+    if (qos == QosValueType::AtMostOnceDelivery) {
+        return;
+    }
+
+    if (qos == QosValueType::AtLeastOnceDelivery) {
+        Mqtt5PubackMsg outMsg;
+        outMsg.field_packetId().setValue(msg.field_packetId().field().getValue());
+        sendMessage(outMsg);
+        return;
+    }
+
+    assert(qos == QosValueType::ExactlyOnceDelivery);
+    Mqtt5PubrecMsg outMsg;
+    outMsg.field_packetId().setValue(msg.field_packetId().field().getValue());
+    sendMessage(outMsg);
+    return;
+}
+
+void Generator::handle(const Mqtt5PubrecMsg& msg)
+{
+    m_logger.infoLog() << "Processing " << msg.name() << "\n";
+    Mqtt5PubrelMsg outMsg;
+    outMsg.field_packetId().setValue(msg.field_packetId().getValue());
+    sendMessage(outMsg);
+    return;    
+}
+
+void Generator::handle(const Mqtt5PubrelMsg& msg)
+{
+    m_logger.infoLog() << "Processing " << msg.name() << "\n";
+    Mqtt5PubcompMsg outMsg;
+    outMsg.field_packetId().setValue(msg.field_packetId().getValue());
+    sendMessage(outMsg);
+    return;    
 }
 
 void Generator::handle(const Mqtt5AuthMsg& msg)
@@ -119,6 +196,28 @@ void Generator::handle([[maybe_unused]] const Mqtt5Message& msg)
     m_logger.infoLog() << "Ignoring " << msg.name() << "\n";
 }
 
+unsigned Generator::allocPacketId()
+{
+    ++m_lastPacketId;
+    return m_lastPacketId;
+}
+
+unsigned Generator::allocTopicAlias(const std::string& topic)
+{
+    if (m_topicAliases.size() <= m_topicAliasLimit) {
+        return 0U;
+    }
+
+    auto iter = m_topicAliases.find(topic);
+    if (iter != m_topicAliases.end()) {
+        return iter->second;
+    }
+
+    auto topicAlias = static_cast<unsigned>(m_topicAliases.size() + 1U);
+    m_topicAliases[topic] = topicAlias;
+    return topicAlias;
+}
+
 void Generator::sendMessage(Mqtt5Message& msg)
 {
     m_logger.infoLog() << "Generating " << msg.name() << "\n";
@@ -129,6 +228,9 @@ void Generator::sendMessage(Mqtt5Message& msg)
     [[maybe_unused]] auto es = m_frame.write(msg, iter, outBuf.max_size());
     assert(es == comms::ErrorStatus::Success);
     assert(m_dataReportCb);
+    
+    std::ostreambuf_iterator<char> outIter(m_stream);
+    std::copy(outBuf.begin(), outBuf.end(), outIter);
     m_dataReportCb(outBuf.data(), outBuf.size());
 }
 
@@ -163,10 +265,34 @@ void Generator::sendConnack(const Mqtt5ConnectMsg& msg, const PropsHandler& prop
         auto& propBundle = propVar.initField_topicAliasMax();
         auto& valueField = propBundle.field_value();        
         valueField.setValue(propsHandler.m_topicAliasMax);        
+        m_topicAliasLimit = propsHandler.m_topicAliasMax;
     }    
 
     sendMessage(outMsg);
     m_connected = true;
+}
+
+void Generator::sendPublish(const std::string& topic, unsigned qos)
+{
+    Mqtt5PublishMsg outMsg;
+
+    outMsg.transportField_flags().field_qos().setValue(qos);
+    outMsg.field_topic().setValue(topic);
+    if (qos > 0U) {
+        outMsg.field_packetId().field().setValue(allocPacketId());
+    }
+    outMsg.field_payload().value().assign(topic.begin(), topic.end());
+
+    auto topicAlias = allocTopicAlias(topic);
+    if (topicAlias != 0U) {
+        auto& propsField = outMsg.field_properties();
+        auto& propVar = addProp(propsField);
+        auto& propBundle = propVar.initField_topicAlias();
+        auto& valueField = propBundle.field_value();        
+        valueField.setValue(topicAlias);        
+    } 
+
+    sendMessage(outMsg);
 }
 
 void Generator::sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType reasonCode)

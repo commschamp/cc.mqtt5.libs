@@ -342,7 +342,7 @@ private:
             assert(ec == CC_Mqtt5ErrorCode_Success);
             if (subInfo.m_handle == nullptr) {
                 errorLog() << "Unexpected failure in subscribe allocation\n";
-                exit(-1);
+                continue;
             }     
 
             for (auto& t : subInfo.m_topics) {
@@ -374,15 +374,14 @@ private:
                     }
 
                     errorLog() << "Unexpected failure in topic subscribe configuration\n";
-                    exit(-1);
+                    break;
                 }
             }
 
             ec = cc_mqtt5_##NAME##client_subscribe_send(subInfo.m_handle, &AflFuzzImpl::subscribeCompleteCb, this);
-            assert(ec == CC_Mqtt5ErrorCode_Success);
             if (ec != CC_Mqtt5ErrorCode_Success) {
                 errorLog() << "Unexpected failure in sending subscribe request";
-                exit(-1);
+                subInfo.m_handle = nullptr;
             }             
         }
     }
@@ -393,13 +392,16 @@ private:
             return;
         }
 
+        m_state.m_reauthRequired = false;
+
         CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
         auto reauth = cc_mqtt5_##NAME##client_reauth_prepare(m_client.get(), &ec);
         assert(reauth != nullptr);
         assert(ec == CC_Mqtt5ErrorCode_Success);
         if (reauth == nullptr) {
             errorLog() << "Unexpected failure in reauth allocation\n";
-            exit(-1);
+            m_state.m_reauthComplete = true;
+            return;
         }     
 
         auto authMethod = m_opts.authMethod();
@@ -415,16 +417,17 @@ private:
         ec = ::cc_mqtt5_##NAME##client_reauth_config_auth(reauth, &authConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             errorLog() << "Unexpected failure in reauth configuration\n";
-            exit(-1);
+            cc_mqtt5_##NAME##client_reauth_cancel(reauth);
+            m_state.m_reauthComplete = true;
+            return;
         }           
 
         ec = ::cc_mqtt5_##NAME##client_reauth_send(reauth, &AflFuzzImpl::reauthCompleteCb, this);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             errorLog() << "Unexpected failure in sending reauth\n";
-            exit(-1);
+            m_state.m_reauthComplete = true;
+            return;
         }            
-
-        m_state.m_reauthRequired = false;
     }
 
     bool createGeneratorIfNeeded()

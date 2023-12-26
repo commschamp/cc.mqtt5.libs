@@ -14,7 +14,11 @@
 #include "cc_mqtt5/Message.h"
 #include "cc_mqtt5/frame/Frame.h"
 
+#ifdef WIN32
+#include <io.h>
+#else // #ifdef WIN32
 #include <unistd.h>
+#endif // #ifdef WIN32
 
 #include <algorithm>
 #include <cassert>
@@ -69,7 +73,9 @@ public:
 
     void run()
     {
+#ifndef WIN32        
         sync();
+#endif        
 
         std::uint8_t buf[BufSize] = {0};
         while (true) {
@@ -99,10 +105,14 @@ public:
             } while (false);      
         
 
-            ssize_t len = 0;
+            int len = 0;
             bool noMoreRead = true;
             if (!m_generator) {
-                len = read(0, buf, BufSize);
+#ifdef WIN32
+                len = _read(0, buf, BufSize);
+#else // #ifdef WIN32
+                len = static_cast<decltype(len)>(read(0, buf, BufSize));
+#endif // #ifdef WIN32                
                 noMoreRead = (len <= 0);
                 len = std::max(len, static_cast<decltype(len)>(0));
                 infoLog() << "Read " << len << " bytes\n";

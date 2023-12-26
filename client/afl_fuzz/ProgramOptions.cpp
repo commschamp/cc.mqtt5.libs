@@ -22,6 +22,7 @@ ProgramOptions::ProgramOptions()
         ("help,h", "Display help message")
         ("verbose,v", "Verbose output")
         ("log-file,f", po::value<std::string>(), "Output log file")
+        ("gen-input,g", po::value<std::string>()->default_value(std::string()), "Generate fuzz input file")
     ;  
 
     po::options_description connectOpts("Connect Options");
@@ -79,6 +80,11 @@ bool ProgramOptions::hasLogFile() const
 std::string ProgramOptions::logFile() const
 {
     return m_vm["log-file"].as<std::string>();
+}
+
+std::string ProgramOptions::genInputFile() const
+{
+    return m_vm["gen-input"].as<std::string>();
 }
 
 std::string ProgramOptions::clientId() const

@@ -878,6 +878,7 @@ CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
         return CC_Mqtt5ErrorCode_InternalError;
     }
 
+    COMMS_ASSERT(m_sendOutputDataCb != nullptr);
     m_sendOutputDataCb(m_sendOutputDataData, &m_buf[0], static_cast<unsigned>(len));
 
     for (auto& opPtr : m_keepAliveOps) {

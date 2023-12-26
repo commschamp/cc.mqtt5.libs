@@ -34,6 +34,7 @@ public:
     bool verbose() const;
     bool hasLogFile() const;
     std::string logFile() const;
+    std::string genInputFile() const;
 
     // Connect options
     std::string clientId() const;

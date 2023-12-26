@@ -7,6 +7,8 @@
 
 #include "AflFuzz.h"
 
+#include "Generator.h"
+
 #include "##NAME##client.h"
 
 #include "cc_mqtt5/Message.h"
@@ -42,6 +44,10 @@ public:
 
     bool init()
     {
+        if (!createGeneratorIfNeeded()) {
+            return false;
+        }
+
         auto subTopics = m_opts.subTopics();
         std::transform(
             subTopics.begin(), subTopics.end(), std::back_inserter(m_state.m_subs),
@@ -93,16 +99,20 @@ public:
             } while (false);      
         
 
-            auto len = read(0, buf, BufSize);
-            bool noMoreRead = (len <= 0);
-            len = std::max(len, static_cast<decltype(len)>(0));
-            infoLog() << "Read " << len << " bytes\n";
+            ssize_t len = 0;
+            bool noMoreRead = true;
+            if (!m_generator) {
+                len = read(0, buf, BufSize);
+                noMoreRead = (len <= 0);
+                len = std::max(len, static_cast<decltype(len)>(0));
+                infoLog() << "Read " << len << " bytes\n";
 
-            if (m_verbose) {
-                auto& out = debugLog();
-                out << "Read bytes: " << std::hex;
-                std::copy_n(buf, len, std::ostream_iterator<unsigned>(out, " "));
-                out << std::dec << std::endl;
+                if (m_verbose) {
+                    auto& out = debugLog();
+                    out << "Read bytes: " << std::hex;
+                    std::copy_n(buf, len, std::ostream_iterator<unsigned>(out, " "));
+                    out << std::dec << std::endl;
+                }
             }
 
             auto dataPtr = &buf[0];
@@ -206,7 +216,7 @@ private:
 
     std::ostream& debugLog()
     {
-        return m_logger.infoLog();
+        return m_logger.debugLog();
     }
 
     std::ostream& infoLog()
@@ -216,7 +226,7 @@ private:
 
     std::ostream& errorLog()
     {
-        return m_logger.infoLog();
+        return m_logger.errorLog();
     }
 
     void doReinit()
@@ -306,30 +316,31 @@ private:
 
     void doSubscribeIfNeeded() {
         for (auto& subInfo : m_state.m_subs) {
-            if (subInfo.m_handle != nullptr) {
+            if ((subInfo.m_handle != nullptr) || (subInfo.m_acked)) {
                 // Request is sent
                 continue;
             }
 
-            assert(!subInfo.m_acked);
+            infoLog() << "Attempting subscribe\n";
 
             CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
-            auto subscribe = cc_mqtt5_##NAME##client_subscribe_prepare(m_client.get(), &ec);
-            assert(subscribe != nullptr);
+            subInfo.m_handle = cc_mqtt5_##NAME##client_subscribe_prepare(m_client.get(), &ec);
+            assert(subInfo.m_handle != nullptr);
             assert(ec == CC_Mqtt5ErrorCode_Success);
-            if (subscribe == nullptr) {
+            if (subInfo.m_handle == nullptr) {
                 errorLog() << "Unexpected failure in subscribe allocation\n";
                 exit(-1);
             }     
 
             for (auto& t : subInfo.m_topics) {
                 assert(!t.empty());
+                infoLog() << "Adding topic " << t << "\n";
                 CC_Mqtt5SubscribeTopicConfig config;
                 cc_mqtt5_##NAME##client_subscribe_init_config_topic(&config);
                 config.m_topic = t.c_str();
 
                 while (true) {
-                    ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subscribe, &config);
+                    ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subInfo.m_handle, &config);
                     assert(ec == CC_Mqtt5ErrorCode_Success);
                     if (ec != CC_Mqtt5ErrorCode_Success) {
                         if (config.m_maxQos > CC_Mqtt5QoS_AtMostOnceDelivery) {
@@ -347,7 +358,7 @@ private:
                 }
             }
 
-            ec = cc_mqtt5_##NAME##client_subscribe_send(subscribe, &AflFuzzImpl::subscribeCompleteCb, this);
+            ec = cc_mqtt5_##NAME##client_subscribe_send(subInfo.m_handle, &AflFuzzImpl::subscribeCompleteCb, this);
             assert(ec == CC_Mqtt5ErrorCode_Success);
             if (ec != CC_Mqtt5ErrorCode_Success) {
                 errorLog() << "Unexpected failure in sending subscribe request";
@@ -396,6 +407,27 @@ private:
         m_state.m_reauthRequired = false;
     }
 
+    bool createGeneratorIfNeeded()
+    {
+        auto inputFile = m_opts.genInputFile();
+        if (inputFile.empty()) {
+            return true;
+        }        
+
+        m_generator = std::make_unique<Generator>(m_logger);
+        if (!m_generator->prepare(inputFile)) {
+            return false;
+        }
+
+        m_generator->setDataReportCb(
+            [this](const std::uint8_t* buf, std::size_t bufLen)
+            {
+                m_inData.insert(m_inData.end(), buf, buf + bufLen);
+            });
+
+        return true;
+    }
+
     static AflFuzzImpl* asThis(void* data)
     {
         return reinterpret_cast<AflFuzzImpl*>(data);
@@ -423,6 +455,11 @@ private:
             std::copy_n(buf, bufLen, std::ostream_iterator<unsigned>(out, " "));
             out << std::dec << '\n';
         }
+
+        auto& generator = asThis(data)->m_generator;
+        if (generator) {
+            generator->processData(buf, bufLen);
+        }
     }
 
     static void brokerDisconnectReportCb(void* data, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
@@ -439,7 +476,7 @@ private:
     {
         auto* thisPtr = asThis(data);
         auto* client = thisPtr->m_client.get();
-        thisPtr->m_logger.infoLog() << "Message Received!!!\n";
+        thisPtr->m_logger.infoLog() << "Message Received!\n";
 
         assert(info != nullptr);
 
@@ -575,6 +612,7 @@ private:
         assert(!iter->m_acked);
         iter->m_handle = nullptr;
         if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            thisPtr->errorLog() << "Subscribe operation is terminated\n";
             return;
         }
 
@@ -582,11 +620,15 @@ private:
         bool allOk = true;
         for (auto idx = 0U; idx < response->m_reasonCodesCount; ++idx) {
             if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCodes[idx]) {
+                thisPtr->errorLog() << "Subscribe rejected\n";
                 allOk = false;
                 break;
             }
         }
         
+        if (allOk) {
+            thisPtr->infoLog() << "The subscribe is properly acked\n";
+        }
         iter->m_acked = allOk;
     }      
 
@@ -630,6 +672,7 @@ private:
     const ProgramOptions& m_opts;
     Logger& m_logger;
     ClientPtr m_client;
+    GeneratorPtr m_generator;
     std::vector<std::uint8_t> m_inData;
     State m_state;
     bool m_verbose = false;

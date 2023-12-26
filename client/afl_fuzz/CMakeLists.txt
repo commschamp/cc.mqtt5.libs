@@ -52,6 +52,7 @@ function (gen_mqtt5_client_afl_fuzz config_file)
 
     set (src
         ${src_output}
+        Generator.cpp
         Logger.cpp
         ProgramOptions.cpp
         main.cpp

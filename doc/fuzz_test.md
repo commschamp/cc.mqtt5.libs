@@ -46,14 +46,15 @@ It is also highly recommended to use "Debug" build to enable all the assertions.
 CC=afl-clang-lto CXX=afl-clang-lto++ cmake ... -DCMAKE_BUILD_TYPE=Debug ...
 ```
 
-After the "Debug" build is tested for several days without showing any crashes it also
-beneficial to rebuild the fuzzing application as a "Release" and re-run it on the same produced corpus
+After the "Debug" build is tested for several days without showing any crashes it is also
+beneficial to rebuild the fuzzing application using the "Release" build type and re-run it on the same produced corpus
 (passing "-i-" to afl-fuzz) to verify that there are no unexpected pitfalls for the "Release" version.
 
 Due to the fact that [AFL++](https://github.com/AFLplusplus/AFLplusplus) compilers
-receive their configuration via environment variable before the build it is necessary
+receive their configuration via environment variables before the build, it is necessary
 to disable "ccache" usage in case the sources are going to be built multiple times
-with different configurations.
+with different configurations. Otherwise the build might produced wierd errors of
+linked object files being incompatible.
 
 ```
 CC=afl-clang-lto CXX=afl-clang-lto++ cmake ... -DCC_MQTT5_USE_CCACHE=OFF ...
@@ -65,16 +66,21 @@ export AFL_USE_ASAN=1
 export AFL_USE_UBSAN=1
 ```
 
-**WARNING**: It has been noticed when too many sanitizers are enabled at the same time the
+**WARNING**: It has been noticed that when too many sanitizers are enabled at the same time the
 target either fails to compile or fails to produce proper output
-("Illegal instruction" is reported) when some failure happens.
+("Illegal instruction" is reported) when some failure happens. If such failure happen
+try to re-compile the fuzzing application without the sanitizers altogether and see
+if any unexpected crash is reported on the generated crash causing input.
+After that, try to recompile enabling only one sanitizer enabled at a time and feeding the
+same problematic input in attempt to produce reasonable failure report from the
+sanitizer.
 
 As the final stage, build the fuzzing application
 ```
 cmake --build . --target install
 ```
 
-Note that in case [custom](custom_client_build.md) client libraries are built, the
+Note that in case of [custom](custom_client_build.md) client libraries are built, the
 fuzzing application will be built for each such library and the application name will
 reflect the custom name selected for the library.
 
@@ -99,7 +105,8 @@ creation of the input corpus. Please use "-h" option to list the available comma
 ```
 Note the presence of the "-g" option which can be used to generate a valid input sequence
 to perform a full single iteration of the **cc_mqtt5_client_afl_fuzz** described
-earlier. If you intend to use some extra command line arguments in the actual
+earlier. The actual fuzzing will use it as a valid input and then deviate from there.
+If you intend to use some extra command line arguments in the actual
 fuzz testing, provide them when generating the input sequence as well.
 
 For example
@@ -112,10 +119,15 @@ mkdir -p /path/to/fuzz/output
 Now when the input corpus is created it is possible to actually start fuzz testing. Use the
 same command line option as ones used for the generation of the input (excluding the "-g" with parameter of course).
 ```
-afl-fuzz -i /path/to/fuzz/input -o /path/to/fuzz/output -- ./install/bin/cc_mqtt5_client_afl_fuzz --auth-method myauth --min-pub-count 5
+afl-fuzz -i /path/to/fuzz/input -o /path/to/fuzz/output -a binary -D -- ./install/bin/cc_mqtt5_client_afl_fuzz --auth-method myauth --min-pub-count 5
 ```
 
 Note that "afl-fuzz" may request to change your machine configuration before being able to fuzz test.
+
+Also use help proved by the "afl-fuzz" itself to see all the available fuzzing options.
+```
+afl-fuzz -h
+```
 
 In case fuzz testing reports any crash please open an issue for this project reporting
 a build configuration and attaching the input file(s) that caused the crash.

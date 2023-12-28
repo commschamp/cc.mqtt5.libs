@@ -48,6 +48,9 @@ public:
     // Subscribe options
     std::vector<StringsList> subTopics() const;
 
+    // Publish options
+    unsigned minPubCount() const;    
+
 private:
     StringsList stringListOpts(const std::string& name) const;
 

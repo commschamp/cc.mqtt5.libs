@@ -93,31 +93,6 @@ void Generator::handle(const Mqtt5ConnectMsg& msg)
     sendConnack(msg, propsHandler);
 }
 
-void Generator::handle(const Mqtt5SubscribeMsg& msg)
-{
-    m_logger.infoLog() << "Processing " << msg.name() << "\n";
-    auto& subsVec = msg.field_list().value();
-
-    Mqtt5SubackMsg outMsg;
-    outMsg.field_packetId().value() = msg.field_packetId().value();
-    auto& ackVec = outMsg.field_list().value();
-    ackVec.resize(subsVec.size());
-
-    for (auto& elem : ackVec) {
-        using ElemType = std::decay_t<decltype(elem)>;
-        elem.setValue(ElemType::ValueType::GrantedQos2);
-    }
-
-    sendMessage(outMsg);
-
-    for (auto& subElemField : subsVec) {
-        auto topic = pubTopicFromFilter(subElemField.field_topic().value());
-        sendPublish(topic, 0);
-        sendPublish(topic, 1);
-        sendPublish(topic, 2);
-    }
-}
-
 void Generator::handle(const Mqtt5PublishMsg& msg)
 {
     m_logger.infoLog() << "Processing " << msg.name() << "\n";
@@ -125,6 +100,8 @@ void Generator::handle(const Mqtt5PublishMsg& msg)
     using QosValueType = Mqtt5PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
     if (qos == QosValueType::AtMostOnceDelivery) {
+        m_logger.infoLog() << "at most once" << "\n";
+        doNextPublishIfNeeded();
         return;
     }
 
@@ -132,6 +109,7 @@ void Generator::handle(const Mqtt5PublishMsg& msg)
         Mqtt5PubackMsg outMsg;
         outMsg.field_packetId().setValue(msg.field_packetId().field().getValue());
         sendMessage(outMsg);
+        doNextPublishIfNeeded();
         return;
     }
 
@@ -157,7 +135,49 @@ void Generator::handle(const Mqtt5PubrelMsg& msg)
     Mqtt5PubcompMsg outMsg;
     outMsg.field_packetId().setValue(msg.field_packetId().getValue());
     sendMessage(outMsg);
+    doNextPublishIfNeeded();
     return;    
+}
+
+void Generator::handle(const Mqtt5SubscribeMsg& msg)
+{
+    m_logger.infoLog() << "Processing " << msg.name() << "\n";
+    auto& subsVec = msg.field_list().value();
+
+    Mqtt5SubackMsg outMsg;
+    outMsg.field_packetId().value() = msg.field_packetId().value();
+    auto& ackVec = outMsg.field_list().value();
+    ackVec.resize(subsVec.size());
+
+    for (auto& elem : ackVec) {
+        using ElemType = std::decay_t<decltype(elem)>;
+        elem.setValue(ElemType::ValueType::GrantedQos2);
+    }
+
+    sendMessage(outMsg);
+
+    for (auto& subElemField : subsVec) {
+        m_lastPubTopic = pubTopicFromFilter(subElemField.field_topic().value());
+        doPublish();
+    }
+}
+
+void Generator::handle(const Mqtt5UnsubscribeMsg& msg)
+{
+    m_logger.infoLog() << "Processing " << msg.name() << "\n";
+    auto& subsVec = msg.field_list().value();
+
+    Mqtt5UnsubackMsg outMsg;
+    outMsg.field_packetId().value() = msg.field_packetId().value();
+    auto& ackVec = outMsg.field_list().value();
+    ackVec.resize(subsVec.size());
+
+    for (auto& elem : ackVec) {
+        using ElemType = std::decay_t<decltype(elem)>;
+        elem.setValue(ElemType::ValueType::Success);
+    }
+
+    sendMessage(outMsg);
 }
 
 void Generator::handle(const Mqtt5AuthMsg& msg)
@@ -293,6 +313,7 @@ void Generator::sendPublish(const std::string& topic, unsigned qos)
     } 
 
     sendMessage(outMsg);
+    ++m_pubCount;
 }
 
 void Generator::sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType reasonCode)
@@ -319,6 +340,23 @@ void Generator::sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_r
     }    
 
     sendMessage(outMsg);
+}
+
+void Generator::doPublish()
+{
+    assert(!m_lastPubTopic.empty());
+    sendPublish(m_lastPubTopic, m_nextPubQos);
+    ++m_nextPubQos;
+    if (m_nextPubQos > 2) {
+        m_nextPubQos = 0;
+    }
+} 
+
+void Generator::doNextPublishIfNeeded()
+{
+    if (m_pubCount < m_minPubCount) {
+        doPublish();
+    }
 }
 
 } // namespace cc_mqtt5_client_afl_fuzz

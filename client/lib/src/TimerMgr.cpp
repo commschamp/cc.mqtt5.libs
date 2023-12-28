@@ -65,7 +65,8 @@ void TimerMgr::tick(unsigned ms)
 
     for (auto idx = 0U; idx < m_timers.size(); ++idx) {
         auto& info = m_timers[idx];
-        if ((info.m_timeoutCb == nullptr) ||
+        if ((!info.m_allocated) || 
+            (info.m_timeoutCb == nullptr) ||
             (info.m_suspended)) {
             continue;
         }

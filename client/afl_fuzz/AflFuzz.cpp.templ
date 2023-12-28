@@ -81,6 +81,11 @@ public:
         while (true) {
             m_logger.flush();
 
+            if (cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
+                infoLog() << "Terminating execution loop when network is disconnected" << std::endl;
+                break;
+            }
+
             if (m_state.m_reinitRequired) {
                 doReinit();
             }   
@@ -101,6 +106,8 @@ public:
 
                 doSubscribeIfNeeded();
                 doReauthIfNeeded();
+                doUnsubscribeIfNeeded();
+                doDisconnectIfNeeded();
 
             } while (false);      
         
@@ -127,6 +134,7 @@ public:
 
             auto dataPtr = &buf[0];
             auto dataLen = static_cast<std::size_t>(len);
+            bool hasPrevData = false;
             if (!m_inData.empty()) {
                 m_inData.insert(m_inData.end(), dataPtr, dataPtr + dataLen);
                 static const auto MaxLen = std::numeric_limits<unsigned>::max();
@@ -137,6 +145,7 @@ public:
 
                 dataPtr = m_inData.data();
                 dataLen = m_inData.size();
+                hasPrevData = true;
             }
 
             using Interface = cc_mqtt5::Message<>;
@@ -145,12 +154,18 @@ public:
 
             static constexpr auto MinLen = IdAndFlagsField::minLength() + SizeField::minLength();
             if (dataLen < MinLen) {
-                if (noMoreRead) {
-                    infoLog() << "Insufficient data in buffer: " << dataLen << std::endl;
-                    break;
+                if (!noMoreRead) {
+                    continue;
                 }
 
-                continue;
+                if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
+                    infoLog() << "Insufficient data in buffer (" << dataLen << "), reporting network disconnected..." << std::endl;
+                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get(), true);
+                    continue;
+                }
+
+                infoLog() << "Insufficient data in buffer (" << dataLen << "), stopping execution loop" << std::endl;
+                break;
             }
 
             auto iter = dataPtr;
@@ -164,24 +179,34 @@ public:
                 processLen = std::min(dataLen, msgLen);
             }
 
-            infoLog() << "Processing " << processLen << " out of " << dataLen << " bytes...\n";
-            auto consumed = cc_mqtt5_##NAME##client_process_data(m_client.get(), dataPtr, static_cast<unsigned>(processLen));
-            infoLog() << "Consumed: " << consumed << '\n';
-
-            assert((consumed > 0U) || (!m_state.m_disconnected));
+            auto consumed = 0U;
+            if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
+                infoLog() << "Processing " << processLen << " out of " << dataLen << " bytes...\n";
+                consumed = cc_mqtt5_##NAME##client_process_data(m_client.get(), dataPtr, static_cast<unsigned>(processLen));
+                infoLog() << "Consumed: " << consumed << '\n';
+            }
+            else {
+                infoLog() << "Network is disconnected, not consuming any data" << '\n';
+            }
 
             if ((consumed == 0U) && noMoreRead) {
-                infoLog() << "No data consumed and no more input\n";
+                if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
+                    infoLog() << "No data consumed and no more input, reporting network disconnected..." << std::endl;
+                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get(), true);
+                    continue;
+                }
+
+                infoLog() << "No data consumed and no more input, stopping execution loop\n";
                 break;
             }
 
-            if ((dataLen <= consumed) && (dataPtr != m_inData.data())) {
+            if ((dataLen <= consumed) && (!hasPrevData)) {
                 infoLog() << "Consumed all available bytes\n";
                 m_inData.clear();
                 continue;
             }
 
-            if (dataPtr != m_inData.data()) {
+            if (!hasPrevData) {
                 m_inData.assign(dataPtr + consumed, dataPtr + dataLen);
                 infoLog() << "Keeping " << m_inData.size() << " bytes for the next iteration\n";
                 continue;
@@ -210,14 +235,17 @@ private:
     struct SubscribeInfo
     {
         std::vector<std::string> m_topics;
-        CC_Mqtt5SubscribeHandle m_handle = nullptr;
+        CC_Mqtt5SubscribeHandle m_subHandle = nullptr;
+        CC_Mqtt5UnsubscribeHandle m_unsubHandle = nullptr;
         bool m_acked = false;
+        bool m_unsubscribed = false;
     };
 
     struct State
     {
         std::vector<SubscribeInfo> m_subs;
         unsigned m_nextTickDuration = 0U;
+        unsigned m_publishCount = 0U;
         bool m_reinitRequired = true;
         bool m_connectRequired = true;
         bool m_connected = false;
@@ -248,6 +276,7 @@ private:
         m_state.m_reinitRequired = false;
         m_state.m_disconnected = false;
         m_state.m_reauthRequired = !m_opts.authMethod().empty();
+        m_state.m_publishCount = 0U;
 
         auto ec = cc_mqtt5_##NAME##client_init(m_client.get());
         assert(ec == CC_Mqtt5ErrorCode_Success);
@@ -329,7 +358,7 @@ private:
 
     void doSubscribeIfNeeded() {
         for (auto& subInfo : m_state.m_subs) {
-            if ((subInfo.m_handle != nullptr) || (subInfo.m_acked)) {
+            if ((subInfo.m_subHandle != nullptr) || (subInfo.m_acked)) {
                 // Request is sent
                 continue;
             }
@@ -337,13 +366,15 @@ private:
             infoLog() << "Attempting subscribe\n";
 
             CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
-            subInfo.m_handle = cc_mqtt5_##NAME##client_subscribe_prepare(m_client.get(), &ec);
-            assert(subInfo.m_handle != nullptr);
-            assert(ec == CC_Mqtt5ErrorCode_Success);
-            if (subInfo.m_handle == nullptr) {
+            subInfo.m_subHandle = cc_mqtt5_##NAME##client_subscribe_prepare(m_client.get(), &ec);
+            
+            if (subInfo.m_subHandle == nullptr) {
                 errorLog() << "Unexpected failure in subscribe allocation\n";
+                subInfo.m_acked = true;
                 continue;
             }     
+
+            assert(ec == CC_Mqtt5ErrorCode_Success);
 
             for (auto& t : subInfo.m_topics) {
                 assert(!t.empty());
@@ -353,7 +384,7 @@ private:
                 config.m_topic = t.c_str();
 
                 while (true) {
-                    ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subInfo.m_handle, &config);
+                    ec = cc_mqtt5_##NAME##client_subscribe_config_topic(subInfo.m_subHandle, &config);
                     if (ec == CC_Mqtt5ErrorCode_Success) {
                         break;
                     }
@@ -378,10 +409,11 @@ private:
                 }
             }
 
-            ec = cc_mqtt5_##NAME##client_subscribe_send(subInfo.m_handle, &AflFuzzImpl::subscribeCompleteCb, this);
+            ec = cc_mqtt5_##NAME##client_subscribe_send(subInfo.m_subHandle, &AflFuzzImpl::subscribeCompleteCb, this);
             if (ec != CC_Mqtt5ErrorCode_Success) {
                 errorLog() << "Unexpected failure in sending subscribe request";
-                subInfo.m_handle = nullptr;
+                subInfo.m_subHandle = nullptr;
+                subInfo.m_acked = true;
             }             
         }
     }
@@ -396,13 +428,13 @@ private:
 
         CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
         auto reauth = cc_mqtt5_##NAME##client_reauth_prepare(m_client.get(), &ec);
-        assert(reauth != nullptr);
-        assert(ec == CC_Mqtt5ErrorCode_Success);
         if (reauth == nullptr) {
             errorLog() << "Unexpected failure in reauth allocation\n";
             m_state.m_reauthComplete = true;
             return;
-        }     
+        }   
+
+        assert(ec == CC_Mqtt5ErrorCode_Success);  
 
         auto authMethod = m_opts.authMethod();
         assert(!authMethod.empty());
@@ -430,6 +462,121 @@ private:
         }            
     }
 
+    void doUnsubscribeIfNeeded() {
+
+        if (m_state.m_publishCount < m_opts.minPubCount()) {
+            return;
+        }
+
+        bool subsComplete = 
+            std::all_of(
+                m_state.m_subs.begin(), m_state.m_subs.end(),
+                [](auto& subInfo)
+                {
+                    return subInfo.m_acked;
+                });
+
+        if (!subsComplete) {
+            return;
+        }
+
+        for (auto& subInfo : m_state.m_subs) {
+            if ((subInfo.m_unsubHandle != nullptr) || (subInfo.m_unsubscribed)) {
+                // Request is sent / completed
+                continue;
+            }
+
+            infoLog() << "Attempting unsubscribe\n";
+
+            CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
+            subInfo.m_unsubHandle = cc_mqtt5_##NAME##client_unsubscribe_prepare(m_client.get(), &ec);
+            if (subInfo.m_unsubHandle == nullptr) {
+                errorLog() << "Unexpected failure in unsubscribe allocation\n";
+                subInfo.m_unsubscribed = true;
+                continue;
+            }     
+
+            assert(ec == CC_Mqtt5ErrorCode_Success);
+
+            for (auto& t : subInfo.m_topics) {
+                assert(!t.empty());
+                infoLog() << "Adding topic " << t << "\n";
+                CC_Mqtt5UnsubscribeTopicConfig config;
+                cc_mqtt5_##NAME##client_unsubscribe_init_config_topic(&config);
+                config.m_topic = t.c_str();
+
+                while (true) {
+                    ec = cc_mqtt5_##NAME##client_unsubscribe_config_topic(subInfo.m_unsubHandle, &config);
+                    if (ec == CC_Mqtt5ErrorCode_Success) {
+                        break;
+                    }
+
+                    if (!cc_mqtt5_##NAME##client_get_verify_outgoing_topic_enabled(m_client.get())) {
+                        errorLog() << "Unexpected failure in configuring unsubscribe topic\n";
+                        cc_mqtt5_##NAME##client_unsubscribe_cancel(subInfo.m_unsubHandle);
+                        break;
+                    }
+
+                    cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(m_client.get(), false);
+                }
+            }
+
+            ec = cc_mqtt5_##NAME##client_unsubscribe_send(subInfo.m_unsubHandle, &AflFuzzImpl::unsubscribeCompleteCb, this);
+            if (ec != CC_Mqtt5ErrorCode_Success) {
+                errorLog() << "Unexpected failure in sending unsubscribe request";
+                subInfo.m_unsubHandle = nullptr;
+                subInfo.m_unsubscribed = true;
+            }             
+        }
+    }
+
+    void doDisconnectIfNeeded() 
+    {
+        if (m_state.m_disconnected) {
+            return;
+        }
+
+        bool unsubsComplete = 
+            std::all_of(
+                m_state.m_subs.begin(), m_state.m_subs.end(),
+                [](auto& subInfo)
+                {
+                    return subInfo.m_unsubscribed;
+                });
+
+        if (!unsubsComplete) {
+            return;
+        }
+
+        m_state.m_disconnected = true;
+        m_state.m_reinitRequired = true;
+
+        CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
+        auto handle = cc_mqtt5_##NAME##client_disconnect_prepare(m_client.get(), &ec);
+        if (handle == nullptr) {
+            errorLog() << "Unexpected failure in disconnect allocation\n";
+            return;
+        }     
+
+        assert(ec == CC_Mqtt5ErrorCode_Success);
+
+        CC_Mqtt5DisconnectConfig config;
+        cc_mqtt5_##NAME##client_disconnect_init_config(&config);
+        
+        ec = cc_mqtt5_##NAME##client_disconnect_config(handle, &config);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            errorLog() << "Failed to configure disconnect\n";
+            cc_mqtt5_##NAME##client_disconnect_cancel(handle);
+            return;
+        }
+
+        ec = cc_mqtt5_##NAME##client_disconnect_send(handle);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            errorLog() << "Failed to send disconnect\n";
+            return;
+        }        
+    }    
+
     bool createGeneratorIfNeeded()
     {
         auto inputFile = m_opts.genInputFile();
@@ -437,7 +584,7 @@ private:
             return true;
         }        
 
-        m_generator = std::make_unique<Generator>(m_logger);
+        m_generator = std::make_unique<Generator>(m_logger, m_opts.minPubCount());
         if (!m_generator->prepare(inputFile)) {
             return false;
         }
@@ -491,9 +638,12 @@ private:
         asThis(data)->m_logger.infoLog() << "Broker disconnected\n";
         auto& state = asThis(data)->m_state;
         state.m_disconnected = true;
-        state.m_reinitRequired = true;
-        state.m_connectRequired = true;
         state.m_connected = false;
+
+        if (!cc_mqtt5_##NAME##client_is_network_disconnected(asThis(data)->m_client.get())) {
+            state.m_reinitRequired = true;
+            state.m_connectRequired = true;
+        }
     }
 
     static void messageReceivedReportCb(void* data, const CC_Mqtt5MessageInfo* info)
@@ -568,7 +718,7 @@ private:
             }             
         }
 
-        ec = cc_mqtt5_##NAME##client_publish_send(publish, nullptr, nullptr);
+        ec = cc_mqtt5_##NAME##client_publish_send(publish, &AflFuzzImpl::publishCompleteCb, thisPtr);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             thisPtr->errorLog() << "Failure to publish message\n";
         }    
@@ -600,13 +750,16 @@ private:
 
             if (!response->m_sessionPresent) {
                 for (auto& subInfo : state.m_subs) {
-                    assert(subInfo.m_handle == nullptr);
+                    assert(subInfo.m_subHandle == nullptr);
+                    assert(subInfo.m_unsubHandle == nullptr);
                     subInfo.m_acked = false;
+                    subInfo.m_unsubscribed = false;
                 }
             }
 
             state.m_connectRequired = false;
             state.m_connected = true;
+            state.m_disconnected = false;
             state.m_firstConnect = false;
             return;
         } while (false);
@@ -625,7 +778,7 @@ private:
                 state.m_subs.begin(), state.m_subs.end(),
                 [handle](auto& info)
                 {
-                    return info.m_handle == handle;
+                    return info.m_subHandle == handle;
                 });
         
         if (iter == state.m_subs.end()) {
@@ -634,7 +787,7 @@ private:
         }
 
         assert(!iter->m_acked);
-        iter->m_handle = nullptr;
+        iter->m_subHandle = nullptr;
         if (status != CC_Mqtt5AsyncOpStatus_Complete) {
             thisPtr->errorLog() << "Subscribe operation is terminated\n";
             return;
@@ -654,7 +807,22 @@ private:
             thisPtr->infoLog() << "The subscribe is properly acked\n";
         }
         iter->m_acked = allOk;
-    }      
+    }   
+
+    static void publishCompleteCb(
+        void* data, 
+        [[maybe_unused]] CC_Mqtt5PublishHandle handle, 
+        CC_Mqtt5AsyncOpStatus status, 
+        [[maybe_unused]] const CC_Mqtt5PublishResponse* response)
+    {
+        auto* thisPtr = asThis(data);
+        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            thisPtr->errorLog() << "Publish operation is terminated\n";
+            return;
+        }
+
+        ++thisPtr->m_state.m_publishCount;
+    }          
 
     static CC_Mqtt5AuthErrorCode authCb(void* data, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut)
     {
@@ -692,6 +860,46 @@ private:
 
         state.m_reauthRequired = true;
     }
+
+    static void unsubscribeCompleteCb(void* data, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+    {
+        auto* thisPtr = asThis(data);
+        auto& state = thisPtr->m_state;
+        auto iter = 
+            std::find_if(
+                state.m_subs.begin(), state.m_subs.end(),
+                [handle](auto& info)
+                {
+                    return info.m_unsubHandle == handle;
+                });
+        
+        if (iter == state.m_subs.end()) {
+            thisPtr->errorLog() << "Unexpected handle of the unsubscribe completion\n";
+            exit(-1);
+        }
+
+        assert(!iter->m_unsubscribed);
+        iter->m_unsubHandle = nullptr;
+        if (status != CC_Mqtt5AsyncOpStatus_Complete) {
+            thisPtr->errorLog() << "Unsubscribe operation is terminated\n";
+            return;
+        }
+
+        assert(response != nullptr);
+        bool allOk = true;
+        for (auto idx = 0U; idx < response->m_reasonCodesCount; ++idx) {
+            if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCodes[idx]) {
+                thisPtr->errorLog() << "Unsubscribe rejected\n";
+                allOk = false;
+                break;
+            }
+        }
+        
+        if (allOk) {
+            thisPtr->infoLog() << "The unsubscribe is properly acked\n";
+        }
+        iter->m_unsubscribed = allOk;
+    }      
 
     const ProgramOptions& m_opts;
     Logger& m_logger;

@@ -42,7 +42,13 @@ ProgramOptions::ProgramOptions()
         ("sub-topic,t", po::value<StringsList>(), "Subscribe topic filters. Can be used multiple times. "
             "Multiple topics can also be comma separated in single occurrance, to be packed into single subscribe message. "
             "If not specified, single subscribe to \"#\" is assumed")
-    ;        
+    ;    
+
+    po::options_description pubOpts("Publish Options");
+    subOpts.add_options()
+        ("min-pub-count", po::value<unsigned>()->default_value(3U), 
+            "Number of successful publish counts before unsubscribing to previously subscribed topics")
+    ;            
 
     m_desc.add(commonOpts);
     m_desc.add(connectOpts);  
@@ -152,6 +158,11 @@ std::vector<ProgramOptions::StringsList> ProgramOptions::subTopics() const
         });
 
     return result;
+}
+
+unsigned ProgramOptions::minPubCount() const
+{
+    return m_vm["min-pub-count"].as<unsigned>();
 }
 
 ProgramOptions::StringsList ProgramOptions::stringListOpts(const std::string& name) const

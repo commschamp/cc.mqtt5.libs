@@ -169,6 +169,25 @@ function (gen_lib_mqtt5_client config_file)
         INTERFACE_LINK_LIBRARIES ""
     )
     add_dependencies(${lib_name} ${header_tgt_name} ${src_tgt_name} ${config_tgt_name} ${prot_opts_tgt_name})
+
+    file (READ "${CMAKE_CURRENT_SOURCE_DIR}/include/cc_mqtt5_client/common.h" version_file)
+    string (REGEX MATCH "CC_MQTT5_CLIENT_MAJOR_VERSION ([0-9]*)U*" _ ${version_file})
+    set (major_ver ${CMAKE_MATCH_1})
+    string (REGEX MATCH "CC_MQTT5_CLIENT_MINOR_VERSION ([0-9]*)U*" _ ${version_file})
+    set (minor_ver ${CMAKE_MATCH_1})
+    string (REGEX MATCH "CC_MQTT5_CLIENT_PATCH_VERSION ([0-9]*)U*" _ ${version_file})
+    set (patch_ver ${CMAKE_MATCH_1})
+    set (CC_MQTT5_CLIENT_VERSION "${major_ver}.${minor_ver}.${patch_ver}")
+
+    write_basic_package_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/${lib_name}ConfigVersion.cmake
+        VERSION ${CC_MQTT5_CLIENT_VERSION}
+        COMPATIBILITY AnyNewerVersion)    
+
+    install (
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/${lib_name}ConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/${lib_name}/cmake
+    )        
     
     install (
         FILES ${header_output}
@@ -236,6 +255,8 @@ install (
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/cc_mqtt5_client
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+include(CMakePackageConfigHelpers)
 
 if (CC_MQTT5_CLIENT_DEFAULT_LIB) 
     gen_lib_mqtt5_client("")

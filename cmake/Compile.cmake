@@ -41,11 +41,6 @@ macro (cc_mqttsn_compile)
         )
     endif()
 
-    if (CC_MQTT5_DISABLE_FALSE_POSITIVE_SANITIZERS)
-        list (APPEND extra_flags_list
-            -fno-sanitize-address-use-after-scope)        
-    endif ()    
-
     string(REPLACE ";" " " extra_flags "${extra_flags_list}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${extra_flags}")
 endmacro()

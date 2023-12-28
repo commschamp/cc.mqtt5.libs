@@ -79,6 +79,7 @@ void Generator::processData(const std::uint8_t* buf, unsigned bufLen)
 void Generator::handle(const Mqtt5ConnectMsg& msg)
 {
     m_logger.infoLog() << "Processing " << msg.name() << "\n";
+    m_connected = false;
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
@@ -196,17 +197,21 @@ void Generator::handle(const Mqtt5AuthMsg& msg)
         return;
     }
 
+    assert(msg.field_reasonCode().doesExist());
+    assert(msg.field_properties().doesExist());
     PropsHandler propsHandler;
-    for (auto& p : m_cachedConnect->field_properties().value()) {
+    for (auto& p : msg.field_properties().field().value()) {
         p.currentFieldExec(propsHandler);
     }  
 
 
     if (msg.field_reasonCode().field().value() == Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::ReAuth) {
+        m_logger.infoLog() << "Re-authentication request\n";
         sendAuth(propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
         return;
     }
 
+    m_logger.infoLog() << "Completing re-authentication\n";
     assert(msg.field_reasonCode().field().value() == Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth);
     sendAuth(propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::Success);
 }
@@ -286,6 +291,13 @@ void Generator::sendConnack(const Mqtt5ConnectMsg& msg, const PropsHandler& prop
         auto& valueField = propBundle.field_value();        
         valueField.setValue(propsHandler.m_topicAliasMax);        
         m_topicAliasLimit = propsHandler.m_topicAliasMax;
+    }  
+
+    if (!propsHandler.m_authMethod.empty()) {
+        auto& propVar = addProp(propsField);
+        auto& propBundle = propVar.initField_authMethod();
+        auto& valueField = propBundle.field_value();        
+        valueField.setValue(propsHandler.m_authMethod);        
     }    
 
     sendMessage(outMsg);
@@ -319,25 +331,34 @@ void Generator::sendPublish(const std::string& topic, unsigned qos)
 void Generator::sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_reasonCode::Field::ValueType reasonCode)
 {
     Mqtt5AuthMsg outMsg;
-    outMsg.field_reasonCode().field().setValue(reasonCode);
-
-    auto& propsField = outMsg.field_properties().field();
-    if (!propsHandler.m_authMethod.empty()) {
-        auto& propVar = addProp(propsField);
-        auto& propBundle = propVar.initField_authMethod();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_authMethod);        
-    }
-
-    if (!propsHandler.m_authData.empty()) {
-        auto& propVar = addProp(propsField);
-        auto& propBundle = propVar.initField_authData();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_authData);     
-        if ((valueField.value().size() & 0x1) != 0) {
-            valueField.value().push_back('1');
+    do {
+        if (reasonCode == Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::Success) {
+            break;
         }
-    }    
+
+        outMsg.field_reasonCode().setExists();
+        outMsg.field_reasonCode().field().setValue(reasonCode);
+        outMsg.field_properties().setExists();
+
+
+        auto& propsField = outMsg.field_properties().field();
+        if (!propsHandler.m_authMethod.empty()) {
+            auto& propVar = addProp(propsField);
+            auto& propBundle = propVar.initField_authMethod();
+            auto& valueField = propBundle.field_value();        
+            valueField.setValue(propsHandler.m_authMethod);        
+        }
+
+        if (!propsHandler.m_authData.empty()) {
+            auto& propVar = addProp(propsField);
+            auto& propBundle = propVar.initField_authData();
+            auto& valueField = propBundle.field_value();        
+            valueField.setValue(propsHandler.m_authData);     
+            if ((valueField.value().size() & 0x1) != 0) {
+                valueField.value().push_back('1');
+            }
+        }    
+    } while (false);
 
     sendMessage(outMsg);
 }

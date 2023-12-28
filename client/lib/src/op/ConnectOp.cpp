@@ -774,10 +774,14 @@ void ConnectOp::handle(AuthMsg& msg)
         return; // Disconnect is sent and op is competed
     }        
 
-    if ((m_authMethod.empty()) || 
-        (msg.field_reasonCode().isMissing()) ||
+    if (m_authMethod.empty()) {
+        errorLog("The connect hasn't used extended authentication, invalid AUTH message received");
+        return; // Disconnect is sent and op is competed
+    }    
+
+    if ((msg.field_reasonCode().isMissing()) ||
         (msg.field_reasonCode().field().value() != AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth)) {
-        errorLog("Invalid reason code received received in AUTH message");
+        errorLog("Invalid reason code received received in AUTH message during connection");
         return; // Disconnect is sent and op is competed
     }
 

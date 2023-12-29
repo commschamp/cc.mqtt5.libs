@@ -17,6 +17,8 @@
 
 #####################################
 
+@echo on
+
 if [ -z "${BUILD_DIR}" ]; then
     echo "BUILD_DIR hasn't been specified"
     exit 1

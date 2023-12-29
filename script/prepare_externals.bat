@@ -13,6 +13,8 @@ rem COMMON_CXX_STANDARD - (Optional) CMake C++ standard
 
 rem -----------------------------------------------------
 
+@echo on
+
 if [%BUILD_DIR%] == [] echo "BUILD_DIR hasn't been specified" & exit /b 1
 
 if [%GENERATOR%] == [] set GENERATOR="NMake Makefiles"

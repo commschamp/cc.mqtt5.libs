@@ -121,6 +121,12 @@ file (WRITE "${OUT_FILE}.tmp" "${text}")
 execute_process(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OUT_FILE}.tmp" "${OUT_FILE}")    
 
-execute_process(
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${OUT_FILE}.tmp")      
+if(CMAKE_VERSION VERSION_LESS "3.8.0") 
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${OUT_FILE}.tmp")      
+else ()    
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${OUT_FILE}.tmp")      
+endif()    
+
 

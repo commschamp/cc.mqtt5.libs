@@ -1,7 +1,14 @@
 # Overview
-This repository provides **single threaded**, **asynchronous**, **non-blocking**, easy to
-use, suitable for **embedded** platforms, well documented MQTT5 client library.
-It is completely generic and allows end application to have a complete control
+This repository provides well documented and easy to use MQTT5 client library.
+It is:
+
+- single threaded
+- asynchronous and non-blocking,
+- fuzz testable
+- compile time configurable (disable unneeded features and/or configure some data types)
+- suitable for **embedded** platforms with limited resources and/or without heap
+
+The library is completely generic and allows end application to have a complete control
 over the I/O link as well as perform extra manipulation on the exchanged
 raw data (such as encryption or extra framing).
 
@@ -42,6 +49,16 @@ the events loop and manage network connection(s)).
 # How to Build
 Detailed instructions on how to build and install all the components can be
 found in [doc/BUILD.md](doc/BUILD.md) file.
+
+# How to Fuzz Test
+The provided MQTT5 client library as well as its dependencies from the
+[CommsChampion Ecosystem](https://commschamp.github.io/) have been designed with
+reliability in mind and to be able to safely handle malformed data as well as
+withstand unexpected behaviour from a MQTT broker. In order to
+verify the library's reliability it is highly recommended to perform
+[AFL++](https://github.com/AFLplusplus/AFLplusplus) based fuzz testing.
+The detailed instruction on how to fuzz test the
+library can be found in [doc/fuzz_test.md](doc/fuzz_test.md) file.
 
 # Branching Model
 This repository will follow the

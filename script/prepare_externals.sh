@@ -12,6 +12,8 @@
 # COMMON_INSTALL_DIR - (Optional) Common directory to perform installations
 # COMMON_BUILD_TYPE - (Optional) CMake build type
 # COMMON_CXX_STANDARD - (Optional) CMake C++ standard
+# COMMON_CMAKE_GENERATOR - (Optional) CMake generator
+# COMMON_CMAKE_PLATFORM - (Optional) CMake platform
 
 #####################################
 
@@ -81,8 +83,10 @@ function build_comms() {
 
     echo "Building COMMS library..."
     mkdir -p ${COMMS_BUILD_DIR}
-    cmake -S ${COMMS_SRC_DIR} -B ${COMMS_BUILD_DIR} -DCMAKE_INSTALL_PREFIX=${COMMS_INSTALL_DIR} \
-        -DCMAKE_BUILD_TYPE=${COMMON_BUILD_TYPE} -DCMAKE_CXX_STANDARD=${COMMON_CXX_STANDARD}
+    cmake -S ${COMMS_SRC_DIR} -B ${COMMS_BUILD_DIR} \
+        ${COMMON_CMAKE_GENERATOR:+"-G ${COMMON_CMAKE_GENERATOR}"} ${COMMON_CMAKE_PLATFORM:+"-A ${COMMON_CMAKE_PLATFORM}"} \
+        -DCMAKE_INSTALL_PREFIX=${COMMS_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${COMMON_BUILD_TYPE} \
+        ${COMMON_CXX_STANDARD:+"-DCMAKE_CXX_STANDARD=${COMMON_CXX_STANDARD}"}
     cmake --build ${COMMS_BUILD_DIR} --config ${COMMON_BUILD_TYPE} --target install ${procs_param}
 }
 
@@ -103,8 +107,10 @@ function build_mqtt5() {
     echo "Building cc.mqtt5.generated library..."
     mkdir -p ${CC_MQTT5_BUILD_DIR}
     cmake -S ${CC_MQTT5_SRC_DIR} -B ${CC_MQTT5_BUILD_DIR} \
+        ${COMMON_CMAKE_GENERATOR:+"-G ${COMMON_CMAKE_GENERATOR}"} ${COMMON_CMAKE_PLATFORM:+"-A ${COMMON_CMAKE_PLATFORM}"} \
         -DCMAKE_INSTALL_PREFIX=${CC_MQTT5_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${COMMON_BUILD_TYPE} \
-        -DCMAKE_CXX_STANDARD=${COMMON_CXX_STANDARD} -DOPT_REQUIRE_COMMS_LIB=OFF
+        ${COMMON_CXX_STANDARD:+"-DCMAKE_CXX_STANDARD=${COMMON_CXX_STANDARD}"} \
+        -DOPT_REQUIRE_COMMS_LIB=OFF
     cmake --build ${CC_MQTT5_BUILD_DIR} --config ${COMMON_BUILD_TYPE} --target install ${procs_param}
 }
 

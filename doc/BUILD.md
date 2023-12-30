@@ -1,7 +1,7 @@
 # How to Build
 This project uses [CMake](https://cmake.org) cross-platform build system to
 generate required build files native to the platform. Please refer to the 
-main [CMakeLists.txt](../CMakeLists.txt) file for the info on available configuraiton options and
+main [CMakeLists.txt](../CMakeLists.txt) file for the info on available configuration options and
 variables.
 
 ## External Dependencies

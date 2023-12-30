@@ -72,7 +72,7 @@ bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
 /// @ingroup client
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 
-/// @brief Provide data, received over I/O link, to the library for processing.
+/// @brief Provide data (received over I/O link), to the library for processing.
 /// @details This call may cause invocation of some callbacks, such as 
 ///     request to cancel the currently running time measurement, send some messages to
 ///     the broker, report incoming application message, and (re)start time

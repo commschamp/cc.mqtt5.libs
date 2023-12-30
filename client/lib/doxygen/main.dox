@@ -33,7 +33,7 @@
 /// @code
 /// CC_Mqtt5ClientHandle client = cc_mqtt5_client_alloc();
 /// @endcode
-/// All other functions are client specific, the receive the returned handle
+/// All other functions are client specific, they receive the returned handle
 /// as their first parameter.
 ///
 /// When work with allocated client is complete, it must be freed using
@@ -77,6 +77,15 @@
 /// @endcode
 /// See also the documentation of the @ref CC_Mqtt5SendOutputDataCb callback function definition.
 ///
+/// In the invoked callback the application is responsible to send the provided data
+/// over the I/O link. The application can also perform extra data manipulation like
+/// encryption.
+///
+/// The reported data resides in internal data structures of the client library,
+/// which can be updated / deleted right after the callback function returns.
+/// It means the data may need to be copied into some other buffer, which will be
+/// held intact until the send over I/O link operation is complete.
+///
 /// @subsection cc_mqtt5_client_callbacks_broker_disconnect Reporting Unsolicited Broker Disconnection
 /// The client application must assign a callback for the library to report
 /// discovered broker disconnection.
@@ -92,6 +101,12 @@
 /// cc_mqtt5_client_set_broker_disconnect_report_callback(client, &my_broker_disconnected_cb, data);
 /// @endcode
 /// See also the documentation of the @ref CC_Mqtt5BrokerDisconnectReportCb callback function definition.
+///
+/// When the broker disconnection is due to reception of the **DISCONNECT**
+/// message from the broker the "info" parameter will report a disconnection reason as well
+/// as extra information reported by the broker. If the broker disconnection is due
+/// to other reasons, the "info" parameter will be @b NULL. See also @ref cc_mqtt5_client_unsolicited_disconnect
+/// for details.
 ///
 /// @subsection cc_mqtt5_client_callbacks_message Reporting Received Message
 /// The client application must assign a callback for the library to report
@@ -149,6 +164,8 @@
 ///     ...
 ///     return ... /* return amount of elapsed milliseconds since last tick program */
 /// }
+///
+/// cc_mqtt5_client_set_cancel_next_tick_wait_callback(client, &my_cancel_tick_program_cb, data);
 /// @endcode
 /// See also the documentation of the @ref CC_Mqtt5CancelNextTickWaitCb callback function definition.
 ///
@@ -171,8 +188,8 @@
 /// See also the documentation of the @ref CC_Mqtt5ErrorLogCb callback function definition.
 ///
 /// @section cc_mqtt5_client_init Client (Re)Initialization
-/// After all the necessary callbacks have been set, it is necessary for the application to
-/// invoke @b cc_mqtt5_client_init() function to allow all other subsequent operations.
+/// After all the necessary callbacks have been set, the application must
+/// invoke the @b cc_mqtt5_client_init() function to allow all other subsequent operations.
 /// The function checks that all the necessary callbacks have been set and reinitializes internal
 /// data structures.
 /// @code
@@ -243,7 +260,7 @@
 /// @li @b send - Send the configured operation message to the broker.
 ///
 /// During the @b send stage the application is expected to provide the callback to
-/// report to the application when the operation is complete. The second parameter
+/// report to the application when the operation is complete. One of the parameters
 /// of the callback is always "status" of the @ref CC_Mqtt5AsyncOpStatus type. It
 /// indicates whether the operation was successfully complete. In addition to the
 /// status it reports some extra information reported by the broker. The information
@@ -509,8 +526,13 @@
 /// the operation before the completion callback is invoked.
 ///
 /// When the "connect" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @b NOTE that only single "connect" operation is allowed at a time, any attempt to
+/// prepare a new one via @b cc_mqtt5_client_connect_prepare() will be rejected
+/// until the "connect" operation completion callback is invoked or
+/// the operation is @ref cc_mqtt5_client_connect_cancel "cancelled".
 ///
 /// @b IMPORTANT: The @ref CC_Mqtt5ConnectResponse "response" information from
 /// the broker may report that some features on the broker side are disabled.
@@ -707,7 +729,7 @@
 /// operation.
 ///
 /// Also @b note that the same function controls the verification of the
-/// "publish" topic format.
+/// "subscribe", "unsubscribe" and "publish" topic formats.
 ///
 /// To retrieve the current configuration use @b cc_mqtt5_client_get_verify_outgoing_topic_enabled()
 /// function.
@@ -771,7 +793,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_subscribe_send() function.
 /// @code
-/// void my_subscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
+/// void my_subscribe_complete_cb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The subscription operation has failed with status=%d\n", status);
@@ -801,8 +823,14 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_subscribe_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "subscribe" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "subscribe" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "subscribe" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
 /// @subsection cc_mqtt5_client_subscribe_cancel Cancel the "Subscribe" Operation.
@@ -890,6 +918,9 @@
 /// @b NOTE that the configuration is global per client and not per "unsubscribe"
 /// operation.
 ///
+/// Also @b note that the same function controls the verification of the
+/// "subscribe", "unsubscribe" and "publish" topic formats.
+///
 /// To retrieve the current configuration use @b cc_mqtt5_client_get_verify_outgoing_topic_enabled()
 /// function.
 ///
@@ -914,7 +945,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_unsubscribe_send() function.
 /// @code
-/// void my_unsubscribe_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
+/// void my_unsubscribe_complete_cb(void* data, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The unsubscription operation has failed with status=%d\n", status);
@@ -944,8 +975,14 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_unsubscribe_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "unsubscribe" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "unsubscribe" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "unsubscribe" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
 /// @subsection cc_mqtt5_client_unsubscribe_cancel Cancel the "Unsubscribe" Operation.
@@ -997,7 +1034,8 @@
 /// @b DUP flag is set in the @b PUBLISH message. When the second attempt is
 /// not acknowledged, then the publish operation is terminated with appropriate
 /// status report. It is possible to change the default by using
-/// @b cc_mqtt5_client_publish_set_resend_attempts() function.
+/// @b cc_mqtt5_client_publish_set_resend_attempts() function. The @b DUP flag
+/// will be sent for all the re-sent @b PUBLISH messages.
 /// @code
 /// ec = cc_mqtt5_client_publish_set_resend_attempts(publish, 3);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
@@ -1047,7 +1085,7 @@
 /// operation.
 ///
 /// Also @b note that the same function controls the verification of the
-/// "subscribe" and "unsubscribe" topic filter format.
+/// "subscribe", "unsubscribe", and "publish" filter / topic formats.
 ///
 /// @subsection cc_mqtt5_client_publish_extra Extra Properties Configuration
 /// To add extra MQTT5 specific properties to the publish request use
@@ -1092,7 +1130,7 @@
 /// operation it can actually be sent to the broker. To initiate sending
 /// use the @b cc_mqtt5_client_publish_send() function.
 /// @code
-/// void my_publish_complete_cb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+/// void my_publish_complete_cb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 /// {
 ///     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
 ///         printf("ERROR: The publish operation has failed with status=%d\n", status);
@@ -1133,11 +1171,17 @@
 /// The valid handle can be used to @ref cc_mqtt5_client_publish_cancel "cancel"
 /// the operation before the completion callback is invoked.
 ///
+/// Note that the callback function receives the "publish" operation handle as
+/// its second parameter. Although the handle is already invalid and cannot be
+/// used in any other function, it allows the application to identify the
+/// original "publish" request if multiple have been issued in parallel
+/// and use the same callback function for all of them.
+///
 /// When the "publish" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
-/// When the callback reporting the connection status is invoked, it is responsibility
+/// When the callback reporting the publish status is invoked, it is responsibility
 /// of the application to check the @ref CC_Mqtt5PublishResponse::m_reasonCode value.
 /// If it's @ref CC_Mqtt5ReasonCode_UnspecifiedError or greater means the "publish"
 /// operation wasn't successful.
@@ -1341,7 +1385,9 @@
 /// @ref CC_Mqtt5AuthErrorCode_Disconnect value library preforms the following steps:
 /// @li Sends @b DISCONNECT message to the broker.
 /// @li Invokes the operation completion callback (see @ref cc_mqtt5_client_reauth_send below)
-///     with the @ref CC_Mqtt5AsyncOpStatus_Aborted "status" value report.
+///     with the @ref CC_Mqtt5AsyncOpStatus_Aborted as status value report.
+/// @li Invokes the callbacks of all other incomplete operations with the
+///     the @ref CC_Mqtt5AsyncOpStatus_Aborted as status value report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     to report disconnection from the broker. See also @ref cc_mqtt5_client_unsolicited_disconnect
 ///     section below for details on how to proceed after the callback invocation.
@@ -1387,8 +1433,13 @@
 /// the operation before the completion callback is invoked.
 ///
 /// When the "reauth" operation completion callback is invoked the reported
-/// response information is present <b>if and only if</b> the "status" is
+/// "response" information is present <b>if and only if</b> the "status" is
 /// @ref CC_Mqtt5AsyncOpStatus_Complete.
+///
+/// @b NOTE that only single "reauth" operation is allowed at a time, any attempt to
+/// prepare a new one via @b cc_mqtt5_client_reauth_prepare() will be rejected
+/// until the "reauth" operation completion callback is invoked or
+/// the operation is @ref cc_mqtt5_client_reauth_cancel "cancelled".
 ///
 /// @subsection cc_mqtt5_client_reauth_cancel Cancel the "Reauth" Operation.
 /// While the handle returned by the @b cc_mqtt5_client_reauth_prepare() is still
@@ -1444,6 +1495,7 @@
 /// @li Close network connection.
 /// @li Re-establish network connection to the broker.
 /// @li Go through the  @ref cc_mqtt5_client_init "re-initialization" process.
+///     Make sure to do it in the next iteration of the event loop and not from within the disconnection report callback.
 /// @li Perform the @ref cc_mqtt5_client_connect "\"connect\"" operation.
 ///
 /// @section cc_mqtt5_client_network_disconnect Network Disconnection
@@ -1451,7 +1503,7 @@
 /// setting the "Session Expiry Interval" property during the @ref cc_mqtt5_client_connect "\"connect\""
 /// operation (see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval). Such
 /// network disconnection is usually detected by the failing @b read or @b write
-/// operations. When the application detects such network disconnection, it
+/// operations on I/O socket. When the application detects such network disconnection, it
 /// is expected to report it to the library using @b cc_mqtt5_client_notify_network_disconnected()
 /// function.
 /// @code

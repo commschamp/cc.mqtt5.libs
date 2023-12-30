@@ -21,11 +21,11 @@ extern "C" {
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 1U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 2U
 
 /// @brief Patch level of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_PATCH_VERSION 1U
+#define CC_MQTT5_CLIENT_PATCH_VERSION 0U
 
 /// @brief Macro to create numeric version as single unsigned number
 /// @ingroup global
@@ -297,8 +297,8 @@ typedef struct
 typedef struct
 {
     unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property, defaults to 0, not added when 0.
-    unsigned m_receiveMaximum; ///< "Receive Maximum" property - allowed amount of incomplete Qos1 and Qos2 publishes, defaults to 0, not added when 0.
-                               ///< When equals to @b 0 (default) no property is added, which defaults to 65,535 on the broker side.
+    unsigned m_receiveMaximum; ///< "Receive Maximum" property - allowed amount of incomplete Qos1 and Qos2 publishes.
+                               ///< When equals to @b 0 (default) no property is added, which is perceived as 65,535 on the broker side.
     unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, defaults to 0, not added when 0, which means "no limit".
     unsigned m_topicAliasMaximum; ///< "Topic Alias Maximum" property, defaults to 0, not added when 0.
     bool m_requestResponseInfo; ///< "Request Response Information" property, defaults to @b false, not added when @b false.
@@ -450,12 +450,12 @@ typedef struct
 /// @ingroup publish
 typedef struct
 {
-    const char* m_contentType; ///< "Content Type" property, not added NULL.
-    const char* m_responseTopic; ///< "Response Topic" property, not added when NULL.
+    const char* m_contentType; ///< "Content Type" property, defaults to NULL, not added when NULL.
+    const char* m_responseTopic; ///< "Response Topic" property, defaults to NULL, not added when NULL.
     const unsigned char* m_correlationData; ///< "Correlation Data" property, can be NULL.
     unsigned m_correlationDataLen; ///< Length of the "Correlation Data", not added when 0.
-    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" property, not added when 0.
-    CC_Mqtt5PayloadFormat m_format; ///< ///< "Payload Format Indicator" property, defaults to CC_Mqtt5PayloadFormat_Unspecified, not added when CC_Mqtt5PayloadFormat_Unspecified.
+    unsigned m_messageExpiryInterval; ///< "Message Expiry Interval" property, defaults to 0, not added when 0.
+    CC_Mqtt5PayloadFormat m_format; ///< "Payload Format Indicator" property, defaults to CC_Mqtt5PayloadFormat_Unspecified, not added when CC_Mqtt5PayloadFormat_Unspecified.
 } CC_Mqtt5PublishExtraConfig;
 
 /// @brief Response information from broker to "publish" request
@@ -490,8 +490,8 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 /// @brief Callback used to request to send data to the broker.
 /// @details The callback is set using
 ///     cc_mqtt5_client_set_send_output_data_callback() function. The reported
-///     data resides in internal data structures of the client library, and
-///     it can be updated right after the callback function returns. It means
+///     data resides in internal data structures of the client library, which
+///     can be updated / deleted right after the callback function returns. It means
 ///     the data may need to be copied into some other buffer which will be
 ///     held intact until the send over I/O link operation is complete.
 /// @param[in] data Pointer to user data object, passed as last parameter to
@@ -544,32 +544,44 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 /// @brief Callback used to report completion of the "subscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_subscribe_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_subscribe_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "subscribe" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "subscribe" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup subscribe
-typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "unsubscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_unsubscribe_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_unsubscribe_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "unsubscribe" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "unsubscribe" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup unsubscribe
-typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
+typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5UnsubscribeResponse* response);
 
 /// @brief Callback used to report completion of the "publish" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_publish_send().
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_publish_prepare() function. When the 
+///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+///     function invocation, but it allows end application to identify the original "publish" operation
+///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "publish" operation.
 /// @param[in] response Response information from the broker. Not-NULL is reported <b>if and onfly if</b>
 ///     the "status" is equal to @ref CC_Mqtt5AsyncOpStatus_Complete.
 /// @post The data members of the reported response can NOT be accessed after the function returns.
 /// @ingroup publish
-typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+typedef void (*CC_Mqtt5PublishCompleteCb)(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
 /// @brief Callback used to report completion of the "reauth" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the

@@ -140,7 +140,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
         }
 
         if (es != comms::ErrorStatus::Success) {
-            return consumed; // Disconnect
+            return len; // Disconnect
         }        
 
         if (m_sessionState.m_maxRecvPacketSize > 0U) {
@@ -151,7 +151,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
             if (maxAllowedSize < sizeField.value()) {
                 errorLog("The message length exceeded max packet size");
                 disconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType::PacketTooLarge;
-                return consumed;
+                return len;
             }
         }
 
@@ -164,7 +164,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 
         if (es != comms::ErrorStatus::Success) {
             errorLog("Unexpected error in framing / payload parsing");
-            return consumed;
+            return len;
         }
 
         COMMS_ASSERT(msg);
@@ -878,6 +878,7 @@ CC_Mqtt5ErrorCode ClientImpl::sendMessage(const ProtMessage& msg)
         return CC_Mqtt5ErrorCode_InternalError;
     }
 
+    COMMS_ASSERT(m_sendOutputDataCb != nullptr);
     m_sendOutputDataCb(m_sendOutputDataData, &m_buf[0], static_cast<unsigned>(len));
 
     for (auto& opPtr : m_keepAliveOps) {

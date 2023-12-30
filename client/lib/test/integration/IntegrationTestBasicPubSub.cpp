@@ -93,11 +93,12 @@ protected:
         ++m_opCount;
     }
 
-    virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
+    virtual void integrationTestSubscribeCompleteImpl(
+        CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
         assert(m_opCount > 0U);
         --m_opCount;        
-        if (!integrationTestVerifySubscribeSuccessful(status, response)) {
+        if (!integrationTestVerifySubscribeSuccessful(handle, status, response)) {
             failTestInternal();
             return;
         }
@@ -105,12 +106,12 @@ protected:
         // Wait for message
     }    
 
-    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
+    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
         assert(m_opCount > 0U);
         --m_opCount;  
 
-        if (!integrationTestVerifyPublishSuccessful(status, response)) {
+        if (!integrationTestVerifyPublishSuccessful(handle, status, response)) {
             failTestInternal();
             return;
         }        
@@ -213,12 +214,12 @@ protected:
         ++m_opCount;
     }
 
-    virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
+    virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
         assert(m_opCount > 0U);
         --m_opCount;
 
-        if (!integrationTestVerifySubscribeSuccessful(status, response)) {
+        if (!integrationTestVerifySubscribeSuccessful(handle, status, response)) {
             failTestInternal();
             return;
         }
@@ -226,12 +227,12 @@ protected:
         doNextPublish();
     }    
 
-    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
+    virtual void integrationTestPublishCompleteImpl(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
         assert(m_opCount > 0U);
         --m_opCount;
 
-        if (!integrationTestVerifyPublishSuccessful(status, response)) {
+        if (!integrationTestVerifyPublishSuccessful(handle, status, response)) {
             failTestInternal();
             return;
         }        

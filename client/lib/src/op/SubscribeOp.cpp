@@ -331,9 +331,10 @@ void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt
 {
     auto cb = m_cb;
     auto* cbData = m_cbData;
+    auto handle = toHandle();
     opComplete(); // mustn't access data members after destruction
     if (cb != nullptr) {
-        cb(cbData, status, response);    
+        cb(cbData, handle, status, response);    
     }
 }
 

@@ -4,11 +4,12 @@ project ("cc_mqtt5_libs")
 # Options
 option (CC_MQTT5_CLIENT_DEFAULT_LIB "Build and install default variant of MQTT5 client library" ON)
 option (CC_MQTT5_CLIENT_APPS "Build and install client applications" ${CC_MQTT5_CLIENT_DEFAULT_LIB})
+option (CC_MQTT5_CLIENT_AFL_FUZZ "Build and install client AFL++ fuzzing application" OFF)
 option (CC_MQTT5_WARN_AS_ERR "Treat warning as error" ON)
 option (CC_MQTT5_USE_CCACHE "Use ccache on unix system" ON)
 option (CC_MQTT5_BUILD_UNIT_TESTS "Build unit tests" OFF)
 option (CC_MQTT5_BUILD_INTEGRATION_TESTS "Build integration tests which require MQTT broker on local port 1883." OFF)
-option (CC_MQTT5_WITH_SANITIZERS "Build with sanitizers" OFF)
+option (CC_MQTT5_WITH_DEFAULT_SANITIZERS "Build with sanitizers" OFF)
 
 # Extra Configuration Variables
 # CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES - List of custom client configuration files
@@ -17,6 +18,8 @@ option (CC_MQTT5_WITH_SANITIZERS "Build with sanitizers" OFF)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")
 
 ##########################################################################
+
+cmake_policy(SET CMP0079 NEW)
 
 set (CC_MQTT5_EXTERNALS_DIR "${PROJECT_SOURCE_DIR}/externals")
 

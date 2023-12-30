@@ -112,7 +112,7 @@ void Pub::brokerConnectedImpl()
     }    
 }
 
-void Pub::publishCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void Pub::publishCompleteInternal([[maybe_unused]] CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
         logError() << "Publish failed with status=" << toString(status) << std::endl;
@@ -136,9 +136,9 @@ void Pub::publishCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5Pu
     doTerminate(result);
 }
 
-void Pub::publishCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void Pub::publishCompleteCb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
-    asThis(data)->publishCompleteInternal(status, response);
+    asThis(data)->publishCompleteInternal(handle, status, response);
 }
 
 

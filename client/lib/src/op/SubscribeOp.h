@@ -30,6 +30,21 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
 
+    CC_Mqtt5SubscribeHandle toHandle()
+    {
+        return reinterpret_cast<CC_Mqtt5SubscribeHandle>(this);
+    }
+
+    static CC_Mqtt5SubscribeHandle asHandle(SubscribeOp* obj)
+    {
+        return reinterpret_cast<CC_Mqtt5SubscribeHandle>(obj);
+    }    
+
+    static SubscribeOp* fromHandle(CC_Mqtt5SubscribeHandle handle)
+    {
+        return reinterpret_cast<SubscribeOp*>(handle);
+    }
+
     using Base::handle;
     virtual void handle(SubackMsg& msg) override;
 

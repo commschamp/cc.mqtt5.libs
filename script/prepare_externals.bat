@@ -15,7 +15,7 @@ rem -----------------------------------------------------
 
 if [%BUILD_DIR%] == [] echo "BUILD_DIR hasn't been specified" & exit /b 1
 
-if [%GENERATOR%] == [] set GENERATOR="NMake Makefiles"
+if [%GENERATOR%] == [] set GENERATOR=NMake Makefiles
 
 if NOT [%PLATFORM%] == [] set PLATFORM_PARAM=-A %PLATFORM%
 

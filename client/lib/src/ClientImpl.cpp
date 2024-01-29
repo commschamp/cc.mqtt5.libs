@@ -84,11 +84,13 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     }
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+    m_ops.clear();
     bool firstConnect = m_sessionState.m_firstConnect;
     m_sessionState = SessionState();
     m_sessionState.m_initialized = true;
     m_sessionState.m_firstConnect = firstConnect;
     COMMS_ASSERT(m_timerMgr.getMinWait() == 0U);
+    COMMS_ASSERT(m_timerMgr.allocCount() == 0U);
     return CC_Mqtt5ErrorCode_Success;
 }
 

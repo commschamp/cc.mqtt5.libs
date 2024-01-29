@@ -39,6 +39,7 @@ public:
     void test30();
     void test31();
     void test32();
+    void test33();
 
 private:
     virtual void setUp() override
@@ -2069,3 +2070,62 @@ void UnitTestConnect::test32()
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);   
 }
 
+void UnitTestConnect::test33()
+{
+    // Extra keep alive testing
+    auto* client = unitTestAllocAndInitClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    auto* tickReq = unitTestTickReq();
+    TS_ASSERT_DIFFERS(tickReq, nullptr);
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);    
+
+    unitTestTick();
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
+    TS_ASSERT(!unitTestIsDisconnected()); 
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_DIFFERS(tickReq, nullptr);
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);    
+
+    const unsigned PingDelay = 1;
+    unitTestTick(PingDelay);
+    UnitTestPingrespMsg pingrespMsg;
+    unitTestReceiveMessage(pingrespMsg);
+
+    tickReq = unitTestTickReq();
+    auto nextTickMs = UnitTestDefaultKeepAliveMs - PingDelay;
+    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);   
+
+    unitTestTick();
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
+    TS_ASSERT(!unitTestIsDisconnected());  
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_DIFFERS(tickReq, nullptr);
+    TS_ASSERT_EQUALS(tickReq->m_requested, PingDelay);   
+
+    unitTestTick(PingDelay);
+    TS_ASSERT(!unitTestHasSentMessage());
+    unitTestReceiveMessage(pingrespMsg);     
+    tickReq = unitTestTickReq();
+    TS_ASSERT_DIFFERS(tickReq, nullptr);
+    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);    
+
+    unitTestTick(6000);
+    unitTestInit(client);
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+
+    tickReq = unitTestTickReq();
+    TS_ASSERT_DIFFERS(tickReq, nullptr);
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);    
+}

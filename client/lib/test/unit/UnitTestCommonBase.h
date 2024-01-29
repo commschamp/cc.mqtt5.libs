@@ -133,6 +133,7 @@ protected:
     explicit UnitTestCommonBase(const LibFuncs& funcs);
 
     static constexpr unsigned UnitTestDefaultOpTimeoutMs = 2000;
+    static constexpr unsigned UnitTestDefaultKeepAliveMs = 60000;
 
     struct UnitTestUserProp
     {
@@ -482,6 +483,8 @@ protected:
     void unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data);    
 
 private:
+
+    void unitTestClearState();
 
     static void unitTestErrorLogCb(void* obj, const char* msg);
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);

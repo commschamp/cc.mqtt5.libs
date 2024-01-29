@@ -234,18 +234,7 @@ UnitTestCommonBase::UnitTestMessageInfo& UnitTestCommonBase::UnitTestMessageInfo
 void UnitTestCommonBase::unitTestSetUp()
 {
     test_assert(!m_client);
-    m_tickReq.clear();
-    m_sentData.clear();
-    m_receivedData.clear();
-    m_connectResp.clear();
-    m_subscribeResp.clear();
-    m_publishResp.clear();
-    m_reauthResp.clear();
-    m_inAuthInfo.clear();
-    m_outAuthInfo.clear();
-    m_userPropsTmp.clear();
-    m_disconnectInfo.clear();
-    m_disconnected = false;
+    unitTestClearState();
 }
 
 void UnitTestCommonBase::unitTestTearDown()
@@ -962,7 +951,11 @@ UnitTestCommonBase::UnitTestClientPtr UnitTestCommonBase::unitTestAlloc()
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestInit(CC_Mqtt5Client* client)
 {
     test_assert(m_funcs.m_init != nullptr);
-    return m_funcs.m_init(client);
+    auto ec = m_funcs.m_init(client);
+    if (ec == CC_Mqtt5ErrorCode_Success) {
+        unitTestClearState();
+    }
+    return ec;
 }
 
 bool UnitTestCommonBase::unitTestIsInitialized(CC_Mqtt5Client* client) const
@@ -1199,6 +1192,22 @@ void UnitTestCommonBase::unitTestSetBrokerDisconnectReportCb(CC_Mqtt5ClientHandl
 void UnitTestCommonBase::unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data)
 {
     return m_funcs.m_set_message_received_report_callback(handle, cb, data);
+}
+
+void UnitTestCommonBase::unitTestClearState()
+{
+    m_tickReq.clear();
+    m_sentData.clear();
+    m_receivedData.clear();
+    m_connectResp.clear();
+    m_subscribeResp.clear();
+    m_publishResp.clear();
+    m_reauthResp.clear();
+    m_inAuthInfo.clear();
+    m_outAuthInfo.clear();
+    m_userPropsTmp.clear();
+    m_disconnectInfo.clear();
+    m_disconnected = false;
 }
 
 void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)

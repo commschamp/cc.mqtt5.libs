@@ -111,6 +111,18 @@ unsigned TimerMgr::getMinWait() const
     return static_cast<unsigned>(std::min(result, std::uint64_t(std::numeric_limits<unsigned>::max())));
 }
 
+unsigned TimerMgr::allocCount() const
+{
+    return 
+        static_cast<unsigned>(
+            std::count_if(
+                m_timers.begin(), m_timers.end(), 
+                [](auto& info)
+                {
+                    return info.m_allocated;
+                }));
+}
+
 void TimerMgr::freeTimer(unsigned idx)
 {
     COMMS_ASSERT(idx < m_timers.size()); 

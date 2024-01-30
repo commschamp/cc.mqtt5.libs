@@ -133,7 +133,7 @@ void TimerMgr::freeTimer(unsigned idx)
     COMMS_ASSERT(m_allocatedTimers > 0U);
     auto& info = m_timers[idx];
     COMMS_ASSERT(info.m_allocated);
-    info.m_allocated = false;
+    info = TimerInfo();
     --m_allocatedTimers;
 }
 

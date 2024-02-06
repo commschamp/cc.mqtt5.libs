@@ -596,7 +596,7 @@
 /// CC_Mqtt5DisconnectConfig config;
 ///
 /// // Assign default values to the "config"
-/// client_disconnect_init_config(&config);
+/// cc_mqtt5_client_disconnect_init_config(&config);
 ///
 /// // Update the values if needed:
 /// config.m_reasonCode = CC_Mqtt5ReasonCode_DisconnectWithWill;
@@ -1179,7 +1179,8 @@
 ///
 /// When the "publish" operation completion callback is invoked the reported
 /// "response" information is present <b>if and only if</b> the "status" is
-/// @ref CC_Mqtt5AsyncOpStatus_Complete.
+/// @ref CC_Mqtt5AsyncOpStatus_Complete and the publish QoS was 1 (@ref CC_Mqtt5QoS_AtLeastOnceDelivery)
+/// or higher.
 ///
 /// When the callback reporting the publish status is invoked, it is responsibility
 /// of the application to check the @ref CC_Mqtt5PublishResponse::m_reasonCode value.

@@ -152,7 +152,7 @@ function (gen_lib_mqtt5_client config_file)
         src/ClientImpl.cpp
         src/TimerMgr.cpp
     )
-    add_library (${lib_name} STATIC ${src} ${src_output})
+    add_library (${lib_name} ${src} ${src_output})
     add_library (cc::${lib_name} ALIAS ${lib_name})
     target_link_libraries(${lib_name} PRIVATE cc::cc_mqtt5 cc::comms)
     target_include_directories(

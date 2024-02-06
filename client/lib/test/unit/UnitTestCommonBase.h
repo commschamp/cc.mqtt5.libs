@@ -28,7 +28,7 @@ public:
         bool (*m_is_network_disconnected)(CC_Mqtt5ClientHandle) = nullptr;
         CC_Mqtt5ErrorCode (*m_set_default_response_timeout)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
         unsigned (*m_get_default_response_timeout)(CC_Mqtt5ClientHandle) = nullptr;
-        CC_Mqtt5ErrorCode (*m_pub_topic_alias_alloc)(CC_Mqtt5ClientHandle, const char*, unsigned char) = nullptr;
+        CC_Mqtt5ErrorCode (*m_pub_topic_alias_alloc)(CC_Mqtt5ClientHandle, const char*, unsigned) = nullptr;
         CC_Mqtt5ErrorCode (*m_pub_topic_alias_free)(CC_Mqtt5ClientHandle, const char*) = nullptr;
         unsigned (*m_pub_topic_alias_count)(CC_Mqtt5ClientHandle) = nullptr;
         bool (*m_pub_topic_alias_is_allocated)(CC_Mqtt5ClientHandle, const char*) = nullptr;

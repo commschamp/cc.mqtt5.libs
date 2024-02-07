@@ -7,6 +7,7 @@
 
 #include "ClientImpl.h"
 
+#include "comms/cast.h"
 #include "comms/Assert.h"
 #include "comms/process.h"
 
@@ -84,11 +85,13 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     }
 
     terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+    m_ops.clear();
     bool firstConnect = m_sessionState.m_firstConnect;
     m_sessionState = SessionState();
     m_sessionState.m_initialized = true;
     m_sessionState.m_firstConnect = firstConnect;
     COMMS_ASSERT(m_timerMgr.getMinWait() == 0U);
+    COMMS_ASSERT(m_timerMgr.allocCount() == 0U);
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -526,7 +529,7 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
     return reauthOp;
 }
 
-CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount)
+CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, unsigned qos0RegsCount)
 {
     if constexpr (Config::HasTopicAliases) {
         if ((topic == nullptr) || (topic[0] == '\0')) {
@@ -554,6 +557,11 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
             return CC_Mqtt5ErrorCode_OutOfMemory;
         }
 
+        if (std::numeric_limits<std::uint8_t>::max() < qos0RegsCount) {
+            errorLog("The qos0RegsCount value is too high");
+            return CC_Mqtt5ErrorCode_BadParam;
+        }
+
         auto iter = 
             std::lower_bound(
                 m_sessionState.m_sendTopicAliases.begin(), m_sessionState.m_sendTopicAliases.end(), topic,
@@ -564,8 +572,8 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
 
         if ((iter != m_sessionState.m_sendTopicAliases.end()) && 
             (iter->m_topic == topic)) {
-            iter->m_lowQosRegCountRequest = qos0RegsCount;
-            iter->m_lowQosRegRemCount = qos0RegsCount;
+            comms::cast_assign(iter->m_lowQosRegCountRequest) = qos0RegsCount;
+            comms::cast_assign(iter->m_lowQosRegRemCount) = qos0RegsCount;
             iter->m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
             return CC_Mqtt5ErrorCode_Success;
         }
@@ -586,7 +594,7 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, std::uint8_t
         auto infoIter = m_sessionState.m_sendTopicAliases.insert(iter, TopicAliasInfo());
         infoIter->m_topic = topic;
         infoIter->m_alias = alias;
-        infoIter->m_lowQosRegRemCount = qos0RegsCount;
+        comms::cast_assign(infoIter->m_lowQosRegRemCount) = qos0RegsCount;
         return CC_Mqtt5ErrorCode_Success;
     }
     else {

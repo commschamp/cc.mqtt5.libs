@@ -73,7 +73,7 @@ public:
     op::SendOp* publishPrepare(CC_Mqtt5ErrorCode* ec);
     op::ReauthOp* reauthPrepare(CC_Mqtt5ErrorCode* ec);
     
-    CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, std::uint8_t qos0RegsCount);
+    CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, unsigned qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
     unsigned pubTopicAliasCount() const;
     bool pubTopicAliasIsAllocated(const char* topic) const;

@@ -8,7 +8,7 @@ set (COMMON_BASE_SRC
     "UnitTestCommonBase.cpp")
 
 
-add_library(${COMMON_BASE_LIB_NAME} ${COMMON_BASE_SRC})
+add_library(${COMMON_BASE_LIB_NAME} STATIC ${COMMON_BASE_SRC})
 target_link_libraries(${COMMON_BASE_LIB_NAME} PUBLIC cc::cc_mqtt5)
 target_include_directories(
     ${COMMON_BASE_LIB_NAME} 
@@ -37,7 +37,7 @@ if (TARGET cc::cc_mqtt5_client)
     set (DEFAULT_BASE_SRC 
         "UnitTestDefaultBase.cpp")    
 
-    add_library(${DEFAULT_BASE_LIB_NAME} ${DEFAULT_BASE_SRC})
+    add_library(${DEFAULT_BASE_LIB_NAME} STATIC ${DEFAULT_BASE_SRC})
     target_link_libraries(${DEFAULT_BASE_LIB_NAME} PUBLIC ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_client)
     target_include_directories(
         ${DEFAULT_BASE_LIB_NAME} INTERFACE
@@ -59,7 +59,7 @@ if (TARGET cc::cc_mqtt5_bm_client)
     set (BM_BASE_SRC 
         "UnitTestBmBase.cpp")    
 
-    add_library(${BM_BASE_LIB_NAME} ${BM_BASE_SRC})
+    add_library(${BM_BASE_LIB_NAME} STATIC ${BM_BASE_SRC})
     target_link_libraries(${BM_BASE_LIB_NAME} PUBLIC ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_bm_client)
     target_include_directories(
         ${BM_BASE_LIB_NAME} INTERFACE

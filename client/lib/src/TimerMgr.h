@@ -94,6 +94,7 @@ public:
     Timer allocTimer();
     void tick(unsigned ms);
     unsigned getMinWait() const;
+    unsigned allocCount() const;
 
 private:
     struct TimerInfo

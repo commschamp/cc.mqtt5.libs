@@ -165,7 +165,7 @@ unsigned cc_mqtt5_##NAME##client_get_default_response_timeout(CC_Mqtt5ClientHand
     return clientFromHandle(handle)->configState().m_responseTimeoutMs;
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned char qos0RegsCount)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHandle handle, const char* topic, unsigned qos0RegsCount)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;

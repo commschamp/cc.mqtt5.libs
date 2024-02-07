@@ -6,7 +6,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 set (COMMON_BASE_LIB_NAME "IntegrationTestCommonBase")
 set (COMMON_BASE_SRC "IntegrationTestCommonBase.cpp")
-add_library(${COMMON_BASE_LIB_NAME} ${COMMON_BASE_SRC})
+add_library(${COMMON_BASE_LIB_NAME} STATIC ${COMMON_BASE_SRC})
 target_link_libraries(${COMMON_BASE_LIB_NAME} PUBLIC cc::cc_mqtt5_client Boost::system Boost::boost)
 target_include_directories(
     ${COMMON_BASE_LIB_NAME} INTERFACE

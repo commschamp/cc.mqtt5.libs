@@ -21,7 +21,7 @@ extern "C" {
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 2U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 3U
 
 /// @brief Patch level of the library
 /// @ingroup global

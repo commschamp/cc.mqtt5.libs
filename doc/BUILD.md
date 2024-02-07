@@ -32,14 +32,18 @@ The default and minimal required C++ standard version to build this project is *
 is possible to increase it using the **CMAKE_CXX_STANDARD** cmake variable.
 
 ## Building as Shared Library
-By default the library is built as static one. It is possible to built it as a shared library
+By default the library is built as static one. It is possible to build it as a shared library
 by using the built-in **BUILD_SHARED_LIBS** cmake option
 
-## Forcing Pisition Independent Code
+## Forcing Position Independent Code
 When the library is built as **shared** one then the position independent code is enabled
-automatically. However, when the library built as **static**, but becomes part of 
-some other shared library, then enabling the position independent code may be required.
-Use standard **CMAKE_POSITION_INDEPENDENT_CODE** cmake variable to enable it.
+automatically. However, when the library built as **static**, but will become part of
+some other shared library, then forcefully enabling the position independent code may be required.
+Use provided **CC_MQTT5_CLIENT_LIB_FORCE_PIC** cmake option to enable it.
+
+Note that it is also possible to force position independent code using global
+**CMAKE_POSITION_INDEPENDENT_CODE** variable set to **ON**. In such case all the
+application will also be compiled with position independent code.
 
 ## Examples of Build and Install
 The examples below are Linux/Unix system oriented, i.e. they use **make** utility
@@ -82,8 +86,9 @@ $> cmake --build . --config Release --target install
 ### Build Static Library With Position Independent Code
 ```
 $> mkdir build && cd build
-$> cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-    -DCMAKE_PREFIX_PATH=/path/to/comms/install\;/path/to/cc.mqtt5.generated/install
+$> cmake .. -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=/path/to/comms/install\;/path/to/cc.mqtt5.generated/install \
+    -DCC_MQTT5_CLIENT_LIB_FORCE_PIC=ON
 $> cmake --build . --config Release --target install
 ```
 

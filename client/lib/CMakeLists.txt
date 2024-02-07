@@ -170,6 +170,10 @@ function (gen_lib_mqtt5_client config_file)
     )
     add_dependencies(${lib_name} ${header_tgt_name} ${src_tgt_name} ${config_tgt_name} ${prot_opts_tgt_name})
 
+    if (CC_MQTT5_CLIENT_LIB_FORCE_PIC)
+        set_property(TARGET ${lib_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    endif ()
+
     file (READ "${CMAKE_CURRENT_SOURCE_DIR}/include/cc_mqtt5_client/common.h" version_file)
     string (REGEX MATCH "CC_MQTT5_CLIENT_MAJOR_VERSION ([0-9]*)U*" _ ${version_file})
     set (major_ver ${CMAKE_MATCH_1})

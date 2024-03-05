@@ -19,7 +19,7 @@
 
 #include <cstdint>
 
-static_assert(CC_MQTT5_VERSION <= COMMS_MAKE_VERSION(2, 5, 0), 
+static_assert(CC_MQTT5_VERSION <= COMMS_MAKE_VERSION(2, 6, 0), 
     "The version of the cc_mqtt5 library is too low.");
 
 namespace cc_mqtt5_client

@@ -1474,6 +1474,16 @@
 ///     The information passed in the @b DISCONNECT message is used to populate reported
 ///     disconnection information.
 ///
+/// @subsection cc_mqtt5_client_unsolicited_disconnect_keep_alive Keep Alive Timeout
+/// When there was no message from the broker for the "keep alive" timeout (configured during the @ref connect "connect"
+/// operation) and the broker doesn't respond to the @b PING message.
+/// In such case the library responds in the following way:
+/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations passing
+/// the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
+/// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
+///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     without any disconnection information.
+///
 /// @subsection cc_mqtt5_client_unsolicited_disconnect_protocol_error Detecting Protocol Error
 /// In case the broker doesn't fully comply with the MQTT5 specification or there is
 /// some unexpected data corruption the library responds in the following way:

@@ -168,6 +168,7 @@ void KeepAliveOp::sendPing()
 
 void KeepAliveOp::pingTimeoutInternal()
 {
+    errorLog("The broker did not respond to PING");
     COMMS_ASSERT(!m_respTimer.isActive());
     sendDisconnectWithReason(DisconnectReason::KeepAliveTimeout);
     client().notifyDisconnected(true);

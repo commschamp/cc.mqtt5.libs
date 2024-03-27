@@ -342,13 +342,15 @@ typedef struct
     unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.
 } CC_Mqtt5AuthInfo;
 
+/// @brief Broker disconnection information
+/// @ingroup global
 typedef struct
 {
-    CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_reasonStr;
-    const char* m_serverRef;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;      
+    CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" reported by the broker
+    const char* m_reasonStr; ///< "Reason String" property, NULL if not reported
+    const char* m_serverRef; ///< "Server Reference" property, NULL if not reported
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.  
 } CC_Mqtt5DisconnectInfo;
 
 /// @brief Configuration structure of the "disconnect" operation.
@@ -503,6 +505,9 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Callback used to report unsolicited disconnection of the broker.
+/// @details When invoked the "info" is present <b>if and only if</b> the 
+///     broker disconnection report is due to the reception of the @b DISCONNECT
+///     message from the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
 /// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 

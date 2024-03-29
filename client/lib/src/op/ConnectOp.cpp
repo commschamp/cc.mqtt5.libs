@@ -711,7 +711,7 @@ void ConnectOp::handle(ConnackMsg& msg)
         state.m_highQosSendLimit = std::min(state.m_highQosSendLimit, Config::SendMaxLimit);
     }
 
-    client().notifyConnected();
+    client().brokerConnected(response.m_sessionPresent);
 }
 
 void ConnectOp::handle(DisconnectMsg& msg)
@@ -751,7 +751,7 @@ void ConnectOp::handle(DisconnectMsg& msg)
     completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     // No members access after this point, the op will be deleted    
 
-    cl.notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
+    cl.brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
 }
 
 void ConnectOp::handle(AuthMsg& msg)

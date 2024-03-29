@@ -84,7 +84,7 @@ CC_Mqtt5ErrorCode DisconnectOp::send()
     auto& clientObj = client();
     clientObj.sendMessage(m_disconnectMsg);
     opComplete(); // No members access after this point, the op will be deleted
-    clientObj.notifyDisconnected(false);
+    clientObj.brokerDisconnected(false);
     return CC_Mqtt5ErrorCode_Success;
 }
 

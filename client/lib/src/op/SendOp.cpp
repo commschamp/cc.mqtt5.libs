@@ -628,6 +628,14 @@ CC_Mqtt5ErrorCode SendOp::cancel()
     return CC_Mqtt5ErrorCode_Success;
 }
 
+void SendOp::postReconnectionResend()
+{
+    assert(m_sendAttempts > 0U);
+    --m_sendAttempts;
+    m_responseTimer.cancel();
+    responseTimeoutInternal(); // Emulating timeout will resend the message again with DUP flag (if needed).
+}
+
 Op::Type SendOp::typeImpl() const
 {
     return Type_Send;

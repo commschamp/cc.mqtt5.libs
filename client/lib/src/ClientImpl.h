@@ -135,8 +135,11 @@ public:
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
     void doApiGuard();
-    void notifyConnected();
-    void notifyDisconnected(bool reportDisconnection, CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, const CC_Mqtt5DisconnectInfo* info = nullptr);
+    void brokerConnected(bool sessionPresent);
+    void brokerDisconnected(
+        bool reportDisconnection, 
+        CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
+        const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
 
     TimerMgr& timerMgr()
@@ -205,10 +208,17 @@ private:
     using OpToDeletePtrsList = ObjListType<const op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
+    enum TerminateMode
+    {
+        TerminateMode_KeepSendRecvOps,
+        TerminateMode_AbortSendRecvOps,
+        TerminateMode_NumOfValues
+    };
+
     void doApiEnter();
     void doApiExit();
     void createKeepAliveOpIfNeeded();
-    void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
+    void terminateOps(CC_Mqtt5AsyncOpStatus status, TerminateMode mode);
     void cleanOps();
     void errorLogInternal(const char* msg);
     void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);

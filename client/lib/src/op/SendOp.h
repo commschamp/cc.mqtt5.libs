@@ -59,6 +59,7 @@ public:
     unsigned getResendAttempts() const;
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
+    void postReconnectionResend();
 
 protected:
     virtual Type typeImpl() const override;    

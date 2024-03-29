@@ -51,7 +51,7 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 ClientImpl::~ClientImpl()
 {
     COMMS_ASSERT(m_apiEnterCount == 0U);
-    terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+    terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_AbortSendRecvOps);
 }
 
 CC_Mqtt5ErrorCode ClientImpl::init()
@@ -84,7 +84,7 @@ CC_Mqtt5ErrorCode ClientImpl::init()
         }
     }
 
-    terminateAllOps(CC_Mqtt5AsyncOpStatus_Aborted);
+    terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
     m_ops.clear();
     bool firstConnect = m_sessionState.m_firstConnect;
     m_sessionState = SessionState();
@@ -118,7 +118,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
             [this, &disconnectReason]()
             {
                 sendDisconnectMsg(disconnectReason);    
-                notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
+                brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
             });
 
     unsigned consumed = 0;
@@ -728,7 +728,7 @@ void ClientImpl::handle(PublishMsg& msg)
     } while (false);
 
     if (disconnectSent) {
-        notifyDisconnected(true);
+        brokerDisconnected(true);
         return;
     }
 }
@@ -936,19 +936,44 @@ void ClientImpl::doApiGuard()
     auto guard = apiEnter();
 }
 
-void ClientImpl::notifyConnected()
+void ClientImpl::brokerConnected(bool sessionPresent)
 {
     m_sessionState.m_connected = true;
-    createKeepAliveOpIfNeeded();
+
+    do {
+        if (sessionPresent) {
+            for (auto& sendOpPtr : m_sendOps) {
+                sendOpPtr->postReconnectionResend();
+            }            
+
+            break;
+        }
+
+        // Old stored session, terminate pending ops
+        for (auto* op : m_ops) {
+            auto opType = op->type();
+            if ((opType != op::Op::Type::Type_Send) && 
+                (opType != op::Op::Type::Type_Recv)) {
+                continue;
+            }
+
+            op->terminateOp(CC_Mqtt5AsyncOpStatus_Aborted);
+        }
+    } while (false);
+
+    createKeepAliveOpIfNeeded();    
 }
 
-void ClientImpl::notifyDisconnected(bool reportDisconnection, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5DisconnectInfo* info)
+void ClientImpl::brokerDisconnected(
+    bool reportDisconnection, 
+    CC_Mqtt5AsyncOpStatus status, 
+    const CC_Mqtt5DisconnectInfo* info)
 {
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
     m_sessionState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
-    terminateAllOps(status);
+    terminateOps(status, TerminateMode_KeepSendRecvOps);
 
     if (reportDisconnection) {
         COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);
@@ -1016,13 +1041,23 @@ void ClientImpl::createKeepAliveOpIfNeeded()
     m_keepAliveOps.push_back(std::move(ptr));
 }
 
-void ClientImpl::terminateAllOps(CC_Mqtt5AsyncOpStatus status)
+void ClientImpl::terminateOps(CC_Mqtt5AsyncOpStatus status, TerminateMode mode)
 {
     m_sessionState.m_terminating = true;
     for (auto* op : m_ops) {
-        if (op != nullptr) {
-            op->terminateOp(status);
+        if (op == nullptr) {
+            continue;
         }
+
+        if (mode == TerminateMode_KeepSendRecvOps) {
+            auto opType = op->type();
+
+            if ((opType == op::Op::Type_Recv) || (opType == op::Op::Type_Send)) {
+                continue;
+            }
+        }
+
+        op->terminateOp(status);
     }
 }
 

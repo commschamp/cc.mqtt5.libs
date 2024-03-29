@@ -134,7 +134,7 @@ void Op::sendDisconnectWithReason(DisconnectReason reason)
 void Op::terminationWithReasonStatic(ClientImpl& client, DisconnectReason reason)
 {
     sendDisconnectWithReason(client, reason);
-    client.notifyDisconnected(true);
+    client.brokerDisconnected(true);
 }
 
 void Op::terminationWithReason(DisconnectReason reason)

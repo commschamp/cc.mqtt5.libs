@@ -60,7 +60,7 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
     if (!msg.doValid()) {
         // Required by the [MQTT-3.14.1-1] clause of the spec
         sendDisconnectWithReason(client(), DisconnectReason::MalformedPacket);
-        client().notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+        client().brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
         return;
     }
 
@@ -94,7 +94,7 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
         }        
     }
 
-    client().notifyDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
+    client().brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
     // No members access after this point, the op will be deleted    
 }
 
@@ -171,13 +171,13 @@ void KeepAliveOp::pingTimeoutInternal()
     errorLog("The broker did not respond to PING");
     COMMS_ASSERT(!m_respTimer.isActive());
     sendDisconnectWithReason(DisconnectReason::KeepAliveTimeout);
-    client().notifyDisconnected(true);
+    client().brokerDisconnected(true);
 }
 
 void KeepAliveOp::sessionExpiryTimeoutInternal()
 {
     COMMS_ASSERT(!m_sessionExpiryTimer.isActive());
-    client().notifyDisconnected(true);
+    client().brokerDisconnected(true);
 }
 
 void KeepAliveOp::sendPingCb(void* data)

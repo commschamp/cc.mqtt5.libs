@@ -484,7 +484,7 @@ protected:
 
 private:
 
-    void unitTestClearState();
+    void unitTestClearState(bool preserveTicks = false);
 
     static void unitTestErrorLogCb(void* obj, const char* msg);
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);

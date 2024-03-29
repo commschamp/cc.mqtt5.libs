@@ -2542,7 +2542,7 @@ void UnitTestPublish::test34()
 void UnitTestPublish::test35()
 {
     // Testing preserving of the PUBLISH (QoS1) operation after the broker disconnection.
-    // [MQTT-4.6.0-1]
+    // [MQTT-4.4.0-1]
 
     auto* client = unitTestAllocAndInitClient();
 
@@ -2585,6 +2585,7 @@ void UnitTestPublish::test35()
 
     ec = unitTestInit(client);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    TS_ASSERT(unitTestCheckNoTicks()); 
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -2623,7 +2624,7 @@ void UnitTestPublish::test35()
 void UnitTestPublish::test36()
 {
     // Testing preserving of the PUBLISH (QoS2) operation after the broker disconnection.
-    // [MQTT-4.6.0-1]
+    // [MQTT-4.4.0-1]
 
     auto* client = unitTestAllocAndInitClient();
 
@@ -2658,7 +2659,7 @@ void UnitTestPublish::test36()
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     auto packetId1 = publishMsg->field_packetId().field().value();
 
-    unitTestTick(1000);
+    unitTestTick(100);
     unitTestNotifyNetworkDisconnected(client, true);
     TS_ASSERT(unitTestIsDisconnected());
     TS_ASSERT(!unitTestIsPublishComplete());
@@ -2666,6 +2667,7 @@ void UnitTestPublish::test36()
 
     ec = unitTestInit(client);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    TS_ASSERT(unitTestCheckNoTicks()); 
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -2716,7 +2718,7 @@ void UnitTestPublish::test36()
 void UnitTestPublish::test37()
 {
     // Testing preserving of the PUBLISH (QoS2) operation after the broker disconnection and after reception of PUBREC.
-    // [MQTT-4.6.0-1]
+    // [MQTT-4.4.0-1]
 
     auto* client = unitTestAllocAndInitClient();
 
@@ -2771,6 +2773,7 @@ void UnitTestPublish::test37()
 
     ec = unitTestInit(client);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    TS_ASSERT(unitTestCheckNoTicks()); 
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();

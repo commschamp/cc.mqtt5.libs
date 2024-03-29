@@ -612,7 +612,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     test_assert(!unitTestIsConnectComplete());    
 
     auto* tickReq = unitTestTickReq();
-    test_assert(tickReq->m_requested == UnitTestDefaultOpTimeoutMs);    
+    test_assert(tickReq->m_requested <= UnitTestDefaultOpTimeoutMs);    
 
     if (authConfig != nullptr) {
         const UnitTestData AuthData = {0x11, 0x22, 0x33, 0x44};
@@ -953,7 +953,7 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestInit(CC_Mqtt5Client* client)
     test_assert(m_funcs.m_init != nullptr);
     auto ec = m_funcs.m_init(client);
     if (ec == CC_Mqtt5ErrorCode_Success) {
-        unitTestClearState();
+        unitTestClearState(true);
     }
     return ec;
 }
@@ -1194,9 +1194,11 @@ void UnitTestCommonBase::unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle
     return m_funcs.m_set_message_received_report_callback(handle, cb, data);
 }
 
-void UnitTestCommonBase::unitTestClearState()
+void UnitTestCommonBase::unitTestClearState(bool preserveTicks)
 {
-    m_tickReq.clear();
+    if (!preserveTicks) {
+        m_tickReq.clear();
+    }
     m_sentData.clear();
     m_receivedData.clear();
     m_connectResp.clear();

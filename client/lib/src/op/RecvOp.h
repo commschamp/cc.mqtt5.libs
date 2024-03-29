@@ -36,6 +36,7 @@ public:
     }
 
     void reset();
+    void postReconnectionResume();
 
 protected:
     virtual Type typeImpl() const override;    

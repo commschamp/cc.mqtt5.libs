@@ -448,6 +448,11 @@ void RecvOp::reset()
     m_info = CC_Mqtt5MessageInfo();
 }
 
+void RecvOp::postReconnectionResume()
+{
+    networkConnectivityChangedImpl();
+}
+
 Op::Type RecvOp::typeImpl() const
 {
     return Type_Recv;

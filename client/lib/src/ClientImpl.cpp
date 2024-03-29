@@ -942,7 +942,11 @@ void ClientImpl::brokerConnected(bool sessionPresent)
         if (sessionPresent) {
             for (auto& sendOpPtr : m_sendOps) {
                 sendOpPtr->postReconnectionResend();
-            }            
+            }  
+
+            for (auto& recvOpPtr : m_recvOps) {
+                recvOpPtr->postReconnectionResume();
+            }                       
 
             break;
         }

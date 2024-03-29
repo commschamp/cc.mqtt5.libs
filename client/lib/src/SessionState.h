@@ -21,7 +21,6 @@ namespace cc_mqtt5_client
 
 struct SessionState
 {
-    using PacketIdsList = ObjListType<std::uint16_t, ExtConfig::PacketIdsLimit>;
     using AuthMethodStorageType = ConnectMsg::Field_properties::ValueType::value_type::Field_authMethod::Field_value::ValueType;
 
     static constexpr unsigned DefaultKeepAlive = 60;
@@ -40,9 +39,7 @@ struct SessionState
     unsigned m_maxSendTopicAlias = 0U;
     unsigned m_maxRecvPacketSize = 0U;
     unsigned m_maxSendPacketSize = 0U;
-    PacketIdsList m_allocatedPacketIds;
     CC_Mqtt5QoS m_pubMaxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
-    std::uint16_t m_lastPacketId = 0U;
     bool m_problemInfoAllowed = false;
     bool m_initialized = false;
     bool m_connected = false;
@@ -51,8 +48,6 @@ struct SessionState
     bool m_subIdsAvailable = false;
     bool m_retainAvailable = false;
     bool m_sharedSubsAvailable = false;
-    bool m_firstConnect = true;
-    bool m_networkDisconnected = false;
 };
 
 } // namespace cc_mqtt5_client

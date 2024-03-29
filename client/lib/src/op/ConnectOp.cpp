@@ -45,7 +45,7 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((!config.m_cleanStart) && (client().sessionState().m_firstConnect)) {
+    if ((!config.m_cleanStart) && (client().clientState().m_firstConnect)) {
         errorLog("Clean start flag needs to be set on the first connection attempt");
         return CC_Mqtt5ErrorCode_BadParam;
     }
@@ -480,7 +480,7 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return CC_Mqtt5ErrorCode_InternalError;
     }    
 
-    if ((!m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) && (client().sessionState().m_firstConnect)) {
+    if ((!m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) && (client().clientState().m_firstConnect)) {
         errorLog("Clean start flag needs to be set on the first connection attempt, perform configuration first.");
         return CC_Mqtt5ErrorCode_InsufficientConfig;
     }    
@@ -704,7 +704,6 @@ void ConnectOp::handle(ConnackMsg& msg)
     state.m_subIdsAvailable = response.m_subIdsAvailable;
     state.m_retainAvailable = response.m_retainAvailable;
     state.m_sharedSubsAvailable = response.m_sharedSubsAvailable;
-    state.m_firstConnect = false;
     state.m_problemInfoAllowed = m_requestProblemInfo;
 
     if constexpr (Config::SendMaxLimit > 0U) {
@@ -964,7 +963,7 @@ void ConnectOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 
 void ConnectOp::networkConnectivityChangedImpl()
 {
-    if (client().sessionState().m_networkDisconnected) {
+    if (client().clientState().m_networkDisconnected) {
         completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
         return;
     }

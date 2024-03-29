@@ -455,7 +455,7 @@ Op::Type RecvOp::typeImpl() const
 
 void RecvOp::networkConnectivityChangedImpl()
 {
-    m_responseTimer.setSuspended(client().sessionState().m_networkDisconnected);
+    m_responseTimer.setSuspended(client().clientState().m_networkDisconnected);
 }
 
 void RecvOp::restartResponseTimer()

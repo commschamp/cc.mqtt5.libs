@@ -435,7 +435,7 @@ protected:
     UnitTestClientPtr unitTestAlloc();
     CC_Mqtt5ErrorCode unitTestInit(CC_Mqtt5Client* client);
     bool unitTestIsInitialized(CC_Mqtt5Client* client) const;
-    void unitTestNotifyClientDisconnected(CC_Mqtt5Client* client, bool disconnected);
+    void unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected);
     bool unitTestIsNetworkDisconnected(CC_Mqtt5Client* client);
     CC_Mqtt5ErrorCode unitTestSetDefaultResponseTimeout(CC_Mqtt5Client* client, unsigned ms);
     CC_Mqtt5ErrorCode unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount);

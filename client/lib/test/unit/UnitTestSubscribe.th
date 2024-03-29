@@ -400,20 +400,20 @@ void UnitTestSubscribe::test5()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsSubscribeComplete());
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000);
-    unitTestNotifyClientDisconnected(client, false);
+    unitTestNotifyNetworkDisconnected(client, false);
     TS_ASSERT(!unitTestIsSubscribeComplete());
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout - 1000); // Resuming SUBACK timer
 
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
 
     TS_ASSERT(!unitTestIsSubscribeComplete());
     tickReq = unitTestTickReq();

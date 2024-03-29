@@ -899,7 +899,7 @@ void UnitTestConnect::test10()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
 
     unitTestTick(1000);
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
 
     TS_ASSERT(unitTestIsConnectComplete());
     auto& connackInfo = unitTestConnectResponseInfo();
@@ -928,19 +928,19 @@ void UnitTestConnect::test11()
 
     unitTestTick(10000); // 10 seconds
 
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000); // 5 seconds
-    unitTestNotifyClientDisconnected(client, false);
+    unitTestNotifyNetworkDisconnected(client, false);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 50000); // Remaining period of the keep alive
 
     unitTestTick(45000); // 45 seconds
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
@@ -1238,7 +1238,7 @@ void UnitTestConnect::test16()
     TS_ASSERT(!unitTestIsConnected(client));
 
     TS_ASSERT(unitTestCheckNoTicks());
-    unitTestNotifyClientDisconnected(client, true); 
+    unitTestNotifyNetworkDisconnected(client, true); 
 }
 
 void UnitTestConnect::test17()
@@ -1363,7 +1363,7 @@ void UnitTestConnect::test20()
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
     TS_ASSERT(!unitTestIsConnected(client));
     TS_ASSERT(!unitTestIsNetworkDisconnected(client));
-    unitTestNotifyClientDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client, true);
     TS_ASSERT(unitTestIsNetworkDisconnected(client));
     [[maybe_unused]] auto ec = unitTestInit(client);
     TS_ASSERT(!unitTestIsNetworkDisconnected(client));

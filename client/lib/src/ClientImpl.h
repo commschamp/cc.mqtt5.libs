@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "ClientState.h"
 #include "ConfigState.h"
 #include "ExtConfig.h"
 #include "ObjAllocator.h"
@@ -152,6 +153,11 @@ public:
         return m_configState;
     }
 
+    ClientState& clientState()
+    {
+        return m_clientState;
+    }    
+
     SessionState& sessionState()
     {
         return m_sessionState;
@@ -253,6 +259,7 @@ private:
     void* m_errorLogData = nullptr;
 
     ConfigState m_configState;
+    ClientState m_clientState;
     SessionState m_sessionState;
     ReuseState m_reuseState;
 

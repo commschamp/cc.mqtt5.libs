@@ -85,13 +85,9 @@ CC_Mqtt5ErrorCode ClientImpl::init()
     }
 
     terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
-    m_ops.clear();
-    bool firstConnect = m_sessionState.m_firstConnect;
     m_sessionState = SessionState();
     m_sessionState.m_initialized = true;
-    m_sessionState.m_firstConnect = firstConnect;
-    COMMS_ASSERT(m_timerMgr.getMinWait() == 0U);
-    COMMS_ASSERT(m_timerMgr.allocCount() == 0U);
+    m_clientState.m_networkDisconnected = false;
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -106,9 +102,10 @@ void ClientImpl::tick(unsigned ms)
 unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 {
     auto guard = apiEnter();
-    COMMS_ASSERT(!m_sessionState.m_networkDisconnected);
+    COMMS_ASSERT(!m_clientState.m_networkDisconnected);
     
-    if (m_sessionState.m_networkDisconnected) {
+    if (m_clientState.m_networkDisconnected) {
+        errorLog("Incoming data when network is disconnected");
         return 0U;
     }
 
@@ -183,7 +180,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
 void ClientImpl::notifyNetworkDisconnected(bool disconnected)
 {
     auto guard = apiEnter();
-    m_sessionState.m_networkDisconnected = disconnected;
+    m_clientState.m_networkDisconnected = disconnected;
     if (disconnected) {
         for (auto& aliasInfo : m_sessionState.m_sendTopicAliases) {
             aliasInfo.m_lowQosRegRemCount = aliasInfo.m_lowQosRegCountRequest;
@@ -200,7 +197,7 @@ void ClientImpl::notifyNetworkDisconnected(bool disconnected)
 
 bool ClientImpl::isNetworkDisconnected() const
 {
-    return m_sessionState.m_networkDisconnected;
+    return m_clientState.m_networkDisconnected;
 }
 
 op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
@@ -232,7 +229,7 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }        
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -288,7 +285,7 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -338,7 +335,7 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -388,7 +385,7 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -438,7 +435,7 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -495,7 +492,7 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_networkDisconnected) {
+        if (m_clientState.m_networkDisconnected) {
             errorLog("Network is disconnected.");
             updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
             break;            
@@ -938,6 +935,7 @@ void ClientImpl::doApiGuard()
 
 void ClientImpl::brokerConnected(bool sessionPresent)
 {
+    m_clientState.m_firstConnect = false;
     m_sessionState.m_connected = true;
 
     do {

@@ -964,7 +964,7 @@ bool UnitTestCommonBase::unitTestIsInitialized(CC_Mqtt5Client* client) const
     return m_funcs.m_is_initialized(client);
 }
 
-void UnitTestCommonBase::unitTestNotifyClientDisconnected(CC_Mqtt5Client* client, bool disconnected)
+void UnitTestCommonBase::unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected)
 {
     m_funcs.m_notify_network_disconnected(client, disconnected);
 }

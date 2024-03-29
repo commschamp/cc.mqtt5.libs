@@ -324,7 +324,7 @@ void SubscribeOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 
 void SubscribeOp::networkConnectivityChangedImpl()
 {
-    m_timer.setSuspended(client().sessionState().m_networkDisconnected);
+    m_timer.setSuspended(client().clientState().m_networkDisconnected);
 }
 
 void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)

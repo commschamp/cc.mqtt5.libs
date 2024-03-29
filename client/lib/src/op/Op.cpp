@@ -66,7 +66,7 @@ void Op::doApiGuard()
 std::uint16_t Op::allocPacketId()
 {
     static constexpr auto MaxPacketId = std::numeric_limits<std::uint16_t>::max();
-    auto& allocatedPacketIds = m_client.sessionState().m_allocatedPacketIds;
+    auto& allocatedPacketIds = m_client.clientState().m_allocatedPacketIds;
 
     if ((allocatedPacketIds.max_size() <= allocatedPacketIds.size()) || 
         (MaxPacketId <= allocatedPacketIds.size())) {
@@ -74,7 +74,7 @@ std::uint16_t Op::allocPacketId()
         return 0U;
     }
 
-    auto& lastPacketId = m_client.sessionState().m_lastPacketId;
+    auto& lastPacketId = m_client.clientState().m_lastPacketId;
     auto nextPacketId = static_cast<std::uint16_t>(lastPacketId + 1U);
 
     if (nextPacketId == 0U) {
@@ -106,7 +106,7 @@ void Op::releasePacketId(std::uint16_t id)
         return;
     }
     
-    auto& allocatedPacketIds = m_client.sessionState().m_allocatedPacketIds;
+    auto& allocatedPacketIds = m_client.clientState().m_allocatedPacketIds;
     auto iter = std::lower_bound(allocatedPacketIds.begin(), allocatedPacketIds.end(), id);
     if ((iter == allocatedPacketIds.end()) || (*iter != id)) {
         [[maybe_unused]] static constexpr bool ShouldNotHappen = false;

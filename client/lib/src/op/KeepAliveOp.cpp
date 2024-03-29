@@ -110,7 +110,7 @@ Op::Type KeepAliveOp::typeImpl() const
 
 void KeepAliveOp::networkConnectivityChangedImpl()
 {
-    bool networkDisconnected = client().sessionState().m_networkDisconnected;
+    bool networkDisconnected = client().clientState().m_networkDisconnected;
     m_pingTimer.setSuspended(networkDisconnected);
     m_recvTimer.setSuspended(networkDisconnected);
     m_respTimer.setSuspended(networkDisconnected);

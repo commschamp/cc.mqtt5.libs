@@ -3,12 +3,12 @@
 /// @section cc_mqtt5_client_overview Overview
 /// The <b>MQTT5 Client Library</b> from the <a href="https://commschamp.github.io/">CommsChampion Ecosystem</a>
 /// provides simple, asynchronous, non-blocking,
-/// and easy to use interface to operate MQTT5 client. The library doesn't
+/// and easy to use interface to operate MQTT v5 client. The library doesn't
 /// make any assumption on the system it is running on, as well as on the type
-/// of I/O link being used to communicate its data to the MQTT5 capable broker.
+/// of I/O link being used to communicate its data to the MQTT v5 capable broker.
 ///
 /// It is a responsibility of the calling application to manage network connectivity
-/// as well as measure time required for the correct operation of the MQTT5 protocol.
+/// as well as measure time required for the correct operation of the MQTT v5 protocol.
 ///
 /// The library allows the application to have a full control over the raw data for
 /// any extra analysis and/or manipulation, such as encryption.
@@ -27,7 +27,7 @@
 /// @endcode
 ///
 /// @section cc_mqtt5_client_allocation Client Allocation
-/// The library supports multiple independent MQTT5 client sessions. The
+/// The library supports multiple independent MQTT v5 client sessions. The
 /// allocation of data structures relevant to a single client is performed
 /// using cc_mqtt5_client_alloc() function.
 /// @code
@@ -122,7 +122,7 @@
 /// See also the documentation of the @ref CC_Mqtt5MessageReceivedReportCb callback function definition.
 ///
 /// @section cc_mqtt5_client_time Time Measurement
-/// For the correct operation of the MQTT5 client side of the protocol, the library
+/// For the correct operation of the MQTT v5 client side of the protocol, the library
 /// requires an ability to measure time. This responsibility is delegated to the
 /// application.
 ///
@@ -203,7 +203,7 @@
 /// it is necessary to perform re-initialization of the library to be able to re-connect
 /// to the broker and continue operation.
 ///
-/// @b IMPORTANT: According to the MQTT5 specification, when broker disconnection is reported, the
+/// @b IMPORTANT: According to the MQTT v5 specification, when broker disconnection is reported, the
 /// client needs to close network connection. It is a responsibility of the application to do so.
 ///
 /// In other words, after the broker disconnection is reported the application is responsible to
@@ -253,7 +253,7 @@
 /// the old and programming new tick timeout.
 ///
 /// @section cc_mqtt5_client_concepts Operating Concepts
-/// The library abstracts away multiple MQTT5 protocol based "operations". Every such operation
+/// The library abstracts away multiple MQTT v5 protocol based "operations". Every such operation
 /// has multiple stages:
 /// @li @b prepare - The operation is "allocated" and relevant handle is returned.
 /// @li @b configure - Apply one or multiple configurations to the prepared operation.
@@ -324,7 +324,7 @@
 /// To retrieve the configured response timeout use the @b cc_mqtt5_client_connect_get_response_timeout() function.
 ///
 /// @subsection cc_mqtt5_client_connect_basic Basic Configuration of "Connect" Operation
-/// The "basic" configuration means no extra MQTT5 properties assigned to the message.
+/// The "basic" configuration means no extra MQTT v5 properties assigned to the message.
 /// @code
 /// CC_Mqtt5ConnectBasicConfig basicConfig;
 ///
@@ -343,7 +343,7 @@
 /// }
 /// @endcode
 ///
-/// **IMPORTANT**: MQTT5 specification allows reconnection to the broker while
+/// **IMPORTANT**: MQTT v5 specification allows reconnection to the broker while
 /// requesting previous session restoration (via "clean start" bit). To prevent
 /// potential errors of the client and broker inner states being out of sync, the
 /// @b first "connect" operation requires setting the @ref CC_Mqtt5ConnectBasicConfig::m_cleanStart
@@ -379,9 +379,9 @@
 /// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_will() function
 /// mustn't be called more than once for a single "connect" operation. Otherwise
 /// it may result in setting multiple will properties of the same type, which
-/// is the "Protocol Error" according to the MQTT5 specification.
+/// is the "Protocol Error" according to the MQTT v5 specification.
 ///
-/// The MQTT5 specification allows adding several "User Properties" specific to
+/// The MQTT v5 specification allows adding several "User Properties" specific to
 /// the will. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_connect_add_will_user_prop() function.
 /// @code
@@ -397,7 +397,7 @@
 /// See also documentation of the @ref CC_Mqtt5UserProp structure.
 ///
 /// @subsection cc_mqtt5_client_connect_extra Extra Properties Configuration
-/// To add extra MQTT5 specific properties to the connection request use
+/// To add extra MQTT v5 specific properties to the connection request use
 /// @b cc_mqtt5_client_connect_config_extra() function.
 /// @code
 /// CC_Mqtt5ConnectExtraConfig extraConfig;
@@ -421,7 +421,7 @@
 /// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_extra() function
 /// mustn't be called more than once for a single "connect" operation. Otherwise
 /// it may result in setting multiple properties of the same type, which
-/// is the "Protocol Error" according to the MQTT5 specification.
+/// is the "Protocol Error" according to the MQTT v5 specification.
 ///
 /// @subsection cc_mqtt5_client_connect_auth Extended Authentication Handshake Configuration
 /// In case the extended authentication handshake is needed use @b cc_mqtt5_client_connect_config_auth() function.
@@ -472,10 +472,10 @@
 /// @b IMPORTANT: The @b cc_mqtt5_client_connect_config_auth() function
 /// mustn't be called more than once for a single "connect" operation. Otherwise
 /// it may result in setting multiple properties of the same type, which
-/// is the "Protocol Error" according to the MQTT5 specification.
+/// is the "Protocol Error" according to the MQTT v5 specification.
 ///
 /// @subsection cc_mqtt5_client_connect_user_prop Adding "User Properties"
-/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// The MQTT v5 specification allows attaching any number of the "User Properties" to
 /// the @b CONNECT message. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_connect_add_user_prop() function.
 /// @code
@@ -541,7 +541,7 @@
 /// containing wildcards, when the reported @ref CC_Mqtt5ConnectResponse::m_wildcardSubAvailable
 /// is @b false, will be rejected with @ref CC_Mqtt5ErrorCode_BadParam.
 ///
-/// Quote from the MQTT5 specification:
+/// Quote from the MQTT v5 specification:
 /// @code
 /// If a Server sends a CONNACK packet containing a Reason code of 128 or greater
 /// it MUST then close the Network Connection [MQTT-3.2.2-7]
@@ -610,7 +610,7 @@
 /// @endcode
 ///
 /// @subsection cc_mqtt5_client_disconnect_user_prop Adding "User Properties"
-/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// The MQTT v5 specification allows attaching any number of the "User Properties" to
 /// the @b DISCONNECT message. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_disconnect_add_user_prop() function.
 /// @code
@@ -735,7 +735,7 @@
 /// function.
 ///
 /// @subsection cc_mqtt5_client_subscribe_extra Extra Properties Configuration
-/// To add extra MQTT5 specific properties to the subscription request use
+/// To add extra MQTT v5 specific properties to the subscription request use
 /// @b cc_mqtt5_client_subscribe_config_extra() function.
 /// @code
 /// CC_Mqtt5SubscribeExtraConfig extraConfig;
@@ -759,7 +759,7 @@
 /// configuration object is not really necessary, because it has only a single @ref CC_Mqtt5SubscribeExtraConfig::m_subId member,
 /// which is going to be overwritten as part of the configuration. However, calling
 /// the @b cc_mqtt5_client_subscribe_init_config_extra() is still recommended to make the
-/// application's code future updates proof. Potentially the MQTT5 specification and as the
+/// application's code future updates proof. Potentially the MQTT v5 specification and as the
 /// result this library can be updated by adding new property to the @ref
 /// CC_Mqtt5SubscribeExtraConfig struct. Having the "unnecessary" call to the
 /// @b cc_mqtt5_client_subscribe_init_config_extra() function makes sure
@@ -773,7 +773,7 @@
 /// handling functionality.
 ///
 /// @subsection cc_mqtt5_client_subscribe_user_prop Adding "User Properties"
-/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// The MQTT v5 specification allows attaching any number of the "User Properties" to
 /// the @b SUBSCRIBE message. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_subscribe_add_user_prop() function.
 /// @code
@@ -898,7 +898,7 @@
 /// configuration object is not really necessary, because it has only a single @ref CC_Mqtt5UnsubscribeTopicConfig::m_topic member,
 /// which is going to be overwritten as part of the configuration. However, calling
 /// the @b cc_mqtt5_client_unsubscribe_init_config_topic() is still recommended to make the
-/// application's code future updates proof. Potentially the MQTT5 specification and as the
+/// application's code future updates proof. Potentially the MQTT v5 specification and as the
 /// result this library can be updated by adding new fields to the @ref
 /// CC_Mqtt5UnsubscribeTopicConfig struct. Having the "unnecessary" call to the
 /// @b cc_mqtt5_client_unsubscribe_init_config_topic() function makes sure
@@ -925,7 +925,7 @@
 /// function.
 ///
 /// @subsection cc_mqtt5_client_unsubscribe_user_prop Adding "User Properties"
-/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// The MQTT v5 specification allows attaching any number of the "User Properties" to
 /// the @b UNSUBSCRIBE message. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_unsubscribe_add_user_prop() function.
 /// @code
@@ -1027,7 +1027,7 @@
 /// To retrieve the configured response timeout use the @b cc_mqtt5_client_publish_get_response_timeout() function.
 ///
 /// @subsection cc_mqtt5_client_publish_resend Configuring "Publish" Re-Send Attempts
-/// The MQTT5 specification has a mechanism of insured delivery of the published
+/// The MQTT v5 specification has a mechanism of insured delivery of the published
 /// message to the broker. In the case of not 100% reliable connection the messages
 /// can get lost and needs to be re-sent. The default amount of re-sends is @b 2, i.e.
 /// when the first send is not acknowledged by the broker, it is tried again with
@@ -1045,7 +1045,7 @@
 /// To retrieve the configured resend attempts number use the @b cc_mqtt5_client_publish_get_resend_attempts() function.
 ///
 /// @subsection cc_mqtt5_client_publish_basic Basic Configuration of "Publish" Operation
-/// The "basic" configuration means no extra MQTT5 properties assigned to the message, with
+/// The "basic" configuration means no extra MQTT v5 properties assigned to the message, with
 /// one small exception of using topic alias (covered @ref cc_mqtt5_client_publish_alias "below" as a separate subject).
 /// @code
 /// CC_Mqtt5PublishBasicConfig basicConfig;
@@ -1088,7 +1088,7 @@
 /// "subscribe", "unsubscribe", and "publish" filter / topic formats.
 ///
 /// @subsection cc_mqtt5_client_publish_extra Extra Properties Configuration
-/// To add extra MQTT5 specific properties to the publish request use
+/// To add extra MQTT v5 specific properties to the publish request use
 /// @b cc_mqtt5_client_publish_config_extra() function.
 /// @code
 /// CC_Mqtt5PublishExtraConfig extraConfig;
@@ -1110,7 +1110,7 @@
 /// See also documentation of the @ref CC_Mqtt5PublishExtraConfig structure.
 ///
 /// @subsection cc_mqtt5_client_publish_user_prop Adding "User Properties"
-/// The MQTT5 specification allows attaching any number of the "User Properties" to
+/// The MQTT v5 specification allows attaching any number of the "User Properties" to
 /// the @b PUBLISH message. The library allows such assignment using multiple invocations of
 /// the @b cc_mqtt5_client_publish_add_user_prop() function.
 /// @code
@@ -1202,7 +1202,7 @@
 /// cancelled @b without callback invocation.
 ///
 /// @subsection cc_mqtt5_client_publish_alias Using Topic Alias
-/// The MQTT5 specification allows usage of the numeric topic aliases to
+/// The MQTT v5 specification allows usage of the numeric topic aliases to
 /// be able to reduce amount of bytes per publish. In order for the library to start
 /// using topic aliases, they need to be allocated (registered) using the
 /// @b cc_mqtt5_client_pub_topic_alias_alloc() function.
@@ -1228,7 +1228,7 @@
 /// "publish" operations there is an acknowledgement message from the broker indicating
 /// that the topic alias is received and known to the broker. However,  when QoS0 only
 /// publishes are performed, the reception of the topic alias registration request
-/// by the broker is not ensured. Also the MQTT5 specification explicitly states
+/// by the broker is not ensured. Also the MQTT v5 specification explicitly states
 /// that it is "Protocol Error" to use unknown topic alias.
 /// @code{.unparsed}
 /// If the PUBLISH packet contains a Topic Alias, the receiver processes it as follows:
@@ -1316,7 +1316,7 @@
 /// reported to the application.
 ///
 /// @section cc_mqtt5_client_reauth Re-Authenticating
-/// The MQTT5 specification allows performing re-authentication after the successful
+/// The MQTT v5 specification allows performing re-authentication after the successful
 /// @ref cc_mqtt5_client_connect "\"connect\"" operation using the same authentication method.
 /// To do so use the @ref reauth "reauth" operation.
 ///
@@ -1396,7 +1396,7 @@
 /// @b IMPORTANT: The @b cc_mqtt5_client_reauth_config_auth() function
 /// mustn't be called more than once for a single "reauth" operation. Otherwise
 /// it may result in setting multiple properties of the same type, which
-/// is the "Protocol Error" according to the MQTT5 specification.
+/// is the "Protocol Error" according to the MQTT v5 specification.
 ///
 /// @subsection cc_mqtt5_client_reauth_send Sending Re-Authentication Request
 /// When all the necessary configurations are performed for the allocated "reauth"
@@ -1462,13 +1462,30 @@
 /// callback will be invoked with the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status.
 ///
 /// @section cc_mqtt5_client_unsolicited_disconnect Unsolicited Broker Disconnection
-/// The unsolicited broker disconnection can happen in one of the following cases.
+/// When broker disconnection is detected all the incomplete asynchronous operations
+/// (except @ref cc_mqtt5_client_publish "publish") will be terminated with the an appropriate
+/// @ref CC_Mqtt5AsyncOpStatus "status" report. The incomplete @ref cc_mqtt5_client_publish "publish"
+/// operations will be preserved due to the following spec clause:
+/// @code
+/// When a Client reconnects with Clean Start set to 0 and a session is present, both the Client and Server
+/// MUST resend any unacknowledged PUBLISH packets (where QoS > 0) and PUBREL packets using their
+/// original Packet Identifiers. This is the only circumstance where a Client or Server is REQUIRED to resend
+/// messages. Clients and Servers MUST NOT resend messages at any other time [MQTT-4.4.0-1].
+/// @endcode
+/// The incomplete @ref cc_mqtt5_client_publish "publish" operation as well as reception of the
+/// incoming message need to be preserved between the sessions. In case the broker reports
+/// a new (clean) session after the reconnection, the callbacks of all the incomplete
+/// @ref cc_mqtt5_client_publish "publish" operations will be invoked with the
+/// @ref CC_Mqtt5AsyncOpStatus_Aborted status.
+///
+/// The unsolicited broker disconnection can happen in one of the following scenarios:
 ///
 /// @subsection cc_mqtt5_client_unsolicited_disconnect_msg Receiving DISCONNECT message
 /// The broker can initiate disconnection any time by simply sending @b DISCONNECT message.
 /// In such case the library responds in the following way:
-/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations passing
-/// the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
+/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations
+///     (except @ref cc_mqtt5_client_publish "publish") passing
+///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function.
 ///     The information passed in the @b DISCONNECT message is used to populate reported
@@ -1478,26 +1495,28 @@
 /// When there was no message from the broker for the "keep alive" timeout (configured during the @ref connect "connect"
 /// operation) and the broker doesn't respond to the @b PING message.
 /// In such case the library responds in the following way:
-/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations passing
-/// the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
+/// @li Terminates and invokes the callbacks of previously initiated but incomplete operations
+///     (except @ref cc_mqtt5_client_publish "publish") passing
+///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
 ///     without any disconnection information.
 ///
 /// @subsection cc_mqtt5_client_unsolicited_disconnect_protocol_error Detecting Protocol Error
-/// In case the broker doesn't fully comply with the MQTT5 specification or there is
+/// In case the broker doesn't fully comply with the MQTT v5 specification or there is
 /// some unexpected data corruption the library responds in the following way:
 /// @li Sends @b DISCONNECT message to the broker reporting error.
 /// @li Terminates and invokes the callback of the operation that detected the protocol error with
 ///     the @ref CC_Mqtt5AsyncOpStatus_ProtocolError status report.
-/// @li Terminates and invokes the callbacks of all other previously initiated but incomplete operations passing
+/// @li Terminates and invokes the callbacks of all other previously initiated but incomplete operations
+///     (except @ref cc_mqtt5_client_publish "publish") passing
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
 ///     without any disconnection information.
 ///
 /// With all said above it means that if application receives @ref CC_Mqtt5AsyncOpStatus_ProtocolError or
-/// @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status in one of its callback, then
+/// @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status in the operation callback, then
 /// the application is expected to wait for the @ref cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     which will follow.
 ///
@@ -1510,7 +1529,7 @@
 /// @li Perform the @ref cc_mqtt5_client_connect "\"connect\"" operation.
 ///
 /// @section cc_mqtt5_client_network_disconnect Network Disconnection
-/// The MQTT5 specification also tries to support intermittent network connection by
+/// The MQTT v5 specification also tries to support intermittent network connection by
 /// setting the "Session Expiry Interval" property during the @ref cc_mqtt5_client_connect "\"connect\""
 /// operation (see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval). Such
 /// network disconnection is usually detected by the failing @b read or @b write

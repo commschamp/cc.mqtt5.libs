@@ -31,6 +31,7 @@ public:
     void test22();
     void test23();
     void test24();
+    void test25();
 
 private:
     virtual void setUp() override
@@ -264,7 +265,24 @@ void UnitTestReceive::test3()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_responseTopic, ResponseTopic);
+    TS_ASSERT_EQUALS(msgInfo.m_correlationData, CorrelationData);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(msgInfo.m_contentType, ContentType);
+    TS_ASSERT_EQUALS(msgInfo.m_subIds.size(), 1U);
+    TS_ASSERT_EQUALS(msgInfo.m_subIds[0], SubId);
+    TS_ASSERT_EQUALS(msgInfo.m_messageExpiryInterval, MessageExpiryInterval);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    TS_ASSERT_EQUALS(msgInfo.m_format, Format);
+    TS_ASSERT_EQUALS(msgInfo.m_retained, Retain);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -307,26 +325,6 @@ void UnitTestReceive::test3()
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo.m_responseTopic, ResponseTopic);
-    TS_ASSERT_EQUALS(msgInfo.m_correlationData, CorrelationData);
-    TS_ASSERT_EQUALS(msgInfo.m_userProps.size(), 2U);
-    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_key, UserPropKey1);
-    TS_ASSERT_EQUALS(msgInfo.m_userProps[0].m_value, UserPropVal1);
-    TS_ASSERT_EQUALS(msgInfo.m_userProps[1].m_key, PubrelUserPropKey);
-    TS_ASSERT_EQUALS(msgInfo.m_userProps[1].m_value, PubrelUserPropVal);    
-    TS_ASSERT_EQUALS(msgInfo.m_contentType, ContentType);
-    TS_ASSERT_EQUALS(msgInfo.m_subIds.size(), 1U);
-    TS_ASSERT_EQUALS(msgInfo.m_subIds[0], SubId);
-    TS_ASSERT_EQUALS(msgInfo.m_messageExpiryInterval, MessageExpiryInterval);
-    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
-    TS_ASSERT_EQUALS(msgInfo.m_format, Format);
-    TS_ASSERT_EQUALS(msgInfo.m_retained, Retain);
-    unitTestPopReceivedMessageInfo();
 }
 
 void UnitTestReceive::test4()
@@ -355,7 +353,13 @@ void UnitTestReceive::test4()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    unitTestPopReceivedMessageInfo();
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -377,7 +381,6 @@ void UnitTestReceive::test4()
     TS_ASSERT(pubrecMsg2->field_reasonCode().doesExist());
     TS_ASSERT_EQUALS(pubrecMsg2->field_reasonCode().field().value(), UnitTestPubrecMsg::Field_reasonCode::Field::ValueType::PacketIdInUse);
 
-
     UnitTestPubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(PacketId);
     unitTestReceiveMessage(pubrelMsg);
@@ -390,13 +393,6 @@ void UnitTestReceive::test4()
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
-    unitTestPopReceivedMessageInfo();
 }
 
 void UnitTestReceive::test5()
@@ -423,7 +419,13 @@ void UnitTestReceive::test5()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    unitTestPopReceivedMessageInfo();
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -480,7 +482,9 @@ void UnitTestReceive::test6()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -511,9 +515,6 @@ void UnitTestReceive::test6()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubcomp);    
     auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    unitTestPopReceivedMessageInfo();
 }
 
 void UnitTestReceive::test7()
@@ -545,7 +546,9 @@ void UnitTestReceive::test7()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -646,7 +649,9 @@ void UnitTestReceive::test9()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();     
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -711,7 +716,9 @@ void UnitTestReceive::test10()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();     
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -764,7 +771,13 @@ void UnitTestReceive::test11()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -780,6 +793,9 @@ void UnitTestReceive::test11()
     publishMsg.transportField_flags().field_dup().setBitValue_bit(true);
 
     unitTestReceiveMessage(publishMsg);
+
+    // Duplicate message is not reported
+    TS_ASSERT(!unitTestHasMessageRecieved());
 
     sentMsg = unitTestGetSentMessage();
     auto* pubrecMsg2 = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
@@ -800,12 +816,7 @@ void UnitTestReceive::test11()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
-    unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 }
 
 
@@ -834,7 +845,13 @@ void UnitTestReceive::test12()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -858,13 +875,6 @@ void UnitTestReceive::test12()
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_ExactlyOnceDelivery);
-    unitTestPopReceivedMessageInfo();
 }
 
 void UnitTestReceive::test13()
@@ -980,6 +990,11 @@ void UnitTestReceive::test14()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);    
 
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo1 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo1.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();    
+
     TS_ASSERT(unitTestHasSentMessage());
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -988,15 +1003,15 @@ void UnitTestReceive::test14()
     TS_ASSERT_DIFFERS(pubackMsg, nullptr);
     TS_ASSERT(pubackMsg->field_reasonCode().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo1 = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo1.m_topic, Topic);
-    unitTestPopReceivedMessageInfo();
-
     unitTestTick(1000);
     publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);    
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo3 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo3.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();    
 
     TS_ASSERT(unitTestHasSentMessage());
     sentMsg = unitTestGetSentMessage();
@@ -1017,11 +1032,6 @@ void UnitTestReceive::test14()
     auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo3 = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo3.m_topic, Topic);
-    unitTestPopReceivedMessageInfo();
 }
 
 void UnitTestReceive::test15()
@@ -1107,7 +1117,11 @@ void UnitTestReceive::test16()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);    
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo3 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo3.m_topic, Topic);
+    unitTestPopReceivedMessageInfo();      
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1150,7 +1164,10 @@ void UnitTestReceive::test17()
     publishMsg.field_payload().value() = Data;
 
     publishMsg.doRefresh();
-    unitTestReceiveMessage(publishMsg);    
+    unitTestReceiveMessage(publishMsg);   
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo();      
 
     TS_ASSERT(!unitTestHasMessageRecieved());
     auto sentMsg = unitTestGetSentMessage();
@@ -1200,7 +1217,12 @@ void UnitTestReceive::test18()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();  
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1225,11 +1247,7 @@ void UnitTestReceive::test18()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 }
 
 void UnitTestReceive::test19()
@@ -1258,6 +1276,13 @@ void UnitTestReceive::test19()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);  
 
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_AtLeastOnceDelivery);
+    unitTestPopReceivedMessageInfo();     
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Puback);    
@@ -1265,16 +1290,16 @@ void UnitTestReceive::test19()
     TS_ASSERT_DIFFERS(pubackMsg, nullptr);
     TS_ASSERT_EQUALS(pubackMsg->field_packetId().value(), PacketId);
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo.m_qos, CC_Mqtt5QoS_AtLeastOnceDelivery);
-    unitTestPopReceivedMessageInfo();  
-
     // Assume PUBACK is not received by the broker
     publishMsg.transportField_flags().field_dup().setBitValue_bit(true);
     unitTestReceiveMessage(publishMsg);  
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo2 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo2.m_data, Data);
+    TS_ASSERT_EQUALS(msgInfo2.m_qos, CC_Mqtt5QoS_AtLeastOnceDelivery);
+    unitTestPopReceivedMessageInfo();        
 
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -1282,13 +1307,6 @@ void UnitTestReceive::test19()
     pubackMsg = dynamic_cast<UnitTestPubackMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(pubackMsg, nullptr);
     TS_ASSERT_EQUALS(pubackMsg->field_packetId().value(), PacketId);
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo2 = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo2.m_data, Data);
-    TS_ASSERT_EQUALS(msgInfo2.m_qos, CC_Mqtt5QoS_AtLeastOnceDelivery);
-    unitTestPopReceivedMessageInfo();    
 }
 
 void UnitTestReceive::test20()
@@ -1329,7 +1347,9 @@ void UnitTestReceive::test20()
 
     publishMsg.field_topic().value() = "topic1";
     unitTestReceiveMessage(publishMsg);    
-    TS_ASSERT(!unitTestHasMessageRecieved()); 
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    unitTestPopReceivedMessageInfo(); 
 
     TS_ASSERT(unitTestHasSentMessage());
     sentMsg = unitTestGetSentMessage();
@@ -1375,7 +1395,12 @@ void UnitTestReceive::test21()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1399,15 +1424,15 @@ void UnitTestReceive::test21()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();
-
     // Receive it again
     unitTestReceiveMessage(publishMsg);
-    TS_ASSERT(!unitTestHasMessageRecieved());
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo2 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo2.m_data, Data);
+    unitTestPopReceivedMessageInfo();
+
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1428,12 +1453,6 @@ void UnitTestReceive::test21()
     TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
-
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo2 = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo2.m_data, Data);
-    unitTestPopReceivedMessageInfo();    
 }
 
 void UnitTestReceive::test22()
@@ -1460,7 +1479,12 @@ void UnitTestReceive::test22()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1516,11 +1540,7 @@ void UnitTestReceive::test22()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 }
 
 void UnitTestReceive::test23()
@@ -1547,7 +1567,12 @@ void UnitTestReceive::test23()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1593,11 +1618,7 @@ void UnitTestReceive::test23()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 }
 
 void UnitTestReceive::test24()
@@ -1624,7 +1645,12 @@ void UnitTestReceive::test24()
     publishMsg.doRefresh();
     unitTestReceiveMessage(publishMsg);
 
-    TS_ASSERT(!unitTestHasMessageRecieved());
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();    
+
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
@@ -1650,8 +1676,105 @@ void UnitTestReceive::test24()
     unitTestPerformBasicSubscribe(client, "#");
     unitTestTick(1000);
 
-    // Resending the same publish without DUP, expected to be accepted (due to discard of the previous message)
+    // Resending the same publish without DUP, expected to be accepted (due to clean session)
     unitTestTick(100);
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo2 = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo2.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo2.m_data, Data);
+    unitTestPopReceivedMessageInfo();     
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);    
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());    
+
+    UnitTestPubrelMsg pubrelMsg;
+    pubrelMsg.field_packetId().setValue(PacketId);
+    unitTestReceiveMessage(pubrelMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubcomp);    
+    auto* pubcompMsg = dynamic_cast<UnitTestPubcompMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubcompMsg, nullptr);
+    TS_ASSERT_EQUALS(pubcompMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubcompMsg->field_properties().isMissing());
+}
+
+void UnitTestReceive::test25()
+{
+    // Testing resuming reception of the PUBLISH (QoS2) after reconnection.
+    // [MQTT-4.4.0-1]
+    auto* client = unitTestAllocAndInitClient();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+    unitTestTick(1000);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrec);    
+    auto* pubrecMsg = dynamic_cast<UnitTestPubrecMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrecMsg, nullptr);
+    TS_ASSERT_EQUALS(pubrecMsg->field_packetId().value(), PacketId);
+    TS_ASSERT(pubrecMsg->field_reasonCode().isMissing());
+    TS_ASSERT(pubrecMsg->field_properties().isMissing());
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(unitTestCheckNoTicks()); 
+
+    auto ec = unitTestInit(client);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    TS_ASSERT(unitTestCheckNoTicks()); 
+
+    // Reconnection with attempt to restore the session
+    auto connectConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&connectConfig);
+
+    connectConfig.m_clientId = __FUNCTION__;
+    connectConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    unitTestPerformConnect(client, &connectConfig, nullptr, nullptr, nullptr, &connectRespConfig);
+
+    unitTestTick(100);
+    publishMsg.transportField_flags().field_dup().setBitValue_bit(true);
     unitTestReceiveMessage(publishMsg);
 
     sentMsg = unitTestGetSentMessage();
@@ -1675,10 +1798,5 @@ void UnitTestReceive::test24()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
-    TS_ASSERT(unitTestHasMessageRecieved());
-    auto& msgInfo = unitTestReceivedMessageInfo();
-    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
-    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 }
-

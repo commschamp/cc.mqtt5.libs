@@ -1307,13 +1307,29 @@
 /// @endcode
 /// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_topic_enabled() function.
 ///
+/// To insure the required in-order reception of the messages, the
+///  @ref cc_mqtt5_client_callbacks_message "message report callback" is invoked immediately on
+/// reception of the @b PUBLISH message. Just like it is described in section 4.3 of the
+/// MQTT v5 specification.
+///
 /// The @b QoS2 publish operation initiated by the broker requires exchange of multiple messages
 /// between the broker and the client. When the library responds with the @b PUBREC
 /// message, the broker is expected to send @b PUBREL back. The library uses the
 /// @ref cc_mqtt5_client_response_timeout configuration to measure the time frame
 /// during which it allows the reception of the corresponding @b PUBREL message. If the latter doesn't
-/// arrive in time, the whole @b PUBLISH request gets discarded and not
-/// reported to the application.
+/// arrive in time, the inner state of the message reception gets discarded resulting in
+/// the future rejection of the relevant @b PUBREL from the broker (if such arrives).
+/// Depending on case whether the @b PUBREC message was actually received by the broker
+/// and how the broker is implemented one of the following scenarios is possible:
+/// @li The broker has NOT received the @b PUBREC and will resend its @b PUBLISH
+///     resulting in the duplicate delivery of the message.
+/// @li The broker has received the @b PUBREC and according to MQTT v5 specification
+///     it is not allowed to perform @b PUBLISH again. Th broker might decide
+///     to either drop its message delivery state (best case scenario) or
+///     treat it as protocol error and disconnect the client.
+///
+/// With all said above it might be necessary to increase the @ref cc_mqtt5_client_response_timeout
+/// "response timeout" for slow networks.
 ///
 /// @section cc_mqtt5_client_reauth Re-Authenticating
 /// The MQTT v5 specification allows performing re-authentication after the successful

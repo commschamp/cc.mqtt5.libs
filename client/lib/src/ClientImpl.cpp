@@ -977,6 +977,16 @@ void ClientImpl::brokerDisconnected(
 
     terminateOps(status, TerminateMode_KeepSendRecvOps);
 
+    for (auto& op : m_recvOps) {
+        assert(op);
+        op->networkConnectivityChanged();
+    }    
+
+    for (auto& op : m_sendOps) {
+        assert(op);
+        op->networkConnectivityChanged();
+    }    
+
     if (reportDisconnection) {
         COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);
         m_brokerDisconnectReportCb(m_brokerDisconnectReportData, info);

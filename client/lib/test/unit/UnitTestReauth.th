@@ -32,7 +32,7 @@ void UnitTestReauth::test1()
 {
     // Simple reauth from client
     // [MQTT-4.12.1-1]
-    auto* client = unitTestAllocAndInitClient(true);
+    auto* client = unitTestAllocClient(true);
     TS_ASSERT_DIFFERS(client, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -200,7 +200,7 @@ void UnitTestReauth::test2()
     // Testing invalid reason code from broker
     // [MQTT-3.15.2-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -275,7 +275,7 @@ void UnitTestReauth::test3()
     // Testing big reason string in AUTH.
     // [MQTT-3.15.2-2]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -358,7 +358,7 @@ void UnitTestReauth::test4()
     // Testing big user properties strings in AUTH.
     // [MQTT-3.15.2-3]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -441,7 +441,7 @@ void UnitTestReauth::test5()
     // Testing inability to perfrom reauth operation when connect didn't have auth
     // [MQTT-4.12.0-7]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -456,7 +456,7 @@ void UnitTestReauth::test6()
 {
     // Testing AUTH rejection by the client.
     // [MQTT-4.12.1-2]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -536,7 +536,7 @@ void UnitTestReauth::test7()
 {
     // Testing AUTH rejection by the broker.
     // [MQTT-4.12.1-2]
-    auto* client = unitTestAllocAndInitClient(true);
+    auto* client = unitTestAllocClient(true);
     TS_ASSERT_DIFFERS(client, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -593,7 +593,7 @@ void UnitTestReauth::test7()
 void UnitTestReauth::test8()
 {
     // Simple reauth from client when broker responds without reason code.
-    auto* client = unitTestAllocAndInitClient(true);
+    auto* client = unitTestAllocClient(true);
     TS_ASSERT_DIFFERS(client, nullptr);
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();

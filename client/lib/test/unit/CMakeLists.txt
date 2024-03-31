@@ -44,7 +44,6 @@ if (TARGET cc::cc_mqtt5_client)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     )
 
-    cc_mqtt5_client_add_unit_test(UnitTestClient ${DEFAULT_BASE_LIB_NAME})
     cc_mqtt5_client_add_unit_test(UnitTestConnect ${DEFAULT_BASE_LIB_NAME})
     cc_mqtt5_client_add_unit_test(UnitTestDisconnect ${DEFAULT_BASE_LIB_NAME})
     cc_mqtt5_client_add_unit_test(UnitTestPublish ${DEFAULT_BASE_LIB_NAME})

@@ -61,7 +61,6 @@ public:
         return ApiEnterGuard(*this);
     }
 
-    CC_Mqtt5ErrorCode init();
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
     void notifyNetworkDisconnected(bool disconnected);
@@ -228,6 +227,7 @@ private:
     void cleanOps();
     void errorLogInternal(const char* msg);
     void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
+    CC_Mqtt5ErrorCode initInternal();
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);

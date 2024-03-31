@@ -50,7 +50,7 @@ void UnitTestReceive::test1()
     // Simple receive of Qos0
     // [MQTT-3.3.2-4]
     // [MQTT-3.3.2-6]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -136,7 +136,7 @@ void UnitTestReceive::test2()
 {
     // Simple receive of Qos1
     // [MQTT-4.3.2-4]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -180,7 +180,7 @@ void UnitTestReceive::test3()
     // [MQTT-3.3.2-6]
     // [MQTT-4.3.3-8]
     // [MQTT-4.3.3-11]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -332,7 +332,7 @@ void UnitTestReceive::test4()
     // Testing rejection of the allocated packet Id in Qos2 publish.
     // [MQTT-2.2.1-4]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -400,7 +400,7 @@ void UnitTestReceive::test5()
     // Testing invalid packet ID in PUBREL
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -458,7 +458,7 @@ void UnitTestReceive::test6()
     // Testing network disconnection during reception of Qos2 message
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned ResponseTimeout = 2000;
     unitTestSetDefaultResponseTimeout(client, ResponseTimeout);
@@ -522,7 +522,7 @@ void UnitTestReceive::test7()
     // Testing network disconnection during reception of Qos2 message
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned ResponseTimeout = 2000;
     unitTestSetDefaultResponseTimeout(client, ResponseTimeout);
@@ -574,7 +574,7 @@ void UnitTestReceive::test8()
     // Rejecting packet bigger than configured.
     // [MQTT-3.1.2-24]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT(!unitTestIsConnected(client));
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -618,7 +618,7 @@ void UnitTestReceive::test9()
     // Testing rejection of "Reason String" in PUBREL
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -685,7 +685,7 @@ void UnitTestReceive::test10()
     // Testing rejection of "User Properties" in PUBREL
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -750,7 +750,7 @@ void UnitTestReceive::test11()
     // [MQTT-3.3.1-1]
     // [MQTT-4.3.3-10]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -825,7 +825,7 @@ void UnitTestReceive::test12()
     // Testing reception of the DUP bit set right away (first PUBLISH was missed)
     // [MQTT-3.3.1-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -882,7 +882,7 @@ void UnitTestReceive::test13()
     // Testing reception of the unsolicited message
     // [MQTT-3.3.2-3]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -941,7 +941,7 @@ void UnitTestReceive::test14()
     // Testing reception of topic aliases
     // [MQTT-3.3.2-10]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1039,7 +1039,7 @@ void UnitTestReceive::test15()
     // Testing reception of invalid topic alias
     // [MQTT-3.3.2-10]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1087,7 +1087,7 @@ void UnitTestReceive::test16()
     // Testing exceeding "Receive Maximum" value by the broker
     // [MQTT-3.3.4-9]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1145,7 +1145,7 @@ void UnitTestReceive::test17()
     // Testing invalid PUBREL
     // [MQTT-3.6.1-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1194,7 +1194,7 @@ void UnitTestReceive::test18()
     // Finish reception of the Qos2 message after unsubscribe
     // [MQTT-3.10.4-3]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1255,7 +1255,7 @@ void UnitTestReceive::test19()
     // Testing double receive of the same Qos1 message
     // [MQTT-4.3.2-5]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1314,7 +1314,7 @@ void UnitTestReceive::test20()
     // Testing PUBLISH after rejecting PUBREC
     // [MQTT-4.3.3-9]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -1366,7 +1366,7 @@ void UnitTestReceive::test21()
     // Double reception of the same Qos2 message after ack
     // [MQTT-4.3.3-12]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1459,7 +1459,7 @@ void UnitTestReceive::test22()
 {
     // Testing resuming reception of the PUBLISH (QoS2) after reconnection.
     // [MQTT-4.4.0-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1500,9 +1500,8 @@ void UnitTestReceive::test22()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);     
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -1547,7 +1546,7 @@ void UnitTestReceive::test23()
 {
     // Testing resuming reception of the PUBLISH (QoS2) after reconnection, assuming PUBREC was received by the broker
     // [MQTT-4.4.0-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1588,9 +1587,8 @@ void UnitTestReceive::test23()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);  
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -1625,7 +1623,7 @@ void UnitTestReceive::test24()
 {
     // Testing discarding reseption of the PUBLISH (QoS2) after reconnection without session present.
     // [MQTT-4.4.0-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1666,9 +1664,8 @@ void UnitTestReceive::test24()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    auto ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);  
 
     // Reconnection with attempt to restore the session
     unitTestPerformBasicConnect(client, __FUNCTION__, false);
@@ -1712,7 +1709,7 @@ void UnitTestReceive::test25()
 {
     // Testing resuming reception of the PUBLISH (QoS2) after reconnection.
     // [MQTT-4.4.0-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1758,9 +1755,7 @@ void UnitTestReceive::test25()
     unitTestPopDisconnectInfo();    
     TS_ASSERT(unitTestCheckNoTicks()); 
 
-    auto ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();

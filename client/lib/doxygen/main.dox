@@ -106,11 +106,11 @@
 /// message from the broker the "info" parameter will report a disconnection reason as well
 /// as extra information reported by the broker. If the broker disconnection is due
 /// to other reasons, the "info" parameter will be @b NULL. See also @ref cc_mqtt5_client_unsolicited_disconnect
-/// for details.
+/// below for details.
 ///
 /// @subsection cc_mqtt5_client_callbacks_message Reporting Received Message
 /// The client application must assign a callback for the library to report
-/// messages received from the broker.
+/// application level messages received from the broker.
 /// @code
 /// void my_message_received_cb(void* data, const CC_Mqtt5MessageInfo* info)
 /// {
@@ -141,8 +141,7 @@
 /// @code
 /// void my_tick_program_cb(void* data, unsigned ms)
 /// {
-///     ... 
-///     cc_mqtt5_client_tick(client, ms); 
+///     ... // program appropriate timer
 /// }
 ///
 /// cc_mqtt5_client_set_next_tick_program_callback(client, &my_tick_program_cb, data);
@@ -150,14 +149,15 @@
 /// It is allowed to invoke the @b cc_mqtt5_client_tick() before the actual requested timeout has 
 /// expired, just make sure that the correct amount of elapsed milliseconds is reported. When 
 /// the @b cc_mqtt5_client_tick() is invoked, it is assumed that the previously requested tick
-/// programming has been cancelled and the registered callback may be invoked again from within the
+/// programming has been cancelled and the registered callback requesting to re-program
+/// the timer may be invoked again from within the
 /// @b cc_mqtt5_client_tick().
 ///
 /// See also the documentation of the @ref CC_Mqtt5NextTickProgramCb callback function definition.
 ///
 /// In case of callback approach for time measurement is chosen, another callback function
-/// (in addition to the @b cc_mqtt5_client_set_next_tick_program_callback()) to
-/// allow interruption of the previously programmed tick wait must also to be registered.
+/// (in addition to requesting the new timer programming) to
+/// allow interruption of the previously programmed timer must also to be registered.
 /// @code
 /// unsigned my_cancel_tick_program_cb(void* data)
 /// {
@@ -186,49 +186,6 @@
 /// cc_mqtt5_client_set_error_log_callback(client, &my_error_log_cb, data);
 /// @endcode
 /// See also the documentation of the @ref CC_Mqtt5ErrorLogCb callback function definition.
-///
-/// @section cc_mqtt5_client_init Client (Re)Initialization
-/// After all the necessary callbacks have been set, the application must
-/// invoke the @b cc_mqtt5_client_init() function to allow all other subsequent operations.
-/// The function checks that all the necessary callbacks have been set and reinitializes internal
-/// data structures.
-/// @code
-/// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_init(client);
-/// if (ec != CC_Mqtt5ErrorCode_Success) {
-///     ... /* Something is wrong, not all callbacks are set */
-/// }
-/// @endcode
-///
-/// Also when broker disconnection is @ref cc_mqtt5_client_callbacks_broker_disconnect "reported",
-/// it is necessary to perform re-initialization of the library to be able to re-connect
-/// to the broker and continue operation.
-///
-/// @b IMPORTANT: According to the MQTT v5 specification, when broker disconnection is reported, the
-/// client needs to close network connection. It is a responsibility of the application to do so.
-///
-/// In other words, after the broker disconnection is reported the application is responsible to
-/// perform the following steps:
-/// @li Close the existing network connection.
-/// @li Re-establish new network connection to the broker.
-/// @li Re-initialize the client library by invoking @b cc_mqtt5_client_init() function.
-///
-/// All previously registered callbacks configuration persists and doesn't need to be
-/// performed between the re-initialization requests.
-///
-/// @b NOTE that the @b cc_mqtt5_client_init() cannot be called from within a callback.
-/// For example, if the broker disconnection is reported via @ref cc_mqtt5_client_callbacks_broker_disconnect "callback"
-/// then the @ref cc_mqtt5_client_init "re-initialization" cannot be executed right away.
-/// It needs to be postponed until the next event loop iteration.
-///
-/// To check whether the client has gone through the initialization procedure or still
-/// needs to be (re)-initialized, the @b cc_mqtt5_client_is_initialized() function
-/// can be used.
-/// @code
-/// if (!cc_mqtt5_client_is_initialized(client)) {
-///     CC_Mqtt5ErrorCode ec = cc_mqtt5_client_init(client);
-///     ...
-/// }
-/// @endcode
 ///
 /// @section cc_mqtt5_client_data Reporting Incoming Data
 /// It is the responsibility of the application to receive data from the broker
@@ -310,6 +267,10 @@
 ///     printf("ERROR: Connect allocation failed with ec=%d\n", ec);
 /// }
 /// @endcode
+/// @b NOTE that the @b cc_mqtt5_client_connect_prepare() cannot be called from within a callback.
+/// For example, if the broker disconnection is reported via @ref cc_mqtt5_client_callbacks_broker_disconnect "callback"
+/// then the @b cc_mqtt5_client_connect_prepare() cannot be invoked right away.
+/// It needs to be postponed until the next event loop iteration.
 ///
 /// @subsection cc_mqtt5_client_connect_response_timeout Configuring "Connect" Response Timeout
 /// When created, the "connect" operation inherits the @ref cc_mqtt5_client_response_timeout
@@ -549,8 +510,8 @@
 /// When the callback reporting the connection status is invoked, it is responsibility
 /// of the application to check the @ref CC_Mqtt5ConnectResponse::m_reasonCode value.
 /// If it's @ref CC_Mqtt5ReasonCode_UnspecifiedError or greater, the application
-/// is responsible to close the network connection and go through the
-/// @ref cc_mqtt5_client_init "re-initialization" process. The same should be
+/// is responsible to close the network connection and retry the "connect" operation after
+/// the network connection to the broker is re-established. The same should be
 /// done when the "connect" operation is not properly completed, i.e. the
 /// reported status is @b NOT @ref CC_Mqtt5AsyncOpStatus_Complete.
 ///
@@ -641,8 +602,8 @@
 /// @b NOTE that the @b cc_mqtt5_client_disconnect_send() function doesn't receive
 /// any callback because there is no expected response to the @b DISCONNECT message
 /// from the broker. The disconnection effect is immediate. The application is
-/// expected to terminate the network connection and go through
-/// @ref cc_mqtt5_client_init "re-initialization" process if necessary. The
+/// expected to terminate the network connection (while making sure that the
+/// the requested data is actually sent). The
 /// handle returned by the @b cc_mqtt5_client_disconnect_prepare() must be discarded.
 ///
 /// In case there are other asynchronous operations that hasn't been completed yet,
@@ -652,6 +613,10 @@
 /// @b IMPORTANT: In case of sending the explicit disconnection request the
 /// @ref cc_mqtt5_client_callbacks_broker_disconnect "registered unsolicited disconnection callback"
 /// is @b NOT invoked.
+///
+/// After the disconnection the application can re-establish network connection
+/// to the broker and perform the @ref cc_mqtt5_client_connect "connect" operation
+/// again.
 ///
 /// @subsection cc_mqtt5_client_disconnect_cancel Cancel the "Disconnect" Operation.
 /// While the handle returned by the @b cc_mqtt5_client_disconnect_prepare() is still
@@ -1215,11 +1180,10 @@
 /// It means that the allocation of the topic aliases is allowed only after the
 /// successful "connect" operation.
 ///
-/// Also note that the topic aliases are not part of the session state. Every
-/// @ref cc_mqtt5_client_init "re-initialization" (which is required for
-/// @ref cc_mqtt5_client_connect "re-connection") all the previously allocated
+/// Also note that the topic aliases are not part of the session state. For every
+/// @ref cc_mqtt5_client_connect "re-connection" attempt all the previously allocated
 /// topic aliases get cleared in the internal data structures and they need to
-/// be allocated again.
+/// be allocated again after the successful connection.
 ///
 /// The last parameter passed to the @b cc_mqtt5_client_pub_topic_alias_alloc() function
 /// is used to specify how many times the topic alias is reported to the broker
@@ -1540,9 +1504,7 @@
 /// expected to go through the following steps:
 /// @li Close network connection.
 /// @li Re-establish network connection to the broker.
-/// @li Go through the  @ref cc_mqtt5_client_init "re-initialization" process.
-///     Make sure to do it in the next iteration of the event loop and not from within the disconnection report callback.
-/// @li Perform the @ref cc_mqtt5_client_connect "\"connect\"" operation.
+/// @li Perform the @ref cc_mqtt5_client_connect "\"connect\"" operation from within a next event loop iteration.
 ///
 /// @section cc_mqtt5_client_network_disconnect Network Disconnection
 /// The MQTT v5 specification also tries to support intermittent network connection by
@@ -1583,10 +1545,19 @@
 /// bool disconnected = cc_mqtt5_client_is_network_disconnected(client);
 /// @endcode
 ///
-/// Also @b note that invocation of the @b cc_mqtt5_client_init() function (see @ref cc_mqtt5_client_init)
-/// will result in library "assuming" network is connected, i.e.
-/// invocation of the @b cc_mqtt5_client_is_network_disconnected() will
-/// return @b false.
+/// Also @b note that after the broker disconnection report, attempt to re-connect
+/// (invocation @b cc_mqtt5_client_connect_prepare()) will be rejected
+/// with the @ref CC_Mqtt5ErrorCode_NetworkDisconnected error code until the network
+/// re-connection reported to the library:
+/// @code
+/// cc_mqtt5_client_notify_network_disconnected(client, false);
+/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+/// CC_Mqtt5ConnectHandle connect = cc_mqtt5_client_connect_prepare(client, &ec);
+/// @endcode
+///
+/// When new client is @ref cc_mqtt5_client_allocation "allocated", its inner state
+/// assumes that the network is connected, i.e. invocation of the
+/// @b cc_mqtt5_client_is_network_disconnected() will return @b false.
 ///
 /// @section cc_mqtt5_client_thread_safety Thread Safety
 /// In general the library is @b NOT thread safe. However, if each thread operates on a separate allocated

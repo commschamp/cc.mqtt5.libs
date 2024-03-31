@@ -21,7 +21,6 @@ public:
         CC_Mqtt5ClientHandle (*m_alloc)() = nullptr;
         void (*m_free)(CC_Mqtt5ClientHandle) = nullptr;
         CC_Mqtt5ErrorCode (*m_init)(CC_Mqtt5ClientHandle) = nullptr;
-        bool (*m_is_initialized)(CC_Mqtt5ClientHandle) = nullptr;
         void (*m_tick)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
         unsigned (*m_process_data)(CC_Mqtt5ClientHandle, const unsigned char*, unsigned) = nullptr;
         void (*m_notify_network_disconnected)(CC_Mqtt5ClientHandle, bool) = nullptr;
@@ -346,7 +345,7 @@ protected:
 
     void unitTestSetUp();
     void unitTestTearDown();
-    UnitTestClientPtr::pointer unitTestAllocAndInitClient(bool addLog = false);
+    UnitTestClientPtr::pointer unitTestAllocClient(bool addLog = false);
 
     decltype(auto) unitTestSentData()
     {
@@ -433,8 +432,6 @@ protected:
     void unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason = UnitTestDisconnectReason::Success);
 
     UnitTestClientPtr unitTestAlloc();
-    CC_Mqtt5ErrorCode unitTestInit(CC_Mqtt5Client* client);
-    bool unitTestIsInitialized(CC_Mqtt5Client* client) const;
     void unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected);
     bool unitTestIsNetworkDisconnected(CC_Mqtt5Client* client);
     CC_Mqtt5ErrorCode unitTestSetDefaultResponseTimeout(CC_Mqtt5Client* client, unsigned ms);
@@ -482,9 +479,9 @@ protected:
     void unitTestSetBrokerDisconnectReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5BrokerDisconnectReportCb cb, void* data);    
     void unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data);    
 
-private:
+    void unitTestClearState(bool preserveTicks = true);
 
-    void unitTestClearState(bool preserveTicks = false);
+private:
 
     static void unitTestErrorLogCb(void* obj, const char* msg);
     static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);

@@ -277,12 +277,6 @@ private:
         m_state.m_disconnected = false;
         m_state.m_reauthRequired = !m_opts.authMethod().empty();
         m_state.m_publishCount = 0U;
-
-        auto ec = cc_mqtt5_##NAME##client_init(m_client.get());
-        assert(ec == CC_Mqtt5ErrorCode_Success);
-        if (ec != CC_Mqtt5ErrorCode_Success) {
-            exit(-1);
-        }        
     }
 
     void doConnect()

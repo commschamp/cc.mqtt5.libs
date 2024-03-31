@@ -24,7 +24,7 @@ private:
 void UnitTestBmPublish::test1()
 {
     // Qos0 publish with properties
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(unitTestIsConnected(client));
 

@@ -39,7 +39,7 @@ void UnitTestSubscribe::test1()
 {
     // Simple subscribe and ack
     // [MQTT-3.8.4-5]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -128,7 +128,7 @@ void UnitTestSubscribe::test1()
 void UnitTestSubscribe::test2()
 {
     // Parallel subscribe
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
     
@@ -248,7 +248,7 @@ void UnitTestSubscribe::test3()
     // [MQTT-4.7.3-1]
     // [MQTT-4.8.2-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -319,7 +319,7 @@ void UnitTestSubscribe::test4()
     // Testing invalid suback;
     // [MQTT-2.2.1-6]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -365,7 +365,7 @@ void UnitTestSubscribe::test5()
     // Suspending subscribe operation when network is disconnected 
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
@@ -431,7 +431,7 @@ void UnitTestSubscribe::test6()
 {
     // Testing properties in SUBACK
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -507,7 +507,7 @@ void UnitTestSubscribe::test7()
     // Testing rejection of "Reason String" in SUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -562,7 +562,7 @@ void UnitTestSubscribe::test8()
     // Testing rejection of "User properties" in SUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -617,7 +617,7 @@ void UnitTestSubscribe::test9()
 {
     // Testing wildcard subscriptions disabled
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -657,7 +657,7 @@ void UnitTestSubscribe::test10()
 {
     // Testing subscription IDs disabled
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -692,7 +692,7 @@ void UnitTestSubscribe::test11()
 {
     // Testing shared subscriptions disabled
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -722,7 +722,7 @@ void UnitTestSubscribe::test12()
     // Testing rejection of the "No Local" bit set for shared subscriptions
     // [MQTT-3.8.3-4]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -743,7 +743,7 @@ void UnitTestSubscribe::test13()
 {
     // Simple SUBACK with wrong number of reason codes
     // [MQTT-3.8.4-6]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -813,7 +813,7 @@ void UnitTestSubscribe::test14()
     // Testing Qos2 subscription when broker doesn't support Qos2 publish.
     // [MQTT-3.8.4-6]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);

@@ -54,42 +54,6 @@ ClientImpl::~ClientImpl()
     terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_AbortSendRecvOps);
 }
 
-CC_Mqtt5ErrorCode ClientImpl::init()
-{
-    if (m_apiEnterCount > 0U) {
-        errorLog("Cannot (re)init from within callback");
-        return CC_Mqtt5ErrorCode_RetryLater;
-    }
-
-    auto guard = apiEnter();
-    if ((m_sendOutputDataCb == nullptr) ||
-        (m_brokerDisconnectReportCb == nullptr) ||
-        (m_messageReceivedReportCb == nullptr)) {
-        errorLog("Hasn't set all must have callbacks");
-        return CC_Mqtt5ErrorCode_BadParam;
-    }
-
-    bool hasTimerCallbacks = 
-        (m_nextTickProgramCb != nullptr) ||
-        (m_cancelNextTickWaitCb != nullptr);
-
-    if (hasTimerCallbacks) {
-        bool hasAllTimerCallbacks = 
-            (m_nextTickProgramCb != nullptr) &&
-            (m_cancelNextTickWaitCb != nullptr);
-
-        if (!hasAllTimerCallbacks) {
-            errorLog("Hasn't set all timer management callbacks callbacks");
-            return CC_Mqtt5ErrorCode_BadParam;
-        }
-    }
-
-    terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
-    m_sessionState = SessionState();
-    m_sessionState.m_initialized = true;
-    m_clientState.m_networkDisconnected = false;
-    return CC_Mqtt5ErrorCode_Success;
-}
 
 void ClientImpl::tick(unsigned ms)
 {
@@ -204,16 +168,24 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::ConnectOp* connectOp = nullptr;
     do {
+        if (!m_sessionState.m_initialized) {
+            if (m_apiEnterCount > 0U) {
+                errorLog("Cannot prepare connect from within callback");
+                updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
+                break;
+            }
+
+            auto initEc = initInternal();
+            if (initEc != CC_Mqtt5ErrorCode_Success) {
+                updateEc(ec, initEc);
+                break;
+            }
+        }
+                
         if (!m_connectOps.empty()) {
             // Already allocated
             errorLog("Another connect operation is in progress.");
             updateEc(ec, CC_Mqtt5ErrorCode_Busy);
-            break;
-        }
-
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow connect.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
             break;
         }
 
@@ -261,12 +233,6 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::DisconnectOp* disconnectOp = nullptr;
     do {
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow disconnect.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
-            break;
-        }
-
         if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow disconnect.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
@@ -317,12 +283,6 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::SubscribeOp* subOp = nullptr;
     do {
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow subscription.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
-            break;
-        }
-
         if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow subscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
@@ -367,12 +327,6 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::UnsubscribeOp* unsubOp = nullptr;
     do {
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow unsubscription.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
-            break;
-        }
-
         if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow unsubscription.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
@@ -417,12 +371,6 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::SendOp* sendOp = nullptr;
     do {
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow publish.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
-            break;
-        }
-
         if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow publish.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
@@ -474,12 +422,6 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
                 
-        if (!m_sessionState.m_initialized) {
-            errorLog("Client must be initialized to allow reauth.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NotIntitialized);
-            break;
-        }
-
         if (!m_sessionState.m_connected) {
             errorLog("Client must be connected to allow reauth.");
             updateEc(ec, CC_Mqtt5ErrorCode_NotConnected);
@@ -1109,6 +1051,37 @@ void ClientImpl::sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::Value
     disconnectMsg.field_properties().setExists();
     disconnectMsg.field_reasonCode().field().setValue(reason);    
     sendMessage(disconnectMsg);
+}
+
+CC_Mqtt5ErrorCode ClientImpl::initInternal()
+{
+    auto guard = apiEnter();
+    if ((m_sendOutputDataCb == nullptr) ||
+        (m_brokerDisconnectReportCb == nullptr) ||
+        (m_messageReceivedReportCb == nullptr)) {
+        errorLog("Hasn't set all must have callbacks");
+        return CC_Mqtt5ErrorCode_NotIntitialized;
+    }
+
+    bool hasTimerCallbacks = 
+        (m_nextTickProgramCb != nullptr) ||
+        (m_cancelNextTickWaitCb != nullptr);
+
+    if (hasTimerCallbacks) {
+        bool hasAllTimerCallbacks = 
+            (m_nextTickProgramCb != nullptr) &&
+            (m_cancelNextTickWaitCb != nullptr);
+
+        if (!hasAllTimerCallbacks) {
+            errorLog("Hasn't set all timer management callbacks callbacks");
+            return CC_Mqtt5ErrorCode_NotIntitialized;
+        }
+    }
+
+    terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
+    m_sessionState = SessionState();
+    m_sessionState.m_initialized = true;
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)

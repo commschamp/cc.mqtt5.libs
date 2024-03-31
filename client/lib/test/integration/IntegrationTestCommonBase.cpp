@@ -63,11 +63,6 @@ bool IntegrationTestCommonBase::integrationTestStart()
     ::cc_mqtt5_client_set_broker_disconnect_report_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb, this);
     ::cc_mqtt5_client_set_message_received_report_callback(m_client.get(), &IntegrationTestCommonBase::integrationTestMessageReceivedCb, this);
 
-    auto ec = ::cc_mqtt5_client_init(m_client.get());
-    if (ec != CC_Mqtt5ErrorCode_Success) {
-        errorLog(m_clientId) << "Failed to init: " << ec << std::endl;
-    }
-
     boost::system::error_code ioEc;
     boost::asio::ip::tcp::resolver resolver(m_io);
     boost::asio::connect(m_socket, resolver.resolve(m_host, m_port), ioEc);    

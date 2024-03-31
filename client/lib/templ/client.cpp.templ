@@ -109,20 +109,6 @@ void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle)
     getClientAllocator().free(clientFromHandle(handle));
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle)
-{
-    return clientFromHandle(handle)->init();
-}
-
-bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle)
-{
-    if (handle == nullptr) {
-        return false;
-    }
-
-    return clientFromHandle(handle)->sessionState().m_initialized;
-}
-
 void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms)
 {
     clientFromHandle(handle)->tick(ms);

@@ -7,8 +7,6 @@ const UnitTestBmBase::LibFuncs& UnitTestBmBase::getFuncs()
     static LibFuncs funcs;
     funcs.m_alloc = &cc_mqtt5_bm_client_alloc;
     funcs.m_free = &cc_mqtt5_bm_client_free;
-    funcs.m_init = &cc_mqtt5_bm_client_init;
-    funcs.m_is_initialized = &cc_mqtt5_bm_client_is_initialized;
     funcs.m_tick = &cc_mqtt5_bm_client_tick;
     funcs.m_process_data = &cc_mqtt5_bm_client_process_data;
     funcs.m_notify_network_disconnected = &cc_mqtt5_bm_client_notify_network_disconnected;

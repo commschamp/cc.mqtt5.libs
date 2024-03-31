@@ -41,8 +41,6 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
 {
     test_assert(m_funcs.m_alloc != nullptr);
     test_assert(m_funcs.m_free != nullptr);
-    test_assert(m_funcs.m_init != nullptr);
-    test_assert(m_funcs.m_is_initialized != nullptr);
     test_assert(m_funcs.m_tick != nullptr);
     test_assert(m_funcs.m_process_data != nullptr);
     test_assert(m_funcs.m_notify_network_disconnected != nullptr);
@@ -234,7 +232,7 @@ UnitTestCommonBase::UnitTestMessageInfo& UnitTestCommonBase::UnitTestMessageInfo
 void UnitTestCommonBase::unitTestSetUp()
 {
     test_assert(!m_client);
-    unitTestClearState();
+    unitTestClearState(false);
 }
 
 void UnitTestCommonBase::unitTestTearDown()
@@ -242,11 +240,10 @@ void UnitTestCommonBase::unitTestTearDown()
     m_client.reset();
 }
 
-UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocAndInitClient(bool addLog)
+UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient(bool addLog)
 {
     test_assert(!m_client);
     m_client.reset(m_funcs.m_alloc());
-    test_assert(!m_funcs.m_is_initialized(m_client.get()));
     if (addLog) {
         m_funcs.m_set_error_log_callback(m_client.get(), &UnitTestCommonBase::unitTestErrorLogCb, nullptr);
     }
@@ -255,9 +252,6 @@ UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAlloc
     unitTestSetSendOutputDataCb(m_client.get(), &UnitTestCommonBase::unitTestSendOutputDataCb, this);
     unitTestSetNextTickProgramCb(m_client.get(), &UnitTestCommonBase::unitTestProgramNextTickCb, this);
     unitTestSetCancelNextTickWaitCb(m_client.get(), &UnitTestCommonBase::unitTestCancelNextTickWaitCb, this);
-    [[maybe_unused]] auto ec = m_funcs.m_init(m_client.get());
-    test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    test_assert(m_funcs.m_is_initialized(m_client.get()));
     return m_client.get();
 }
 
@@ -946,22 +940,6 @@ UnitTestCommonBase::UnitTestClientPtr UnitTestCommonBase::unitTestAlloc()
 {
     test_assert(m_funcs.m_alloc != nullptr);
     return UnitTestClientPtr(m_funcs.m_alloc(), UnitTestDeleter(m_funcs));
-}
-
-CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestInit(CC_Mqtt5Client* client)
-{
-    test_assert(m_funcs.m_init != nullptr);
-    auto ec = m_funcs.m_init(client);
-    if (ec == CC_Mqtt5ErrorCode_Success) {
-        unitTestClearState(true);
-    }
-    return ec;
-}
-
-bool UnitTestCommonBase::unitTestIsInitialized(CC_Mqtt5Client* client) const
-{
-    test_assert(m_funcs.m_is_initialized != nullptr);
-    return m_funcs.m_is_initialized(client);
 }
 
 void UnitTestCommonBase::unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected)

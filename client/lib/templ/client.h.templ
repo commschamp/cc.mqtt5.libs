@@ -42,21 +42,6 @@ CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_alloc();
 /// @ingroup client
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle);
 
-/// @brief (Re)Initialize client.
-/// @details Re-initializes all internal data structures into their default variables
-///     and checks that all the required callbacks have been set. If there are old
-///     outstanding operations they are all aborted.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
-/// @pre Mustn't be called from within a callback, use next event loop iteration.
-/// @ingroup client
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_init(CC_Mqtt5ClientHandle handle);
-
-/// @brief Check that the client has been (re)initialized
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
-/// @return @b true if cc_mqtt5_##NAME##client_init() has been invoked before, @b false otherwise.
-/// @ingroup client
-bool cc_mqtt5_##NAME##client_is_initialized(CC_Mqtt5ClientHandle handle);
-
 /// @brief Notify client about requested time expiry.
 /// @details The reported amount of milliseconds needs to be from the 
 ///     last request to program timer via callback (set by
@@ -95,8 +80,8 @@ void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle ha
 /// @brief Check current network disconnected status
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @return @b true when disconnected, @b false when0 connected.
-/// @note After invocation of the @ref cc_mqtt5_##NAME##client_init, this function will return @b false, i.e.
-/// after (re)initializaiton network is assumend connected.
+/// @note After invocation of the @ref cc_mqtt5_##NAME##client_alloc(), this function will return @b false, i.e.
+/// after client allocation network is assumend connected.
 /// @ingroup client
 bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle);
 
@@ -186,11 +171,12 @@ bool cc_mqtt5_##NAME##client_get_verify_incoming_msg_subscribed(CC_Mqtt5ClientHa
 void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 
 /// @brief Prepare "connect" operation.
+/// @details For successful operation the client needs to be in the "disconnected" state and 
+///     there are no other incomplete "connect" operation
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "connect" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
-/// @pre There were no other prepared or complete "connect" operation since last invocation of 
-///     @ref cc_mqtt5_##NAME##client_init().
+/// @pre The function can NOT be called from within a callback, use next event iteration.
 /// @post The "connect" operation is allocated, use either @ref cc_mqtt5_##NAME##client_connect_send()
 ///     or @ref cc_mqtt5_##NAME##client_connect_cancel() to prevent memory leaks.
 /// @ingroup connect
@@ -311,10 +297,11 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle h
 bool cc_mqtt5_##NAME##client_is_connected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Prepare "disconnect" operation.
+/// @details For successful operation the client needs to be in the "connected" state and 
+///     there were no other prepared or complete "disconnect" operation since last "connect" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "disconnect" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
-/// @pre There were no other prepared or complete "disconnect" operation since last "connect" operation.
 /// @post The "disconnect" operation is allocated, use either @ref cc_mqtt5_##NAME##client_disconnect_send()
 ///     or @ref cc_mqtt5_##NAME##client_disconnect_cancel() to prevent memory leaks.
 /// @ingroup disconnect
@@ -356,6 +343,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHand
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_cancel(CC_Mqtt5DisconnectHandle handle);
 
 /// @brief Prepare "subscribe" operation.
+/// @details For successful operation the client needs to be in the "connected" state.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "subscribe" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
@@ -432,6 +420,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHandle handle);
 
 /// @brief Prepare "unsubscribe" operation.
+/// @details For successful operation the client needs to be in the "connected" state.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "unsubscribe" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
@@ -495,6 +484,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHa
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5UnsubscribeHandle handle);
 
 /// @brief Prepare "publish" operation.
+/// @details For successful operation the client needs to be in the "connected" state.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "publish" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
@@ -587,10 +577,11 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle);
 
 /// @brief Prepare "reauth" operation.
+/// @details For successful operation the client needs to be in the "connected" state and 
+///     there is no other incomplete "reauth" operation.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "reauth" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
-/// @pre There is no other incomplete "reauth" operation.
 /// @post The "reauth" operation is allocated, use either @ref cc_mqtt5_##NAME##client_reauth_send()
 ///     or @ref cc_mqtt5_##NAME##client_reauth_cancel() to prevent memory leaks.
 /// @ingroup reauth

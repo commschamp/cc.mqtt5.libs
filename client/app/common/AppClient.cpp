@@ -141,12 +141,6 @@ bool AppClient::start(int argc, const char* argv[])
         return true;
     }
 
-    auto ec = ::cc_mqtt5_client_init(m_client.get());
-    if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to initialize client object." << std::endl;
-        return false;
-    }
-
     if (!createSession()) {
         return false;
     }

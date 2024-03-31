@@ -34,7 +34,7 @@ void UnitTestUnsubscribe::test1()
 {
     // Simple unsubscribe and ack
     // [MQTT-3.11.3-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -100,7 +100,7 @@ void UnitTestUnsubscribe::test1()
 void UnitTestUnsubscribe::test2()
 {
     // Parallel unsubscribe 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -196,7 +196,7 @@ void UnitTestUnsubscribe::test2()
 void UnitTestUnsubscribe::test3()
 {
     // Invalid unsubscribe topics
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -251,7 +251,7 @@ void UnitTestUnsubscribe::test4()
     // Testing invalid unsuback;
     // [MQTT-2.2.1-6]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -302,7 +302,7 @@ void UnitTestUnsubscribe::test5()
     // Suspending unsubscribe operation when network is disconnected 
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
@@ -372,7 +372,7 @@ void UnitTestUnsubscribe::test6()
 {
     // Testing properties in UNSUBACK
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
@@ -450,7 +450,7 @@ void UnitTestUnsubscribe::test7()
     // Testing rejection of "Reason String" in UNSUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -506,7 +506,7 @@ void UnitTestUnsubscribe::test8()
     // Testing rejection of "User properties" in UNSUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -563,7 +563,7 @@ void UnitTestUnsubscribe::test9()
     // Testing rejection of unsubscribe attempt for the topic that hasn't been subscribed before
     // [MQTT-3.10.4-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -585,7 +585,7 @@ void UnitTestUnsubscribe::test10()
     // Testing unexpected number of reason codes in UNSUBACK
     // [MQTT-3.11.3-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 

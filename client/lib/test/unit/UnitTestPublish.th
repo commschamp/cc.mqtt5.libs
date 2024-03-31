@@ -66,7 +66,7 @@ void UnitTestPublish::test1()
     // [MQTT-3.3.2-4]
     // [MQTT-3.3.2-5]
     // [MQTT-4.3.1-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -162,7 +162,7 @@ void UnitTestPublish::test2()
 {
     // Simple Qos1 publish
     // [MQTT-4.3.1-1]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -214,7 +214,7 @@ void UnitTestPublish::test2()
 void UnitTestPublish::test3()
 {
     // Simple Qos1 publish with response properties
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -314,7 +314,7 @@ void UnitTestPublish::test4()
 {
     // Timed out Qos1 publish
     // [MQTT-3.3.1-3]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -370,7 +370,7 @@ void UnitTestPublish::test5()
     // Simple Qos2 publish
     // [MQTT-4.3.3-2]
     // [MQTT-4.3.3-4]
-    auto* client = unitTestAllocAndInitClient(true);
+    auto* client = unitTestAllocClient(true);
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
@@ -507,7 +507,7 @@ void UnitTestPublish::test6()
     // Timed out Qos2 publish
     // [MQTT-3.3.1-3]
     // [MQTT-4.3.3-5]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -585,7 +585,7 @@ void UnitTestPublish::test7()
 {
     // Qos0 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -693,7 +693,7 @@ void UnitTestPublish::test8()
 {
     // Qos1 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -786,7 +786,7 @@ void UnitTestPublish::test9()
 {
     // Qos2 publish with topic id
     // [MQTT-3.3.2-8]
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -910,7 +910,7 @@ void UnitTestPublish::test10()
     // [MQTT-4.7.2-1]
     // [MQTT-4.7.3-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -945,7 +945,7 @@ void UnitTestPublish::test11()
     // Testing invalid packet ID in PUBACK
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -1003,7 +1003,7 @@ void UnitTestPublish::test12()
     // Testing invalid packet ID in PUBREC
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -1075,7 +1075,7 @@ void UnitTestPublish::test13()
     // Testing invalid packet ID in PUBCOMP
     // [MQTT-2.2.1-5]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -1149,7 +1149,7 @@ void UnitTestPublish::test14()
     // Suspending Qos1 publish operation when network is disconnected
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
@@ -1218,7 +1218,7 @@ void UnitTestPublish::test15()
     // Suspending Qos2 publish operation when network is disconnected
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
@@ -1300,7 +1300,7 @@ void UnitTestPublish::test16()
     // Testing rejection of "Reason String" in PUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1370,7 +1370,7 @@ void UnitTestPublish::test17()
     // Testing rejection of "User Properties" in PUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1443,7 +1443,7 @@ void UnitTestPublish::test18()
     // Testing rejection of "Reason String" in PUBREC
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1513,7 +1513,7 @@ void UnitTestPublish::test19()
     // Testing rejection of "User Properties" in PUBREL
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1586,7 +1586,7 @@ void UnitTestPublish::test20()
     // Testing rejection of "Reason String" in PUBCOMP
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1668,7 +1668,7 @@ void UnitTestPublish::test21()
     // Testing rejection of "User Properties" in PUBCOMP
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -1753,7 +1753,7 @@ void UnitTestPublish::test22()
     // [MQTT-3.2.2-11]
     // [MQTT-4.9.0-2]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1803,7 +1803,7 @@ void UnitTestPublish::test23()
     // Testing rejection of publish with retain when it's unavailable
     // [MQTT-3.2.2-14]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1851,7 +1851,7 @@ void UnitTestPublish::test24()
     // Testing rejection of publish exceeding max packet size
     // [MQTT-3.2.2-15]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -1905,7 +1905,7 @@ void UnitTestPublish::test25()
     // Testing rejection of invalid QoS value
     // [MQTT-3.3.1-4]
     
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
@@ -1934,7 +1934,7 @@ void UnitTestPublish::test26()
     // Qos0 publish with topic alias with network disconnection
     // [MQTT-3.3.2-7]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -2060,7 +2060,7 @@ void UnitTestPublish::test27()
     // Testing inability to use wildcards in "Response Topic"
     // [MQTT-3.3.2-14]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2089,7 +2089,7 @@ void UnitTestPublish::test28()
     // Testing incoming PUBREC instead of PUBACK
     // [MQTT-3.3.4-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2142,7 +2142,7 @@ void UnitTestPublish::test29()
     // Testing incoming PUBACK instead of PUBREC
     // [MQTT-3.3.4-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2195,7 +2195,7 @@ void UnitTestPublish::test30()
     // Testing limit of the outgoing high Qos publishes
     // [MQTT-3.3.4-7]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&basicConfig);
@@ -2268,7 +2268,7 @@ void UnitTestPublish::test31()
     // Testing rejection of the Qos1 publish by the broker
     // [MQTT-4.4.0-2]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2321,7 +2321,7 @@ void UnitTestPublish::test32()
     // Testing rejection of the Qos2 publish by the broker
     // [MQTT-4.4.0-2]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2374,7 +2374,7 @@ void UnitTestPublish::test33()
     // Testing re-publish of not acked Qos1 messages in the same order.
     // [MQTT-4.6.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2459,7 +2459,7 @@ void UnitTestPublish::test34()
     // Testing re-publish of not acked Qos1 and Qos2 messages in the same order.
     // [MQTT-4.6.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2545,7 +2545,7 @@ void UnitTestPublish::test35()
     // Testing preserving of the PUBLISH (QoS1) operation after the broker disconnection.
     // [MQTT-4.4.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2584,9 +2584,8 @@ void UnitTestPublish::test35()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -2627,7 +2626,7 @@ void UnitTestPublish::test36()
     // Testing preserving of the PUBLISH (QoS2) operation after the broker disconnection.
     // [MQTT-4.4.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2666,9 +2665,8 @@ void UnitTestPublish::test36()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -2721,7 +2719,7 @@ void UnitTestPublish::test37()
     // Testing preserving of the PUBLISH (QoS2) operation after the broker disconnection and after reception of PUBREC.
     // [MQTT-4.4.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2772,9 +2770,8 @@ void UnitTestPublish::test37()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -2813,7 +2810,7 @@ void UnitTestPublish::test38()
     // Testing preserving of the PUBLISH (QoS1) operation after the broker disconnection and termination upon reconnect
     // [MQTT-4.6.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2848,8 +2845,8 @@ void UnitTestPublish::test38()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    unitTestClearState();
+    unitTestNotifyNetworkDisconnected(client, false);    
 
     // Reconnection with attempt to restore the session, but the clean session is reported
     unitTestPerformBasicConnect(client, __FUNCTION__, true);
@@ -2865,7 +2862,7 @@ void UnitTestPublish::test39()
     // Testing preserving of the PUBLISH (QoS1) operation after the broker disconnection (initiated by the broker).
     // [MQTT-4.4.0-1]
 
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
@@ -2912,10 +2909,8 @@ void UnitTestPublish::test39()
     TS_ASSERT(!unitTestIsPublishComplete());
     TS_ASSERT(unitTestCheckNoTicks());
 
-    ec = unitTestInit(client);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    TS_ASSERT(unitTestCheckNoTicks()); 
-
+    unitTestClearState();
+    
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
     unitTestConnectInitConfigBasic(&connectConfig);

@@ -10,6 +10,7 @@
 #include "comms/cast.h"
 #include "comms/Assert.h"
 #include "comms/process.h"
+#include "comms/util/ScopeGuard.h"
 
 #include <algorithm>
 #include <type_traits>

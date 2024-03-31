@@ -944,6 +944,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle h
     return sendOpFromHandle(handle)->cancel();
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_simple(
+    CC_Mqtt5ClientHandle handle,
+    const CC_Mqtt5PublishBasicConfig* basicConfig,
+    CC_Mqtt5PublishCompleteCb cb, 
+    void* cbData)
+{
+    return cc_mqtt5_##NAME##client_publish_full(handle, basicConfig, nullptr, cb, cbData);
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5PublishBasicConfig* basicConfig,

@@ -40,6 +40,8 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_connect_add_will_user_prop = &cc_mqtt5_client_connect_add_will_user_prop;
     funcs.m_connect_send = &cc_mqtt5_client_connect_send;
     funcs.m_connect_cancel = &cc_mqtt5_client_connect_cancel;
+    funcs.m_connect_simple = &cc_mqtt5_client_connect_simple;
+    funcs.m_connect_full = &cc_mqtt5_client_connect_full;
     funcs.m_is_connected = &cc_mqtt5_client_is_connected;
     funcs.m_disconnect_prepare = &cc_mqtt5_client_disconnect_prepare;
     funcs.m_disconnect_init_config = &cc_mqtt5_client_disconnect_init_config;
@@ -47,6 +49,7 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_disconnect_add_user_prop = &cc_mqtt5_client_disconnect_add_user_prop;
     funcs.m_disconnect_send = &cc_mqtt5_client_disconnect_send;
     funcs.m_disconnect_cancel = &cc_mqtt5_client_disconnect_cancel;
+    funcs.m_disconnect = &cc_mqtt5_client_disconnect;
     funcs.m_subscribe_prepare = &cc_mqtt5_client_subscribe_prepare;
     funcs.m_subscribe_set_response_timeout = &cc_mqtt5_client_subscribe_set_response_timeout;
     funcs.m_subscribe_get_response_timeout = &cc_mqtt5_client_subscribe_get_response_timeout;
@@ -57,6 +60,8 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_subscribe_add_user_prop = &cc_mqtt5_client_subscribe_add_user_prop;
     funcs.m_subscribe_send = &cc_mqtt5_client_subscribe_send;
     funcs.m_subscribe_cancel = &cc_mqtt5_client_subscribe_cancel;
+    funcs.m_subscribe_simple = &cc_mqtt5_client_subscribe_simple;
+    funcs.m_subscribe_full = &cc_mqtt5_client_subscribe_full;
     funcs.m_unsubscribe_prepare = &cc_mqtt5_client_unsubscribe_prepare;
     funcs.m_unsubscribe_set_response_timeout = &cc_mqtt5_client_unsubscribe_set_response_timeout;
     funcs.m_unsubscribe_get_response_timeout = &cc_mqtt5_client_unsubscribe_get_response_timeout;
@@ -65,6 +70,8 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_unsubscribe_add_user_prop = &cc_mqtt5_client_unsubscribe_add_user_prop;
     funcs.m_unsubscribe_send = &cc_mqtt5_client_unsubscribe_send;
     funcs.m_unsubscribe_cancel = &cc_mqtt5_client_unsubscribe_cancel;    
+    funcs.m_unsubscribe_simple = &cc_mqtt5_client_unsubscribe_simple;
+    funcs.m_unsubscribe_full = &cc_mqtt5_client_unsubscribe_full;    
     funcs.m_publish_prepare = &cc_mqtt5_client_publish_prepare;    
     funcs.m_publish_init_config_basic = &cc_mqtt5_client_publish_init_config_basic;
     funcs.m_publish_init_config_extra = &cc_mqtt5_client_publish_init_config_extra;
@@ -77,6 +84,8 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_publish_add_user_prop = &cc_mqtt5_client_publish_add_user_prop;
     funcs.m_publish_send = &cc_mqtt5_client_publish_send;
     funcs.m_publish_cancel = &cc_mqtt5_client_publish_cancel;    
+    funcs.m_publish_simple = &cc_mqtt5_client_publish_simple;    
+    funcs.m_publish_full = &cc_mqtt5_client_publish_full;    
     funcs.m_reauth_prepare = &cc_mqtt5_client_reauth_prepare;    
     funcs.m_reauth_init_config_auth = &cc_mqtt5_client_reauth_init_config_auth;
     funcs.m_reauth_set_response_timeout = &cc_mqtt5_client_reauth_set_response_timeout;
@@ -85,6 +94,7 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_reauth_add_user_prop = &cc_mqtt5_client_reauth_add_user_prop;
     funcs.m_reauth_send = &cc_mqtt5_client_reauth_send;
     funcs.m_reauth_cancel = &cc_mqtt5_client_reauth_cancel;
+    funcs.m_reauth = &cc_mqtt5_client_reauth;
     funcs.m_set_next_tick_program_callback = &cc_mqtt5_client_set_next_tick_program_callback;
     funcs.m_set_cancel_next_tick_wait_callback = &cc_mqtt5_client_set_cancel_next_tick_wait_callback;
     funcs.m_set_send_output_data_callback = &cc_mqtt5_client_set_send_output_data_callback;

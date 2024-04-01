@@ -197,10 +197,12 @@ void SendOp::handle(PubrecMsg& msg)
         } 
     }
     
+    // Protocol wise it's all correct, no need to terminate any more
+    terminateOnExit.release();
+
     if ((msg.field_reasonCode().doesExist()) && 
         (msg.field_reasonCode().field().value() >= PubrecMsg::Field_reasonCode::Field::ValueType::UnspecifiedError)) {
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
-        terminateOnExit.release();
         status = CC_Mqtt5AsyncOpStatus_Complete;
         return;
     }
@@ -216,13 +218,11 @@ void SendOp::handle(PubrecMsg& msg)
     auto result = client().sendMessage(pubrelMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
-        terminateOnExit.release();
         status = CC_Mqtt5AsyncOpStatus_InternalError;
         return;
     }
 
     m_reasonCode = response.m_reasonCode;
-    terminateOnExit.release();
     completeOpOnExit.release();
     ++m_sendAttempts;
     restartResponseTimer();

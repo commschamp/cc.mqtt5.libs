@@ -743,8 +743,8 @@
     MUST resend any unacknowledged PUBLISH packets (where QoS > 0) and PUBREL packets using their
     original Packet Identifiers. This is the only circumstance where a Client or Server is REQUIRED to resend
     messages. Clients and Servers MUST NOT resend messages at any other time.
-    * Not applicable to current client implementation. It doesn't allow connect without previous disconnection
-        where all outstanding requests get aborted.
+    * Publish tested in UnitTestPublish::test[35 - 39]
+    * Receive tested in UnitTestReceive::test[22 - 25]
 - [MQTT-4.4.0-2]: If PUBACK or PUBREC is received containing a Reason Code of 0x80 or greater the corresponding
     PUBLISH packet is treated as acknowledged, and MUST NOT be retransmitted
     * Tested in UnitTestPublish::test31 and UnitTestPublish::test32.

@@ -921,12 +921,12 @@ void ClientImpl::brokerDisconnected(
     terminateOps(status, TerminateMode_KeepSendRecvOps);
 
     for (auto& op : m_recvOps) {
-        assert(op);
+        COMMS_ASSERT(op);
         op->networkConnectivityChanged();
     }    
 
     for (auto& op : m_sendOps) {
-        assert(op);
+        COMMS_ASSERT(op);
         op->networkConnectivityChanged();
     }    
 

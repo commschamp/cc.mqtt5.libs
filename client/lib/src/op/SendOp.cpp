@@ -630,7 +630,7 @@ CC_Mqtt5ErrorCode SendOp::cancel()
 
 void SendOp::postReconnectionResend()
 {
-    assert(m_sendAttempts > 0U);
+    COMMS_ASSERT(m_sendAttempts > 0U);
     --m_sendAttempts;
     m_responseTimer.cancel();
     responseTimeoutInternal(); // Emulating timeout will resend the message again with DUP flag (if needed).

@@ -111,7 +111,7 @@ void RecvOp::handle(PublishMsg& msg)
         }
 
         // If dispatched to this op, duplicate has been detected
-        assert(msg.transportField_flags().field_dup().getBitValue_bit());
+        COMMS_ASSERT(msg.transportField_flags().field_dup().getBitValue_bit());
         PubrecMsg pubrecMsg;
         pubrecMsg.field_packetId().setValue(m_packetId);
         sendMessage(pubrecMsg);

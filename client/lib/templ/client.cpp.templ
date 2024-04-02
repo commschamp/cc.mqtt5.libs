@@ -935,6 +935,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
     return sendOpFromHandle(handle)->send(cb, cbData);         
 }
 
+bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return false;
+    }    
+
+    return sendOpFromHandle(handle)->isSent();
+}
+
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle)
 {
     if (handle == nullptr) {

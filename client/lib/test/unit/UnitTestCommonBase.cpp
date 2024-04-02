@@ -119,6 +119,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_publish_add_user_prop != nullptr);  
     test_assert(m_funcs.m_publish_send != nullptr);  
     test_assert(m_funcs.m_publish_cancel != nullptr);  
+    test_assert(m_funcs.m_publish_was_initiated != nullptr);  
     test_assert(m_funcs.m_publish_simple != nullptr);  
     test_assert(m_funcs.m_publish_full != nullptr);  
     test_assert(m_funcs.m_reauth_prepare != nullptr);  
@@ -1115,6 +1116,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishAddUserProp(CC_Mqtt5Publish
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishCancel(CC_Mqtt5PublishHandle handle)
 {
     return m_funcs.m_publish_cancel(handle);
+}
+
+bool UnitTestCommonBase::unitTestPublishWasInitiated(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_was_initiated(handle);
 }
 
 CC_Mqtt5ReauthHandle UnitTestCommonBase::unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

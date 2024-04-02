@@ -67,6 +67,11 @@ public:
         return m_paused;
     }
 
+    bool isSent() const
+    {
+        return m_sent;
+    }
+
 protected:
     virtual Type typeImpl() const override;    
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
@@ -89,6 +94,7 @@ private:
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+    bool m_sent = false;
     bool m_acked = false;
     bool m_registeredAlias = false;
     bool m_topicConfigured = false;

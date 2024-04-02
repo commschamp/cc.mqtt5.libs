@@ -768,6 +768,7 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
         return result;
     }
 
+    m_sent = true;
     ++m_sendAttempts;
 
     if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {

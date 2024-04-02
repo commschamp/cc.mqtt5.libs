@@ -241,6 +241,20 @@
 /// the prepared operation using the @b cancel request. After performing the @b cancel
 /// stage the allocated handle is no longer valid.
 ///
+/// <b>IMPORTANT LIBRARY LIMITATION</b>: Once an operation is @b prepared,
+/// it must be be immediately @b configured and @b sent (or @b cancelled) before
+/// any other other operation can be prepared. For example:
+/// @code
+/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
+/// CC_Mqtt5ConnectHandle connect = cc_mqtt5_client_connect_prepare(...);
+/// assert(connect != nullptr);
+///
+/// // The following attempt to prepare the "subscribe" operation will fail because
+/// // previously allocated "connect" hasn't been sent or cancelled yet.
+/// CC_Mqtt5SubscribeHandle subscribe = cc_mqtt5_client_subscribe_prepare(...);
+/// assert(subscribe == NULL);
+/// @endcode
+///
 /// @section doc_cc_mqtt5_client_response_timeout Default Response Timeout
 /// After sending any operation request to the broker, the client library has to allow
 /// some time for the broker to process the request. If it takes too much time, the

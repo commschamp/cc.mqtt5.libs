@@ -34,7 +34,7 @@ void UnitTestUnsubscribe::test1()
 {
     // Simple unsubscribe and ack
     // [MQTT-3.11.3-1]
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocClient(true);
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 

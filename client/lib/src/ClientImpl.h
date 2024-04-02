@@ -142,6 +142,7 @@ public:
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
     bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
+    void allowNextPrepare();
 
     TimerMgr& timerMgr()
     {
@@ -308,6 +309,7 @@ private:
 
     OpPtrsList m_ops;
     bool m_opsDeleted = false;
+    bool m_preparationLocked = false;
 };
 
 } // namespace cc_mqtt5_client

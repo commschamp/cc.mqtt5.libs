@@ -112,6 +112,8 @@ CC_Mqtt5ErrorCode UnsubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
 
 CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData) 
 {
+    client().allowNextPrepare();
+
     auto completeOnError = 
         comms::util::makeScopeGuard(
             [this]()
@@ -151,6 +153,11 @@ CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cb
 
 CC_Mqtt5ErrorCode UnsubscribeOp::cancel()
 {
+    if (m_cb == nullptr) {
+        // hasn't been sent yet
+        client().allowNextPrepare();
+    }            
+
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
 }

@@ -63,21 +63,22 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5ErrorCode_Success, ///< The requested function executed successfully.
-    CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report    
-    CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
-    CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
-    CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
-    CC_Mqtt5ErrorCode_AlreadyConnected, ///< The client library is already connected to the broker, cannot perform connection operation.
-    CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
-    CC_Mqtt5ErrorCode_InsufficientConfig, ///< The required configuration hasn't been performed.
-    CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.
-    CC_Mqtt5ErrorCode_BufferOverflow, ///< Output buffer is too short
-    CC_Mqtt5ErrorCode_NotSupported, ///< Feature is not supported
-    CC_Mqtt5ErrorCode_RetryLater, ///< Retry in next event loop iteration.
-    CC_Mqtt5ErrorCode_Terminating, ///< The client is in "terminating" state, (re)init is required.
-    CC_Mqtt5ErrorCode_NetworkDisconnected, ///< When network is disconnected issueing new ops is not accepted
-    CC_Mqtt5ErrorCode_NotAuthenticated, ///< The client not authenticated.
+    CC_Mqtt5ErrorCode_Success = 0, ///< The requested function executed successfully.
+    CC_Mqtt5ErrorCode_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5ErrorCode_NotIntitialized = 2, ///< The allocated client hasn't been initialized.
+    CC_Mqtt5ErrorCode_Busy = 3, ///< The client library is in the middle of previous operation(s), cannot start a new one.
+    CC_Mqtt5ErrorCode_NotConnected = 4, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
+    CC_Mqtt5ErrorCode_AlreadyConnected = 5, ///< The client library is already connected to the broker, cannot perform connection operation.
+    CC_Mqtt5ErrorCode_BadParam = 6, ///< Bad parameter is passed to the function.
+    CC_Mqtt5ErrorCode_InsufficientConfig = 7, ///< The required configuration hasn't been performed.
+    CC_Mqtt5ErrorCode_OutOfMemory = 8, ///< Memory allocation failed.
+    CC_Mqtt5ErrorCode_BufferOverflow = 9, ///< Output buffer is too short
+    CC_Mqtt5ErrorCode_NotSupported = 10, ///< Feature is not supported
+    CC_Mqtt5ErrorCode_RetryLater = 11, ///< Retry in next event loop iteration.
+    CC_Mqtt5ErrorCode_Disconnecting = 12, ///< The client is in "disconnecting" state, (re)connect is required in the next iteration loop.
+    CC_Mqtt5ErrorCode_NetworkDisconnected = 13, ///< When network is disconnected issueing new ops is not accepted
+    CC_Mqtt5ErrorCode_NotAuthenticated = 14, ///< The client not authenticated.
+    CC_Mqtt5ErrorCode_PreparationLocked = 15, ///< Another operation is being prepared, cannot create a new one without performing "send" or "cancel".
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 

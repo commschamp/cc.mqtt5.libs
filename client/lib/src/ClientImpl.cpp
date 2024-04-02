@@ -190,9 +190,9 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate connection.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate connection.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -214,6 +214,12 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"connect\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }
+
         auto ptr = m_connectOpAlloc.alloc(*this);
         if (!ptr) {
             errorLog("Cannot allocate new connect operation.");
@@ -221,6 +227,7 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_connectOps.push_back(std::move(ptr));
         connectOp = m_connectOps.back().get();
@@ -246,9 +253,9 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }        
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate disconnection.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate disconnection.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -262,7 +269,13 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             errorLog("Cannot start disconnect operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
-        }        
+        }   
+
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"disconnect\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }            
 
         auto ptr = m_disconnectOpsAlloc.alloc(*this);
         if (!ptr) {
@@ -271,6 +284,7 @@ op::DisconnectOp* ClientImpl::disconnectPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_disconnectOps.push_back(std::move(ptr));
         disconnectOp = m_disconnectOps.back().get();
@@ -290,9 +304,9 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate subscription.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate subscription.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -306,7 +320,13 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
-        }        
+        }  
+
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"subscribe\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }            
 
         auto ptr = m_subscribeOpsAlloc.alloc(*this);
         if (!ptr) {
@@ -315,6 +335,7 @@ op::SubscribeOp* ClientImpl::subscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_subscribeOps.push_back(std::move(ptr));
         subOp = m_subscribeOps.back().get();
@@ -334,9 +355,9 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate unsubscription.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate unsubscription.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -350,7 +371,13 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             errorLog("Cannot start subscribe operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
-        }        
+        }    
+
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"unsubscribe\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }             
 
         auto ptr = m_unsubscribeOpsAlloc.alloc(*this);
         if (!ptr) {
@@ -359,6 +386,7 @@ op::UnsubscribeOp* ClientImpl::unsubscribePrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_unsubscribeOps.push_back(std::move(ptr));
         unsubOp = m_unsubscribeOps.back().get();
@@ -378,9 +406,9 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate publish.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate publish.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -403,6 +431,13 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"unsubscribe\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }          
+
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_sendOps.push_back(std::move(ptr));
         sendOp = m_sendOps.back().get();
@@ -429,9 +464,9 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot initiate reauth.");
-            updateEc(ec, CC_Mqtt5ErrorCode_Terminating);
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot initiate reauth.");
+            updateEc(ec, CC_Mqtt5ErrorCode_Disconnecting);
             break;
         }
 
@@ -451,7 +486,13 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             errorLog("Cannot start reauth operation, retry in next event loop iteration.");
             updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
             break;
-        }        
+        }       
+
+        if (m_preparationLocked) {
+            errorLog("Another operation is being prepared, cannot prepare \"reauth\" without \"send\" or \"cancel\" of the previous.");
+            updateEc(ec, CC_Mqtt5ErrorCode_PreparationLocked);            
+            break;
+        }           
 
         auto ptr = m_reauthOpsAlloc.alloc(*this);
         if (!ptr) {
@@ -460,6 +501,7 @@ op::ReauthOp* ClientImpl::reauthPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        m_preparationLocked = true;
         m_ops.push_back(ptr.get());
         m_reauthOps.push_back(std::move(ptr));
         reauthOp = m_reauthOps.back().get();
@@ -482,9 +524,9 @@ CC_Mqtt5ErrorCode ClientImpl::allocPubTopicAlias(const char* topic, unsigned qos
             return CC_Mqtt5ErrorCode_NotConnected;
         }
 
-        if (m_sessionState.m_terminating) {
-            errorLog("Session termination is in progress, cannot allocate topic alias.");
-            return CC_Mqtt5ErrorCode_Terminating;
+        if (m_sessionState.m_disconnecting) {
+            errorLog("Session disconnection is in progress, cannot allocate topic alias.");
+            return CC_Mqtt5ErrorCode_Disconnecting;
         }    
 
         if (m_sessionState.m_maxSendTopicAlias <= m_sessionState.m_sendTopicAliases.size()) {
@@ -606,7 +648,7 @@ bool ClientImpl::pubTopicAliasIsAllocated(const char* topic) const
 
 void ClientImpl::handle(PublishMsg& msg)
 {
-    if (m_sessionState.m_terminating) {
+    if (m_sessionState.m_disconnecting) {
         return;
     }
 
@@ -776,7 +818,7 @@ void ClientImpl::handle(PubcompMsg& msg)
 
 void ClientImpl::handle(ProtMessage& msg)
 {
-    if (m_sessionState.m_terminating) {
+    if (m_sessionState.m_disconnecting) {
         return;
     }
 
@@ -798,7 +840,7 @@ void ClientImpl::handle(ProtMessage& msg)
 
         // After message dispatching the whole session may be in terminating state
         // Don't continue iteration
-        if (m_sessionState.m_terminating) {
+        if (m_sessionState.m_disconnecting) {
             break;
         }    
     }
@@ -984,6 +1026,12 @@ bool ClientImpl::hasPausedSendsBefore(const op::SendOp* sendOp) const
     return prevSendOpPtr->isPaused();
 }
 
+void ClientImpl::allowNextPrepare()
+{
+    COMMS_ASSERT(m_preparationLocked);
+    m_preparationLocked = false;
+}
+
 void ClientImpl::doApiEnter()
 {
     ++m_apiEnterCount;
@@ -1040,7 +1088,7 @@ void ClientImpl::createKeepAliveOpIfNeeded()
 
 void ClientImpl::terminateOps(CC_Mqtt5AsyncOpStatus status, TerminateMode mode)
 {
-    m_sessionState.m_terminating = true;
+    m_sessionState.m_disconnecting = true;
     for (auto* op : m_ops) {
         if (op == nullptr) {
             continue;
@@ -1177,7 +1225,7 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
 void ClientImpl::opComplete_Send(const op::Op* op)
 {
     eraseFromList(op, m_sendOps);
-    if (m_sessionState.m_terminating) {
+    if (m_sessionState.m_disconnecting) {
         return;
     }
 

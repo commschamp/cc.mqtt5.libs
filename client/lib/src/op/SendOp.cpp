@@ -577,6 +577,8 @@ unsigned SendOp::getResendAttempts() const
 
 CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 {
+    client().allowNextPrepare();
+    
     auto completeOnExit = 
         comms::util::makeScopeGuard(
             [this]()
@@ -624,6 +626,11 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
 CC_Mqtt5ErrorCode SendOp::cancel()
 {
+    if (m_cb == nullptr) {
+        // hasn't been sent yet
+        client().allowNextPrepare();
+    }
+
     opCompleteInternal();
     return CC_Mqtt5ErrorCode_Success;
 }

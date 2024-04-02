@@ -43,7 +43,7 @@ struct SessionState
     bool m_problemInfoAllowed = false;
     bool m_initialized = false;
     bool m_connected = false;
-    bool m_terminating = false;
+    bool m_disconnecting = false;
     bool m_wildcardSubAvailable = false;
     bool m_subIdsAvailable = false;
     bool m_retainAvailable = false;

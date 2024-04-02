@@ -319,7 +319,7 @@ typedef struct
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to array containing "User Properties", NULL if none
     unsigned m_userPropsCount; ///< Amount of "User Properties" in the array
     unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property, 0 if not reported.
-    unsigned m_highQosSendLimit; ///< "Receive Maximum" property, 0 if not reported.
+    unsigned m_highQosSendLimit; ///< "Receive Maximum" property.
     unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, 0 if not reported.
     unsigned m_topicAliasMax; ///< "Topic Alias Maximum" property, 0 if not reported.
     CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" property, 

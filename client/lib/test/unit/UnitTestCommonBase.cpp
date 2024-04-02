@@ -9,6 +9,7 @@ namespace
 {
 
 #define test_assert(cond_) \
+    assert(cond_); \
     if (!(cond_)) { \
         std::cerr << "\nAssertion failure (" << #cond_ << ") in " << __FILE__ << ":" << __LINE__ << std::endl; \
         std::exit(1); \
@@ -320,10 +321,12 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendUnsubscribe(CC_Mqtt5Unsubscrib
     return result;
 }
 
-CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish)
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish, bool clearHandle)
 {
     auto result = m_funcs.m_publish_send(publish, &UnitTestCommonBase::unitTestPublishCompleteCb, this);
-    publish = nullptr;
+    if (clearHandle) {
+        publish = nullptr;
+    }
     return result;
 }
 
@@ -1107,6 +1110,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishConfigExtra(CC_Mqtt5Publish
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop)
 {
     return m_funcs.m_publish_add_user_prop(handle, prop);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishCancel(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_cancel(handle);
 }
 
 CC_Mqtt5ReauthHandle UnitTestCommonBase::unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

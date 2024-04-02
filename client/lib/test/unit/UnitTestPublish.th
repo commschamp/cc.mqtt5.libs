@@ -46,6 +46,10 @@ public:
     void test37();
     void test38();
     void test39();
+    void test40();
+    void test41();
+    void test42();
+    void test43();
 
 private:
     virtual void setUp() override
@@ -2233,6 +2237,8 @@ void UnitTestPublish::test30()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    auto packetId1 = publishMsg->field_packetId().field().value();
 
     TS_ASSERT(!unitTestIsPublishComplete());
 
@@ -2246,21 +2252,74 @@ void UnitTestPublish::test30()
     ec = unitTestSendPublish(publish2);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    sentMsg = unitTestGetSentMessage();
-    TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
-    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
-    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
-
-    TS_ASSERT(unitTestIsPublishComplete());
-    unitTestPopPublishResponseInfo();    
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
 
     auto* publish3 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish3, nullptr);
 
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     ec = unitTestPublishConfigBasic(publish3, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Busy); 
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(publishMsg->field_packetId().isMissing()); // QoS0 sent
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    // QoS2 is also sent right away
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(publishMsg->field_packetId().doesExist()); 
+    auto packetId2 = publishMsg->field_packetId().field().value();
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);    
+    TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), packetId2);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg);
+    TS_ASSERT(unitTestIsPublishComplete());
+    TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();     
 }
 
 void UnitTestPublish::test31()
@@ -2943,4 +3002,609 @@ void UnitTestPublish::test39()
     auto& pubInfo = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     unitTestPopPublishResponseInfo();    
+}
+
+void UnitTestPublish::test40()
+{
+    // Testing limit of the outgoing high Qos publishes when paused publishes get cancelled
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_recvMaximum = 1;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    auto packetId1 = publishMsg->field_packetId().field().value();
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish3, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+    ec = unitTestPublishCancel(publish3);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(!unitTestIsPublishComplete()); // No callback is invoked
+
+    TS_ASSERT(!unitTestHasSentMessage()); // No new message has been sent
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(publishMsg->field_packetId().isMissing()); // QoS0 sent
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    TS_ASSERT_EQUALS(pubInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    TS_ASSERT(!unitTestHasSentMessage()); 
+}
+
+void UnitTestPublish::test41()
+{
+    // Testing limit of the outgoing high Qos publishes with broker disconnect
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_recvMaximum = 1;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    auto packetId1 = publishMsg->field_packetId().field().value();
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish3, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(unitTestCheckNoTicks());     
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestClearState();
+
+        // Reconnection with attempt to restore the session
+    auto connectConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&connectConfig);
+
+    connectConfig.m_clientId = __FUNCTION__;
+    connectConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    connectRespConfig.m_recvMaximum = 1;
+    unitTestPerformConnect(client, &connectConfig, nullptr, nullptr, nullptr, &connectRespConfig);
+
+    // Checking the PUBLISH is re-sent
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);  
+    TS_ASSERT(publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_packetId().field().value(), packetId1);    
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the other messages sending is delayed
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().isMissing()); // QoS0 sent
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    // QoS2 is also sent right away
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit()); // NO DUP
+    TS_ASSERT(publishMsg->field_packetId().doesExist()); 
+    auto packetId2 = publishMsg->field_packetId().field().value();
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);    
+    TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), packetId2);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg);
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo3 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo3.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();     
+}
+
+void UnitTestPublish::test42()
+{
+    // Testing limit of the outgoing high Qos publishes with broker disconnect, recomment removes the limit
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_recvMaximum = 1;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    auto packetId1 = publishMsg->field_packetId().field().value();
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish3, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(unitTestCheckNoTicks());     
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestClearState();
+
+    // Reconnection with attempt to restore the session
+    auto connectConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&connectConfig);
+
+    connectConfig.m_clientId = __FUNCTION__;
+    connectConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    unitTestPerformConnect(client, &connectConfig, nullptr, nullptr, nullptr, &connectRespConfig);
+
+    // Checking the PUBLISH is re-sent
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);  
+    TS_ASSERT(publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_packetId().field().value(), packetId1);    
+
+    // Checking other PUBLISH-es are resumed
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().isMissing()); // QoS0 sent
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    // QoS2 is also sent right away
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit()); // NO DUP
+    TS_ASSERT(publishMsg->field_packetId().doesExist()); 
+    auto packetId2 = publishMsg->field_packetId().field().value();
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);    
+    TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), packetId2);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo3 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo3.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();     
+}
+
+void UnitTestPublish::test43()
+{
+    // Testing limit of the outgoing high Qos publishes with broker disconnect, recomment increases the limit
+
+    auto* client = unitTestAllocClient();
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_recvMaximum = 1;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    auto packetId1 = publishMsg->field_packetId().field().value();
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish2);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(!unitTestHasSentMessage()); // the sent message sending is delayed
+
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish3, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(unitTestCheckNoTicks());     
+
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestClearState();
+
+    // Reconnection with attempt to restore the session
+    auto connectConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&connectConfig);
+
+    connectConfig.m_clientId = __FUNCTION__;
+    connectConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    connectRespConfig.m_recvMaximum = 2;
+    unitTestPerformConnect(client, &connectConfig, nullptr, nullptr, nullptr, &connectRespConfig);
+
+    // Checking the PUBLISH is re-sent
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);  
+    TS_ASSERT(publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg->field_packetId().field().value(), packetId1);    
+
+    // Checking other PUBLISH-es are resumed
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg->field_packetId().isMissing()); // QoS0 sent
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    // QoS2 is also sent right away
+    TS_ASSERT(unitTestHasSentMessage()); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg, nullptr);    
+    TS_ASSERT(!publishMsg->transportField_flags().field_dup().getBitValue_bit()); // NO DUP
+    TS_ASSERT(publishMsg->field_packetId().doesExist()); 
+    auto packetId2 = publishMsg->field_packetId().field().value();
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg;
+    pubackMsg.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo(); 
+
+    UnitTestPubrecMsg pubrecMsg;
+    pubrecMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg);
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg, nullptr);    
+    TS_ASSERT_EQUALS(pubrelMsg->field_packetId().value(), packetId2);
+    TS_ASSERT(!unitTestIsPublishComplete());
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg;
+    pubcompMsg.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo3 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo3.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();     
 }

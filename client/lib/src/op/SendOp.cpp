@@ -331,11 +331,6 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) && (state.m_highQosSendLimit < client().sendsCount())) {
-        errorLog("Exceeding number of allowed high QoS publishes.");
-        return CC_Mqtt5ErrorCode_Busy;        
-    }
-
     if (config.m_retain && (!state.m_retainAvailable)) {
         errorLog("Retain is not supported by the broker");
         return CC_Mqtt5ErrorCode_BadParam;
@@ -603,23 +598,19 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
     m_pubMsg.doRefresh(); // Update packetId presence
 
-    m_sendAttempts = 0U;
-    auto result = client().sendMessage(m_pubMsg); 
-    if (result != CC_Mqtt5ErrorCode_Success) {
-        return result;
-    }
-
-    ++m_sendAttempts;
-
-    if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete);
+    if (m_paused) {
+        completeOnExit.release(); // don't complete op yet
         return CC_Mqtt5ErrorCode_Success;
     }
 
-    completeOnExit.release(); // don't complete op yet
     auto guard = client().apiEnter();
-    restartResponseTimer();
-    return CC_Mqtt5ErrorCode_Success;
+    auto sendResult = doSendInternal();
+    if (sendResult != CC_Mqtt5ErrorCode_Success) {
+        return sendResult;
+    }
+
+    completeOnExit.release(); // don't complete op in this context
+    return sendResult;
 }
 
 CC_Mqtt5ErrorCode SendOp::cancel()
@@ -630,10 +621,41 @@ CC_Mqtt5ErrorCode SendOp::cancel()
 
 void SendOp::postReconnectionResend()
 {
+    if (m_paused) {
+        return;
+    }
+
     COMMS_ASSERT(m_sendAttempts > 0U);
     --m_sendAttempts;
     m_responseTimer.cancel();
-    responseTimeoutInternal(); // Emulating timeout will resend the message again with DUP flag (if needed).
+    resendDupMsg(); 
+}
+
+void SendOp::pause()
+{
+    COMMS_ASSERT(!m_paused);
+    m_paused = true;
+}
+
+void SendOp::resume()
+{
+    COMMS_ASSERT(m_paused);
+    m_paused = false;
+    auto ec = doSendInternal();
+    if (ec == CC_Mqtt5ErrorCode_Success) {
+        return;
+    }
+
+    auto cbStatus = CC_Mqtt5AsyncOpStatus_InternalError;
+    if (ec == CC_Mqtt5ErrorCode_BadParam) {
+        cbStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+    }
+    else if (ec == CC_Mqtt5ErrorCode_BufferOverflow) {
+        cbStatus = CC_Mqtt5AsyncOpStatus_OutOfMemory;
+    }
+
+    reportPubComplete(cbStatus);
+    opComplete();
 }
 
 Op::Type SendOp::typeImpl() const
@@ -663,6 +685,11 @@ void SendOp::responseTimeoutInternal()
 {
     COMMS_ASSERT(!m_responseTimer.isActive());
     errorLog("Timeout on publish acknowledgement from broker.");
+    resendDupMsg();
+}
+
+void SendOp::resendDupMsg()
+{
     if (m_totalSendAttempts <= m_sendAttempts) {
         errorLog("Exhauses all attempts to publish message, discarding publish.");
         reportPubComplete(CC_Mqtt5AsyncOpStatus_Timeout);
@@ -731,6 +758,26 @@ void SendOp::confirmRegisteredAlias()
     if (iter->m_highQosRegRemCount > 0U) {
         --(iter->m_highQosRegRemCount);
     }
+}
+
+CC_Mqtt5ErrorCode SendOp::doSendInternal()
+{
+    m_sendAttempts = 0U;
+    auto result = client().sendMessage(m_pubMsg); 
+    if (result != CC_Mqtt5ErrorCode_Success) {
+        return result;
+    }
+
+    ++m_sendAttempts;
+
+    if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
+        reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete);
+        opComplete();
+        return CC_Mqtt5ErrorCode_Success;
+    }
+
+    restartResponseTimer();
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 void SendOp::recvTimeoutCb(void* data)

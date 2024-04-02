@@ -403,6 +403,11 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
+        COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);
+        if (m_sessionState.m_highQosSendLimit <= m_sendOps.size()) {
+            ptr->pause();
+        }
+
         m_ops.push_back(ptr.get());
         m_sendOps.push_back(std::move(ptr));
         sendOp = m_sendOps.back().get();
@@ -889,7 +894,36 @@ void ClientImpl::brokerConnected(bool sessionPresent)
 
             for (auto& recvOpPtr : m_recvOps) {
                 recvOpPtr->postReconnectionResume();
-            }                       
+            }    
+
+            COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);  
+            auto resumeUntilIdx = std::min(std::size_t(m_sessionState.m_highQosSendLimit), m_sendOps.size()); 
+            auto resumeFromIdx = resumeUntilIdx; 
+            for (auto count = resumeUntilIdx; count > 0U; --count) {
+                auto idx = count - 1U;
+                auto& sendOpPtr = m_sendOps[idx];
+                if (!sendOpPtr->isPaused()) {
+                    break;
+                }
+
+                resumeFromIdx = idx;
+            }
+
+            // Resume in-order of creation
+            while (resumeFromIdx < std::min(std::size_t(m_sessionState.m_highQosSendLimit), m_sendOps.size())) {
+                auto& sendOpPtr = m_sendOps[resumeFromIdx];
+                COMMS_ASSERT(sendOpPtr);
+                if (!sendOpPtr->isPaused()) {
+                    ++resumeFromIdx;
+                    continue;
+                }
+
+                sendOpPtr->resume();
+                // Do not increament resumeFromIdx right away
+                // There can be QoS0 ops that can get completed right away
+                // The QoS0 completion can also trigger the resume of others
+                // Increment in the next iteration
+            }
 
             break;
         }
@@ -1118,6 +1152,22 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
 void ClientImpl::opComplete_Send(const op::Op* op)
 {
     eraseFromList(op, m_sendOps);
+    if (m_sessionState.m_terminating) {
+        return;
+    }
+
+    COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);
+    if (m_sendOps.size() < m_sessionState.m_highQosSendLimit) {
+        return;
+    }
+
+    auto& opToUnpausePtr = m_sendOps[m_sessionState.m_highQosSendLimit - 1U];
+    if (!opToUnpausePtr->isPaused()) {
+        // Some operations that has been paused can be cancelled, hence not influencing any resume.
+        return;
+    }
+
+    opToUnpausePtr->resume();
 }
 
 void ClientImpl::opComplete_Reauth(const op::Op* op)

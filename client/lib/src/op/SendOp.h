@@ -60,6 +60,12 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
     void postReconnectionResend();
+    void pause();
+    void resume();
+    bool isPaused() const
+    {
+        return m_paused;
+    }
 
 protected:
     virtual Type typeImpl() const override;    
@@ -69,8 +75,10 @@ protected:
 private:
     void restartResponseTimer();
     void responseTimeoutInternal();
+    void resendDupMsg();
     void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     void confirmRegisteredAlias();
+    CC_Mqtt5ErrorCode doSendInternal();
 
     static void recvTimeoutCb(void* data);
 
@@ -84,6 +92,7 @@ private:
     bool m_acked = false;
     bool m_registeredAlias = false;
     bool m_topicConfigured = false;
+    bool m_paused = false;
 
     static constexpr unsigned DefaultSendAttempts = 2U;
     static_assert(ExtConfig::SendOpTimers == 1U);

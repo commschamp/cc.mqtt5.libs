@@ -60,8 +60,7 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
     void postReconnectionResend();
-    void pause();
-    void resume();
+    bool resume();
     bool isPaused() const
     {
         return m_paused;
@@ -84,6 +83,8 @@ private:
     void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     void confirmRegisteredAlias();
     CC_Mqtt5ErrorCode doSendInternal();
+    bool canSend() const;
+    void opCompleteInternal();
 
     static void recvTimeoutCb(void* data);
 

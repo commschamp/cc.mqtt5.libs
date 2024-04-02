@@ -403,11 +403,6 @@ op::SendOp* ClientImpl::publishPrepare(CC_Mqtt5ErrorCode* ec)
             break;
         }
 
-        COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);
-        if (m_sessionState.m_highQosSendLimit <= m_sendOps.size()) {
-            ptr->pause();
-        }
-
         m_ops.push_back(ptr.get());
         m_sendOps.push_back(std::move(ptr));
         sendOp = m_sendOps.back().get();
@@ -909,22 +904,9 @@ void ClientImpl::brokerConnected(bool sessionPresent)
                 resumeFromIdx = idx;
             }
 
-            // Resume in-order of creation
-            while (resumeFromIdx < std::min(std::size_t(m_sessionState.m_highQosSendLimit), m_sendOps.size())) {
-                auto& sendOpPtr = m_sendOps[resumeFromIdx];
-                COMMS_ASSERT(sendOpPtr);
-                if (!sendOpPtr->isPaused()) {
-                    ++resumeFromIdx;
-                    continue;
-                }
-
-                sendOpPtr->resume();
-                // Do not increament resumeFromIdx right away
-                // There can be QoS0 ops that can get completed right away
-                // The QoS0 completion can also trigger the resume of others
-                // Increment in the next iteration
+            if (resumeFromIdx < resumeUntilIdx) {
+                resumeSendOpsSince(static_cast<unsigned>(resumeFromIdx));
             }
-
             break;
         }
 
@@ -974,6 +956,32 @@ void ClientImpl::reportMsgInfo(const CC_Mqtt5MessageInfo& info)
 {
     COMMS_ASSERT(m_messageReceivedReportCb != nullptr);
     m_messageReceivedReportCb(m_messageReceivedReportData, &info);
+}
+
+bool ClientImpl::hasPausedSendsBefore(const op::SendOp* sendOp) const
+{
+    auto riter = 
+        std::find_if(
+            m_sendOps.rbegin(), m_sendOps.rend(),
+            [sendOp](auto& opPtr)
+            {
+                return opPtr.get() == sendOp;
+            });
+
+    COMMS_ASSERT(riter != m_sendOps.rend());
+    if (riter == m_sendOps.rend()) {
+        return false;
+    }
+
+    auto iter = riter.base() - 1;
+    auto idx = static_cast<unsigned>(std::distance(m_sendOps.begin(), iter));
+    COMMS_ASSERT(idx < m_sendOps.size());
+    if (idx == 0U) {
+        return false;
+    }
+
+    auto& prevSendOpPtr = m_sendOps[idx - 1U];
+    return prevSendOpPtr->isPaused();
 }
 
 void ClientImpl::doApiEnter()
@@ -1119,6 +1127,23 @@ CC_Mqtt5ErrorCode ClientImpl::initInternal()
     return CC_Mqtt5ErrorCode_Success;
 }
 
+void ClientImpl::resumeSendOpsSince(unsigned idx)
+{
+    while (idx < m_sendOps.size()) {
+        auto& opToResumePtr = m_sendOps[idx];
+        if (!opToResumePtr->isPaused()) {
+            ++idx;
+            continue;
+        }         
+        
+        if (!opToResumePtr->resume()) {
+            break;
+        }
+
+        // After resuming some (QoS0) ops can complete right away, increment idx next iteration
+    }
+}
+
 void ClientImpl::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
@@ -1161,13 +1186,8 @@ void ClientImpl::opComplete_Send(const op::Op* op)
         return;
     }
 
-    auto& opToUnpausePtr = m_sendOps[m_sessionState.m_highQosSendLimit - 1U];
-    if (!opToUnpausePtr->isPaused()) {
-        // Some operations that has been paused can be cancelled, hence not influencing any resume.
-        return;
-    }
-
-    opToUnpausePtr->resume();
+    auto idx = m_sessionState.m_highQosSendLimit - 1U;
+    resumeSendOpsSince(idx);
 }
 
 void ClientImpl::opComplete_Reauth(const op::Op* op)

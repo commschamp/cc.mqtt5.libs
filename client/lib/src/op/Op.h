@@ -88,6 +88,11 @@ protected:
         return m_client;
     }
 
+    const ClientImpl& client() const
+    {
+        return m_client;
+    }    
+
     static void sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason);
     void sendDisconnectWithReason(DisconnectReason reason);
     static void terminationWithReasonStatic(ClientImpl& client, DisconnectReason reason);

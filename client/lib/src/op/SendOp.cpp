@@ -46,6 +46,9 @@ void SendOp::handle(PubackMsg& msg)
 
     m_responseTimer.cancel();
 
+    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
+
     auto terminateOnExit = 
         comms::util::makeScopeGuard(
             [&cl = client()]()
@@ -67,7 +70,7 @@ void SendOp::handle(PubackMsg& msg)
                     responsePtr = nullptr;
                 }
                 reportPubComplete(status, responsePtr);
-                opComplete();
+                opCompleteInternal();
             });        
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery) {
@@ -127,6 +130,9 @@ void SendOp::handle(PubrecMsg& msg)
         return;
     }
 
+    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
+
     m_responseTimer.cancel();
 
     auto terminateOnExit = 
@@ -150,7 +156,7 @@ void SendOp::handle(PubrecMsg& msg)
                     responsePtr = nullptr;
                 }
                 reportPubComplete(status, responsePtr);
-                opComplete();
+                opCompleteInternal();
             });    
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -257,7 +263,7 @@ void SendOp::handle(PubcompMsg& msg)
                     responsePtr = nullptr;
                 }
                 reportPubComplete(status, responsePtr);
-                opComplete();
+                opCompleteInternal();
             });  
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -575,7 +581,7 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
         comms::util::makeScopeGuard(
             [this]()
             {
-                opComplete();
+                opCompleteInternal();
             });
 
     if (!m_responseTimer.isValid()) {
@@ -598,7 +604,10 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
     m_pubMsg.doRefresh(); // Update packetId presence
 
-    if (m_paused) {
+    if (!canSend()) {
+        COMMS_ASSERT(!m_paused);
+        m_paused = true;
+
         completeOnExit.release(); // don't complete op yet
         return CC_Mqtt5ErrorCode_Success;
     }
@@ -615,7 +624,7 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
 CC_Mqtt5ErrorCode SendOp::cancel()
 {
-    opComplete();
+    opCompleteInternal();
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -631,19 +640,20 @@ void SendOp::postReconnectionResend()
     resendDupMsg(); 
 }
 
-void SendOp::pause()
+bool SendOp::resume()
 {
-    COMMS_ASSERT(!m_paused);
-    m_paused = true;
-}
+    if (!m_paused) {
+        return false;
+    }
 
-void SendOp::resume()
-{
-    COMMS_ASSERT(m_paused);
+    if (!canSend()) {
+        return false;
+    }
+
     m_paused = false;
     auto ec = doSendInternal();
     if (ec == CC_Mqtt5ErrorCode_Success) {
-        return;
+        return true;
     }
 
     auto cbStatus = CC_Mqtt5AsyncOpStatus_InternalError;
@@ -655,7 +665,8 @@ void SendOp::resume()
     }
 
     reportPubComplete(cbStatus);
-    opComplete();
+    opCompleteInternal();
+    return true;
 }
 
 Op::Type SendOp::typeImpl() const
@@ -666,7 +677,7 @@ Op::Type SendOp::typeImpl() const
 void SendOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 {
     reportPubComplete(status);
-    opComplete();
+    opCompleteInternal();
 }
 
 void SendOp::networkConnectivityChangedImpl()
@@ -693,17 +704,18 @@ void SendOp::resendDupMsg()
     if (m_totalSendAttempts <= m_sendAttempts) {
         errorLog("Exhauses all attempts to publish message, discarding publish.");
         reportPubComplete(CC_Mqtt5AsyncOpStatus_Timeout);
-        opComplete();
+        opCompleteInternal();
         return;
     }
 
+    COMMS_ASSERT(m_sent);
     if (!m_acked) {
         m_pubMsg.transportField_flags().field_dup().setBitValue_bit(true);
         auto result = client().sendMessage(m_pubMsg); 
         if (result != CC_Mqtt5ErrorCode_Success) {
             errorLog("Failed to resend PUBLISH message.");
             reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-            opComplete();
+            opCompleteInternal();
             return;
         }
 
@@ -719,7 +731,7 @@ void SendOp::resendDupMsg()
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
         reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-        opComplete();
+        opCompleteInternal();
         return;
     }
 
@@ -768,17 +780,48 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
         return result;
     }
 
-    m_sent = true;
+    if (!m_sent) {
+        m_sent = true;
+        ++client().clientState().m_inFlightSends;
+    }
+
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
     ++m_sendAttempts;
 
     if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
         reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete);
-        opComplete();
+        opCompleteInternal();
         return CC_Mqtt5ErrorCode_Success;
     }
 
     restartResponseTimer();
     return CC_Mqtt5ErrorCode_Success;
+}
+
+bool SendOp::canSend() const
+{
+    if (client().clientState().m_inFlightSends < client().sessionState().m_highQosSendLimit) {
+        return true;
+    }
+
+    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+    if ((m_pubMsg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) && 
+        (client().clientState().m_inFlightSends == client().sessionState().m_highQosSendLimit) &&
+        (!client().hasPausedSendsBefore(this))) {
+        return true;
+    }
+
+    return false;
+}
+
+void SendOp::opCompleteInternal()
+{
+    if (m_sent) {
+        COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
+        --client().clientState().m_inFlightSends;
+    }
+
+    opComplete();
 }
 
 void SendOp::recvTimeoutCb(void* data)

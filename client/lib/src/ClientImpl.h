@@ -141,6 +141,7 @@ public:
         CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
+    bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
 
     TimerMgr& timerMgr()
     {
@@ -157,10 +158,20 @@ public:
         return m_clientState;
     }    
 
+    const ClientState& clientState() const
+    {
+        return m_clientState;
+    }       
+
     SessionState& sessionState()
     {
         return m_sessionState;
     }
+
+    const SessionState& sessionState() const
+    {
+        return m_sessionState;
+    }    
 
     ReuseState& reuseState()
     {
@@ -228,6 +239,7 @@ private:
     void errorLogInternal(const char* msg);
     void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
     CC_Mqtt5ErrorCode initInternal();
+    void resumeSendOpsSince(unsigned idx);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);

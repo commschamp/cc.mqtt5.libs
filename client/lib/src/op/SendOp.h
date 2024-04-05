@@ -80,7 +80,7 @@ private:
     void restartResponseTimer();
     void responseTimeoutInternal();
     void resendDupMsg();
-    void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
+    void completeWithCb(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     void confirmRegisteredAlias();
     CC_Mqtt5ErrorCode doSendInternal();
     bool canSend() const;

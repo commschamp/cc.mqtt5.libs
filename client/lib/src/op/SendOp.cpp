@@ -69,8 +69,7 @@ void SendOp::handle(PubackMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opCompleteInternal();
+                completeWithCb(status, responsePtr);
             });        
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery) {
@@ -155,8 +154,8 @@ void SendOp::handle(PubrecMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opCompleteInternal();
+
+                completeWithCb(status, responsePtr);
             });    
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -262,8 +261,8 @@ void SendOp::handle(PubcompMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opCompleteInternal();
+
+                completeWithCb(status, responsePtr);
             });  
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -671,8 +670,7 @@ bool SendOp::resume()
         cbStatus = CC_Mqtt5AsyncOpStatus_OutOfMemory;
     }
 
-    reportPubComplete(cbStatus);
-    opCompleteInternal();
+    completeWithCb(cbStatus);
     return true;
 }
 
@@ -683,8 +681,7 @@ Op::Type SendOp::typeImpl() const
 
 void SendOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 {
-    reportPubComplete(status);
-    opCompleteInternal();
+    completeWithCb(status);
 }
 
 void SendOp::networkConnectivityChangedImpl()
@@ -710,8 +707,7 @@ void SendOp::resendDupMsg()
 {
     if (m_totalSendAttempts <= m_sendAttempts) {
         errorLog("Exhauses all attempts to publish message, discarding publish.");
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_Timeout);
-        opCompleteInternal();
+        completeWithCb(CC_Mqtt5AsyncOpStatus_Timeout);
         return;
     }
 
@@ -721,8 +717,7 @@ void SendOp::resendDupMsg()
         auto result = client().sendMessage(m_pubMsg); 
         if (result != CC_Mqtt5ErrorCode_Success) {
             errorLog("Failed to resend PUBLISH message.");
-            reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-            opCompleteInternal();
+            completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
             return;
         }
 
@@ -737,8 +732,7 @@ void SendOp::resendDupMsg()
     auto result = client().sendMessage(pubrelMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-        opCompleteInternal();
+        completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
         return;
     }
 
@@ -746,13 +740,19 @@ void SendOp::resendDupMsg()
     restartResponseTimer();
 }
 
-void SendOp::reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void SendOp::completeWithCb(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
-    if (m_cb == nullptr) {
+    auto cb = m_cb;
+    auto cbData = m_cbData;
+    auto handle = toHandle();
+
+    opCompleteInternal(); // No member access after this point
+
+    if (cb == nullptr) {
         return;
     }
 
-    m_cb(m_cbData, toHandle(), status, response);
+    cb(cbData, handle, status, response);
 }
 
 void SendOp::confirmRegisteredAlias()
@@ -796,8 +796,7 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
     ++m_sendAttempts;
 
     if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete);
-        opCompleteInternal();
+        completeWithCb(CC_Mqtt5AsyncOpStatus_Complete);
         return CC_Mqtt5ErrorCode_Success;
     }
 

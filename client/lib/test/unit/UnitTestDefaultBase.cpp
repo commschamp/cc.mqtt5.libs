@@ -73,6 +73,7 @@ const UnitTestDefaultBase::LibFuncs& UnitTestDefaultBase::getFuncs()
     funcs.m_unsubscribe_simple = &cc_mqtt5_client_unsubscribe_simple;
     funcs.m_unsubscribe_full = &cc_mqtt5_client_unsubscribe_full;    
     funcs.m_publish_prepare = &cc_mqtt5_client_publish_prepare;    
+    funcs.m_publish_count = &cc_mqtt5_client_publish_count;    
     funcs.m_publish_init_config_basic = &cc_mqtt5_client_publish_init_config_basic;
     funcs.m_publish_init_config_extra = &cc_mqtt5_client_publish_init_config_extra;
     funcs.m_publish_set_response_timeout = &cc_mqtt5_client_publish_set_response_timeout;

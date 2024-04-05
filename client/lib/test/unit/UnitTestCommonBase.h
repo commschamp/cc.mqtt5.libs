@@ -87,6 +87,7 @@ public:
         CC_Mqtt5ErrorCode (*m_unsubscribe_simple)(CC_Mqtt5ClientHandle, const CC_Mqtt5UnsubscribeTopicConfig*, CC_Mqtt5UnsubscribeCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_unsubscribe_full)(CC_Mqtt5ClientHandle, const CC_Mqtt5UnsubscribeTopicConfig*, unsigned, CC_Mqtt5UnsubscribeCompleteCb, void*) = nullptr;
         CC_Mqtt5PublishHandle (*m_publish_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
+        unsigned (*m_publish_count)(CC_Mqtt5ClientHandle) = nullptr;
         void (*m_publish_init_config_basic)(CC_Mqtt5PublishBasicConfig*) = nullptr;
         void (*m_publish_init_config_extra)(CC_Mqtt5PublishExtraConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_set_response_timeout)(CC_Mqtt5PublishHandle, unsigned) = nullptr;
@@ -475,6 +476,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestUnsubscribeConfigTopic(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UnsubscribeTopicConfig* config);
     CC_Mqtt5ErrorCode unitTestUnsubscribeAddUserProp(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop);
     CC_Mqtt5PublishHandle unitTestPublishPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
+    unsigned unitTestPublishCount(CC_Mqtt5Client* client);
     void unitTestPublishInitConfigBasic(CC_Mqtt5PublishBasicConfig* config);
     void unitTestPublishInitConfigExtra(CC_Mqtt5PublishExtraConfig* config);
     CC_Mqtt5ErrorCode unitTestPublishSetResponseTimeout(CC_Mqtt5PublishHandle handle, unsigned ms);

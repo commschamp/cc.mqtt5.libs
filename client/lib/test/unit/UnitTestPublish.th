@@ -76,6 +76,7 @@ void UnitTestPublish::test1()
 
     auto* publish = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
+    TS_ASSERT_EQUALS(unitTestPublishCount(client), 1U);
 
     const std::string Topic("some/topic");
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
@@ -160,6 +161,8 @@ void UnitTestPublish::test1()
     TS_ASSERT_EQUALS(propsHandler.m_userProps.size(), 1U);    
     TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_first().value(), PubUserPropKey1);    
     TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_second().value(), PubUserPropVal1);    
+
+    TS_ASSERT_EQUALS(unitTestPublishCount(client), 0U);
 }
 
 void UnitTestPublish::test2()

@@ -108,6 +108,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_unsubscribe_simple != nullptr);    
     test_assert(m_funcs.m_unsubscribe_full != nullptr);    
     test_assert(m_funcs.m_publish_prepare != nullptr);    
+    test_assert(m_funcs.m_publish_count != nullptr);    
     test_assert(m_funcs.m_publish_init_config_basic != nullptr);    
     test_assert(m_funcs.m_publish_init_config_extra != nullptr);    
     test_assert(m_funcs.m_publish_set_response_timeout != nullptr);    
@@ -1081,6 +1082,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestUnsubscribeAddUserProp(CC_Mqtt5Uns
 CC_Mqtt5PublishHandle UnitTestCommonBase::unitTestPublishPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
 {
     return m_funcs.m_publish_prepare(client, ec);
+}
+
+unsigned UnitTestCommonBase::unitTestPublishCount(CC_Mqtt5Client* client)
+{
+    return m_funcs.m_publish_count(client);
 }
 
 void UnitTestCommonBase::unitTestPublishInitConfigBasic(CC_Mqtt5PublishBasicConfig* config)

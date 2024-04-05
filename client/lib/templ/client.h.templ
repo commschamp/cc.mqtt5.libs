@@ -637,6 +637,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_full(
 /// @ingroup publish
 CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec);
 
+/// @brief  Get amount incomplete "publish" operations
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
+/// @return Amount of publish operations that have been prepared before, and are still incomplete.
+/// @ingroup publish
+unsigned cc_mqtt5_##NAME##client_publish_count(CC_Mqtt5ClientHandle handle);
+
 /// @brief Intialize the @ref CC_Mqtt5PublishBasicConfig configuration structure.
 /// @param[out] config Configuration structure. Must not be NULL.
 /// @ingroup publish

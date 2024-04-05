@@ -852,6 +852,15 @@ CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHand
     return handleFromSendOp(clientFromHandle(handle)->publishPrepare(ec));     
 }
 
+unsigned cc_mqtt5_##NAME##client_publish_count(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return 0U;
+    }    
+
+    return static_cast<unsigned>(clientFromHandle(handle)->sendsCount());
+}
+
 void cc_mqtt5_##NAME##client_publish_init_config_basic(CC_Mqtt5PublishBasicConfig* config)
 {
     *config = CC_Mqtt5PublishBasicConfig();

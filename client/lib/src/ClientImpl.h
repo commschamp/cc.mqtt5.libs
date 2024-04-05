@@ -54,6 +54,7 @@ public:
         ClientImpl& m_client;
     };
 
+    ClientImpl();
     ~ClientImpl();
 
     ApiEnterGuard apiEnter()
@@ -63,7 +64,7 @@ public:
 
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
-    void notifyNetworkDisconnected(bool disconnected);
+    void notifyNetworkDisconnected();
     bool isNetworkDisconnected() const;
 
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
@@ -241,6 +242,7 @@ private:
     void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
     CC_Mqtt5ErrorCode initInternal();
     void resumeSendOpsSince(unsigned idx);
+    void sessionExpiryTimeoutInternal();
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
@@ -250,6 +252,8 @@ private:
     void opComplete_Recv(const op::Op* op);
     void opComplete_Send(const op::Op* op);
     void opComplete_Reauth(const op::Op* op);
+
+    static void sessionExpiryTimeoutCb(void* data);
 
     friend class ApiEnterGuard;
 
@@ -308,6 +312,7 @@ private:
     ReauthOpsList m_reauthOps;
 
     OpPtrsList m_ops;
+    TimerMgr::Timer m_sessionExpiryTimer;  
     bool m_opsDeleted = false;
     bool m_preparationLocked = false;
 };

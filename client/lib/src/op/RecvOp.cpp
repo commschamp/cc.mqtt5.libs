@@ -402,7 +402,7 @@ void RecvOp::reset()
 
 void RecvOp::postReconnectionResume()
 {
-    networkConnectivityChangedImpl();
+    connectivityChangedImpl();
 }
 
 Op::Type RecvOp::typeImpl() const
@@ -410,7 +410,7 @@ Op::Type RecvOp::typeImpl() const
     return Type_Recv;
 }
 
-void RecvOp::networkConnectivityChangedImpl()
+void RecvOp::connectivityChangedImpl()
 {
     m_responseTimer.setSuspended(
         (!client().sessionState().m_connected) || client().clientState().m_networkDisconnected);

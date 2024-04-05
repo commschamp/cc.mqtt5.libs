@@ -60,7 +60,7 @@ void TcpSession::sendDataImpl(const std::uint8_t* buf, std::size_t bufLen)
         return;
     } while (false);
 
-    reportNetworkDisconnected(true);
+    reportNetworkDisconnected();
 }
 
 void TcpSession::doRead()
@@ -75,12 +75,9 @@ void TcpSession::doRead()
 
             if (ec) {
                 logError() << "Failed to read data: " << ec.message();
-                reportNetworkDisconnected(true);
-                doReadLater();
+                reportNetworkDisconnected();
                 return;
             }
-
-            reportNetworkDisconnected(false);
 
             auto buf = &m_inData[0];
             auto bufLen = bytesCount;
@@ -110,27 +107,6 @@ void TcpSession::doRead()
             doRead();
         }
     );
-}
-
-void TcpSession::doReadLater()
-{
-    m_readTimer.expires_after(std::chrono::seconds(1U));
-    m_readTimer.async_wait(
-        [this](const boost::system::error_code& ec)
-        {
-            if (ec == boost::asio::error::operation_aborted) {
-                return;
-            }
-
-            if (ec) {
-                logError() << "Timer error: " << ec.message();
-                io().stop();
-                return;
-            }
-
-            doRead();
-        }
-    );    
 }
 
 } // namespace cc_mqtt5_client_app

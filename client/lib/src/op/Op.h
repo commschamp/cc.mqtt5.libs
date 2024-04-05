@@ -62,9 +62,9 @@ public:
         m_responseTimeoutMs = ms;
     }    
 
-    void networkConnectivityChanged()
+    void connectivityChanged()
     {
-        networkConnectivityChangedImpl();
+        connectivityChangedImpl();
     }
 
 protected:
@@ -75,7 +75,7 @@ protected:
 
     virtual Type typeImpl() const = 0;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status);
-    virtual void networkConnectivityChangedImpl();
+    virtual void connectivityChangedImpl();
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();

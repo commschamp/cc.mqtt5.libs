@@ -71,11 +71,12 @@ void cc_mqtt5_##NAME##client_tick(CC_Mqtt5ClientHandle handle, unsigned ms);
 /// @ingroup client
 unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const unsigned char* buf, unsigned bufLen);
 
-/// @brief Report network disconnected status
+/// @brief Report network disconnected
+/// @details To notify the client that the network is connected again use 
+///     @ref cc_mqtt5_##NAME##client_connect_prepare()
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
-/// @param[in] disconnected Flag for network disconnection: @b true when disconnected, @b false when (re)connected.
 /// @ingroup client
-void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected);
+void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle);
 
 /// @brief Check current network disconnected status
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_alloc() function.
@@ -177,6 +178,8 @@ void cc_mqtt5_##NAME##client_init_user_prop(CC_Mqtt5UserProp* prop);
 /// @param[out] ec Error code reporting result of the operation. Can be NULL.
 /// @return Handle of the "connect" operation, will be NULL in case of failure. To analyze the reason failure use "ec" output parameter.
 /// @pre The function can NOT be called from within a callback, use next event iteration.
+/// @post The network assumed to be in the "connected" state, use @ref cc_mqtt5_##NAME##client_is_network_disconnected()
+///     to notify about the network disconnection.
 /// @post The "connect" operation is allocated, use either @ref cc_mqtt5_##NAME##client_connect_send()
 ///     or @ref cc_mqtt5_##NAME##client_connect_cancel() to prevent memory leaks.
 /// @ingroup connect

@@ -28,13 +28,11 @@ KeepAliveOp::KeepAliveOp(ClientImpl& client) :
     Base(client),
     m_pingTimer(client.timerMgr().allocTimer()),
     m_recvTimer(client.timerMgr().allocTimer()),
-    m_respTimer(client.timerMgr().allocTimer()),
-    m_sessionExpiryTimer(client.timerMgr().allocTimer())
+    m_respTimer(client.timerMgr().allocTimer())
 {
     COMMS_ASSERT(m_pingTimer.isValid());
     COMMS_ASSERT(m_recvTimer.isValid());
     COMMS_ASSERT(m_respTimer.isValid());
-    COMMS_ASSERT(m_sessionExpiryTimer.isValid());
 
     restartPingTimer();
 }    
@@ -108,32 +106,6 @@ Op::Type KeepAliveOp::typeImpl() const
     return Type_KeepAlive;
 }
 
-void KeepAliveOp::networkConnectivityChangedImpl()
-{
-    bool networkDisconnected = client().clientState().m_networkDisconnected;
-    m_pingTimer.setSuspended(networkDisconnected);
-    m_recvTimer.setSuspended(networkDisconnected);
-    m_respTimer.setSuspended(networkDisconnected);
-
-    if (!networkDisconnected) {
-        m_sessionExpiryTimer.cancel();
-        return;
-    }
-
-    auto sessionExpiryInterval = client().sessionState().m_sessionExpiryIntervalMs;
-    if (sessionExpiryInterval == 0U) {
-        sessionExpiryTimeoutInternal();
-        return;
-    }
-
-    if (sessionExpiryInterval == (static_cast<decltype(sessionExpiryInterval)>(CC_MQTT5_SESSION_NEVER_EXPIRES) * 1000U)) {
-        // Session never expires
-        return;
-    }
-
-    m_sessionExpiryTimer.wait(sessionExpiryInterval, &KeepAliveOp::sessionExpiryTimeoutCb, this);
-}
-
 void KeepAliveOp::restartPingTimer()
 {
     auto& state = client().sessionState();
@@ -174,12 +146,6 @@ void KeepAliveOp::pingTimeoutInternal()
     client().brokerDisconnected(true);
 }
 
-void KeepAliveOp::sessionExpiryTimeoutInternal()
-{
-    COMMS_ASSERT(!m_sessionExpiryTimer.isActive());
-    client().brokerDisconnected(true);
-}
-
 void KeepAliveOp::sendPingCb(void* data)
 {
     asKeepAliveOp(data)->sendPing();
@@ -193,11 +159,6 @@ void KeepAliveOp::recvTimeoutCb(void* data)
 void KeepAliveOp::pingTimeoutCb(void* data)
 {
     asKeepAliveOp(data)->pingTimeoutInternal();
-}
-
-void KeepAliveOp::sessionExpiryTimeoutCb(void* data)
-{
-    asKeepAliveOp(data)->sessionExpiryTimeoutInternal();
 }
 
 } // namespace op

@@ -362,7 +362,7 @@ void UnitTestSubscribe::test4()
 
 void UnitTestSubscribe::test5()
 {
-    // Suspending subscribe operation when network is disconnected 
+    // Canceling subscribe operation when network is disconnected 
     // [MQTT-3.1.2-23]
 
     auto* client = unitTestAllocClient();
@@ -400,31 +400,13 @@ void UnitTestSubscribe::test5()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    unitTestNotifyNetworkDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client);
+    TS_ASSERT(!unitTestIsDisconnected());
 
-    TS_ASSERT(!unitTestIsSubscribeComplete());
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
-
-    unitTestTick(5000);
-    unitTestNotifyNetworkDisconnected(client, false);
-    TS_ASSERT(!unitTestIsSubscribeComplete());
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout - 1000); // Resuming SUBACK timer
-
-    unitTestNotifyNetworkDisconnected(client, true);
-
-    TS_ASSERT(!unitTestIsSubscribeComplete());
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
-
-    unitTestTick(); // Session expiry
     TS_ASSERT(unitTestIsSubscribeComplete());
     auto& subackInfo = unitTestSubscribeResponseInfo();
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     unitTestPopSubscribeResponseInfo();
-    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestSubscribe::test6()

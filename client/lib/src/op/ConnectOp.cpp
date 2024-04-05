@@ -967,7 +967,7 @@ void ConnectOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
     completeOpInternal(status);
 }
 
-void ConnectOp::networkConnectivityChangedImpl()
+void ConnectOp::connectivityChangedImpl()
 {
     if (client().clientState().m_networkDisconnected) {
         completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);

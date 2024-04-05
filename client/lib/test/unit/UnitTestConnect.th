@@ -899,17 +899,12 @@ void UnitTestConnect::test10()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
 
     unitTestTick(1000);
-    unitTestNotifyNetworkDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client);
 
     TS_ASSERT(unitTestIsConnectComplete());
     auto& connackInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     TS_ASSERT(!unitTestIsConnected(client));
-
-    // New connection attempt when network is disconnected
-    connect = unitTestConnectPrepare(client, &ec);
-    TS_ASSERT_EQUALS(connect, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
 }
 
 void UnitTestConnect::test11()
@@ -928,26 +923,9 @@ void UnitTestConnect::test11()
 
     unitTestTick(10000); // 10 seconds
 
-    unitTestNotifyNetworkDisconnected(client, true);
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
-
-    unitTestTick(5000); // 5 seconds
-    unitTestNotifyNetworkDisconnected(client, false);
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, 50000); // Remaining period of the keep alive
-
-    unitTestTick(45000); // 45 seconds
-    unitTestNotifyNetworkDisconnected(client, true);
-
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
-
-    TS_ASSERT(!unitTestIsDisconnected());
-    unitTestTick(); // Session expiry timeout
-    TS_ASSERT(unitTestIsDisconnected());
+    unitTestNotifyNetworkDisconnected(client);
+    TS_ASSERT(!unitTestIsDisconnected()); // Broker disconnection is not notified
+    TS_ASSERT(unitTestCheckNoTicks()); // No publish or receive, not need to measure session expiry
 }
 
 void UnitTestConnect::test12()
@@ -1238,7 +1216,7 @@ void UnitTestConnect::test16()
     TS_ASSERT(!unitTestIsConnected(client));
 
     TS_ASSERT(unitTestCheckNoTicks());
-    unitTestNotifyNetworkDisconnected(client, true); 
+    unitTestNotifyNetworkDisconnected(client); 
 }
 
 void UnitTestConnect::test17()
@@ -1360,7 +1338,7 @@ void UnitTestConnect::test20()
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
     TS_ASSERT(!unitTestIsConnected(client));
     TS_ASSERT(!unitTestIsNetworkDisconnected(client));
-    unitTestNotifyNetworkDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client);
     TS_ASSERT(unitTestIsNetworkDisconnected(client));
 }
 

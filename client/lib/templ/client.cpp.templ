@@ -122,10 +122,10 @@ unsigned cc_mqtt5_##NAME##client_process_data(CC_Mqtt5ClientHandle handle, const
     return clientFromHandle(handle)->processData(buf, bufLen);
 }
 
-void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle, bool disconnected)
+void cc_mqtt5_##NAME##client_notify_network_disconnected(CC_Mqtt5ClientHandle handle)
 {
     COMMS_ASSERT(handle != nullptr);
-    clientFromHandle(handle)->notifyNetworkDisconnected(disconnected);
+    clientFromHandle(handle)->notifyNetworkDisconnected();
 }
 
 bool cc_mqtt5_##NAME##client_is_network_disconnected(CC_Mqtt5ClientHandle handle)

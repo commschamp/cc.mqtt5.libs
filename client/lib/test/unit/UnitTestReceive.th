@@ -458,7 +458,7 @@ void UnitTestReceive::test6()
     // Testing network disconnection during reception of Qos2 message
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocClient(true);
 
     const unsigned ResponseTimeout = 2000;
     unitTestSetDefaultResponseTimeout(client, ResponseTimeout);
@@ -495,16 +495,20 @@ void UnitTestReceive::test6()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    unitTestNotifyNetworkDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(5000);
-    unitTestNotifyNetworkDisconnected(client, false);
 
-    tickReq = unitTestTickReq();
-    TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout - 1000); 
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &connectRespConfig);
 
     // Sending PUBREL with invalid packet id;
     UnitTestPubrelMsg pubrelMsg;
@@ -559,14 +563,13 @@ void UnitTestReceive::test7()
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
     unitTestTick(1000);
-    unitTestNotifyNetworkDisconnected(client, true);
+    unitTestNotifyNetworkDisconnected(client);
 
     tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, SessionExpiryInterval * 1000); // Expecting to measure session expiry interval
 
     unitTestTick(); // Session expiry
     TS_ASSERT(!unitTestHasMessageRecieved());
-    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestReceive::test8()
@@ -1461,7 +1464,8 @@ void UnitTestReceive::test22()
     // [MQTT-4.4.0-1]
     auto* client = unitTestAllocClient();
 
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(unitTestIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
@@ -1495,13 +1499,11 @@ void UnitTestReceive::test22()
     TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(100);
-    unitTestNotifyNetworkDisconnected(client, true);
-    TS_ASSERT(unitTestIsDisconnected());
-    TS_ASSERT(!unitTestIsPublishComplete());
-    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestNotifyNetworkDisconnected(client);
+    TS_ASSERT(!unitTestIsDisconnected());
+    TS_ASSERT(!unitTestCheckNoTicks()); // has session expiry
 
     unitTestClearState();
-    unitTestNotifyNetworkDisconnected(client, false);     
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -1548,7 +1550,8 @@ void UnitTestReceive::test23()
     // [MQTT-4.4.0-1]
     auto* client = unitTestAllocClient();
 
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(unitTestIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
@@ -1582,13 +1585,12 @@ void UnitTestReceive::test23()
     TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(100);
-    unitTestNotifyNetworkDisconnected(client, true);
-    TS_ASSERT(unitTestIsDisconnected());
+    unitTestNotifyNetworkDisconnected(client);
+    TS_ASSERT(!unitTestIsDisconnected());
     TS_ASSERT(!unitTestIsPublishComplete());
-    TS_ASSERT(unitTestCheckNoTicks());
+    TS_ASSERT(!unitTestCheckNoTicks()); // session expiry tick
 
     unitTestClearState();
-    unitTestNotifyNetworkDisconnected(client, false);  
 
     // Reconnection with attempt to restore the session
     auto connectConfig = CC_Mqtt5ConnectBasicConfig();
@@ -1625,7 +1627,8 @@ void UnitTestReceive::test24()
     // [MQTT-4.4.0-1]
     auto* client = unitTestAllocClient();
 
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(unitTestIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
@@ -1659,13 +1662,11 @@ void UnitTestReceive::test24()
     TS_ASSERT(pubrecMsg->field_properties().isMissing());
 
     unitTestTick(100);
-    unitTestNotifyNetworkDisconnected(client, true);
-    TS_ASSERT(unitTestIsDisconnected());
-    TS_ASSERT(!unitTestIsPublishComplete());
-    TS_ASSERT(unitTestCheckNoTicks());
+    unitTestNotifyNetworkDisconnected(client);
+    TS_ASSERT(!unitTestIsDisconnected());
+    TS_ASSERT(!unitTestCheckNoTicks()); // session expiry tick
 
     unitTestClearState();
-    unitTestNotifyNetworkDisconnected(client, false);  
 
     // Reconnection with attempt to restore the session
     unitTestPerformBasicConnect(client, __FUNCTION__, false);
@@ -1711,7 +1712,8 @@ void UnitTestReceive::test25()
     // [MQTT-4.4.0-1]
     auto* client = unitTestAllocClient();
 
-    unitTestPerformBasicConnect(client, __FUNCTION__);
+    const unsigned SessionExpiryInterval = 10;
+    unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
     TS_ASSERT(unitTestIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
@@ -1734,6 +1736,7 @@ void UnitTestReceive::test25()
     TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
     TS_ASSERT_EQUALS(msgInfo.m_data, Data);
     unitTestPopReceivedMessageInfo();
+    TS_ASSERT(!unitTestHasMessageRecieved());
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -1753,7 +1756,7 @@ void UnitTestReceive::test25()
     auto& disconnectInfo = unitTestDisconnectInfo();
     TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
     unitTestPopDisconnectInfo();    
-    TS_ASSERT(unitTestCheckNoTicks()); 
+    TS_ASSERT(!unitTestCheckNoTicks()); // session expiry tick
 
     unitTestClearState();
 

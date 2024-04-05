@@ -23,7 +23,7 @@ public:
         CC_Mqtt5ErrorCode (*m_init)(CC_Mqtt5ClientHandle) = nullptr;
         void (*m_tick)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
         unsigned (*m_process_data)(CC_Mqtt5ClientHandle, const unsigned char*, unsigned) = nullptr;
-        void (*m_notify_network_disconnected)(CC_Mqtt5ClientHandle, bool) = nullptr;
+        void (*m_notify_network_disconnected)(CC_Mqtt5ClientHandle) = nullptr;
         bool (*m_is_network_disconnected)(CC_Mqtt5ClientHandle) = nullptr;
         CC_Mqtt5ErrorCode (*m_set_default_response_timeout)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
         unsigned (*m_get_default_response_timeout)(CC_Mqtt5ClientHandle) = nullptr;
@@ -446,10 +446,11 @@ protected:
     void unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason = UnitTestDisconnectReason::Success);
 
     UnitTestClientPtr unitTestAlloc();
-    void unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected);
+    void unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client);
     bool unitTestIsNetworkDisconnected(CC_Mqtt5Client* client);
     CC_Mqtt5ErrorCode unitTestSetDefaultResponseTimeout(CC_Mqtt5Client* client, unsigned ms);
     CC_Mqtt5ErrorCode unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount);
+    unsigned unitTestPubTopicAliasCount(CC_Mqtt5Client* client);
     CC_Mqtt5ConnectHandle unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     void unitTestConnectInitConfigBasic(CC_Mqtt5ConnectBasicConfig* config);
     void unitTestConnectInitConfigWill(CC_Mqtt5ConnectWillConfig* config);

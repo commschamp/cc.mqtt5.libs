@@ -130,8 +130,8 @@
     Session Expiry Interval is greater than 0
     * Implemented by allowing notification of the network disconnection.
     * When network is disconnected during connection attempt, the operation is immediately aborted. Tested in UnitTestConnect::test10.
-    * Suspending keep alive ping for session expiry period is tested in UnitTestConnect::test11.
-    * Suspending subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
+    * Canceling keep alive is tested in UnitTestConnect::test11.
+    * Canceling subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
     * Suspending unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
     * Suspending publish operation for session expiry period is tested in UnitTestPublish::test14 and UnitTestPublish::test15.
     * Suspending message reception for session expiry period is tested in UnitTestReceive::test6 and UnitTestReceive::test7.

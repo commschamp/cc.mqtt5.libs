@@ -40,7 +40,7 @@ public:
 
 protected:
     virtual Type typeImpl() const override;    
-    virtual void networkConnectivityChangedImpl() override;
+    virtual void connectivityChangedImpl() override;
 
 private:
     using UserPropKeyStorage = PublishMsg::Field_properties::ValueType::value_type::Field_userProperty::Field_value::Field_first::ValueType;

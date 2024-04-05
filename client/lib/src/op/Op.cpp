@@ -48,7 +48,7 @@ void Op::terminateOpImpl([[maybe_unused]] CC_Mqtt5AsyncOpStatus status)
     opComplete();
 }
 
-void Op::networkConnectivityChangedImpl()
+void Op::connectivityChangedImpl()
 {
     // Do nothing by default
 }

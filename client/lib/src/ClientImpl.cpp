@@ -49,6 +49,12 @@ void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
 
 } // namespace 
 
+ClientImpl::ClientImpl() :
+    m_sessionExpiryTimer(m_timerMgr.allocTimer())
+{
+    COMMS_ASSERT(m_sessionExpiryTimer.isValid());
+}
+
 ClientImpl::~ClientImpl()
 {
     COMMS_ASSERT(m_apiEnterCount == 0U);
@@ -142,22 +148,11 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
     return consumed;    
 }
 
-void ClientImpl::notifyNetworkDisconnected(bool disconnected)
+void ClientImpl::notifyNetworkDisconnected()
 {
     auto guard = apiEnter();
-    m_clientState.m_networkDisconnected = disconnected;
-    if (disconnected) {
-        for (auto& aliasInfo : m_sessionState.m_sendTopicAliases) {
-            aliasInfo.m_lowQosRegRemCount = aliasInfo.m_lowQosRegCountRequest;
-            aliasInfo.m_highQosRegRemCount = TopicAliasInfo::DefaultHighQosRegRemCount;
-        }
-    }
-
-    for (auto* op : m_ops) {
-        if (op != nullptr) {
-            op->networkConnectivityChanged();
-        }
-    }
+    m_clientState.m_networkDisconnected = true;
+    brokerDisconnected(false);
 }
 
 bool ClientImpl::isNetworkDisconnected() const
@@ -169,6 +164,8 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
 {
     op::ConnectOp* connectOp = nullptr;
     do {
+        m_clientState.m_networkDisconnected = false;
+
         if (!m_sessionState.m_initialized) {
             if (m_apiEnterCount > 0U) {
                 errorLog("Cannot prepare connect from within callback");
@@ -201,12 +198,6 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
             updateEc(ec, CC_Mqtt5ErrorCode_AlreadyConnected);
             break;
         }        
-
-        if (m_clientState.m_networkDisconnected) {
-            errorLog("Network is disconnected.");
-            updateEc(ec, CC_Mqtt5ErrorCode_NetworkDisconnected);
-            break;            
-        }
 
         if (m_ops.max_size() <= m_ops.size()) {
             errorLog("Cannot start connect operation, retry in next event loop iteration.");
@@ -920,6 +911,8 @@ void ClientImpl::doApiGuard()
 
 void ClientImpl::brokerConnected(bool sessionPresent)
 {
+    m_sessionExpiryTimer.cancel();
+    
     m_clientState.m_firstConnect = false;
     m_sessionState.m_connected = true;
 
@@ -976,16 +969,28 @@ void ClientImpl::brokerDisconnected(
     m_sessionState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
-    terminateOps(status, TerminateMode_KeepSendRecvOps);
+    bool preserveSendRecv = 
+        (m_sessionState.m_sessionExpiryIntervalMs > 0U) && 
+        ((!m_recvOps.empty()) || (!m_sendOps.empty()));
 
-    for (auto& op : m_recvOps) {
-        COMMS_ASSERT(op);
-        op->networkConnectivityChanged();
-    }    
+    auto termMode = TerminateMode_AbortSendRecvOps;
+    if (preserveSendRecv) {
+        termMode = TerminateMode_KeepSendRecvOps;
+    }
 
-    for (auto& op : m_sendOps) {
-        COMMS_ASSERT(op);
-        op->networkConnectivityChanged();
+    terminateOps(status, termMode);    
+
+    if (preserveSendRecv) {
+        for (auto* op : m_ops) {
+            if (op != nullptr) {
+                op->connectivityChanged();
+            }
+        } 
+
+        const auto NeverExpires = (static_cast<decltype(m_sessionState.m_sessionExpiryIntervalMs)>(CC_MQTT5_SESSION_NEVER_EXPIRES) * 1000U);
+        if (m_sessionState.m_sessionExpiryIntervalMs != NeverExpires) {
+            m_sessionExpiryTimer.wait(m_sessionState.m_sessionExpiryIntervalMs, &ClientImpl::sessionExpiryTimeoutCb, this);
+        }    
     }    
 
     if (reportDisconnection) {
@@ -1192,6 +1197,25 @@ void ClientImpl::resumeSendOpsSince(unsigned idx)
     }
 }
 
+void ClientImpl::sessionExpiryTimeoutInternal()
+{
+    COMMS_ASSERT(m_apiEnterCount > 0U);
+    COMMS_ASSERT(!m_sessionState.m_connected);
+    for (auto* op : m_ops) {
+        if (op == nullptr) {
+            continue;
+        }
+
+        auto opType = op->type();
+
+        if ((opType != op::Op::Type_Recv) && (opType != op::Op::Type_Send)) {
+            continue;
+        }
+
+        op->terminateOp(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
+    }
+}
+
 void ClientImpl::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
@@ -1241,6 +1265,11 @@ void ClientImpl::opComplete_Send(const op::Op* op)
 void ClientImpl::opComplete_Reauth(const op::Op* op)
 {
     eraseFromList(op, m_reauthOps);
+}
+
+void ClientImpl::sessionExpiryTimeoutCb(void* data)
+{
+    reinterpret_cast<ClientImpl*>(data)->sessionExpiryTimeoutInternal();
 }
 
 } // namespace cc_mqtt5_client

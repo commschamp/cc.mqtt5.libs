@@ -926,9 +926,9 @@ UnitTestCommonBase::UnitTestClientPtr UnitTestCommonBase::unitTestAlloc()
     return UnitTestClientPtr(m_funcs.m_alloc(), UnitTestDeleter(m_funcs));
 }
 
-void UnitTestCommonBase::unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client, bool disconnected)
+void UnitTestCommonBase::unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client)
 {
-    m_funcs.m_notify_network_disconnected(client, disconnected);
+    m_funcs.m_notify_network_disconnected(client);
 }
 
 bool UnitTestCommonBase::unitTestIsNetworkDisconnected(CC_Mqtt5Client* client)
@@ -944,6 +944,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSetDefaultResponseTimeout(CC_Mqtt5
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount)
 {
     return m_funcs.m_pub_topic_alias_alloc(client, topic, qos0RegsCount);
+}
+
+unsigned UnitTestCommonBase::unitTestPubTopicAliasCount(CC_Mqtt5Client* client)
+{
+    return m_funcs.m_pub_topic_alias_count(client);
 }
 
 CC_Mqtt5ConnectHandle UnitTestCommonBase::unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

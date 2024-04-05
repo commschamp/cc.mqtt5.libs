@@ -750,10 +750,11 @@ bool AppClient::createSession()
         });
 
     m_session->setNetworkDisconnectedReportCb(
-        [this](bool disconnected)
+        [this]()
         {
             assert(m_client);
-            ::cc_mqtt5_client_notify_network_disconnected(m_client.get(), disconnected);
+            ::cc_mqtt5_client_notify_network_disconnected(m_client.get());
+            brokerDisconnectedImpl(nullptr);
         }
     );
 

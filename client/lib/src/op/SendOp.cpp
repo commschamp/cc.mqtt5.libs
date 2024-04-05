@@ -684,7 +684,7 @@ void SendOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
     completeWithCb(status);
 }
 
-void SendOp::networkConnectivityChangedImpl()
+void SendOp::connectivityChangedImpl()
 {
     m_responseTimer.setSuspended(
         (!client().sessionState().m_connected) || client().clientState().m_networkDisconnected);

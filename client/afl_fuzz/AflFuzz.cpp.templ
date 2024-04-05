@@ -160,7 +160,7 @@ public:
 
                 if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
                     infoLog() << "Insufficient data in buffer (" << dataLen << "), reporting network disconnected..." << std::endl;
-                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get(), true);
+                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get());
                     continue;
                 }
 
@@ -192,7 +192,7 @@ public:
             if ((consumed == 0U) && noMoreRead) {
                 if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
                     infoLog() << "No data consumed and no more input, reporting network disconnected..." << std::endl;
-                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get(), true);
+                    cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get());
                     continue;
                 }
 

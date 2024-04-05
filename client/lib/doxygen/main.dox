@@ -1683,18 +1683,14 @@
 /// When broker disconnection is detected all the incomplete asynchronous operations
 /// (except @ref doc_cc_mqtt5_client_publish "publish") will be terminated with the an appropriate
 /// @ref CC_Mqtt5AsyncOpStatus "status" report. The incomplete @ref doc_cc_mqtt5_client_publish "publish"
-/// operations will be preserved due to the following spec clause:
+/// operations may be preserved (depending on "Session Expiry Interval" configuration
+/// during the @ref doc_cc_mqtt5_client_connect "connect" operation) due to the following spec clause:
 /// @code
 /// When a Client reconnects with Clean Start set to 0 and a session is present, both the Client and Server
 /// MUST resend any unacknowledged PUBLISH packets (where QoS > 0) and PUBREL packets using their
 /// original Packet Identifiers. This is the only circumstance where a Client or Server is REQUIRED to resend
 /// messages. Clients and Servers MUST NOT resend messages at any other time [MQTT-4.4.0-1].
 /// @endcode
-/// The incomplete @ref doc_cc_mqtt5_client_publish "publish" operation as well as reception of the
-/// incoming message need to be preserved between the sessions. In case the broker reports
-/// a new (clean) session after the reconnection, the callbacks of all the incomplete
-/// @ref doc_cc_mqtt5_client_publish "publish" operations will be invoked with the
-/// @ref CC_Mqtt5AsyncOpStatus_Aborted status.
 ///
 /// The unsolicited broker disconnection can happen in one of the following scenarios:
 ///
@@ -1744,58 +1740,48 @@
 /// @li Re-establish network connection to the broker.
 /// @li Perform the @ref doc_cc_mqtt5_client_connect "\"connect\"" operation from within a next event loop iteration.
 ///
+/// In case the "Session Expiry Interval" was set during the @ref doc_cc_mqtt5_client_connect "connect"
+/// operation, the library may still require timer measurement, depending on
+/// whether there are incomplete @ref doc_cc_mqtt5_client_publish "publish" operations
+/// and/or incomplete @ref doc_cc_mqtt5_client_receive "message reception" that
+/// need to be preserved for some time until the session expires or client re-connects
+/// to the broker. In case the "Session Expiry Interval" is not set or when the
+/// session is actually expires (based on the reported @ref doc_cc_mqtt5_client_time "ticks"), then all the
+/// incomplete @ref doc_cc_mqtt5_client_publish "publish" operations will also get terminated
+/// with the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status and the
+/// incomplete @ref doc_cc_mqtt5_client_receive "message reception" will be discarded.
+///
+/// In case the client re-connects to the broker before the "Session Expiry Interval" expires
+/// and the broker reports "clean session", then all the incomplete @ref doc_cc_mqtt5_client_publish "publish" operations
+/// will be terminated with the @ref CC_Mqtt5AsyncOpStatus_Aborted status.
+///
 /// @section doc_cc_mqtt5_client_network_disconnect Network Disconnection
-/// The MQTT v5 specification also tries to support intermittent network connection by
-/// setting the "Session Expiry Interval" property during the @ref doc_cc_mqtt5_client_connect "\"connect\""
-/// operation (see @ref CC_Mqtt5ConnectExtraConfig::m_sessionExpiryInterval). Such
+/// In addition to the @ref doc_cc_mqtt5_client_unsolicited_disconnect the network
+/// connection can be suddenly terminated. Such
 /// network disconnection is usually detected by the failing @b read or @b write
 /// operations on I/O socket. When the application detects such network disconnection, it
 /// is expected to report it to the library using @b cc_mqtt5_client_notify_network_disconnected()
 /// function.
 /// @code
 /// // Report network disconnected
-/// cc_mqtt5_client_notify_network_disconnected(client, true);
+/// cc_mqtt5_client_notify_network_disconnected(client);
 /// @endcode
-/// When network disconnection is reported some internal timers such as waiting for
-/// QoS1/QoS2 publish responses get suspended for the period of configured "Session Expiry Interval".
-///
-/// If the application manages to re-establish connection by repeating failing @b read / @b write
-/// operations for several times until they succeed, then the application is expected to report
-/// the network re-connection by invoking the same @b cc_mqtt5_client_notify_network_disconnected() function.
-/// @code
-/// // Report network reconnected
-/// cc_mqtt5_client_notify_network_disconnected(client, false);
-/// @endcode
-/// After such network re-connection is reported, the library will resume its timers and continue
-/// functioning as usual (as if network disconnection hasn't happened).
-///
-/// However, if the network re-connection is not reported until the "Session Expiry Interval" is over,
-/// then the library will proceed to the @ref doc_cc_mqtt5_client_unsolicited_disconnect logic.
-///
-/// @b Note that if the "Session Expiry Interval" was not configured during the
-/// @ref doc_cc_mqtt5_client_connect "\"connect\"" operation, invocation of the
-/// @b cc_mqtt5_client_notify_network_disconnected() will result in the
-/// @ref doc_cc_mqtt5_client_unsolicited_disconnect report right away.
+/// When the network disconnection is reported, the similar workflow to one described
+/// in the @ref doc_cc_mqtt5_client_unsolicited_disconnect section above is
+/// performed, @b excluding the invocation of the
+/// @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "broker disconnection report callback".
+/// When the incomplete operations get terminated the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status
+/// is reported.
 ///
 /// Inquiry about current network disconnection status can be done using the
 /// @b cc_mqtt5_client_is_network_disconnected() function.
 /// @code
 /// bool disconnected = cc_mqtt5_client_is_network_disconnected(client);
 /// @endcode
-///
-/// Also @b note that after the broker disconnection report, attempt to re-connect
-/// (invocation @b cc_mqtt5_client_connect_prepare()) will be rejected
-/// with the @ref CC_Mqtt5ErrorCode_NetworkDisconnected error code until the network
-/// re-connection reported to the library:
-/// @code
-/// cc_mqtt5_client_notify_network_disconnected(client, false);
-/// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
-/// CC_Mqtt5ConnectHandle connect = cc_mqtt5_client_connect_prepare(client, &ec);
-/// @endcode
-///
-/// When new client is @ref doc_cc_mqtt5_client_allocation "allocated", its inner state
-/// assumes that the network is connected, i.e. invocation of the
-/// @b cc_mqtt5_client_is_network_disconnected() will return @b false.
+/// Note that when the new "connect" op is @ref doc_cc_mqtt5_client_connect_prepare "prepared",
+/// the library will assume that the network connection is re-established and
+/// the subsequent call to the @b cc_mqtt5_client_is_network_disconnected() function
+/// will return @b false.
 ///
 /// @section doc_cc_mqtt5_client_thread_safety Thread Safety
 /// In general the library is @b NOT thread safe. However, if each thread operates on a separate allocated

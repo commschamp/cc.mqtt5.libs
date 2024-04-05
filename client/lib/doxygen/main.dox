@@ -243,7 +243,7 @@
 ///
 /// <b>IMPORTANT LIBRARY LIMITATION</b>: Once an operation is @b prepared,
 /// it must be be immediately @b configured and @b sent (or @b cancelled) before
-/// any other other operation can be prepared. For example:
+/// any other other operation can be @b prepared. For example:
 /// @code
 /// CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
 /// CC_Mqtt5ConnectHandle connect = cc_mqtt5_client_connect_prepare(...);
@@ -1143,7 +1143,7 @@
 /// cc_mqtt5_client_publish_init_config_basic(&basicConfig);
 ///
 /// // Update the required values
-/// basicConfig.m_topic = "some_topic";
+/// basicConfig.m_topic = "some/topic";
 /// basicConfig.m_data = &some_buf[0];
 /// basicConfig.m_dataLen = ...;
 /// basicConfig.m_qos = ...;
@@ -1290,6 +1290,61 @@
 /// called before the @b cc_mqtt5_client_publish_cancel(), the operation is
 /// cancelled @b without callback invocation.
 ///
+/// @subsection doc_cc_mqtt5_client_publish_recv_max Exceeding "Receive Maximum" Set by the Broker
+/// When the @ref doc_cc_mqtt5_client_connect "connect" operation is complete, the
+/// "Receive Maximum" property set by the broker is reported via the
+/// @ref CC_Mqtt5ConnectResponse::m_highQosSendLimit value. The application can
+/// monitor amount of incomplete "publish" operations using the
+/// @b cc_mqtt5_client_publish_count() function and decide whether to issue
+/// any new publishes.
+/// @code
+/// unsigned count = cc_mqtt5_client_publish_count(client);
+/// if (count >= max_allowed) {
+///     ...
+/// }
+/// @endcode
+/// However, when the "Receive Maximum" limit is reached and a new @b QoS1
+/// or @b QoS2 publish is issued by the application, its send will be paused until one of the
+/// previous "publish" operations is complete. It is possible to inquire whether
+/// the operation was initiated (@b PUBLISH message is sent) via the
+/// @b cc_mqtt5_client_publish_was_initiated() function. If the function returns
+/// @b false, the "publish" operation can be safely @ref doc_cc_mqtt5_client_publish_cancel "cancelled"
+/// without any possible side effects.
+/// @code
+/// if (!cc_mqtt5_client_publish_was_initiated(publish)) {
+///     cc_mqtt5_client_publish_cancel(publish);
+/// }
+/// @endcode
+/// When it comes to publishing the @b QoS0 messages after the "Receive Maximum" limit
+/// is reached the library checks whether there are other previous "publish" operations
+/// which are @b paused. If the requested @b QoS0 "publish" is the only one to exceed
+/// the "Receive Maximum" limit, it is sent right away because @b QoS0 messages
+/// do not require acknowledgement and are not influenced by the "Receive Maximum" limit.
+/// However, when there are previously issued @b QoS1 / @b QoS2 publish messages
+/// which are paused (due to exceeding the "Receive Maximum" limit), the issued
+/// @b QoS0 "publish" operation is also paused until all other previously issued "publish"-es
+/// send their first @b PUBLISH message. It is done to ensure in-order send of
+/// the messages regardless of their QoS value.
+///
+/// The MQTT v5 specification allows out-of-order reception of the messages with different
+/// QoS values. The library provides means to allow out-of-order sending of the @b QoS0
+/// messages, send of which could have been delayed in the default operation mode described above.
+/// To allow the immediate send of the @b QoS0 message (even if there other paused publishes
+/// that haven't sent their @b PUBLISH message yet) use @b cc_mqtt5_client_publish_set_out_of_order_allowed()
+/// function to override the default behaviour.
+/// @code
+/// ec = cc_mqtt5_client_publish_set_out_of_order_allowed(publish, true);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Out of order configuration failed with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// Note that the out-of-order configuration set by the @b cc_mqtt5_client_publish_set_out_of_order_allowed()
+/// function applicable only to @b QoS0 messages and doesn't have any effect for
+/// the @b QoS1 and @b QoS2 ones.
+///
+/// To retrieve the current configuration use @b cc_mqtt5_client_publish_get_out_of_order_allowed().
+///
 /// @subsection doc_cc_mqtt5_client_publish_simplify Simplifying the "Publish" Operation Preparation.
 /// In many use cases the "publish" operation can be quite simple with a lot of defaults.
 /// To simplify the sequence of the operation preparation and handling of errors,
@@ -1327,7 +1382,7 @@
 /// using topic aliases, they need to be allocated (registered) using the
 /// @b cc_mqtt5_client_pub_topic_alias_alloc() function.
 /// @code
-/// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "some_topic", 2 /* qos0RegsCount */);
+/// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_pub_topic_alias_alloc(client, "some/topic", 2 /* qos0RegsCount */);
 /// @endcode
 /// Note that the broker reports maximum amount of allowed topic aliases
 /// in its response to the "connect" request via the @ref CC_Mqtt5ConnectResponse::m_topicAliasMax
@@ -1368,7 +1423,7 @@
 /// To stop using topic alias for the specific topic, use @b cc_mqtt5_client_pub_topic_alias_free()
 /// function to free the allocated alias.
 /// @code
-/// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_pub_topic_alias_free(client, "some_topic");
+/// CC_Mqtt5ErrorCode ec = cc_mqtt5_client_pub_topic_alias_free(client, "some/topic");
 /// @endcode
 ///
 /// To inquire how many topic aliases have already been allocated, use the
@@ -1380,7 +1435,7 @@
 /// To check whether a topic alias is allocated for specific topic use
 /// the @b cc_mqtt5_client_pub_topic_alias_is_allocated() function.
 /// @code
-/// bool allocated = cc_mqtt5_client_pub_topic_alias_is_allocated(client, "some_topic");
+/// bool allocated = cc_mqtt5_client_pub_topic_alias_is_allocated(client, "some/topic");
 /// @endcode
 ///
 /// Once the topic alias is successfully allocated, the @ref doc_cc_mqtt5_client_publish_basic "basic"

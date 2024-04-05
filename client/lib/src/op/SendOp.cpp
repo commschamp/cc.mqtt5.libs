@@ -811,8 +811,15 @@ bool SendOp::canSend() const
     }
 
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
-    if ((m_pubMsg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) && 
-        (client().clientState().m_inFlightSends == client().sessionState().m_highQosSendLimit) &&
+    if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
+        return false;
+    }
+
+    if (m_outOfOrderAllowed) {
+        return true;
+    }
+
+    if ((client().clientState().m_inFlightSends == client().sessionState().m_highQosSendLimit) &&
         (!client().hasPausedSendsBefore(this))) {
         return true;
     }

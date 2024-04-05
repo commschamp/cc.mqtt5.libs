@@ -944,6 +944,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
     return sendOpFromHandle(handle)->send(cb, cbData);         
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }    
+
+    return sendOpFromHandle(handle)->cancel();
+}
+
 bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
 {
     if (handle == nullptr) {
@@ -953,13 +962,22 @@ bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
     return sendOpFromHandle(handle)->isSent();
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle)
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_out_of_order_allowed(CC_Mqtt5PublishHandle handle, bool allowed)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }  
 
-    return sendOpFromHandle(handle)->cancel();
+    return sendOpFromHandle(handle)->setOutOfOrderAllowed(allowed);
+}
+
+bool cc_mqtt5_##NAME##client_publish_get_out_of_order_allowed(CC_Mqtt5PublishHandle handle)
+{
+    if (handle == nullptr) {
+        return false;
+    }
+
+    return sendOpFromHandle(handle)->getOutOfOrderAllowed();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_simple(

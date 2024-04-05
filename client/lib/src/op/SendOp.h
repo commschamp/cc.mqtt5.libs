@@ -71,6 +71,17 @@ public:
         return m_sent;
     }
 
+    CC_Mqtt5ErrorCode setOutOfOrderAllowed(bool allowed)
+    {
+        m_outOfOrderAllowed = allowed;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+
+    bool getOutOfOrderAllowed() const
+    {
+        return m_outOfOrderAllowed;
+    }
+
 protected:
     virtual Type typeImpl() const override;    
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
@@ -95,6 +106,7 @@ private:
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+    bool m_outOfOrderAllowed = false;
     bool m_sent = false;
     bool m_acked = false;
     bool m_registeredAlias = false;

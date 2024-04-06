@@ -58,11 +58,6 @@ void Op::opComplete()
     m_client.opComplete(this);
 }
 
-void Op::doApiGuard()
-{
-    m_client.doApiGuard();
-}
-
 std::uint16_t Op::allocPacketId()
 {
     static constexpr auto MaxPacketId = std::numeric_limits<std::uint16_t>::max();

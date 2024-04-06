@@ -902,11 +902,6 @@ void ClientImpl::opComplete(const op::Op* op)
     (this->*func)(op);
 }
 
-void ClientImpl::doApiGuard()
-{
-    auto guard = apiEnter();
-}
-
 void ClientImpl::brokerConnected(bool sessionPresent)
 {
     m_sessionExpiryTimer.cancel();

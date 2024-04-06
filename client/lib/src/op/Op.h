@@ -79,7 +79,6 @@ protected:
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();
-    void doApiGuard();
     std::uint16_t allocPacketId();
     void releasePacketId(std::uint16_t id);
 

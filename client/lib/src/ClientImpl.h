@@ -62,6 +62,7 @@ public:
         return ApiEnterGuard(*this);
     }
 
+    // -------------------- API Calls -----------------------------
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
     void notifyNetworkDisconnected();
@@ -78,6 +79,11 @@ public:
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
     unsigned pubTopicAliasCount() const;
     bool pubTopicAliasIsAllocated(const char* topic) const;
+
+    std::size_t sendsCount() const
+    {
+        return m_sendOps.size();
+    }
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
@@ -125,6 +131,8 @@ public:
         m_errorLogData = data;
     }
 
+    // -------------------- Message Handling -----------------------------
+
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
     virtual void handle(PubackMsg& msg) override;
@@ -133,9 +141,10 @@ public:
     virtual void handle(PubcompMsg& msg) override;
     virtual void handle(ProtMessage& msg) override;
 
+    // -------------------- Ops Access API -----------------------------
+
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
-    void doApiGuard();
     void brokerConnected(bool sessionPresent);
     void brokerDisconnected(
         bool reportDisconnection, 
@@ -185,11 +194,6 @@ public:
         if constexpr (Config::HasErrorLog) {
             errorLogInternal(msg);
         }
-    }
-
-    std::size_t sendsCount() const
-    {
-        return m_sendOps.size();
     }
 
     std::size_t recvsCount() const

@@ -70,3 +70,37 @@ if (TARGET cc::cc_mqtt5_bm_client)
     cc_mqtt5_client_add_unit_test(UnitTestBmPublish ${BM_BASE_LIB_NAME})
     cc_mqtt5_client_add_unit_test(UnitTestBmReceive ${BM_BASE_LIB_NAME})
 endif ()  
+
+if (TARGET cc::cc_mqtt5_qos1_client)
+    set (QOS1_BASE_LIB_NAME "UnitTestQos1Base")
+    set (QOS1_BASE_SRC 
+        "UnitTestQos1Base.cpp")    
+
+    add_library(${QOS1_BASE_LIB_NAME} STATIC ${QOS1_BASE_SRC})
+    target_link_libraries(${QOS1_BASE_LIB_NAME} PUBLIC ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_qos1_client)
+    target_include_directories(
+        ${QOS1_BASE_LIB_NAME} INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    )
+
+    cc_mqtt5_client_add_unit_test(UnitTestQos1Publish ${QOS1_BASE_LIB_NAME})
+    cc_mqtt5_client_add_unit_test(UnitTestQos1Receive ${QOS1_BASE_LIB_NAME})
+    cc_mqtt5_client_add_unit_test(UnitTestQos1Subscribe ${QOS1_BASE_LIB_NAME})
+endif ()  
+
+if (TARGET cc::cc_mqtt5_qos0_client)
+    set (QOS0_BASE_LIB_NAME "UnitTestQos0Base")
+    set (QOS0_BASE_SRC 
+        "UnitTestQos0Base.cpp")    
+
+    add_library(${QOS0_BASE_LIB_NAME} STATIC ${QOS0_BASE_SRC})
+    target_link_libraries(${QOS0_BASE_LIB_NAME} PUBLIC ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_qos0_client)
+    target_include_directories(
+        ${QOS0_BASE_LIB_NAME} INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    )
+
+    cc_mqtt5_client_add_unit_test(UnitTestQos0Publish ${QOS0_BASE_LIB_NAME})
+    cc_mqtt5_client_add_unit_test(UnitTestQos0Receive ${QOS0_BASE_LIB_NAME})
+    cc_mqtt5_client_add_unit_test(UnitTestQos0Subscribe ${QOS0_BASE_LIB_NAME})
+endif ()  

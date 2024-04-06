@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "Config.h"
 #include "ProtocolOptions.h"
 
 #include "cc_mqtt5/Message.h"
@@ -37,10 +38,46 @@ using ProtMessage = cc_mqtt5::Message<
 
 CC_MQTT5_ALIASES_FOR_ALL_MESSAGES(, Msg, ProtMessage, ProtocolOptions)
 
-using ProtFrame = cc_mqtt5::frame::Frame<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions>, ProtocolOptions>;
+template <typename TBase, typename TOpt>
+using Qos1ClientInputMessages =
+    std::tuple<
+        cc_mqtt5::message::Connack<TBase, TOpt>,
+        cc_mqtt5::message::Publish<TBase, TOpt>,
+        cc_mqtt5::message::Puback<TBase, TOpt>,
+        cc_mqtt5::message::Suback<TBase, TOpt>,
+        cc_mqtt5::message::Unsuback<TBase, TOpt>,
+        cc_mqtt5::message::Pingresp<TBase, TOpt>,
+        cc_mqtt5::message::Disconnect<TBase, TOpt>,
+        cc_mqtt5::message::Auth<TBase, TOpt>
+    >;
+
+template <typename TBase, typename TOpt>
+using Qos0ClientInputMessages =
+    std::tuple<
+        cc_mqtt5::message::Connack<TBase, TOpt>,
+        cc_mqtt5::message::Publish<TBase, TOpt>,
+        cc_mqtt5::message::Suback<TBase, TOpt>,
+        cc_mqtt5::message::Unsuback<TBase, TOpt>,
+        cc_mqtt5::message::Pingresp<TBase, TOpt>,
+        cc_mqtt5::message::Disconnect<TBase, TOpt>,
+        cc_mqtt5::message::Auth<TBase, TOpt>
+    >; 
+
+using ProtInputMessages = 
+    std::conditional_t<
+        2 <= Config::MaxQos,
+        cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions>,
+        std::conditional_t<
+            1 == Config::MaxQos,
+            Qos1ClientInputMessages<ProtMessage, ProtocolOptions>,
+            Qos0ClientInputMessages<ProtMessage, ProtocolOptions>
+        >
+    >;
+
+using ProtFrame = cc_mqtt5::frame::Frame<ProtMessage, ProtInputMessages, ProtocolOptions>;
 using ProtMsgPtr = ProtFrame::MsgPtr;
 
-class ProtMsgHandler : public comms::GenericHandler<ProtMessage, cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions> >
+class ProtMsgHandler : public comms::GenericHandler<ProtMessage, ProtInputMessages>
 {
 protected:
     ProtMsgHandler() = default;

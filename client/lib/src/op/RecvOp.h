@@ -28,14 +28,17 @@ public:
 
     using Base::handle;
     void handle(PublishMsg& msg) override;
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
     void handle(PubrelMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2    
 
     unsigned packetId() const
     {
         return m_packetId;
     }
 
-    void reset();
+    void resetTimer();
     void postReconnectionResume();
 
 protected:
@@ -61,8 +64,6 @@ private:
 
     TimerMgr::Timer m_responseTimer;  
     TopicStr m_topicStr;
-    UserPropsList m_userProps;
-    SubIdsStorage m_subIds;
     unsigned m_packetId = 0U;
 
     static_assert(ExtConfig::RecvOpTimers == 1U);

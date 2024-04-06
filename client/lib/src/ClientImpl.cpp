@@ -668,38 +668,47 @@ void ClientImpl::handle(PublishMsg& msg)
             };
 
         using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
-        if ((msg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) || 
-            (msg.transportField_flags().field_qos().value() == Qos::AtLeastOnceDelivery)) {
+        auto qos = msg.transportField_flags().field_qos().value();
+        if ((qos == Qos::AtMostOnceDelivery) || 
+            (qos == Qos::AtLeastOnceDelivery)) {
             createRecvOp();
             break;
         }
 
-        auto iter = 
-            std::find_if(
-                m_recvOps.begin(), m_recvOps.end(),
-                [&msg](auto& opPtr)
-                {
-                    return opPtr->packetId() == msg.field_packetId().field().value();
-                });
+        if constexpr (Config::MaxQos >= 2) {
+            auto iter = 
+                std::find_if(
+                    m_recvOps.begin(), m_recvOps.end(),
+                    [&msg](auto& opPtr)
+                    {
+                        return opPtr->packetId() == msg.field_packetId().field().value();
+                    });
 
-        if (iter == m_recvOps.end()) {
-            createRecvOp();
-            break;            
-        }
+            if (iter == m_recvOps.end()) {
+                createRecvOp();
+                break;            
+            }
 
-        if (!msg.transportField_flags().field_dup().getBitValue_bit()) {
             PubrecMsg pubrecMsg;
             pubrecMsg.field_packetId().setValue(msg.field_packetId().field().value());
-            pubrecMsg.field_reasonCode().setExists();
-            pubrecMsg.field_properties().setExists();
-            pubrecMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdInUse;
+
+            if (!msg.transportField_flags().field_dup().getBitValue_bit()) {
+                pubrecMsg.field_reasonCode().setExists();
+                pubrecMsg.field_properties().setExists();
+                pubrecMsg.field_reasonCode().field().value() = PubrecMsg::Field_reasonCode::Field::ValueType::PacketIdInUse;
+            }
+            else {
+                // Duplicate detected, just re-confirming
+                (*iter)->resetTimer();
+            }
+
             sendMessage(pubrecMsg);
             return;
         }
-
-        // Duplicate attempt to deliver 
-        (*iter)->reset();
-        msg.dispatch(**iter);
+        else {
+            createRecvOp();
+            break;
+        }
     } while (false);
 
     if (disconnectSent) {
@@ -708,8 +717,11 @@ void ClientImpl::handle(PublishMsg& msg)
     }
 }
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1
 void ClientImpl::handle(PubackMsg& msg)
 {
+    static_assert(Config::MaxQos >= 1);
+
     for (auto& opPtr : m_keepAliveOps) {
         msg.dispatch(*opPtr);
     }            
@@ -729,9 +741,12 @@ void ClientImpl::handle(PubackMsg& msg)
 
     msg.dispatch(**iter);
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
 void ClientImpl::handle(PubrecMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     for (auto& opPtr : m_keepAliveOps) {
         msg.dispatch(*opPtr);
     }  
@@ -750,7 +765,7 @@ void ClientImpl::handle(PubrecMsg& msg)
         pubrelMsg.field_packetId().setValue(msg.field_packetId().value());
         pubrelMsg.field_reasonCode().setExists();
         pubrelMsg.field_properties().setExists();        
-        pubrelMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
+        pubrelMsg.field_reasonCode().field().value() = PubrecMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubrelMsg);
         return;
     }
@@ -760,6 +775,7 @@ void ClientImpl::handle(PubrecMsg& msg)
 
 void ClientImpl::handle(PubrelMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     for (auto& opPtr : m_keepAliveOps) {
         msg.dispatch(*opPtr);
     }
@@ -769,6 +785,7 @@ void ClientImpl::handle(PubrelMsg& msg)
             m_recvOps.begin(), m_recvOps.end(),
             [&msg](auto& opPtr)
             {
+                COMMS_ASSERT(opPtr);
                 return opPtr->packetId() == msg.field_packetId().value();
             });
 
@@ -778,11 +795,10 @@ void ClientImpl::handle(PubrelMsg& msg)
         pubcompMsg.field_packetId().setValue(msg.field_packetId().value());
         pubcompMsg.field_reasonCode().setExists();
         pubcompMsg.field_properties().setExists();        
-        pubcompMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
+        pubcompMsg.field_reasonCode().field().value() = PubcompMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubcompMsg);
         return;
     }
-
 
     msg.dispatch(**iter);
 }
@@ -808,6 +824,8 @@ void ClientImpl::handle(PubcompMsg& msg)
 
     msg.dispatch(**iter);
 }
+
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
 
 void ClientImpl::handle(ProtMessage& msg)
 {

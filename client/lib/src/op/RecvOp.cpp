@@ -96,36 +96,40 @@ void RecvOp::handle(PublishMsg& msg)
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
-    if (qos > Qos::ExactlyOnceDelivery) {
+    if (!verifyQosValid(qos)) {
         terminationWithReason(DisconnectReason::QosNotSupported);
         return;
     }    
 
-    if ((qos == Qos::ExactlyOnceDelivery) && 
-        (m_packetId != 0U) && 
-        (msg.field_packetId().doesExist())) {
-        
-        if (msg.field_packetId().field().value() != m_packetId) {
-            // Applicable to other RecvOp being handled in parallel
+    if constexpr (Config::MaxQos >= 2) {
+        if ((qos == Qos::ExactlyOnceDelivery) && 
+            (m_packetId != 0U) && 
+            (msg.field_packetId().doesExist())) {
+            
+            if (msg.field_packetId().field().value() != m_packetId) {
+                // Applicable to other RecvOp being handled in parallel
+                return;
+            }
+
+            // If dispatched to this op, duplicate has been detected
+            COMMS_ASSERT(msg.transportField_flags().field_dup().getBitValue_bit());
+            PubrecMsg pubrecMsg;
+            pubrecMsg.field_packetId().setValue(m_packetId);
+            sendMessage(pubrecMsg);
+            restartResponseTimer();
             return;
         }
-
-        // If dispatched to this op, duplicate has been detected
-        COMMS_ASSERT(msg.transportField_flags().field_dup().getBitValue_bit());
-        PubrecMsg pubrecMsg;
-        pubrecMsg.field_packetId().setValue(m_packetId);
-        sendMessage(pubrecMsg);
-        restartResponseTimer();
-        return;
     }
 
     auto& sessionState = client().sessionState();
 
-    if ((qos > Qos::AtMostOnceDelivery) && 
-        (0U < sessionState.m_highQosRecvLimit) && 
-        (sessionState.m_highQosRecvLimit < client().recvsCount())) {
-        terminationWithReason(DisconnectReason::ReceiveMaxExceeded);
-        return;
+    if constexpr (Config::MaxQos >= 1) {
+        if ((qos > Qos::AtMostOnceDelivery) && 
+            (0U < sessionState.m_highQosRecvLimit) && 
+            (sessionState.m_highQosRecvLimit < client().recvsCount())) {
+            terminationWithReason(DisconnectReason::ReceiveMaxExceeded);
+            return;
+        }
     }
 
     auto completeNotAuthorized = 
@@ -146,14 +150,18 @@ void RecvOp::handle(PublishMsg& msg)
                     break;
                 }    
 
-                if (qos == Qos::AtLeastOnceDelivery) {
-                    PubackMsg pubackMsg;
-                    sendNotAuthorized(pubackMsg);
-                    break;
+                if constexpr (Config::MaxQos >= 1) {
+                    if (qos == Qos::AtLeastOnceDelivery) {
+                        PubackMsg pubackMsg;
+                        sendNotAuthorized(pubackMsg);
+                        break;
+                    }
                 }
 
-                PubrecMsg pubrecMsg;
-                sendNotAuthorized(pubrecMsg);
+                if constexpr (Config::MaxQos >= 2) {
+                    PubrecMsg pubrecMsg;
+                    sendNotAuthorized(pubrecMsg);
+                }
                 break;
             } while (false);
 
@@ -172,6 +180,9 @@ void RecvOp::handle(PublishMsg& msg)
         protocolErrorTermination();
         return;
     }
+
+    UserPropsList userProps;
+    SubIdsStorage subIds;    
 
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().value()) {
@@ -271,9 +282,9 @@ void RecvOp::handle(PublishMsg& msg)
 
     if constexpr (Config::HasUserProps) {
         if (!propsHandler.m_userProps.empty()) {
-            fillUserProps(propsHandler, m_userProps);
-            comms::cast_assign(info.m_userPropsCount) = m_userProps.size();
-            info.m_userProps = &m_userProps[0];
+            fillUserProps(propsHandler, userProps);
+            comms::cast_assign(info.m_userPropsCount) = userProps.size();
+            info.m_userProps = &userProps[0];
         }
     }    
 
@@ -285,13 +296,13 @@ void RecvOp::handle(PublishMsg& msg)
     }
 
     if (!propsHandler.m_subscriptionIds.empty()) {
-        m_subIds.reserve(propsHandler.m_subscriptionIds.size());
+        subIds.reserve(propsHandler.m_subscriptionIds.size());
         for (auto* id : propsHandler.m_subscriptionIds) {
-            m_subIds.push_back(id->field_value().value());
+            subIds.push_back(id->field_value().value());
         }
 
-        info.m_subIds = &m_subIds[0];
-        comms::cast_assign(info.m_subIdsCount) = m_subIds.size();
+        info.m_subIds = &subIds[0];
+        comms::cast_assign(info.m_subIdsCount) = subIds.size();
     }
 
     comms::cast_assign(info.m_qos) = qos;
@@ -321,23 +332,29 @@ void RecvOp::handle(PublishMsg& msg)
 
     client().reportMsgInfo(info);
 
-    if (qos == Qos::AtLeastOnceDelivery) {
-        PubackMsg pubackMsg;
-        pubackMsg.field_packetId().value() = msg.field_packetId().field().value();
-        sendMessage(pubackMsg);
-        opComplete();
-        return;
-    }    
+    if constexpr (Config::MaxQos >= 1) {
+        if (qos == Qos::AtLeastOnceDelivery) {
+            PubackMsg pubackMsg;
+            pubackMsg.field_packetId().value() = msg.field_packetId().field().value();
+            sendMessage(pubackMsg);
+            opComplete();
+            return;
+        }    
+    }
 
-    m_packetId = msg.field_packetId().field().value();
-    PubrecMsg pubrecMsg;
-    pubrecMsg.field_packetId().setValue(m_packetId);
-    sendMessage(pubrecMsg);
-    restartResponseTimer();
+    if constexpr (Config::MaxQos >= 2) {
+        m_packetId = msg.field_packetId().field().value();
+        PubrecMsg pubrecMsg;
+        pubrecMsg.field_packetId().setValue(m_packetId);
+        sendMessage(pubrecMsg);
+        restartResponseTimer();
+    }
 }
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
 void RecvOp::handle(PubrelMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     if (msg.field_packetId().value() != m_packetId) {
         return;
     }
@@ -392,18 +409,21 @@ void RecvOp::handle(PubrelMsg& msg)
     sendMessage(pubcompMsg);
     opComplete();
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
 
-void RecvOp::reset()
+void RecvOp::resetTimer()
 {
-    m_responseTimer.cancel();
-    m_userProps.clear();
-    m_subIds.clear();
+    if constexpr (Config::MaxQos >= 2) {    
+        m_responseTimer.cancel();
+    }
 }
 
 void RecvOp::postReconnectionResume()
 {
-    connectivityChangedImpl();
-    restartResponseTimer();
+    if constexpr (Config::MaxQos >= 2) {
+        connectivityChangedImpl();
+        restartResponseTimer();
+    }
 }
 
 Op::Type RecvOp::typeImpl() const
@@ -413,28 +433,36 @@ Op::Type RecvOp::typeImpl() const
 
 void RecvOp::connectivityChangedImpl()
 {
-    m_responseTimer.setSuspended(
-        (!client().sessionState().m_connected) || client().clientState().m_networkDisconnected);
+    if constexpr (Config::MaxQos >= 2) {
+        m_responseTimer.setSuspended(
+            (!client().sessionState().m_connected) || client().clientState().m_networkDisconnected);
+    }
 }
 
 void RecvOp::restartResponseTimer()
 {
-    auto& state = client().configState();
-    m_responseTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
+    if constexpr (Config::MaxQos >= 2) {    
+        auto& state = client().configState();
+        m_responseTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
+    }        
 }
 
 void RecvOp::responseTimeoutInternal()
 {
-    // When there is no response from broker, just terminate the reception.
-    // The retry will be initiated by the broker.
-    COMMS_ASSERT(!m_responseTimer.isActive());
-    errorLog("Timeout on PUBREL reception from broker.");
-    opComplete();
+    if constexpr (Config::MaxQos >= 2) {
+        // When there is no response from broker, just terminate the reception.
+        // The retry will be initiated by the broker.
+        COMMS_ASSERT(!m_responseTimer.isActive());
+        errorLog("Timeout on PUBREL reception from broker.");
+        opComplete();
+    }
 }
 
 void RecvOp::recvTimeoutCb(void* data)
 {
-    asRecvOp(data)->responseTimeoutInternal();
+    if constexpr (Config::MaxQos >= 2) {
+        asRecvOp(data)->responseTimeoutInternal();
+    }
 }
 
 } // namespace op

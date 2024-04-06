@@ -23,6 +23,7 @@ struct Config
     static constexpr bool HasTopicFormatVerification = ##CC_MQTT5_CLIENT_HAS_TOPIC_FORMAT_VERIFICATION_CPP##;
     static constexpr bool HasSubTopicVerification = ##CC_MQTT5_CLIENT_HAS_SUB_TOPIC_VERIFICATION_CPP##;
     static constexpr unsigned SubFiltersLimit = ##CC_MQTT5_CLIENT_SUB_FILTERS_LIMIT##;
+    static constexpr unsigned MaxQos = ##CC_MQTT5_CLIENT_MAX_QOS##;
 
     static_assert(HasDynMemAlloc || (ClientAllocLimit > 0U), "Must use CC_MQTT5_CLIENT_ALLOC_LIMIT in configuration to limit number of clients");
     static_assert(HasDynMemAlloc || (StringFieldFixedLen > 0U), "Must use CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN in configuration to limit string field length");
@@ -37,6 +38,11 @@ struct Config
     static_assert(HasDynMemAlloc || (!HasSubTopicVerification) || (SubFiltersLimit > 0U), "Must use CC_MQTT5_CLIENT_SUB_FILTERS_LIMIT in configuration to limit amount of subscribe filters");    
 
     static_assert(HasUserProps || (UserPropsLimit == 0), "CC_MQTT5_CLIENT_USER_PROPS_LIMIT is expected to be 0 when user props are disabled");
+    static_assert(MaxQos <= 2, "Not supported QoS value");
 };
 
 } // namespace cc_mqtt5_client
+
+#ifndef CC_MQTT5_CLIENT_MAX_QOS
+#define CC_MQTT5_CLIENT_MAX_QOS ##CC_MQTT5_CLIENT_MAX_QOS##
+#endif

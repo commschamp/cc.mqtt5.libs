@@ -38,8 +38,10 @@ SendOp::~SendOp()
     releasePacketId(m_pubMsg.field_packetId().field().value());
 }
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1 
 void SendOp::handle(PubackMsg& msg)
 {
+    static_assert(Config::MaxQos >= 1);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
@@ -122,9 +124,12 @@ void SendOp::handle(PubackMsg& msg)
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1 
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2 
 void SendOp::handle(PubrecMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
@@ -235,6 +240,7 @@ void SendOp::handle(PubrecMsg& msg)
 
 void SendOp::handle(PubcompMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
@@ -316,6 +322,7 @@ void SendOp::handle(PubcompMsg& msg)
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
 
 CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 {
@@ -331,7 +338,8 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
     auto& state = client().sessionState();
 
-    if (config.m_qos > state.m_pubMaxQos) {
+    if ((config.m_qos > state.m_pubMaxQos) ||
+        (config.m_qos > static_cast<decltype(config.m_qos)>(Config::MaxQos))) {
         errorLog("QoS value is too high in publish.");
         return CC_Mqtt5ErrorCode_BadParam;
     }

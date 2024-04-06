@@ -856,6 +856,48 @@ void UnitTestCommonBase::unitTestPerformBasicDisconnect(CC_Mqtt5Client* client, 
     unitTestPerformDisconnect(client, &config);
 }
 
+void UnitTestCommonBase::unitTestPerformSubscribe(
+    CC_Mqtt5Client* client, 
+    CC_Mqtt5SubscribeTopicConfig* topicConfigs, 
+    unsigned topicConfigsCount,
+    const CC_Mqtt5SubscribeExtraConfig* extraConfig)
+{
+    auto ec = m_funcs.m_subscribe_full(client, topicConfigs, topicConfigsCount, extraConfig, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
+    test_assert(ec == CC_Mqtt5ErrorCode_Success);
+    test_assert(!unitTestIsSubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    test_assert(static_cast<bool>(sentMsg));
+    test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Subscribe);    
+    [[maybe_unused]] auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
+    test_assert(subscribeMsg != nullptr);
+    if ((extraConfig != nullptr) && (extraConfig->m_subId > 0U)) {
+        UnitTestPropsHandler propsHandler;
+        for (auto& p : subscribeMsg->field_properties().value()) {
+            p.currentFieldExec(propsHandler);
+        }
+
+        assert (!propsHandler.m_subscriptionIds.empty());
+        test_assert(propsHandler.m_subscriptionIds.front()->field_value().value() == extraConfig->m_subId);
+    }
+
+    unitTestTick(1000);
+    UnitTestSubackMsg subackMsg;
+    subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
+    subackMsg.field_list().value().resize(topicConfigsCount);
+    for (auto idx = 0U; idx < topicConfigsCount; ++idx) {
+        subackMsg.field_list().value()[0].setValue(static_cast<unsigned>(CC_Mqtt5ReasonCode_GrantedQos0) + topicConfigs[idx].m_maxQos);
+    }
+
+    unitTestReceiveMessage(subackMsg);
+    test_assert(unitTestIsSubscribeComplete());    
+
+    [[maybe_unused]] auto& subackInfo = unitTestSubscribeResponseInfo();
+    test_assert(subackInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
+    test_assert(subackInfo.m_response.m_reasonCodes.size() == topicConfigsCount);
+    unitTestPopSubscribeResponseInfo();    
+}
+
 void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)
 {
     auto config = CC_Mqtt5SubscribeTopicConfig();
@@ -870,38 +912,7 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
         extraPtr = &extra;
     }    
 
-    [[maybe_unused]] auto ec = m_funcs.m_subscribe_full(client, &config, 1U, extraPtr, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
-    test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    test_assert(!unitTestIsSubscribeComplete());
-
-    auto sentMsg = unitTestGetSentMessage();
-    test_assert(static_cast<bool>(sentMsg));
-    test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Subscribe);    
-    [[maybe_unused]] auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
-    test_assert(subscribeMsg != nullptr);
-    if (subId > 0U) {
-        UnitTestPropsHandler propsHandler;
-        for (auto& p : subscribeMsg->field_properties().value()) {
-            p.currentFieldExec(propsHandler);
-        }
-
-        assert (!propsHandler.m_subscriptionIds.empty());
-        test_assert(propsHandler.m_subscriptionIds.front()->field_value().value() == subId);
-    }
-
-    unitTestTick(1000);
-    UnitTestSubackMsg subackMsg;
-    subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
-    subackMsg.field_list().value().resize(1);
-    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
-    unitTestReceiveMessage(subackMsg);
-    test_assert(unitTestIsSubscribeComplete());    
-
-    [[maybe_unused]] auto& subackInfo = unitTestSubscribeResponseInfo();
-    test_assert(subackInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
-    test_assert(subackInfo.m_response.m_reasonCodes.size() == 1U);
-    test_assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_GrantedQos2);
-    unitTestPopSubscribeResponseInfo();    
+    unitTestPerformSubscribe(client, &config, 1U, extraPtr);
 }
 
 void UnitTestCommonBase::unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason)
@@ -1064,6 +1075,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeConfigExtra(CC_Mqtt5Subsc
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeAddUserProp(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5UserProp* prop)
 {
     return m_funcs.m_subscribe_add_user_prop(handle, prop);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeSimple(CC_Mqtt5Client* client, CC_Mqtt5SubscribeTopicConfig* config)
+{
+    return m_funcs.m_subscribe_simple(client, config, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
 }
 
 CC_Mqtt5UnsubscribeHandle UnitTestCommonBase::unitTestUnsubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

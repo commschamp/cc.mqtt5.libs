@@ -128,7 +128,7 @@ void UnitTestSubscribe::test1()
 void UnitTestSubscribe::test2()
 {
     // Parallel subscribe
-    auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocClient(true);
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
     

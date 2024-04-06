@@ -28,9 +28,15 @@ public:
     ~SendOp();
 
     using Base::handle;
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1  
     virtual void handle(PubackMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1  
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2  
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2    
 
     CC_Mqtt5PublishHandle toHandle()
     {
@@ -105,7 +111,7 @@ private:
     void* m_cbData = nullptr;    
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
-    CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+    [[maybe_unused]] CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
     bool m_outOfOrderAllowed = false;
     bool m_sent = false;
     bool m_acked = false;

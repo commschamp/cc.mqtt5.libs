@@ -122,7 +122,8 @@ CC_Mqtt5ErrorCode ConnectOp::configWill(const CC_Mqtt5ConnectWillConfig& config)
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((config.m_qos < CC_Mqtt5QoS_AtMostOnceDelivery) || (config.m_qos > CC_Mqtt5QoS_ExactlyOnceDelivery)) {
+    if ((config.m_qos < CC_Mqtt5QoS_AtMostOnceDelivery) || 
+        (static_cast<decltype(config.m_qos)>(Config::MaxQos) < config.m_qos)) {
         errorLog("Invalid will QoS value in configuration.");
         return CC_Mqtt5ErrorCode_BadParam;
     }    

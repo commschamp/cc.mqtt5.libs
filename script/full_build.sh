@@ -26,7 +26,8 @@ cmake .. -DCMAKE_INSTALL_PREFIX=${COMMON_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${BUILD
     -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
     -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON  \
     -DCC_MQTT5_CLIENT_AFL_FUZZ=ON \
-    -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="${ROOT_DIR}/client/lib/script/BareMetalConfig.cmake" "$@"
+    -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="${ROOT_DIR}/client/lib/script/BareMetalTestConfig.cmake;${ROOT_DIR}/client/lib/script/Qos1TestConfig.cmake;${ROOT_DIR}/client/lib/script/Qos0TestConfig.cmake" \
+    "$@"
 
 procs=$(nproc)
 if [ -n "${procs}" ]; then

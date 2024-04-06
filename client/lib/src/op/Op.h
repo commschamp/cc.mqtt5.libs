@@ -67,6 +67,12 @@ public:
         connectivityChangedImpl();
     }
 
+    inline 
+    static bool verifyQosValid(PublishMsg::TransportField_flags::Field_qos::ValueType qos)
+    {
+        return (qos <= static_cast<decltype(qos)>(Config::MaxQos));
+    }    
+
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
     using DisconnectReason = DisconnectMsg::Field_reasonCode::Field::ValueType;

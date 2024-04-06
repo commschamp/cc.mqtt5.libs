@@ -135,10 +135,17 @@ public:
 
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1    
     virtual void handle(PubackMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1    
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubrelMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
+
     virtual void handle(ProtMessage& msg) override;
 
     // -------------------- Ops Access API -----------------------------

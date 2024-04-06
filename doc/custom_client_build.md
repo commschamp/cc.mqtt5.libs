@@ -446,7 +446,7 @@ The content of the custom client configuration file, which explicitly specifies
 all compile time limits and constants to prevent usage of dynamic 
 memory allocation and STL types like [std::string](http://en.cppreference.com/w/cpp/string/basic_string)
 and [std::vector](http://en.cppreference.com/w/cpp/container/vector), may look
-like [this](../client/lib/script/BareMetalConfig.cmake):
+like [this](../client/lib/script/BareMetalTestConfig.cmake):
 
 Setting "bm" as a custom client name results in having a static library called `cc_mqtt5_bm_client`.
 All the API functions are defined in `cc_mqtt5_client/bm_client.h` header file:

@@ -695,7 +695,8 @@ void ConnectOp::handle(ConnackMsg& msg)
         reuseState = ReuseState();
     }    
 
-    state.m_sendTopicAliases.resize(std::min(state.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
+    auto& clientState = client().clientState();
+    clientState.m_sendTopicAliases.resize(std::min(clientState.m_sendTopicAliases.size(), std::size_t(response.m_topicAliasMax)));
 
     state.m_keepAliveMs = keepAlive * 1000U;
     state.m_highQosSendLimit = response.m_highQosSendLimit;

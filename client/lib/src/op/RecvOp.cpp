@@ -403,6 +403,7 @@ void RecvOp::reset()
 void RecvOp::postReconnectionResume()
 {
     connectivityChangedImpl();
+    restartResponseTimer();
 }
 
 Op::Type RecvOp::typeImpl() const

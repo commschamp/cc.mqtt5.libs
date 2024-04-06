@@ -349,15 +349,16 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
             
+            auto& clientState = client().clientState();
             auto iter = 
                 std::lower_bound(
-                    state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), config.m_topic,
+                    clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), config.m_topic,
                     [](auto& info, const char* topicParam)
                     {
                         return info.m_topic < topicParam;
                     });
 
-            bool found = ((iter != state.m_sendTopicAliases.end()) && (iter->m_topic == config.m_topic));
+            bool found = ((iter != clientState.m_sendTopicAliases.end()) && (iter->m_topic == config.m_topic));
             if (!found) {
                 if ((config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias) || 
                     (config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceAliasOnly)) {
@@ -380,21 +381,17 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-            if (iter->m_highQosRegRemCount == 0U) {
-                // The message was acked
-                mustAssignTopic = false;
-                break;
-            }
-
-            if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
-                break;
-            }
-
             if (iter->m_lowQosRegRemCount == 0U) {
                 mustAssignTopic = false;
                 break;
             }
 
+
+            // if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
+            //     break;
+            // }
+
+    
             --iter->m_lowQosRegRemCount;
         }
         else {
@@ -640,6 +637,54 @@ void SendOp::postReconnectionResend()
         return;
     }
 
+    if constexpr (Config::HasTopicAliases) {
+        do {
+            auto& propsVec = m_pubMsg.field_properties().value();
+            auto iter = 
+                std::find_if(
+                    propsVec.begin(), propsVec.end(),
+                    [](auto& prop) {
+                        return (prop.currentField() == PublishMsg::Field_properties::ValueType::value_type::FieldIdx_topicAlias);
+                    });
+
+            if (iter == propsVec.end()) {
+                COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
+                break;
+            }
+
+            if (m_acked) {
+                // The message won't be sent, no need to update it.
+                propsVec.erase(iter);
+                break;
+            }
+
+            if (m_pubMsg.field_topic().value().empty()) {
+                auto& topicAliasField = iter->accessField_topicAlias();
+                auto topicAliasValue = topicAliasField.field_value().value();
+
+                auto& aliases = client().clientState().m_sendTopicAliases;
+                auto infoIter = 
+                    std::find_if(
+                        aliases.begin(), aliases.end(),
+                        [topicAliasValue](auto& info)
+                        {
+                            return info.m_alias == topicAliasValue;
+                        });
+
+                COMMS_ASSERT(infoIter != aliases.end());
+                if (infoIter == aliases.end()) {
+                    errorLog("Broker reduced its allowed topic aliases (less likely) or it's internal error (most likely).");
+                    completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
+                    return;
+                }
+
+                m_pubMsg.field_topic().value() = infoIter->m_topic.c_str();
+            }
+
+            propsVec.erase(iter);
+        } while (false);
+    }
+
     COMMS_ASSERT(m_sendAttempts > 0U);
     --m_sendAttempts;
     m_responseTimer.cancel();
@@ -759,24 +804,22 @@ void SendOp::confirmRegisteredAlias()
 {
     COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
     COMMS_ASSERT(m_registeredAlias);
-    auto& state = client().sessionState();
+    auto& clientState = client().clientState();
     auto& topic = m_pubMsg.field_topic().value();
     auto iter = 
         std::lower_bound(
-            state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), topic,
+            clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), topic,
             [](auto& info, auto& topicParam)
             {
                 return info.m_topic < topicParam;
             });    
 
-    if (iter == state.m_sendTopicAliases.end()) {
+    if (iter == clientState.m_sendTopicAliases.end()) {
         errorLog("Topic alias freed before it is acknowledged");
         return;
     }
 
-    if (iter->m_highQosRegRemCount > 0U) {
-        --(iter->m_highQosRegRemCount);
-    }
+    iter->m_lowQosRegRemCount = 0U;
 }
 
 CC_Mqtt5ErrorCode SendOp::doSendInternal()

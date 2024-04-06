@@ -21,13 +21,10 @@ using RecvTopicsMap = ObjListType<TopicStr, Config::TopicAliasesLimit, Config::H
 struct TopicAliasInfo
 {
     static constexpr std::uint8_t DefaultLowQosRegRemCount = 3;
-    static constexpr std::uint8_t DefaultHighQosRegRemCount = 1;
 
     TopicStr m_topic;
     unsigned m_alias = 0U;
-    std::uint8_t m_lowQosRegCountRequest = DefaultLowQosRegRemCount;
     std::uint8_t m_lowQosRegRemCount = DefaultLowQosRegRemCount;
-    std::uint8_t m_highQosRegRemCount = DefaultHighQosRegRemCount;
 };
 
 using SendTopicsMap = ObjListType<TopicAliasInfo, Config::TopicAliasesLimit, Config::HasTopicAliases>;

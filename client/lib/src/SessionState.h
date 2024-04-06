@@ -27,7 +27,6 @@ struct SessionState
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
     RecvTopicsMap m_recvTopicAliases;
-    SendTopicsMap m_sendTopicAliases;
     SendTopicsFreeAliasList m_sendTopicFreeAliases;
     AuthMethodStorageType m_authMethod;
     std::uint64_t m_sessionExpiryIntervalMs = 0U;

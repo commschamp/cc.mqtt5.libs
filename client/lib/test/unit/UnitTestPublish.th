@@ -51,6 +51,7 @@ public:
     void test42();
     void test43();
     void test44();
+    void test45();
 
 private:
     virtual void setUp() override
@@ -3852,4 +3853,147 @@ void UnitTestPublish::test44()
     auto& pubInfo2 = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     unitTestPopPublishResponseInfo();     
+}
+
+void UnitTestPublish::test45()
+{
+    // Testing resend in the resumed session when topic alias was in use before disconnection.
+
+    auto* client = unitTestAllocClient(true);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = true;
+
+    auto extraConfig = CC_Mqtt5ConnectExtraConfig();
+    unitTestConnectInitConfigExtra(&extraConfig);
+    extraConfig.m_sessionExpiryInterval = 10;   
+
+    UnitTestConnectResponseConfig responseConfig;
+    responseConfig.m_topicAliasMax = 10;
+
+    unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig, nullptr, &responseConfig);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 1U);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().isMissing());
+    TS_ASSERT_EQUALS(publishMsg1->field_topic().value(), Topic);
+    
+    UnitTestPropsHandler propsHandler1;
+    for (auto& p : publishMsg1->field_properties().value()) {
+        p.currentFieldExec(propsHandler1);
+    }    
+
+    TS_ASSERT_DIFFERS(propsHandler1.m_topicAlias, nullptr);
+    auto alias1 = propsHandler1.m_topicAlias->field_value().value();    
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();     
+
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+    TS_ASSERT(unitTestHasSentMessage());
+
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_topic().value().empty()); // Topic alias is in use
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    auto packetId2 = publishMsg2->field_packetId().field().value();
+
+    UnitTestPropsHandler propsHandler2;
+    for (auto& p : publishMsg2->field_properties().value()) {
+        p.currentFieldExec(propsHandler2);
+    }    
+
+    TS_ASSERT_DIFFERS(propsHandler2.m_topicAlias, nullptr);
+    auto alias2 = propsHandler2.m_topicAlias->field_value().value();    
+    TS_ASSERT_EQUALS(alias1, alias2);
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+    
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(!unitTestCheckNoTicks()); // Has session expiry timeout
+
+    unitTestClearState();
+    
+    // Reconnection with attempt to restore the session
+    auto connectConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&connectConfig);
+
+    connectConfig.m_clientId = __FUNCTION__;
+    connectConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    connectRespConfig.m_topicAliasMax = 10;
+    unitTestPerformConnect(client, &connectConfig, nullptr, nullptr, nullptr, &connectRespConfig);
+
+    // Checking the PUBLISH is present
+    TS_ASSERT(!unitTestIsPublishComplete());
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto publishMsg3 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg3, nullptr);  
+    TS_ASSERT(publishMsg3->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg3->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg3->field_packetId().field().value(), packetId2);        
+    TS_ASSERT(!publishMsg3->field_topic().value().empty());
+
+    UnitTestPropsHandler propsHandler3;
+    for (auto& p : publishMsg3->field_properties().value()) {
+        p.currentFieldExec(propsHandler3);
+    }    
+
+    // The topic alias should not be used in resend
+    TS_ASSERT_EQUALS(propsHandler3.m_topicAlias, nullptr);
 }

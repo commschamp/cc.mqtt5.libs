@@ -26,6 +26,7 @@ struct ClientState
     static constexpr unsigned DefaultKeepAlive = 60;
     static constexpr unsigned DefaultTopicAliasMax = 10;
 
+    SendTopicsMap m_sendTopicAliases;
     PacketIdsList m_allocatedPacketIds;
     std::uint16_t m_lastPacketId = 0U;
     unsigned m_inFlightSends = 0U;    

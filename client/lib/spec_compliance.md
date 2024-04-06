@@ -132,7 +132,7 @@
     * When network is disconnected during connection attempt, the operation is immediately aborted. Tested in UnitTestConnect::test10.
     * Canceling keep alive is tested in UnitTestConnect::test11.
     * Canceling subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
-    * Suspending unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
+    * Canceling unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
     * Suspending publish operation for session expiry period is tested in UnitTestPublish::test14 and UnitTestPublish::test15.
     * Suspending message reception for session expiry period is tested in UnitTestReceive::test6 and UnitTestReceive::test7.
 - [MQTT-3.1.2-24]: The Server MUST NOT send packets exceeding Maximum Packet Size to the Client

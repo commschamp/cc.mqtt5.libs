@@ -319,11 +319,18 @@
 /// @endcode
 ///
 /// **IMPORTANT**: MQTT v5 specification allows reconnection to the broker while
-/// requesting previous session restoration (via "clean start" bit). To prevent
+/// requesting previous session restoration (via "clean start" bit). By default,
+/// the client library verifies that the message received from the broker was
+/// actually subscribed to before reporting the message to the application
+/// (see @ref doc_cc_mqtt5_client_receive for details). To prevent
 /// potential errors of the client and broker inner states being out of sync, the
 /// @b first "connect" operation requires setting the @ref CC_Mqtt5ConnectBasicConfig::m_cleanStart
-/// value to @b true. Otherwise the @ref CC_Mqtt5ErrorCode_BadParam error code
-/// will be returned. Any subsequent reconnection attempts will allow
+/// value to @b true. The only exception to this rule is when the subscription
+/// verification on message reception was disabled (described in the
+/// @ref doc_cc_mqtt5_client_receive section below). In case the subscription
+/// verification is still enabled and the @ref CC_Mqtt5ConnectBasicConfig::m_cleanStart
+/// value is @b NOT set to @b true, the function rejects the configuration
+/// with the @ref CC_Mqtt5ErrorCode_BadParam error code. Any subsequent reconnection attempts will allow
 /// setting the value to @b false.
 ///
 /// See also documentation of the @ref CC_Mqtt5ConnectBasicConfig structure.

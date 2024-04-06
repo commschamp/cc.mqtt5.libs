@@ -451,6 +451,7 @@ protected:
     CC_Mqtt5ErrorCode unitTestSetDefaultResponseTimeout(CC_Mqtt5Client* client, unsigned ms);
     CC_Mqtt5ErrorCode unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount);
     unsigned unitTestPubTopicAliasCount(CC_Mqtt5Client* client);
+    void unitTestSetVerifyIncomingMsgSubscribed(CC_Mqtt5Client* client, bool enabled);
     CC_Mqtt5ConnectHandle unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     void unitTestConnectInitConfigBasic(CC_Mqtt5ConnectBasicConfig* config);
     void unitTestConnectInitConfigWill(CC_Mqtt5ConnectWillConfig* config);

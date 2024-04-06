@@ -32,6 +32,7 @@ public:
     void test23();
     void test24();
     void test25();
+    void test26();
 
 private:
     virtual void setUp() override
@@ -1796,5 +1797,39 @@ void UnitTestReceive::test25()
     TS_ASSERT(pubcompMsg->field_reasonCode().isMissing());
     TS_ASSERT(pubcompMsg->field_properties().isMissing());
 
+    TS_ASSERT(!unitTestHasMessageRecieved());
+}
+
+void UnitTestReceive::test26()
+{
+    // Testing allowing non-clean first connect when subscription verification is disabled
+    auto* client = unitTestAllocClient(true);
+
+    unitTestSetVerifyIncomingMsgSubscribed(client, false);
+
+    auto basicConfig = CC_Mqtt5ConnectBasicConfig();
+    unitTestConnectInitConfigBasic(&basicConfig);
+    basicConfig.m_clientId = __FUNCTION__;
+    basicConfig.m_cleanStart = false;
+
+    auto connectRespConfig = UnitTestConnectResponseConfig();
+    connectRespConfig.m_sessionPresent = true;
+    unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &connectRespConfig);        
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery;
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();
     TS_ASSERT(!unitTestHasMessageRecieved());
 }

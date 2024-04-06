@@ -951,6 +951,11 @@ unsigned UnitTestCommonBase::unitTestPubTopicAliasCount(CC_Mqtt5Client* client)
     return m_funcs.m_pub_topic_alias_count(client);
 }
 
+void UnitTestCommonBase::unitTestSetVerifyIncomingMsgSubscribed(CC_Mqtt5Client* client, bool enabled)
+{
+    m_funcs.m_set_verify_incoming_msg_subscribed(client, enabled);
+}
+
 CC_Mqtt5ConnectHandle UnitTestCommonBase::unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
 {
     return m_funcs.m_connect_prepare(client, ec);

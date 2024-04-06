@@ -45,7 +45,7 @@ CC_Mqtt5ErrorCode ConnectOp::configBasic(const CC_Mqtt5ConnectBasicConfig& confi
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    if ((!config.m_cleanStart) && (client().clientState().m_firstConnect)) {
+    if ((!config.m_cleanStart) && client().clientState().m_firstConnect && client().configState().m_verifySubFilter) {
         errorLog("Clean start flag needs to be set on the first connection attempt");
         return CC_Mqtt5ErrorCode_BadParam;
     }
@@ -481,7 +481,9 @@ CC_Mqtt5ErrorCode ConnectOp::send(CC_Mqtt5ConnectCompleteCb cb, void* cbData)
         return CC_Mqtt5ErrorCode_InternalError;
     }    
 
-    if ((!m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) && (client().clientState().m_firstConnect)) {
+    if ((!m_connectMsg.field_flags().field_low().getBitValue_cleanStart()) && 
+        (client().clientState().m_firstConnect) && 
+        (client().configState().m_verifySubFilter)) {
         errorLog("Clean start flag needs to be set on the first connection attempt, perform configuration first.");
         return CC_Mqtt5ErrorCode_InsufficientConfig;
     }    

@@ -1780,6 +1780,11 @@
 /// When the incomplete operations get terminated the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status
 /// is reported.
 ///
+/// When the @ref doc_cc_mqtt5_client_unsolicited_disconnect is detected prior to
+/// the detection of the network disconnection itself and the broker disconnection
+/// report callback is invoked, there is <b>no need</b> to report the network disconnection
+/// to the library.
+///
 /// Inquiry about current network disconnection status can be done using the
 /// @b cc_mqtt5_client_is_network_disconnected() function.
 /// @code

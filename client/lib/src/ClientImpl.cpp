@@ -152,6 +152,10 @@ void ClientImpl::notifyNetworkDisconnected()
 {
     auto guard = apiEnter();
     m_clientState.m_networkDisconnected = true;
+    if (m_sessionState.m_disconnecting) {
+        return; // No need to go through broker disconnection
+    }
+    
     brokerDisconnected(false);
 }
 
@@ -973,6 +977,7 @@ void ClientImpl::brokerDisconnected(
         termMode = TerminateMode_KeepSendRecvOps;
     }
 
+    m_sessionState.m_disconnecting = true;
     terminateOps(status, termMode);    
 
     if (preserveSendRecv) {
@@ -1088,7 +1093,6 @@ void ClientImpl::createKeepAliveOpIfNeeded()
 
 void ClientImpl::terminateOps(CC_Mqtt5AsyncOpStatus status, TerminateMode mode)
 {
-    m_sessionState.m_disconnecting = true;
     for (auto* op : m_ops) {
         if (op == nullptr) {
             continue;

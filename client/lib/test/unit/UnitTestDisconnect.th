@@ -11,6 +11,7 @@ public:
     void test2();
     void test3();
     void test4();
+    void test5();
 
 private:
     virtual void setUp() override
@@ -90,7 +91,7 @@ void UnitTestDisconnect::test4()
     // Testing rejection any operation (except connect) after disconnect
     // [MQTT-3.14.4-1]
 
-        auto* client = unitTestAllocClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -118,4 +119,28 @@ void UnitTestDisconnect::test4()
     auto* disconnect = unitTestDisconnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(disconnect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);       
+}
+
+void UnitTestDisconnect::test5()
+{
+    // Testing DISCONNECT message and network disconnection that follows
+
+    auto* client = unitTestAllocClient();
+    TS_ASSERT_DIFFERS(client, nullptr);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));
+
+    unitTestTick(100);
+    UnitTestDisconnectMsg disconnectMsg;
+    unitTestReceiveMessage(disconnectMsg);
+
+    TS_ASSERT(unitTestIsDisconnected());
+    TS_ASSERT(unitTestHasDisconnectInfo());
+    auto& disconnectInfo = unitTestDisconnectInfo();
+    TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
+    unitTestPopDisconnectInfo();    
+    TS_ASSERT(unitTestCheckNoTicks());
+
+    unitTestNotifyNetworkDisconnected(client);
 }

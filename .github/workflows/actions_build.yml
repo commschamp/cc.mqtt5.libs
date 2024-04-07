@@ -210,6 +210,7 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build   
 
     - name: Install Boost
+      if: ${{ matrix.arch == x64 }
       shell: cmd
       run: |
         choco install boost-msvc-14.3
@@ -236,7 +237,9 @@ jobs:
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} -DBoost_USE_STATIC_LIBS=ON ^
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON
+          -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
+      env:
+        HAS_BOOST: "${{ matrix.arch == x64 && 'ON' || 'OFF' }}"
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build

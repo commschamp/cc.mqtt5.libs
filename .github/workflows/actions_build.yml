@@ -154,11 +154,18 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build      
+      run: cmake -E make_directory ${{runner.workspace}}/build   
+
+    - name: Check GITHUB_WORKSPACE
+      shell: cmd
+      run: |
+        echo github.workspace=${{ github.workspace }}
+        echo GITHUB_WORKSPACE=%GITHUB_WORKSPACE%
 
     - name: Prepare externals
       shell: cmd
-      run: %GITHUB_WORKSPACE%\script\prepare_externals.bat
+      run: |
+        %GITHUB_WORKSPACE%\script\prepare_externals.bat
       env:
         BUILD_DIR: ${{runner.workspace}}/build
         GENERATOR: Visual Studio 16 2019

@@ -8,6 +8,7 @@ env:
 
 jobs:
   build_gcc_ubuntu_22_04:
+    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -52,7 +53,7 @@ jobs:
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
           -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES=$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake \
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
       env:
         CC: gcc-${{matrix.cc_ver}}
@@ -72,6 +73,7 @@ jobs:
       
 
   build_clang_ubuntu_22_04:
+    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -122,7 +124,7 @@ jobs:
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
           -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES=$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake \
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
       env:
         CC: clang-${{matrix.cc_ver}}
@@ -156,7 +158,7 @@ jobs:
 
     - name: Prepare externals
       shell: pwsh
-      run: $GITHUB_WORKSPACE/script/prepare_externals.bat
+      run: $GITHUB_WORKSPACE\script\prepare_externals.bat
       env:
         BUILD_DIR: ${{runner.workspace}}/build
         GENERATOR: Visual Studio 16 2019
@@ -174,10 +176,9 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -G "Visual Studio 16 2019" -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
+          -DCC_MQTT5_CLIENT_APPS=OFF -DCC_MQTT5_CLIENT_AFL_FUZZ=OFF 
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build

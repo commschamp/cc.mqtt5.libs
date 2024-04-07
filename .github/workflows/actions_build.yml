@@ -168,8 +168,6 @@ jobs:
         %GITHUB_WORKSPACE%\script\prepare_externals.bat
       env:
         BUILD_DIR: ${{runner.workspace}}/build
-        GENERATOR: "Visual Studio 16 2019"
-        PLATFORM: ${{matrix.arch}}
         EXTERNALS_DIR: ${{runner.workspace}}/externals
         COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
         COMMON_BUILD_TYPE: ${{matrix.type}}

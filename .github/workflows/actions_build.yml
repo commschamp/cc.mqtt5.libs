@@ -210,7 +210,7 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build   
 
     - name: Install Boost
-      if: matrix.arch == x64
+      if: matrix.arch == 'x64'
       shell: cmd
       run: |
         choco install boost-msvc-14.3

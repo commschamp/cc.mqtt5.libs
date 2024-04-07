@@ -239,7 +239,7 @@ jobs:
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
           -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
       env:
-        HAS_BOOST: "${{ matrix.arch == x64 && 'ON' || 'OFF' }}"
+        HAS_BOOST: "${{ matrix.arch == 'x64' && 'ON' || 'OFF' }}"
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build

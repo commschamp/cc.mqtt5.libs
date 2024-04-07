@@ -156,11 +156,10 @@ jobs:
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build   
 
-    - name: Check GITHUB_WORKSPACE
+    - name: Install Boost
       shell: cmd
       run: |
-        echo github.workspace=${{ github.workspace }}
-        echo GITHUB_WORKSPACE=%GITHUB_WORKSPACE%
+        choco install boost-msvc-14.1
 
     - name: Prepare externals
       shell: cmd
@@ -181,10 +180,10 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
         cmake %GITHUB_WORKSPACE% -G "Visual Studio 16 2019" -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
-          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
+          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} -DBoost_USE_STATIC_LIBS=ON ^
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON ^
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
-          -DCC_MQTT5_CLIENT_APPS=OFF -DCC_MQTT5_CLIENT_AFL_FUZZ=OFF 
+          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build

@@ -31,6 +31,7 @@ SendOp::SendOp(ClientImpl& client) :
     m_responseTimer(client.timerMgr().allocTimer())
 {
     COMMS_ASSERT(m_responseTimer.isValid());
+    static_cast<void>(m_reasonCode);
 }    
 
 SendOp::~SendOp()

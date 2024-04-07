@@ -111,7 +111,7 @@ private:
     void* m_cbData = nullptr;    
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
-    [[maybe_unused]] CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+    CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
     bool m_outOfOrderAllowed = false;
     bool m_sent = false;
     bool m_acked = false;

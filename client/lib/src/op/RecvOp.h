@@ -63,7 +63,6 @@ private:
     static void recvTimeoutCb(void* data);
 
     TimerMgr::Timer m_responseTimer;  
-    TopicStr m_topicStr;
     unsigned m_packetId = 0U;
 
     static_assert(ExtConfig::RecvOpTimers == 1U);

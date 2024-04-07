@@ -161,6 +161,7 @@ public:
                 if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
                     infoLog() << "Insufficient data in buffer (" << dataLen << "), reporting network disconnected..." << std::endl;
                     cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get());
+                    brokerDisconnectReportCb(this, nullptr);
                     continue;
                 }
 
@@ -277,6 +278,7 @@ private:
         m_state.m_disconnected = false;
         m_state.m_reauthRequired = !m_opts.authMethod().empty();
         m_state.m_publishCount = 0U;
+        m_state.m_connected = false;
     }
 
     void doConnect()
@@ -544,6 +546,7 @@ private:
 
         m_state.m_disconnected = true;
         m_state.m_reinitRequired = true;
+        m_state.m_connected = false;
 
         CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
         auto handle = cc_mqtt5_##NAME##client_disconnect_prepare(m_client.get(), &ec);
@@ -568,7 +571,7 @@ private:
         if (ec != CC_Mqtt5ErrorCode_Success) {
             errorLog() << "Failed to send disconnect\n";
             return;
-        }        
+        }     
     }    
 
     bool createGeneratorIfNeeded()
@@ -633,11 +636,8 @@ private:
         auto& state = asThis(data)->m_state;
         state.m_disconnected = true;
         state.m_connected = false;
-
-        if (!cc_mqtt5_##NAME##client_is_network_disconnected(asThis(data)->m_client.get())) {
-            state.m_reinitRequired = true;
-            state.m_connectRequired = true;
-        }
+        state.m_reinitRequired = true;
+        state.m_connectRequired = true;
     }
 
     static void messageReceivedReportCb(void* data, const CC_Mqtt5MessageInfo* info)

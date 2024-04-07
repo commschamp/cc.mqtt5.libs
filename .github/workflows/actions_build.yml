@@ -157,8 +157,8 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build      
 
     - name: Prepare externals
-      shell: pwsh
-      run: $GITHUB_WORKSPACE\script\prepare_externals.bat
+      shell: cmd
+      run: %GITHUB_WORKSPACE%\script\prepare_externals.bat
       env:
         BUILD_DIR: ${{runner.workspace}}/build
         GENERATOR: Visual Studio 16 2019
@@ -171,23 +171,23 @@ jobs:
         CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
 
     - name: Configure CMake
-      shell: pwsh
+      shell: cmd
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake $GITHUB_WORKSPACE -G "Visual Studio 16 2019" -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
+        cmake %GITHUB_WORKSPACE% -G "Visual Studio 16 2019" -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_APPS=OFF -DCC_MQTT5_CLIENT_AFL_FUZZ=OFF 
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build
-      shell: pwsh
+      shell: cmd
       run: cmake --build . --config ${{matrix.type}} --target install
       env:
         VERBOSE: 1 
     - name: Testing
       working-directory: ${{runner.workspace}}/build
-      shell: pwsh
+      shell: cmd
       run: ctest -V
 

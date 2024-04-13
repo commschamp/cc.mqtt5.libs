@@ -28,9 +28,15 @@ public:
     ~SendOp();
 
     using Base::handle;
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1  
     virtual void handle(PubackMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1  
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2  
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2    
 
     CC_Mqtt5PublishHandle toHandle()
     {
@@ -59,17 +65,43 @@ public:
     unsigned getResendAttempts() const;
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
+    void postReconnectionResend();
+    bool resume();
+    bool isPaused() const
+    {
+        return m_paused;
+    }
+
+    bool isSent() const
+    {
+        return m_sent;
+    }
+
+    CC_Mqtt5ErrorCode setOutOfOrderAllowed(bool allowed)
+    {
+        m_outOfOrderAllowed = allowed;
+        return CC_Mqtt5ErrorCode_Success;
+    }
+
+    bool getOutOfOrderAllowed() const
+    {
+        return m_outOfOrderAllowed;
+    }
 
 protected:
     virtual Type typeImpl() const override;    
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
-    virtual void networkConnectivityChangedImpl() override;
+    virtual void connectivityChangedImpl() override;
 
 private:
     void restartResponseTimer();
     void responseTimeoutInternal();
-    void reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
+    void resendDupMsg();
+    void completeWithCb(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response = nullptr);
     void confirmRegisteredAlias();
+    CC_Mqtt5ErrorCode doSendInternal();
+    bool canSend() const;
+    void opCompleteInternal();
 
     static void recvTimeoutCb(void* data);
 
@@ -80,9 +112,12 @@ private:
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
+    bool m_outOfOrderAllowed = false;
+    bool m_sent = false;
     bool m_acked = false;
     bool m_registeredAlias = false;
     bool m_topicConfigured = false;
+    bool m_paused = false;
 
     static constexpr unsigned DefaultSendAttempts = 2U;
     static_assert(ExtConfig::SendOpTimers == 1U);

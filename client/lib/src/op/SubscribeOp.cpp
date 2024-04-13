@@ -72,7 +72,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
         return CC_Mqtt5ErrorCode_BadParam;
     }    
 
-    if (CC_Mqtt5QoS_ValuesLimit <= config.m_maxQos) {
+    if (static_cast<decltype(config.m_maxQos)>(Config::MaxQos) < config.m_maxQos) {
         errorLog("Bad subscription qos value.");
         return CC_Mqtt5ErrorCode_BadParam;        
     }
@@ -138,6 +138,8 @@ CC_Mqtt5ErrorCode SubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
 
 CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData) 
 {
+    client().allowNextPrepare();
+    
     auto completeOnError = 
         comms::util::makeScopeGuard(
             [this]()
@@ -177,6 +179,11 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
 
 CC_Mqtt5ErrorCode SubscribeOp::cancel()
 {
+    if (m_cb == nullptr) {
+        // hasn't been sent yet
+        client().allowNextPrepare();
+    }
+
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
 }
@@ -234,7 +241,8 @@ void SubscribeOp::handle(SubackMsg& msg)
         return;
     }
 
-    reasonCodes.reserve(std::min(reasonCodesVec.size(), reasonCodesVec.max_size()));
+    auto maxReasonCodesCount = std::min(reasonCodesVec.size(), reasonCodes.max_size());
+    reasonCodes.reserve(maxReasonCodesCount);
     for (auto idx = 0U; idx < reasonCodesVec.size(); ++idx) {
         auto rc = msg.field_list().value()[idx];
         if (reasonCodes.max_size() <= idx) {
@@ -244,7 +252,18 @@ void SubscribeOp::handle(SubackMsg& msg)
             return;
         }
 
-        reasonCodes.push_back(static_cast<CC_Mqtt5ReasonCode>(rc.value()));
+        auto rcCasted = static_cast<CC_Mqtt5ReasonCode>(rc.value());
+
+        if ((CC_Mqtt5ReasonCode_GrantedQos0 <= rcCasted) && (rcCasted <= CC_Mqtt5ReasonCode_GrantedQos2)) {
+            auto ackQos = static_cast<unsigned>(rcCasted) - static_cast<unsigned>(CC_Mqtt5ReasonCode_GrantedQos0);
+            auto reqQos = static_cast<unsigned>(topicsVec[idx].field_options().field_qos().value());
+            if (reqQos < ackQos) {
+                errorLog("Granted QoS in SUBACK is greater than requested");
+                return; // protocol error will be reported
+            }   
+        }     
+
+        reasonCodes.push_back(rcCasted);
 
         if constexpr (Config::HasSubTopicVerification) {
             if (!client().configState().m_verifySubFilter) {
@@ -320,11 +339,6 @@ Op::Type SubscribeOp::typeImpl() const
 void SubscribeOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 {
     completeOpInternal(status);
-}
-
-void SubscribeOp::networkConnectivityChangedImpl()
-{
-    m_timer.setSuspended(client().sessionState().m_networkDisconnected);
 }
 
 void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)

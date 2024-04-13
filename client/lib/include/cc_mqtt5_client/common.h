@@ -21,11 +21,11 @@ extern "C" {
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 3U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 4U
 
 /// @brief Patch level of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_PATCH_VERSION 1U
+#define CC_MQTT5_CLIENT_PATCH_VERSION 0U
 
 /// @brief Macro to create numeric version as single unsigned number
 /// @ingroup global
@@ -63,21 +63,22 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5ErrorCode_Success, ///< The requested function executed successfully.
-    CC_Mqtt5ErrorCode_InternalError, ///< Internal library error, please submit bug report    
-    CC_Mqtt5ErrorCode_NotIntitialized, ///< The allocated client hasn't been initialized.
-    CC_Mqtt5ErrorCode_Busy, ///< The client library is in the middle of previous operation(s), cannot start a new one.
-    CC_Mqtt5ErrorCode_NotConnected, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
-    CC_Mqtt5ErrorCode_AlreadyConnected, ///< The client library is already connected to the broker, cannot perform connection operation.
-    CC_Mqtt5ErrorCode_BadParam, ///< Bad parameter is passed to the function.
-    CC_Mqtt5ErrorCode_InsufficientConfig, ///< The required configuration hasn't been performed.
-    CC_Mqtt5ErrorCode_OutOfMemory, ///< Memory allocation failed.
-    CC_Mqtt5ErrorCode_BufferOverflow, ///< Output buffer is too short
-    CC_Mqtt5ErrorCode_NotSupported, ///< Feature is not supported
-    CC_Mqtt5ErrorCode_RetryLater, ///< Retry in next event loop iteration.
-    CC_Mqtt5ErrorCode_Terminating, ///< The client is in "terminating" state, (re)init is required.
-    CC_Mqtt5ErrorCode_NetworkDisconnected, ///< When network is disconnected issueing new ops is not accepted
-    CC_Mqtt5ErrorCode_NotAuthenticated, ///< The client not authenticated.
+    CC_Mqtt5ErrorCode_Success = 0, ///< The requested function executed successfully.
+    CC_Mqtt5ErrorCode_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5ErrorCode_NotIntitialized = 2, ///< The allocated client hasn't been initialized.
+    CC_Mqtt5ErrorCode_Busy = 3, ///< The client library is in the middle of previous operation(s), cannot start a new one.
+    CC_Mqtt5ErrorCode_NotConnected = 4, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
+    CC_Mqtt5ErrorCode_AlreadyConnected = 5, ///< The client library is already connected to the broker, cannot perform connection operation.
+    CC_Mqtt5ErrorCode_BadParam = 6, ///< Bad parameter is passed to the function.
+    CC_Mqtt5ErrorCode_InsufficientConfig = 7, ///< The required configuration hasn't been performed.
+    CC_Mqtt5ErrorCode_OutOfMemory = 8, ///< Memory allocation failed.
+    CC_Mqtt5ErrorCode_BufferOverflow = 9, ///< Output buffer is too short
+    CC_Mqtt5ErrorCode_NotSupported = 10, ///< Feature is not supported
+    CC_Mqtt5ErrorCode_RetryLater = 11, ///< Retry in next event loop iteration.
+    CC_Mqtt5ErrorCode_Disconnecting = 12, ///< The client is in "disconnecting" state, (re)connect is required in the next iteration loop.
+    CC_Mqtt5ErrorCode_NetworkDisconnected = 13, ///< When network is disconnected issueing new ops is not accepted
+    CC_Mqtt5ErrorCode_NotAuthenticated = 14, ///< The client not authenticated.
+    CC_Mqtt5ErrorCode_PreparationLocked = 15, ///< Another operation is being prepared, cannot create a new one without performing "send" or "cancel".
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 
@@ -172,7 +173,7 @@ typedef enum
 {
     CC_Mqtt5RetainHandling_Send = 0, ///< Send retained messages at the time of the subscribe
     CC_Mqtt5RetainHandling_SendIfDoesNotExist = 1, ///< Send retained messages at subscribe only if the subscription does not currently exist
-    CC_Mqtt5AuthErrorCode_DoNotSend = 2, ///< Do not send retained messages at the time of the subscribe
+    CC_Mqtt5RetainHandling_DoNotSend = 2, ///< Do not send retained messages at the time of the subscribe
     CC_Mqtt5RetainHandling_ValuesLimit ///< Limit for the values
 } CC_Mqtt5RetainHandling;
 
@@ -319,7 +320,7 @@ typedef struct
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to array containing "User Properties", NULL if none
     unsigned m_userPropsCount; ///< Amount of "User Properties" in the array
     unsigned m_sessionExpiryInterval; ///< "Session Expiry Interval" property, 0 if not reported.
-    unsigned m_highQosSendLimit; ///< "Receive Maximum" property, 0 if not reported.
+    unsigned m_highQosSendLimit; ///< "Receive Maximum" property.
     unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, 0 if not reported.
     unsigned m_topicAliasMax; ///< "Topic Alias Maximum" property, 0 if not reported.
     CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" property, 
@@ -342,13 +343,15 @@ typedef struct
     unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.
 } CC_Mqtt5AuthInfo;
 
+/// @brief Broker disconnection information
+/// @ingroup global
 typedef struct
 {
-    CC_Mqtt5ReasonCode m_reasonCode;
-    const char* m_reasonStr;
-    const char* m_serverRef;
-    const CC_Mqtt5UserProp* m_userProps;
-    unsigned m_userPropsCount;      
+    CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" reported by the broker
+    const char* m_reasonStr; ///< "Reason String" property, NULL if not reported
+    const char* m_serverRef; ///< "Server Reference" property, NULL if not reported
+    const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.  
 } CC_Mqtt5DisconnectInfo;
 
 /// @brief Configuration structure of the "disconnect" operation.
@@ -503,6 +506,9 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Callback used to report unsolicited disconnection of the broker.
+/// @details When invoked the "info" is present <b>if and only if</b> the 
+///     broker disconnection report is due to the reception of the @b DISCONNECT
+///     message from the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
 /// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 

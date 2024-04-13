@@ -89,6 +89,7 @@ public:
     // Subscribe Options
     StringsList subTopics() const;
     UnsignedsList subQoses() const;
+    bool subNoRetained() const;
     bool subBinary() const;
     unsigned subId() const;
     StringsList subUserProps() const;

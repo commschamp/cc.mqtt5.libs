@@ -141,12 +141,6 @@ bool AppClient::start(int argc, const char* argv[])
         return true;
     }
 
-    auto ec = ::cc_mqtt5_client_init(m_client.get());
-    if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to initialize client object." << std::endl;
-        return false;
-    }
-
     if (!createSession()) {
         return false;
     }
@@ -170,9 +164,10 @@ std::string AppClient::toString(CC_Mqtt5ErrorCode val)
         "CC_Mqtt5ErrorCode_BufferOverflow",
         "CC_Mqtt5ErrorCode_NotSupported",
         "CC_Mqtt5ErrorCode_RetryLater",
-        "CC_Mqtt5ErrorCode_Terminating",
+        "CC_Mqtt5ErrorCode_Disconnecting",
         "CC_Mqtt5ErrorCode_NetworkDisconnected",
         "CC_Mqtt5ErrorCode_NotAuthenticated",
+        "CC_Mqtt5ErrorCode_PreparationLocked",
     };
     static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == CC_Mqtt5ErrorCode_ValuesLimit);
@@ -755,10 +750,11 @@ bool AppClient::createSession()
         });
 
     m_session->setNetworkDisconnectedReportCb(
-        [this](bool disconnected)
+        [this]()
         {
             assert(m_client);
-            ::cc_mqtt5_client_notify_network_disconnected(m_client.get(), disconnected);
+            ::cc_mqtt5_client_notify_network_disconnected(m_client.get());
+            brokerDisconnectedImpl(nullptr);
         }
     );
 

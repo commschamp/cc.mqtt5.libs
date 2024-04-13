@@ -130,9 +130,9 @@
     Session Expiry Interval is greater than 0
     * Implemented by allowing notification of the network disconnection.
     * When network is disconnected during connection attempt, the operation is immediately aborted. Tested in UnitTestConnect::test10.
-    * Suspending keep alive ping for session expiry period is tested in UnitTestConnect::test11.
-    * Suspending subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
-    * Suspending unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
+    * Canceling keep alive is tested in UnitTestConnect::test11.
+    * Canceling subscribe operation for session expiry period is tested in UnitTestSubscribe::test5.
+    * Canceling unsubscribe operation for session expiry period is tested in UnitTestUnsubscribe::test5.
     * Suspending publish operation for session expiry period is tested in UnitTestPublish::test14 and UnitTestPublish::test15.
     * Suspending message reception for session expiry period is tested in UnitTestReceive::test6 and UnitTestReceive::test7.
 - [MQTT-3.1.2-24]: The Server MUST NOT send packets exceeding Maximum Packet Size to the Client
@@ -743,8 +743,8 @@
     MUST resend any unacknowledged PUBLISH packets (where QoS > 0) and PUBREL packets using their
     original Packet Identifiers. This is the only circumstance where a Client or Server is REQUIRED to resend
     messages. Clients and Servers MUST NOT resend messages at any other time.
-    * Not applicable to current client implementation. It doesn't allow connect without previous disconnection
-        where all outstanding requests get aborted.
+    * Publish tested in UnitTestPublish::test[35 - 39]
+    * Receive tested in UnitTestReceive::test[22 - 25]
 - [MQTT-4.4.0-2]: If PUBACK or PUBREC is received containing a Reason Code of 0x80 or greater the corresponding
     PUBLISH packet is treated as acknowledged, and MUST NOT be retransmitted
     * Tested in UnitTestPublish::test31 and UnitTestPublish::test32.

@@ -24,7 +24,7 @@ private:
 void UnitTestBmConnect::test1()
 {
     // Simple connect and ack
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
     TS_ASSERT(!unitTestIsConnected(client));

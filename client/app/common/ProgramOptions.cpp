@@ -109,6 +109,7 @@ void ProgramOptions::addSubscribe()
         ("sub-topic,t", po::value<StringsList>(), "Subscribe topic filter. Can be used multiple times.")
         ("sub-qos,q", po::value<UnsignedsList>(), "Subscribe max QoS: 0, 1, or 2. Defaults to 2. Can be used multiple times "
             "(for each topic filter correspondingly).")
+        ("sub-no-retained", "Disable reception of the retained messages")
         ("sub-binary", "Force binary output of the received message data")
         ("sub-id", po::value<unsigned>()->default_value(0), "\"Subscription Identifier\" property.")
         ("sub-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the SUBSCRIBE request.")
@@ -330,6 +331,11 @@ ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
     }
 
     return result;    
+}
+
+bool ProgramOptions::subNoRetained() const
+{
+    return m_vm.count("sub-no-retained") > 0U;
 }
 
 bool ProgramOptions::subBinary() const

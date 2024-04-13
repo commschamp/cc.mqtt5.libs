@@ -1,0 +1,65 @@
+#include "UnitTestQos0Base.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestQos0Publish : public CxxTest::TestSuite, public UnitTestQos0Base
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestQos0Publish::test1()
+{
+    // Rejecting Qos2 configuration
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));
+
+    auto* publish = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish, nullptr);
+    TS_ASSERT_EQUALS(unitTestPublishCount(client), 1U);
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto ec = unitTestPublishConfigBasic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish, &config);
+    ec = unitTestPublishConfigBasic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendPublish(publish);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubackInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();       
+}

@@ -1,0 +1,69 @@
+#include "UnitTestQos1Base.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestQos1Subscribe : public CxxTest::TestSuite, public UnitTestQos1Base
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestQos1Subscribe::test1()
+{
+    // Rejection QoS2 subscription attempt
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
+    unitTestSubscribeInitConfigTopic(&subscribeConfig);
+    subscribeConfig.m_topic = "#";
+    subscribeConfig.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto* subscribe = unitTestSubscribePrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(subscribe, nullptr);
+
+    auto ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
+
+    subscribeConfig.m_maxQos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    ec = unitTestSendSubscribe(subscribe);
+    TS_ASSERT(!unitTestIsSubscribeComplete());
+
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
+
+    UnitTestSubackMsg subackMsg;
+    subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
+    subackMsg.field_list().value().resize(1);
+    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
+    
+    unitTestReceiveMessage(subackMsg);
+    TS_ASSERT(unitTestIsSubscribeComplete());
+
+    auto& subackInfo = unitTestSubscribeResponseInfo();
+    TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    unitTestPopSubscribeResponseInfo();     
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
+    TS_ASSERT(unitTestIsDisconnected());    
+}

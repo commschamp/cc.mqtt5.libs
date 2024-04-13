@@ -74,6 +74,7 @@ CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 
 CC_Mqtt5ErrorCode DisconnectOp::send()
 {
+    client().allowNextPrepare();
     if ((m_disconnectMsg.field_reasonCode().field().value() != DisconnectReason::Success) || 
         (!m_disconnectMsg.field_properties().field().value().empty())) {
         m_disconnectMsg.field_reasonCode().setExists();
@@ -84,12 +85,13 @@ CC_Mqtt5ErrorCode DisconnectOp::send()
     auto& clientObj = client();
     clientObj.sendMessage(m_disconnectMsg);
     opComplete(); // No members access after this point, the op will be deleted
-    clientObj.notifyDisconnected(false);
+    clientObj.brokerDisconnected(false);
     return CC_Mqtt5ErrorCode_Success;
 }
 
 CC_Mqtt5ErrorCode DisconnectOp::cancel()
 {
+    client().allowNextPrepare();
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
 }

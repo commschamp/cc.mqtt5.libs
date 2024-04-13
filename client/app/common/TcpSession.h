@@ -40,7 +40,6 @@ private:
     }
 
     void doRead();
-    void doReadLater();
 
     Socket m_socket;
     Timer m_readTimer;

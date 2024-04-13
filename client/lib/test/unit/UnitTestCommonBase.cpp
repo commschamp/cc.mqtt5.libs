@@ -9,6 +9,7 @@ namespace
 {
 
 #define test_assert(cond_) \
+    assert(cond_); \
     if (!(cond_)) { \
         std::cerr << "\nAssertion failure (" << #cond_ << ") in " << __FILE__ << ":" << __LINE__ << std::endl; \
         std::exit(1); \
@@ -41,8 +42,6 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
 {
     test_assert(m_funcs.m_alloc != nullptr);
     test_assert(m_funcs.m_free != nullptr);
-    test_assert(m_funcs.m_init != nullptr);
-    test_assert(m_funcs.m_is_initialized != nullptr);
     test_assert(m_funcs.m_tick != nullptr);
     test_assert(m_funcs.m_process_data != nullptr);
     test_assert(m_funcs.m_notify_network_disconnected != nullptr);
@@ -76,6 +75,8 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_connect_add_will_user_prop != nullptr);
     test_assert(m_funcs.m_connect_send != nullptr);
     test_assert(m_funcs.m_connect_cancel != nullptr);
+    test_assert(m_funcs.m_connect_simple != nullptr);
+    test_assert(m_funcs.m_connect_full != nullptr);
     test_assert(m_funcs.m_is_connected != nullptr);
     test_assert(m_funcs.m_disconnect_prepare != nullptr);
     test_assert(m_funcs.m_disconnect_init_config != nullptr);
@@ -83,6 +84,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_disconnect_add_user_prop != nullptr);
     test_assert(m_funcs.m_disconnect_send != nullptr);
     test_assert(m_funcs.m_disconnect_cancel != nullptr);
+    test_assert(m_funcs.m_disconnect != nullptr);
     test_assert(m_funcs.m_subscribe_prepare != nullptr);
     test_assert(m_funcs.m_subscribe_set_response_timeout != nullptr);
     test_assert(m_funcs.m_subscribe_get_response_timeout != nullptr);
@@ -93,6 +95,8 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_subscribe_add_user_prop != nullptr);
     test_assert(m_funcs.m_subscribe_send != nullptr);
     test_assert(m_funcs.m_subscribe_cancel != nullptr);
+    test_assert(m_funcs.m_subscribe_simple != nullptr);
+    test_assert(m_funcs.m_subscribe_full != nullptr);
     test_assert(m_funcs.m_unsubscribe_prepare != nullptr);
     test_assert(m_funcs.m_unsubscribe_set_response_timeout != nullptr);
     test_assert(m_funcs.m_unsubscribe_get_response_timeout != nullptr);
@@ -101,7 +105,10 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_unsubscribe_add_user_prop != nullptr);
     test_assert(m_funcs.m_unsubscribe_send != nullptr);
     test_assert(m_funcs.m_unsubscribe_cancel != nullptr);    
+    test_assert(m_funcs.m_unsubscribe_simple != nullptr);    
+    test_assert(m_funcs.m_unsubscribe_full != nullptr);    
     test_assert(m_funcs.m_publish_prepare != nullptr);    
+    test_assert(m_funcs.m_publish_count != nullptr);    
     test_assert(m_funcs.m_publish_init_config_basic != nullptr);    
     test_assert(m_funcs.m_publish_init_config_extra != nullptr);    
     test_assert(m_funcs.m_publish_set_response_timeout != nullptr);    
@@ -113,6 +120,11 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_publish_add_user_prop != nullptr);  
     test_assert(m_funcs.m_publish_send != nullptr);  
     test_assert(m_funcs.m_publish_cancel != nullptr);  
+    test_assert(m_funcs.m_publish_was_initiated != nullptr);  
+    test_assert(m_funcs.m_publish_set_out_of_order_allowed != nullptr);
+    test_assert(m_funcs.m_publish_get_out_of_order_allowed != nullptr);
+    test_assert(m_funcs.m_publish_simple != nullptr);  
+    test_assert(m_funcs.m_publish_full != nullptr);  
     test_assert(m_funcs.m_reauth_prepare != nullptr);  
     test_assert(m_funcs.m_reauth_init_config_auth != nullptr);  
     test_assert(m_funcs.m_reauth_set_response_timeout != nullptr);  
@@ -121,6 +133,7 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_reauth_add_user_prop != nullptr); 
     test_assert(m_funcs.m_reauth_send != nullptr); 
     test_assert(m_funcs.m_reauth_cancel != nullptr); 
+    test_assert(m_funcs.m_reauth != nullptr); 
     test_assert(m_funcs.m_set_next_tick_program_callback != nullptr); 
     test_assert(m_funcs.m_set_cancel_next_tick_wait_callback != nullptr); 
     test_assert(m_funcs.m_set_send_output_data_callback != nullptr); 
@@ -234,7 +247,7 @@ UnitTestCommonBase::UnitTestMessageInfo& UnitTestCommonBase::UnitTestMessageInfo
 void UnitTestCommonBase::unitTestSetUp()
 {
     test_assert(!m_client);
-    unitTestClearState();
+    unitTestClearState(false);
 }
 
 void UnitTestCommonBase::unitTestTearDown()
@@ -242,11 +255,10 @@ void UnitTestCommonBase::unitTestTearDown()
     m_client.reset();
 }
 
-UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocAndInitClient(bool addLog)
+UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAllocClient(bool addLog)
 {
     test_assert(!m_client);
     m_client.reset(m_funcs.m_alloc());
-    test_assert(!m_funcs.m_is_initialized(m_client.get()));
     if (addLog) {
         m_funcs.m_set_error_log_callback(m_client.get(), &UnitTestCommonBase::unitTestErrorLogCb, nullptr);
     }
@@ -255,9 +267,6 @@ UnitTestCommonBase::UnitTestClientPtr::pointer UnitTestCommonBase::unitTestAlloc
     unitTestSetSendOutputDataCb(m_client.get(), &UnitTestCommonBase::unitTestSendOutputDataCb, this);
     unitTestSetNextTickProgramCb(m_client.get(), &UnitTestCommonBase::unitTestProgramNextTickCb, this);
     unitTestSetCancelNextTickWaitCb(m_client.get(), &UnitTestCommonBase::unitTestCancelNextTickWaitCb, this);
-    [[maybe_unused]] auto ec = m_funcs.m_init(m_client.get());
-    test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    test_assert(m_funcs.m_is_initialized(m_client.get()));
     return m_client.get();
 }
 
@@ -316,10 +325,12 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendUnsubscribe(CC_Mqtt5Unsubscrib
     return result;
 }
 
-CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish)
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSendPublish(CC_Mqtt5PublishHandle& publish, bool clearHandle)
 {
     auto result = m_funcs.m_publish_send(publish, &UnitTestCommonBase::unitTestPublishCompleteCb, this);
-    publish = nullptr;
+    if (clearHandle) {
+        publish = nullptr;
+    }
     return result;
 }
 
@@ -576,34 +587,13 @@ void UnitTestCommonBase::unitTestPerformConnect(
     CC_Mqtt5AuthConfig* authConfig,
     const UnitTestConnectResponseConfig* responseConfig)
 {
-    auto* connect = unitTestConnectPrepare(client, nullptr);
-    test_assert(connect != nullptr);
-
-    auto ec = CC_Mqtt5ErrorCode_Success;
-    if (basicConfig != nullptr) {
-        ec = unitTestConnectConfigBasic(connect, basicConfig);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }
-
-    if (willConfig != nullptr) {
-        ec = unitTestConnectConfigWill(connect, willConfig);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }
-
-    if (extraConfig != nullptr) {
-        ec = unitTestConnectConfigExtra(connect, extraConfig);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }
-
     if (authConfig != nullptr) {
         test_assert(authConfig->m_authCb == nullptr);
         authConfig->m_authCb = &UnitTestCommonBase::unitTestAuthCb;
         authConfig->m_authCbData = this;        
-        ec = unitTestConnectConfigAuth(connect, authConfig);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }    
+    }   
 
-    ec = unitTestSendConnect(connect);
+    [[maybe_unused]] auto ec = m_funcs.m_connect_full(client, basicConfig, willConfig, extraConfig, authConfig, &UnitTestCommonBase::unitTestConnectCompleteCb, this);
     test_assert(ec == CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
@@ -612,7 +602,7 @@ void UnitTestCommonBase::unitTestPerformConnect(
     test_assert(!unitTestIsConnectComplete());    
 
     auto* tickReq = unitTestTickReq();
-    test_assert(tickReq->m_requested == UnitTestDefaultOpTimeoutMs);    
+    test_assert(tickReq->m_requested <= UnitTestDefaultOpTimeoutMs);    
 
     if (authConfig != nullptr) {
         const UnitTestData AuthData = {0x11, 0x22, 0x33, 0x44};
@@ -848,14 +838,7 @@ void UnitTestCommonBase::unitTestPerformDisconnect(
     CC_Mqtt5Client* client, 
     const CC_Mqtt5DisconnectConfig* config)
 {
-    auto* disconnect = unitTestDisconnectPrepare(client, nullptr);
-    test_assert(disconnect != nullptr);
-    if (config != nullptr) {
-        [[maybe_unused]] auto ec = unitTestDisconnectConfig(disconnect, config);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }
-
-    [[maybe_unused]] auto ec = m_funcs.m_disconnect_send(disconnect);
+    [[maybe_unused]] auto ec = m_funcs.m_disconnect(client, config);
     test_assert(ec == CC_Mqtt5ErrorCode_Success);
 
     auto reason = UnitTestDisconnectReason::Success;
@@ -873,26 +856,13 @@ void UnitTestCommonBase::unitTestPerformBasicDisconnect(CC_Mqtt5Client* client, 
     unitTestPerformDisconnect(client, &config);
 }
 
-void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)
+void UnitTestCommonBase::unitTestPerformSubscribe(
+    CC_Mqtt5Client* client, 
+    CC_Mqtt5SubscribeTopicConfig* topicConfigs, 
+    unsigned topicConfigsCount,
+    const CC_Mqtt5SubscribeExtraConfig* extraConfig)
 {
-    auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
-    config.m_topic = topic;
-
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
-    test_assert(subscribe != nullptr);
-
-    [[maybe_unused]] auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
-    test_assert(ec == CC_Mqtt5ErrorCode_Success);
-
-    if (subId > 0U) {
-        auto extra = CC_Mqtt5SubscribeExtraConfig();
-        extra.m_subId = subId;
-        ec = unitTestSubscribeConfigExtra(subscribe, &extra);
-        test_assert(ec == CC_Mqtt5ErrorCode_Success);
-    }
-
-    ec = unitTestSendSubscribe(subscribe);
+    auto ec = m_funcs.m_subscribe_full(client, topicConfigs, topicConfigsCount, extraConfig, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
     test_assert(ec == CC_Mqtt5ErrorCode_Success);
     test_assert(!unitTestIsSubscribeComplete());
 
@@ -901,29 +871,48 @@ void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, c
     test_assert(sentMsg->getId() == cc_mqtt5::MsgId_Subscribe);    
     [[maybe_unused]] auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     test_assert(subscribeMsg != nullptr);
-    if (subId > 0U) {
+    if ((extraConfig != nullptr) && (extraConfig->m_subId > 0U)) {
         UnitTestPropsHandler propsHandler;
         for (auto& p : subscribeMsg->field_properties().value()) {
             p.currentFieldExec(propsHandler);
         }
 
         assert (!propsHandler.m_subscriptionIds.empty());
-        test_assert(propsHandler.m_subscriptionIds.front()->field_value().value() == subId);
+        test_assert(propsHandler.m_subscriptionIds.front()->field_value().value() == extraConfig->m_subId);
     }
 
     unitTestTick(1000);
     UnitTestSubackMsg subackMsg;
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
-    subackMsg.field_list().value().resize(1);
-    subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
+    subackMsg.field_list().value().resize(topicConfigsCount);
+    for (auto idx = 0U; idx < topicConfigsCount; ++idx) {
+        subackMsg.field_list().value()[0].setValue(static_cast<unsigned>(CC_Mqtt5ReasonCode_GrantedQos0) + topicConfigs[idx].m_maxQos);
+    }
+
     unitTestReceiveMessage(subackMsg);
     test_assert(unitTestIsSubscribeComplete());    
 
     [[maybe_unused]] auto& subackInfo = unitTestSubscribeResponseInfo();
     test_assert(subackInfo.m_status == CC_Mqtt5AsyncOpStatus_Complete);
-    test_assert(subackInfo.m_response.m_reasonCodes.size() == 1U);
-    test_assert(subackInfo.m_response.m_reasonCodes[0] == CC_Mqtt5ReasonCode_GrantedQos2);
+    test_assert(subackInfo.m_response.m_reasonCodes.size() == topicConfigsCount);
     unitTestPopSubscribeResponseInfo();    
+}
+
+void UnitTestCommonBase::unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId)
+{
+    auto config = CC_Mqtt5SubscribeTopicConfig();
+    unitTestSubscribeInitConfigTopic(&config);
+    config.m_topic = topic;
+
+    auto extra = CC_Mqtt5SubscribeExtraConfig();
+    const CC_Mqtt5SubscribeExtraConfig* extraPtr = nullptr;
+
+    if (subId > 0U) {
+        extra.m_subId = subId;
+        extraPtr = &extra;
+    }    
+
+    unitTestPerformSubscribe(client, &config, 1U, extraPtr);
 }
 
 void UnitTestCommonBase::unitTestVerifyDisconnectSent(UnitTestDisconnectReason reason)
@@ -948,25 +937,9 @@ UnitTestCommonBase::UnitTestClientPtr UnitTestCommonBase::unitTestAlloc()
     return UnitTestClientPtr(m_funcs.m_alloc(), UnitTestDeleter(m_funcs));
 }
 
-CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestInit(CC_Mqtt5Client* client)
+void UnitTestCommonBase::unitTestNotifyNetworkDisconnected(CC_Mqtt5Client* client)
 {
-    test_assert(m_funcs.m_init != nullptr);
-    auto ec = m_funcs.m_init(client);
-    if (ec == CC_Mqtt5ErrorCode_Success) {
-        unitTestClearState();
-    }
-    return ec;
-}
-
-bool UnitTestCommonBase::unitTestIsInitialized(CC_Mqtt5Client* client) const
-{
-    test_assert(m_funcs.m_is_initialized != nullptr);
-    return m_funcs.m_is_initialized(client);
-}
-
-void UnitTestCommonBase::unitTestNotifyClientDisconnected(CC_Mqtt5Client* client, bool disconnected)
-{
-    m_funcs.m_notify_network_disconnected(client, disconnected);
+    m_funcs.m_notify_network_disconnected(client);
 }
 
 bool UnitTestCommonBase::unitTestIsNetworkDisconnected(CC_Mqtt5Client* client)
@@ -982,6 +955,16 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSetDefaultResponseTimeout(CC_Mqtt5
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPubTopicAliasAlloc(CC_Mqtt5Client* client, const char* topic, unsigned char qos0RegsCount)
 {
     return m_funcs.m_pub_topic_alias_alloc(client, topic, qos0RegsCount);
+}
+
+unsigned UnitTestCommonBase::unitTestPubTopicAliasCount(CC_Mqtt5Client* client)
+{
+    return m_funcs.m_pub_topic_alias_count(client);
+}
+
+void UnitTestCommonBase::unitTestSetVerifyIncomingMsgSubscribed(CC_Mqtt5Client* client, bool enabled)
+{
+    m_funcs.m_set_verify_incoming_msg_subscribed(client, enabled);
 }
 
 CC_Mqtt5ConnectHandle UnitTestCommonBase::unitTestConnectPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
@@ -1094,6 +1077,11 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeAddUserProp(CC_Mqtt5Subsc
     return m_funcs.m_subscribe_add_user_prop(handle, prop);
 }
 
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestSubscribeSimple(CC_Mqtt5Client* client, CC_Mqtt5SubscribeTopicConfig* config)
+{
+    return m_funcs.m_subscribe_simple(client, config, &UnitTestCommonBase::unitTestSubscribeCompleteCb, this);
+}
+
 CC_Mqtt5UnsubscribeHandle UnitTestCommonBase::unitTestUnsubscribePrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
 {
     return m_funcs.m_unsubscribe_prepare(client, ec);
@@ -1124,6 +1112,11 @@ CC_Mqtt5PublishHandle UnitTestCommonBase::unitTestPublishPrepare(CC_Mqtt5Client*
     return m_funcs.m_publish_prepare(client, ec);
 }
 
+unsigned UnitTestCommonBase::unitTestPublishCount(CC_Mqtt5Client* client)
+{
+    return m_funcs.m_publish_count(client);
+}
+
 void UnitTestCommonBase::unitTestPublishInitConfigBasic(CC_Mqtt5PublishBasicConfig* config)
 {
     return m_funcs.m_publish_init_config_basic(config);
@@ -1152,6 +1145,26 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishConfigExtra(CC_Mqtt5Publish
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop)
 {
     return m_funcs.m_publish_add_user_prop(handle, prop);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishCancel(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_cancel(handle);
+}
+
+bool UnitTestCommonBase::unitTestPublishWasInitiated(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_was_initiated(handle);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishSetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle, bool allowed)
+{
+    return m_funcs.m_publish_set_out_of_order_allowed(handle, allowed);
+}
+
+bool UnitTestCommonBase::unitTestPublishGetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle)
+{
+    return m_funcs.m_publish_get_out_of_order_allowed(handle);
 }
 
 CC_Mqtt5ReauthHandle UnitTestCommonBase::unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)
@@ -1194,9 +1207,11 @@ void UnitTestCommonBase::unitTestSetMessageReceivedReportCb(CC_Mqtt5ClientHandle
     return m_funcs.m_set_message_received_report_callback(handle, cb, data);
 }
 
-void UnitTestCommonBase::unitTestClearState()
+void UnitTestCommonBase::unitTestClearState(bool preserveTicks)
 {
-    m_tickReq.clear();
+    if (!preserveTicks) {
+        m_tickReq.clear();
+    }
     m_sentData.clear();
     m_receivedData.clear();
     m_connectResp.clear();

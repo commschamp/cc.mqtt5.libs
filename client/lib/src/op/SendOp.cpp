@@ -31,6 +31,7 @@ SendOp::SendOp(ClientImpl& client) :
     m_responseTimer(client.timerMgr().allocTimer())
 {
     COMMS_ASSERT(m_responseTimer.isValid());
+    static_cast<void>(m_reasonCode);
 }    
 
 SendOp::~SendOp()
@@ -38,13 +39,18 @@ SendOp::~SendOp()
     releasePacketId(m_pubMsg.field_packetId().field().value());
 }
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1 
 void SendOp::handle(PubackMsg& msg)
 {
+    static_assert(Config::MaxQos >= 1);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
 
     m_responseTimer.cancel();
+
+    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
 
     auto terminateOnExit = 
         comms::util::makeScopeGuard(
@@ -66,8 +72,7 @@ void SendOp::handle(PubackMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opComplete();
+                completeWithCb(status, responsePtr);
             });        
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery) {
@@ -120,12 +125,18 @@ void SendOp::handle(PubackMsg& msg)
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1 
 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2 
 void SendOp::handle(PubrecMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
+
+    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
 
     m_responseTimer.cancel();
 
@@ -149,8 +160,8 @@ void SendOp::handle(PubrecMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opComplete();
+
+                completeWithCb(status, responsePtr);
             });    
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -197,10 +208,12 @@ void SendOp::handle(PubrecMsg& msg)
         } 
     }
     
+    // Protocol wise it's all correct, no need to terminate any more
+    terminateOnExit.release();
+
     if ((msg.field_reasonCode().doesExist()) && 
         (msg.field_reasonCode().field().value() >= PubrecMsg::Field_reasonCode::Field::ValueType::UnspecifiedError)) {
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
-        terminateOnExit.release();
         status = CC_Mqtt5AsyncOpStatus_Complete;
         return;
     }
@@ -216,13 +229,11 @@ void SendOp::handle(PubrecMsg& msg)
     auto result = client().sendMessage(pubrelMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
-        terminateOnExit.release();
         status = CC_Mqtt5AsyncOpStatus_InternalError;
         return;
     }
 
     m_reasonCode = response.m_reasonCode;
-    terminateOnExit.release();
     completeOpOnExit.release();
     ++m_sendAttempts;
     restartResponseTimer();
@@ -230,6 +241,7 @@ void SendOp::handle(PubrecMsg& msg)
 
 void SendOp::handle(PubcompMsg& msg)
 {
+    static_assert(Config::MaxQos >= 2);
     if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
         return;
     }
@@ -256,8 +268,8 @@ void SendOp::handle(PubcompMsg& msg)
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
                 }
-                reportPubComplete(status, responsePtr);
-                opComplete();
+
+                completeWithCb(status, responsePtr);
             });  
 
     if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
@@ -311,6 +323,7 @@ void SendOp::handle(PubcompMsg& msg)
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
 
 CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 {
@@ -326,14 +339,10 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
     auto& state = client().sessionState();
 
-    if (config.m_qos > state.m_pubMaxQos) {
+    if ((config.m_qos > state.m_pubMaxQos) ||
+        (config.m_qos > static_cast<decltype(config.m_qos)>(Config::MaxQos))) {
         errorLog("QoS value is too high in publish.");
         return CC_Mqtt5ErrorCode_BadParam;
-    }
-
-    if ((config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) && (state.m_highQosSendLimit < client().sendsCount())) {
-        errorLog("Exceeding number of allowed high QoS publishes.");
-        return CC_Mqtt5ErrorCode_Busy;        
     }
 
     if (config.m_retain && (!state.m_retainAvailable)) {
@@ -349,15 +358,16 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
             
+            auto& clientState = client().clientState();
             auto iter = 
                 std::lower_bound(
-                    state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), config.m_topic,
+                    clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), config.m_topic,
                     [](auto& info, const char* topicParam)
                     {
                         return info.m_topic < topicParam;
                     });
 
-            bool found = ((iter != state.m_sendTopicAliases.end()) && (iter->m_topic == config.m_topic));
+            bool found = ((iter != clientState.m_sendTopicAliases.end()) && (iter->m_topic == config.m_topic));
             if (!found) {
                 if ((config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias) || 
                     (config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceAliasOnly)) {
@@ -380,21 +390,17 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-            if (iter->m_highQosRegRemCount == 0U) {
-                // The message was acked
-                mustAssignTopic = false;
-                break;
-            }
-
-            if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
-                break;
-            }
-
             if (iter->m_lowQosRegRemCount == 0U) {
                 mustAssignTopic = false;
                 break;
             }
 
+
+            // if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
+            //     break;
+            // }
+
+    
             --iter->m_lowQosRegRemCount;
         }
         else {
@@ -576,11 +582,13 @@ unsigned SendOp::getResendAttempts() const
 
 CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 {
+    client().allowNextPrepare();
+    
     auto completeOnExit = 
         comms::util::makeScopeGuard(
             [this]()
             {
-                opComplete();
+                opCompleteInternal();
             });
 
     if (!m_responseTimer.isValid()) {
@@ -603,29 +611,121 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 
     m_pubMsg.doRefresh(); // Update packetId presence
 
-    m_sendAttempts = 0U;
-    auto result = client().sendMessage(m_pubMsg); 
-    if (result != CC_Mqtt5ErrorCode_Success) {
-        return result;
-    }
+    if (!canSend()) {
+        COMMS_ASSERT(!m_paused);
+        m_paused = true;
 
-    ++m_sendAttempts;
-
-    if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_Complete);
+        completeOnExit.release(); // don't complete op yet
         return CC_Mqtt5ErrorCode_Success;
     }
 
-    completeOnExit.release(); // don't complete op yet
     auto guard = client().apiEnter();
-    restartResponseTimer();
-    return CC_Mqtt5ErrorCode_Success;
+    auto sendResult = doSendInternal();
+    if (sendResult != CC_Mqtt5ErrorCode_Success) {
+        return sendResult;
+    }
+
+    completeOnExit.release(); // don't complete op in this context
+    return sendResult;
 }
 
 CC_Mqtt5ErrorCode SendOp::cancel()
 {
-    opComplete();
+    if (m_cb == nullptr) {
+        // hasn't been sent yet
+        client().allowNextPrepare();
+    }
+
+    opCompleteInternal();
     return CC_Mqtt5ErrorCode_Success;
+}
+
+void SendOp::postReconnectionResend()
+{
+    if (m_paused) {
+        return;
+    }
+
+    if constexpr (Config::HasTopicAliases) {
+        do {
+            auto& propsVec = m_pubMsg.field_properties().value();
+            auto iter = 
+                std::find_if(
+                    propsVec.begin(), propsVec.end(),
+                    [](auto& prop) {
+                        return (prop.currentField() == PublishMsg::Field_properties::ValueType::value_type::FieldIdx_topicAlias);
+                    });
+
+            if (iter == propsVec.end()) {
+                COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
+                break;
+            }
+
+            if (m_acked) {
+                // The message won't be sent, no need to update it.
+                propsVec.erase(iter);
+                break;
+            }
+
+            if (m_pubMsg.field_topic().value().empty()) {
+                auto& topicAliasField = iter->accessField_topicAlias();
+                auto topicAliasValue = topicAliasField.field_value().value();
+
+                auto& aliases = client().clientState().m_sendTopicAliases;
+                auto infoIter = 
+                    std::find_if(
+                        aliases.begin(), aliases.end(),
+                        [topicAliasValue](auto& info)
+                        {
+                            return info.m_alias == topicAliasValue;
+                        });
+
+                COMMS_ASSERT(infoIter != aliases.end());
+                if (infoIter == aliases.end()) {
+                    errorLog("Broker reduced its allowed topic aliases (less likely) or it's internal error (most likely).");
+                    completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
+                    return;
+                }
+
+                m_pubMsg.field_topic().value() = infoIter->m_topic.c_str();
+            }
+
+            propsVec.erase(iter);
+        } while (false);
+    }
+
+    COMMS_ASSERT(m_sendAttempts > 0U);
+    --m_sendAttempts;
+    m_responseTimer.cancel();
+    resendDupMsg(); 
+}
+
+bool SendOp::resume()
+{
+    if (!m_paused) {
+        return false;
+    }
+
+    if (!canSend()) {
+        return false;
+    }
+
+    m_paused = false;
+    auto ec = doSendInternal();
+    if (ec == CC_Mqtt5ErrorCode_Success) {
+        return true;
+    }
+
+    auto cbStatus = CC_Mqtt5AsyncOpStatus_InternalError;
+    if (ec == CC_Mqtt5ErrorCode_BadParam) {
+        cbStatus = CC_Mqtt5AsyncOpStatus_BadParam;
+    }
+    else if (ec == CC_Mqtt5ErrorCode_BufferOverflow) {
+        cbStatus = CC_Mqtt5AsyncOpStatus_OutOfMemory;
+    }
+
+    completeWithCb(cbStatus);
+    return true;
 }
 
 Op::Type SendOp::typeImpl() const
@@ -635,13 +735,13 @@ Op::Type SendOp::typeImpl() const
 
 void SendOp::terminateOpImpl(CC_Mqtt5AsyncOpStatus status)
 {
-    reportPubComplete(status);
-    opComplete();
+    completeWithCb(status);
 }
 
-void SendOp::networkConnectivityChangedImpl()
+void SendOp::connectivityChangedImpl()
 {
-    m_responseTimer.setSuspended(client().sessionState().m_networkDisconnected);
+    m_responseTimer.setSuspended(
+        (!client().sessionState().m_connected) || client().clientState().m_networkDisconnected);
 }
 
 void SendOp::restartResponseTimer()
@@ -654,20 +754,24 @@ void SendOp::responseTimeoutInternal()
 {
     COMMS_ASSERT(!m_responseTimer.isActive());
     errorLog("Timeout on publish acknowledgement from broker.");
+    resendDupMsg();
+}
+
+void SendOp::resendDupMsg()
+{
     if (m_totalSendAttempts <= m_sendAttempts) {
         errorLog("Exhauses all attempts to publish message, discarding publish.");
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_Timeout);
-        opComplete();
+        completeWithCb(CC_Mqtt5AsyncOpStatus_Timeout);
         return;
     }
 
+    COMMS_ASSERT(m_sent);
     if (!m_acked) {
         m_pubMsg.transportField_flags().field_dup().setBitValue_bit(true);
         auto result = client().sendMessage(m_pubMsg); 
         if (result != CC_Mqtt5ErrorCode_Success) {
             errorLog("Failed to resend PUBLISH message.");
-            reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-            opComplete();
+            completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
             return;
         }
 
@@ -682,8 +786,7 @@ void SendOp::responseTimeoutInternal()
     auto result = client().sendMessage(pubrelMsg); 
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
-        reportPubComplete(CC_Mqtt5AsyncOpStatus_InternalError);
-        opComplete();
+        completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
         return;
     }
 
@@ -691,37 +794,99 @@ void SendOp::responseTimeoutInternal()
     restartResponseTimer();
 }
 
-void SendOp::reportPubComplete(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
+void SendOp::completeWithCb(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
-    if (m_cb == nullptr) {
+    auto cb = m_cb;
+    auto cbData = m_cbData;
+    auto handle = toHandle();
+
+    opCompleteInternal(); // No member access after this point
+
+    if (cb == nullptr) {
         return;
     }
 
-    m_cb(m_cbData, toHandle(), status, response);
+    cb(cbData, handle, status, response);
 }
 
 void SendOp::confirmRegisteredAlias()
 {
     COMMS_ASSERT(!m_pubMsg.field_topic().value().empty());
     COMMS_ASSERT(m_registeredAlias);
-    auto& state = client().sessionState();
+    auto& clientState = client().clientState();
     auto& topic = m_pubMsg.field_topic().value();
     auto iter = 
         std::lower_bound(
-            state.m_sendTopicAliases.begin(), state.m_sendTopicAliases.end(), topic,
+            clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), topic,
             [](auto& info, auto& topicParam)
             {
                 return info.m_topic < topicParam;
             });    
 
-    if (iter == state.m_sendTopicAliases.end()) {
+    if (iter == clientState.m_sendTopicAliases.end()) {
         errorLog("Topic alias freed before it is acknowledged");
         return;
     }
 
-    if (iter->m_highQosRegRemCount > 0U) {
-        --(iter->m_highQosRegRemCount);
+    iter->m_lowQosRegRemCount = 0U;
+}
+
+CC_Mqtt5ErrorCode SendOp::doSendInternal()
+{
+    m_sendAttempts = 0U;
+    auto result = client().sendMessage(m_pubMsg); 
+    if (result != CC_Mqtt5ErrorCode_Success) {
+        return result;
     }
+
+    if (!m_sent) {
+        m_sent = true;
+        ++client().clientState().m_inFlightSends;
+    }
+
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
+    ++m_sendAttempts;
+
+    if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
+        completeWithCb(CC_Mqtt5AsyncOpStatus_Complete);
+        return CC_Mqtt5ErrorCode_Success;
+    }
+
+    restartResponseTimer();
+    return CC_Mqtt5ErrorCode_Success;
+}
+
+bool SendOp::canSend() const
+{
+    if (client().clientState().m_inFlightSends < client().sessionState().m_highQosSendLimit) {
+        return true;
+    }
+
+    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+    if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
+        return false;
+    }
+
+    if (m_outOfOrderAllowed) {
+        return true;
+    }
+
+    if ((client().clientState().m_inFlightSends == client().sessionState().m_highQosSendLimit) &&
+        (!client().hasPausedSendsBefore(this))) {
+        return true;
+    }
+
+    return false;
+}
+
+void SendOp::opCompleteInternal()
+{
+    if (m_sent) {
+        COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
+        --client().clientState().m_inFlightSends;
+    }
+
+    opComplete();
 }
 
 void SendOp::recvTimeoutCb(void* data)

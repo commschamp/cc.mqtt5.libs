@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "ClientState.h"
 #include "ConfigState.h"
 #include "ExtConfig.h"
 #include "ObjAllocator.h"
@@ -53,6 +54,7 @@ public:
         ClientImpl& m_client;
     };
 
+    ClientImpl();
     ~ClientImpl();
 
     ApiEnterGuard apiEnter()
@@ -60,10 +62,10 @@ public:
         return ApiEnterGuard(*this);
     }
 
-    CC_Mqtt5ErrorCode init();
+    // -------------------- API Calls -----------------------------
     void tick(unsigned ms);
     unsigned processData(const std::uint8_t* iter, unsigned len);
-    void notifyNetworkDisconnected(bool disconnected);
+    void notifyNetworkDisconnected();
     bool isNetworkDisconnected() const;
 
     op::ConnectOp* connectPrepare(CC_Mqtt5ErrorCode* ec);
@@ -77,6 +79,11 @@ public:
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
     unsigned pubTopicAliasCount() const;
     bool pubTopicAliasIsAllocated(const char* topic) const;
+
+    std::size_t sendsCount() const
+    {
+        return m_sendOps.size();
+    }
 
     void setNextTickProgramCallback(CC_Mqtt5NextTickProgramCb cb, void* data)
     {
@@ -124,20 +131,35 @@ public:
         m_errorLogData = data;
     }
 
+    // -------------------- Message Handling -----------------------------
+
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1    
     virtual void handle(PubackMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1    
+
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubrelMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
+
     virtual void handle(ProtMessage& msg) override;
+
+    // -------------------- Ops Access API -----------------------------
 
     CC_Mqtt5ErrorCode sendMessage(const ProtMessage& msg);
     void opComplete(const op::Op* op);
-    void doApiGuard();
-    void notifyConnected();
-    void notifyDisconnected(bool reportDisconnection, CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, const CC_Mqtt5DisconnectInfo* info = nullptr);
+    void brokerConnected(bool sessionPresent);
+    void brokerDisconnected(
+        bool reportDisconnection, 
+        CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
+        const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
+    bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
+    void allowNextPrepare();
 
     TimerMgr& timerMgr()
     {
@@ -149,10 +171,25 @@ public:
         return m_configState;
     }
 
+    ClientState& clientState()
+    {
+        return m_clientState;
+    }    
+
+    const ClientState& clientState() const
+    {
+        return m_clientState;
+    }       
+
     SessionState& sessionState()
     {
         return m_sessionState;
     }
+
+    const SessionState& sessionState() const
+    {
+        return m_sessionState;
+    }    
 
     ReuseState& reuseState()
     {
@@ -164,11 +201,6 @@ public:
         if constexpr (Config::HasErrorLog) {
             errorLogInternal(msg);
         }
-    }
-
-    std::size_t sendsCount() const
-    {
-        return m_sendOps.size();
     }
 
     std::size_t recvsCount() const
@@ -205,13 +237,23 @@ private:
     using OpToDeletePtrsList = ObjListType<const op::Op*, ExtConfig::OpsLimit>;
     using OutputBuf = ObjListType<std::uint8_t, ExtConfig::MaxOutputPacketSize>;
 
+    enum TerminateMode
+    {
+        TerminateMode_KeepSendRecvOps,
+        TerminateMode_AbortSendRecvOps,
+        TerminateMode_NumOfValues
+    };
+
     void doApiEnter();
     void doApiExit();
     void createKeepAliveOpIfNeeded();
-    void terminateAllOps(CC_Mqtt5AsyncOpStatus status);
+    void terminateOps(CC_Mqtt5AsyncOpStatus status, TerminateMode mode);
     void cleanOps();
     void errorLogInternal(const char* msg);
     void sendDisconnectMsg(DisconnectMsg::Field_reasonCode::Field::ValueType reason);
+    CC_Mqtt5ErrorCode initInternal();
+    void resumeSendOpsSince(unsigned idx);
+    void sessionExpiryTimeoutInternal();
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);
@@ -221,6 +263,8 @@ private:
     void opComplete_Recv(const op::Op* op);
     void opComplete_Send(const op::Op* op);
     void opComplete_Reauth(const op::Op* op);
+
+    static void sessionExpiryTimeoutCb(void* data);
 
     friend class ApiEnterGuard;
 
@@ -243,6 +287,7 @@ private:
     void* m_errorLogData = nullptr;
 
     ConfigState m_configState;
+    ClientState m_clientState;
     SessionState m_sessionState;
     ReuseState m_reuseState;
 
@@ -278,7 +323,9 @@ private:
     ReauthOpsList m_reauthOps;
 
     OpPtrsList m_ops;
+    TimerMgr::Timer m_sessionExpiryTimer;  
     bool m_opsDeleted = false;
+    bool m_preparationLocked = false;
 };
 
 } // namespace cc_mqtt5_client

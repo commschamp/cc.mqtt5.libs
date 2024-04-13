@@ -1,0 +1,53 @@
+#include "UnitTestQos1Base.h"
+#include "UnitTestPropsHandler.h"
+#include "UnitTestProtocolDefs.h"
+
+#include <cxxtest/TestSuite.h>
+
+class UnitTestQos1Receive : public CxxTest::TestSuite, public UnitTestQos1Base
+{
+public:
+    void test1();
+
+private:
+    virtual void setUp() override
+    {
+        unitTestSetUp();
+    }
+
+    virtual void tearDown() override
+    {
+        unitTestTearDown();
+    }
+};
+
+void UnitTestQos1Receive::test1()
+{
+    // Rejection QoS2 reception
+    auto* client = unitTestAllocClient();
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
+    unitTestSubscribeInitConfigTopic(&subscribeConfig);
+    subscribeConfig.m_topic = "#";
+    subscribeConfig.m_maxQos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    unitTestPerformSubscribe(client, &subscribeConfig);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+    const unsigned PacketId = 10;
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.transportField_flags().field_qos().value() = UnitTestPublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery;
+    publishMsg.field_packetId().field().setValue(PacketId);
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;
+
+    publishMsg.doRefresh();
+    unitTestReceiveMessage(publishMsg);
+
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::QosNotSupported);
+    TS_ASSERT(unitTestIsDisconnected());      
+}

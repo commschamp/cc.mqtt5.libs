@@ -36,6 +36,7 @@ void Sub::brokerConnectedImpl()
 {
     auto topics = opts().subTopics();
     auto qoses = opts().subQoses();
+    bool noRetained = opts().subNoRetained();
 
     auto ec = CC_Mqtt5ErrorCode_InternalError;
     auto* subscribe = ::cc_mqtt5_client_subscribe_prepare(client(), &ec);
@@ -52,6 +53,10 @@ void Sub::brokerConnectedImpl()
 
         if (idx < qoses.size()) {
             topicConfig.m_maxQos = static_cast<decltype(topicConfig.m_maxQos)>(qoses[idx]);
+        }
+
+        if (noRetained) {
+            topicConfig.m_retainHandling = CC_Mqtt5RetainHandling_DoNotSend;  
         }
 
         ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);

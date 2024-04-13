@@ -43,7 +43,7 @@ public:
         m_dataReportCb = std::forward<TFunc>(func);
     }
 
-    using NetworkDisconnectedReportCb = std::function<void (bool)>;
+    using NetworkDisconnectedReportCb = std::function<void ()>;
     template <typename TFunc>
     void setNetworkDisconnectedReportCb(TFunc&& func)
     {
@@ -67,7 +67,7 @@ protected:
     static std::ostream& logError();
 
     unsigned reportData(const std::uint8_t* buf, std::size_t bufLen);
-    void reportNetworkDisconnected(bool disconnected);
+    void reportNetworkDisconnected();
 
     virtual bool startImpl() = 0;
     virtual void sendDataImpl(const std::uint8_t* buf, std::size_t bufLen) = 0;

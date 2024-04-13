@@ -26,7 +26,7 @@ private:
 void UnitTestBmReceive::test1()
 {
     // Simple receive of Qos0
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -54,7 +54,7 @@ void UnitTestBmReceive::test1()
 void UnitTestBmReceive::test2()
 {
     // Testing ignore of the user properties
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 
@@ -94,7 +94,7 @@ void UnitTestBmReceive::test2()
 void UnitTestBmReceive::test3()
 {
     // Testing ignore of the too many properties
-    auto* client = unitTestAllocAndInitClient();
+    auto* client = unitTestAllocClient();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(unitTestIsConnected(client));
 

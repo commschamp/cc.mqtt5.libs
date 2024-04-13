@@ -62,10 +62,16 @@ public:
         m_responseTimeoutMs = ms;
     }    
 
-    void networkConnectivityChanged()
+    void connectivityChanged()
     {
-        networkConnectivityChangedImpl();
+        connectivityChangedImpl();
     }
+
+    inline 
+    static bool verifyQosValid(PublishMsg::TransportField_flags::Field_qos::ValueType qos)
+    {
+        return (qos <= static_cast<decltype(qos)>(Config::MaxQos));
+    }    
 
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
@@ -75,11 +81,10 @@ protected:
 
     virtual Type typeImpl() const = 0;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status);
-    virtual void networkConnectivityChangedImpl();
+    virtual void connectivityChangedImpl();
 
     void sendMessage(const ProtMessage& msg);
     void opComplete();
-    void doApiGuard();
     std::uint16_t allocPacketId();
     void releasePacketId(std::uint16_t id);
 
@@ -87,6 +92,11 @@ protected:
     {
         return m_client;
     }
+
+    const ClientImpl& client() const
+    {
+        return m_client;
+    }    
 
     static void sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason);
     void sendDisconnectWithReason(DisconnectReason reason);

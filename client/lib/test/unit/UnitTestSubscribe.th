@@ -68,7 +68,7 @@ void UnitTestSubscribe::test1()
 
     const std::string SubTopic2 = "/sub/topic/2";
     const CC_Mqtt5QoS SubQos2 = CC_Mqtt5QoS_ExactlyOnceDelivery;
-    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5AuthErrorCode_DoNotSend;
+    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5RetainHandling_DoNotSend;
     const bool SubNoLocal2 = true;
     const bool SubRetainAsPublish2 = false;
     auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
@@ -194,7 +194,7 @@ void UnitTestSubscribe::test2()
 
     const std::string SubTopic2 = "/sub/topic/2";
     const CC_Mqtt5QoS SubQos2 = CC_Mqtt5QoS_ExactlyOnceDelivery;
-    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5AuthErrorCode_DoNotSend;
+    const CC_Mqtt5RetainHandling SubRetainHandling2 = CC_Mqtt5RetainHandling_DoNotSend;
     const bool SubNoLocal2 = true;
     const bool SubRetainAsPublish2 = false;
     auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();

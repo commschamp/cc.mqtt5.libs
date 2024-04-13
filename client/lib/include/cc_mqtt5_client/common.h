@@ -173,7 +173,7 @@ typedef enum
 {
     CC_Mqtt5RetainHandling_Send = 0, ///< Send retained messages at the time of the subscribe
     CC_Mqtt5RetainHandling_SendIfDoesNotExist = 1, ///< Send retained messages at subscribe only if the subscription does not currently exist
-    CC_Mqtt5AuthErrorCode_DoNotSend = 2, ///< Do not send retained messages at the time of the subscribe
+    CC_Mqtt5RetainHandling_DoNotSend = 2, ///< Do not send retained messages at the time of the subscribe
     CC_Mqtt5RetainHandling_ValuesLimit ///< Limit for the values
 } CC_Mqtt5RetainHandling;
 

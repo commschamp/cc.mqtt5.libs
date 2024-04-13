@@ -44,22 +44,20 @@ if NOT [%COMMON_INSTALL_DIR%] == [] set CC_MQTT5_INSTALL_DIR=%COMMON_INSTALL_DIR
 rem ----------------------------------------------------
 
 mkdir "%EXTERNALS_DIR%"
-if exist %COMMS_SRC_DIR%/.git goto comms_update
-echo "Cloning COMMS library..."
-git clone -b %COMMS_TAG% %COMMS_REPO% %COMMS_SRC_DIR%
-if %errorlevel% neq 0 exit /b %errorlevel%
-goto comms_build
+if exist %COMMS_SRC_DIR%/.git (
+    echo "Updating COMMS library..."
+    cd "%COMMS_SRC_DIR%"
+    git fetch --all
+    git checkout .
+    git checkout %COMMS_TAG%
+    git pull --all
+    if %errorlevel% neq 0 exit /b %errorlevel%
+) else (
+    echo "Cloning COMMS library..."
+    git clone -b %COMMS_TAG% %COMMS_REPO% %COMMS_SRC_DIR%
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
-:comms_update
-echo "Updating COMMS library..."
-cd "%COMMS_SRC_DIR%"
-git fetch --all
-git checkout .
-git checkout %COMMS_TAG%
-git pull --all
-if %errorlevel% neq 0 exit /b %errorlevel%
-
-:comms_build
 echo "Building COMMS library..."
 mkdir "%COMMS_BUILD_DIR%"
 cd %COMMS_BUILD_DIR%
@@ -70,22 +68,22 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cmake --build %COMMS_BUILD_DIR% --config %COMMON_BUILD_TYPE% --target install
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-if exist %CC_MQTT5_SRC_DIR%/.git goto mqtt5_update
-echo "Cloning cc.mqtt5.generated library..."
-git clone -b %CC_MQTT5_TAG% %CC_MQTT5_REPO% %CC_MQTT5_SRC_DIR%
-if %errorlevel% neq 0 exit /b %errorlevel%
-goto mqtt5_build
+rem ----------------------------------------------------
 
-:mqtt5_update
-echo "Updating cc.mqtt5.generated library..."
-cd "%CC_MQTT5_SRC_DIR%"
-git fetch --all
-git checkout .
-git checkout %CC_MQTT5_TAG%
-git pull --all
-if %errorlevel% neq 0 exit /b %errorlevel%
+if exist %CC_MQTT5_SRC_DIR%/.git (
+    echo "Updating cc.mqtt5.generated library..."
+    cd "%CC_MQTT5_SRC_DIR%"
+    git fetch --all
+    git checkout .
+    git checkout %CC_MQTT5_TAG%
+    git pull --all
+    if %errorlevel% neq 0 exit /b %errorlevel%
+) else (
+    echo "Cloning cc.mqtt5.generated library..."
+    git clone -b %CC_MQTT5_TAG% %CC_MQTT5_REPO% %CC_MQTT5_SRC_DIR%
+    if %errorlevel% neq 0 exit /b %errorlevel%
+)
 
-:mqtt5_build
 echo "Building cc.mqtt5.generated library..."
 mkdir "%CC_MQTT5_BUILD_DIR%"
 cd %CC_MQTT5_BUILD_DIR%
@@ -95,4 +93,3 @@ cmake %GENERATOR_PARAM% %PLATFORM_PARAM% -S %CC_MQTT5_SRC_DIR% -B %CC_MQTT5_BUIL
 if %errorlevel% neq 0 exit /b %errorlevel%
 cmake --build %CC_MQTT5_BUILD_DIR% --config %COMMON_BUILD_TYPE% --target install
 if %errorlevel% neq 0 exit /b %errorlevel%
-

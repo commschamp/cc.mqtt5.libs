@@ -33,7 +33,7 @@ find_package(LibComms REQUIRED)
 find_package(cc_mqtt5 REQUIRED)
 
 include (${PROJECT_SOURCE_DIR}/cmake/Compile.cmake)
-cc_mqttsn_compile ()
+cc_mqtt5_compile ()
 
 while (TRUE)
     if ((NOT CC_MQTT5_BUILD_UNIT_TESTS) AND (NOT CC_MQTT5_BUILD_INTEGRATION_TESTS))

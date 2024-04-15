@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file
-/// @brief Common definition for MQTT-SN clients.
+/// @brief Common definition for MQTT v5 clients.
 
 #pragma once
 

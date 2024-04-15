@@ -101,7 +101,7 @@ void TcpSession::doRead()
                 }
 
                 assert(buf == &m_inData[0]);
-                m_buf.insert(m_buf.end(), m_inData.begin() + consumed, m_inData.end());
+                m_buf.insert(m_buf.end(), m_inData.begin() + consumed, m_inData.begin() + bytesCount);
             } while (false);
 
             doRead();

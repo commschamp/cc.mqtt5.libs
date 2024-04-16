@@ -687,9 +687,7 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     auto& state = client().sessionState();
     if (!connected) {
-        state.m_keepAliveMs = 0U;
-        state.m_highQosSendLimit = 0U;
-        state.m_subIdsAvailable = false;
+        state = SessionState();
         return;
     }
 

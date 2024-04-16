@@ -95,14 +95,14 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5AsyncOpStatus_Complete, ///< The requested operation has been completed, refer to reported extra details for information.
-    CC_Mqtt5AsyncOpStatus_InternalError, ///< Internal library error, please submit bug report    
-    CC_Mqtt5AsyncOpStatus_Timeout, ///< The required response from broker hasn't been received in time
-    CC_Mqtt5AsyncOpStatus_ProtocolError, ///< The broker's response doesn't comply with MQTT5 specification.
-    CC_Mqtt5AsyncOpStatus_Aborted, ///< The operation has been aborted before completion due to client's side operation.
-    CC_Mqtt5AsyncOpStatus_BrokerDisconnected, ///< The operation has been aborted before completion due to broker's disconnection.
-    CC_Mqtt5AsyncOpStatus_OutOfMemory, ///< The client library wasn't able to allocate necessary memory.
-    CC_Mqtt5AsyncOpStatus_BadParam, ///< Bad value has been returned from the relevant callback.
+    CC_Mqtt5AsyncOpStatus_Complete = 0, ///< The requested operation has been completed, refer to reported extra details for information.
+    CC_Mqtt5AsyncOpStatus_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5AsyncOpStatus_Timeout = 2, ///< The required response from broker hasn't been received in time
+    CC_Mqtt5AsyncOpStatus_ProtocolError = 3, ///< The broker's response doesn't comply with MQTT5 specification.
+    CC_Mqtt5AsyncOpStatus_Aborted = 4, ///< The operation has been aborted before completion due to client's side operation.
+    CC_Mqtt5AsyncOpStatus_BrokerDisconnected = 5, ///< The operation has been aborted before completion due to broker's disconnection.
+    CC_Mqtt5AsyncOpStatus_OutOfMemory = 6, ///< The client library wasn't able to allocate necessary memory.
+    CC_Mqtt5AsyncOpStatus_BadParam = 7, ///< Bad value has been returned from the relevant callback.
     CC_Mqtt5AsyncOpStatus_ValuesLimit ///< Limit for the values
 } CC_Mqtt5AsyncOpStatus;
 
@@ -110,9 +110,9 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5AuthErrorCode_Continue, ///< Continue the authentication process
-    CC_Mqtt5AuthErrorCode_Disconnect, ///< Stop the authentication, send DISCONNECT to broker
-    CC_Mqtt5AuthErrorCode_ValuesLimit ///< Limit for the values
+    CC_Mqtt5AuthErrorCode_Continue = 0, ///< Continue the authentication process
+    CC_Mqtt5AuthErrorCode_Disconnect = 1, ///< Stop the authentication, send DISCONNECT to broker
+    CC_Mqtt5AuthErrorCode_ValuesLimit = 2 ///< Limit for the values
 } CC_Mqtt5AuthErrorCode;
 
 /// @brief "Reason Code" as defined in MQTT5 specification
@@ -181,10 +181,10 @@ typedef enum
 /// @ingroup publish
 typedef enum
 {
-    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable, ///< Use topic alias if such is available
-    CC_Mqtt5TopicAliasPreference_ForceAliasOnly, ///< Force sending topic alias, requires topic alias to be allocated.
-    CC_Mqtt5TopicAliasPreference_ForceTopicOnly, ///< Force sending topic string even if topic alias is available.
-    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias, ///< Force sending both topic string and its numeric alias.
+    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable = 0, ///< Use topic alias if such is available
+    CC_Mqtt5TopicAliasPreference_ForceAliasOnly = 1, ///< Force sending topic alias, requires topic alias to be allocated.
+    CC_Mqtt5TopicAliasPreference_ForceTopicOnly = 2, ///< Force sending topic string even if topic alias is available.
+    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias = 3, ///< Force sending both topic string and its numeric alias.
     CC_Mqtt5TopicAliasPreference_ValuesLimit ///< Limit for the values
 } CC_Mqtt5TopicAliasPreference;
 

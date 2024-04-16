@@ -170,7 +170,7 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
     do {
         m_clientState.m_networkDisconnected = false;
 
-        if (!m_sessionState.m_initialized) {
+        if (!m_clientState.m_initialized) {
             if (m_apiEnterCount > 0U) {
                 errorLog("Cannot prepare connect from within callback");
                 updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
@@ -983,7 +983,7 @@ void ClientImpl::brokerDisconnected(
     const CC_Mqtt5DisconnectInfo* info)
 {
     COMMS_ASSERT(reportDisconnection || (info == nullptr));
-    m_sessionState.m_initialized = false; // Require re-initialization
+    m_clientState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
     bool preserveSendRecv = 
@@ -1193,7 +1193,7 @@ CC_Mqtt5ErrorCode ClientImpl::initInternal()
 
     terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
     m_sessionState = SessionState();
-    m_sessionState.m_initialized = true;
+    m_clientState.m_initialized = true;
     return CC_Mqtt5ErrorCode_Success;
 }
 

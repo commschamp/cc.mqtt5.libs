@@ -46,15 +46,6 @@ protected:
     virtual void connectivityChangedImpl() override;
 
 private:
-    using UserPropKeyStorage = PublishMsg::Field_properties::ValueType::value_type::Field_userProperty::Field_value::Field_first::ValueType;
-    using UserPropValueStorage = PublishMsg::Field_properties::ValueType::value_type::Field_userProperty::Field_value::Field_second::ValueType;
-
-    struct UserPropInfo
-    {
-        UserPropKeyStorage m_key;
-        UserPropValueStorage m_value;
-    };
-    using UserPropsStorage = ObjListType<UserPropInfo, Config::UserPropsLimit, Config::HasUserProps>;
     using SubIdsStorage = ObjListType<unsigned, Config::SubIdsLimit, Config::HasSubIds>;
 
     void restartResponseTimer();

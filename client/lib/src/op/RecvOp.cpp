@@ -96,7 +96,14 @@ void RecvOp::handle(PublishMsg& msg)
     using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
+    if (qos > Qos::ExactlyOnceDelivery) {
+        errorLog("Received PUBLISH with unknown QoS value.");
+        protocolErrorTermination();
+        return;         
+    }    
+
     if (!verifyQosValid(qos)) {
+        errorLog("Invalid QoS in PUBLISH from broker");
         terminationWithReason(DisconnectReason::QosNotSupported);
         return;
     }    
@@ -199,12 +206,6 @@ void RecvOp::handle(PublishMsg& msg)
         errorLog("Received PUBLISH without topic alias.");
         protocolErrorTermination();
         return;        
-    }
-
-    if (qos > Qos::ExactlyOnceDelivery) {
-        errorLog("Received PUBLISH with unknown Qos value.");
-        protocolErrorTermination();
-        return;         
     }
 
     auto* topicPtr = &topic;
@@ -323,16 +324,16 @@ void RecvOp::handle(PublishMsg& msg)
         return;
     }
 
-    if (!msg.field_packetId().doesExist()) {
-        [[maybe_unused]] static constexpr bool ProtocolDecodingError = false;
-        COMMS_ASSERT(ProtocolDecodingError);
-        terminationWithReason(DisconnectReason::UnspecifiedError);
-        return;
-    }    
-
-    client().reportMsgInfo(info);
-
     if constexpr (Config::MaxQos >= 1) {
+        if (!msg.field_packetId().doesExist()) {
+            [[maybe_unused]] static constexpr bool ProtocolDecodingError = false;
+            COMMS_ASSERT(ProtocolDecodingError);
+            terminationWithReason(DisconnectReason::UnspecifiedError);
+            return;
+        }    
+
+        client().reportMsgInfo(info);
+    
         if (qos == Qos::AtLeastOnceDelivery) {
             PubackMsg pubackMsg;
             pubackMsg.field_packetId().value() = msg.field_packetId().field().value();

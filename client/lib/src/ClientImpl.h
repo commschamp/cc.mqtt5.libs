@@ -159,6 +159,7 @@ public:
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
     bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
+    bool hasHigherQosSendsBefore(const op::SendOp* sendOp, op::Op::Qos qos) const;
     void allowNextPrepare();
 
     TimerMgr& timerMgr()

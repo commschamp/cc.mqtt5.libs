@@ -58,6 +58,11 @@ public:
         return m_pubMsg.field_packetId().field().value();
     }
 
+    Qos qos() const 
+    {
+        return m_pubMsg.transportField_flags().field_qos().value();
+    }
+
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5PublishBasicConfig& config);
     CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5PublishExtraConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);

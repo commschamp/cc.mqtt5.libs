@@ -93,7 +93,6 @@ RecvOp::RecvOp(ClientImpl& client) :
 
 void RecvOp::handle(PublishMsg& msg)
 {
-    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     auto qos = msg.transportField_flags().field_qos().value();
 
     if (qos > Qos::ExactlyOnceDelivery) {

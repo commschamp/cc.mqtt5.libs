@@ -22,7 +22,7 @@ namespace
 {
 
 template <typename TList>
-void eraseFromList(const op::Op* op, TList& list)
+unsigned eraseFromList(const op::Op* op, TList& list)
 {
     auto iter = 
         std::find_if(
@@ -32,12 +32,14 @@ void eraseFromList(const op::Op* op, TList& list)
                 return op == opPtr.get();
             });
 
+    auto result = static_cast<unsigned>(std::distance(list.begin(), iter));
+
     COMMS_ASSERT(iter != list.end());
-    if (iter == list.end()) {
-        return;
+    if (iter != list.end()) {
+        list.erase(iter);
     }
 
-    list.erase(iter);
+    return result;
 }
 
 void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
@@ -667,7 +669,7 @@ void ClientImpl::handle(PublishMsg& msg)
                 msg.dispatch(*m_recvOps.back());
             };
 
-        using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+        using Qos = op::Op::Qos;
         auto qos = msg.transportField_flags().field_qos().value();
         if ((qos == Qos::AtMostOnceDelivery) || 
             (qos == Qos::AtLeastOnceDelivery)) {
@@ -1049,6 +1051,22 @@ bool ClientImpl::hasPausedSendsBefore(const op::SendOp* sendOp) const
     return prevSendOpPtr->isPaused();
 }
 
+bool ClientImpl::hasHigherQosSendsBefore(const op::SendOp* sendOp, op::Op::Qos qos) const
+{
+    for (auto& sendOpPtr : m_sendOps) {
+        if (sendOpPtr.get() == sendOp) {
+            return false;
+        }
+
+        if (sendOpPtr->qos() > qos) {
+            return true;
+        }
+    }
+
+    COMMS_ASSERT(false); // Mustn't reach here
+    return false;
+}
+
 void ClientImpl::allowNextPrepare()
 {
     COMMS_ASSERT(m_preparationLocked);
@@ -1265,17 +1283,11 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
 
 void ClientImpl::opComplete_Send(const op::Op* op)
 {
-    eraseFromList(op, m_sendOps);
+    auto idx = eraseFromList(op, m_sendOps);
     if (m_sessionState.m_disconnecting) {
         return;
     }
 
-    COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);
-    if (m_sendOps.size() < m_sessionState.m_highQosSendLimit) {
-        return;
-    }
-
-    auto idx = m_sessionState.m_highQosSendLimit - 1U;
     resumeSendOpsSince(idx);
 }
 

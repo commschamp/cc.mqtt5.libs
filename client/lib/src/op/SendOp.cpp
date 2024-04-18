@@ -75,7 +75,7 @@ void SendOp::handle(PubackMsg& msg)
                 completeWithCb(status, responsePtr);
             });        
 
-    if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::AtLeastOnceDelivery) {
+    if (m_pubMsg.transportField_flags().field_qos().value() != Qos::AtLeastOnceDelivery) {
         errorLog("Unexpected PUBACK for Qos2 message");
         return;
     }
@@ -164,7 +164,7 @@ void SendOp::handle(PubrecMsg& msg)
                 completeWithCb(status, responsePtr);
             });    
 
-    if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
+    if (m_pubMsg.transportField_flags().field_qos().value() != Qos::ExactlyOnceDelivery) {
         errorLog("Unexpected PUBREC for Qos1 message");
         return;
     }
@@ -272,7 +272,7 @@ void SendOp::handle(PubcompMsg& msg)
                 completeWithCb(status, responsePtr);
             });  
 
-    if (m_pubMsg.transportField_flags().field_qos().value() != PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery) {
+    if (m_pubMsg.transportField_flags().field_qos().value() != Qos::ExactlyOnceDelivery) {
         errorLog("Unexpected PUBCOMP for Qos1 message");
         return;
     }
@@ -604,7 +604,6 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
     m_cb = cb;
     m_cbData = cbData;
 
-    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
     if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
         m_pubMsg.field_packetId().field().setValue(allocPacketId());
     }
@@ -780,7 +779,7 @@ void SendOp::resendDupMsg()
         return;
     }
 
-    COMMS_ASSERT(m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::ExactlyOnceDelivery);
+    COMMS_ASSERT(m_pubMsg.transportField_flags().field_qos().value() == Qos::ExactlyOnceDelivery);
     PubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(m_pubMsg.field_packetId().field().value());
     auto result = client().sendMessage(pubrelMsg); 
@@ -847,7 +846,7 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
     COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
     ++m_sendAttempts;
 
-    if (m_pubMsg.transportField_flags().field_qos().value() == PublishMsg::TransportField_flags::Field_qos::ValueType::AtMostOnceDelivery) {
+    if (m_pubMsg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) {
         completeWithCb(CC_Mqtt5AsyncOpStatus_Complete);
         return CC_Mqtt5ErrorCode_Success;
     }
@@ -858,12 +857,14 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
 
 bool SendOp::canSend() const
 {
-    if (client().clientState().m_inFlightSends < client().sessionState().m_highQosSendLimit) {
-        return true;
-    }
+    bool reachedLimit = (client().sessionState().m_highQosSendLimit <= client().clientState().m_inFlightSends);
+    auto qos = m_pubMsg.transportField_flags().field_qos().value();
 
-    using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
-    if (m_pubMsg.transportField_flags().field_qos().value() > Qos::AtMostOnceDelivery) {
+    if (reachedLimit) {
+        if ((m_outOfOrderAllowed) && (qos == Qos::AtMostOnceDelivery)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -871,12 +872,12 @@ bool SendOp::canSend() const
         return true;
     }
 
-    if ((client().clientState().m_inFlightSends == client().sessionState().m_highQosSendLimit) &&
-        (!client().hasPausedSendsBefore(this))) {
-        return true;
+    if ((client().hasPausedSendsBefore(this)) ||
+        (client().hasHigherQosSendsBefore(this, qos))) {
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 void SendOp::opCompleteInternal()

@@ -44,7 +44,7 @@ void SendOp::handle(PubackMsg& msg)
 {
     static_assert(Config::MaxQos >= 1);
     COMMS_ASSERT(m_pubMsg.field_packetId().field().value() == msg.field_packetId().value());
-    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(m_published);
     COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
 
     m_responseTimer.cancel();
@@ -131,7 +131,7 @@ void SendOp::handle(PubrecMsg& msg)
         return;
     }
 
-    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(m_published);
     COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
 
     m_responseTimer.cancel();
@@ -769,7 +769,7 @@ void SendOp::resendDupMsg()
         return;
     }
 
-    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(m_published);
     if (!m_acked) {
         m_pubMsg.transportField_flags().field_dup().setBitValue_bit(true);
         auto result = client().sendMessage(m_pubMsg); 
@@ -843,8 +843,8 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
         return result;
     }
 
-    if (!m_sent) {
-        m_sent = true;
+    if (!m_published) {
+        m_published = true;
         ++client().clientState().m_inFlightSends;
     }
 
@@ -887,7 +887,7 @@ bool SendOp::canSend() const
 
 void SendOp::opCompleteInternal()
 {
-    if (m_sent) {
+    if (m_published) {
         COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
         --client().clientState().m_inFlightSends;
     }

@@ -1224,7 +1224,7 @@ op::SendOp* ClientImpl::findSendOp(std::uint16_t packetId)
 
 bool ClientImpl::isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck) const
 {
-    if (!sendOp->isSent()) {
+    if (!sendOp->isPublished()) {
         return false;
     }
 

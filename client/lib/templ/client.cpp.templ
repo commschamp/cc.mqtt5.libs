@@ -959,7 +959,7 @@ bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
         return false;
     }    
 
-    return sendOpFromHandle(handle)->isSent();
+    return sendOpFromHandle(handle)->isPublished();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_out_of_order_allowed(CC_Mqtt5PublishHandle handle, bool allowed)

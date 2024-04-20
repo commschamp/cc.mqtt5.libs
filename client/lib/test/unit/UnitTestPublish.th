@@ -52,6 +52,11 @@ public:
     void test43();
     void test44();
     void test45();
+    void test46();
+    void test47();
+    void test48();
+    void test49();
+    void test50();
 
 private:
     virtual void setUp() override
@@ -127,8 +132,8 @@ void UnitTestPublish::test1()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     unitTestPopPublishResponseInfo();
 
     auto sentMsg = unitTestGetSentMessage();
@@ -215,8 +220,8 @@ void UnitTestPublish::test2()
     unitTestReceiveMessage(pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     unitTestPopPublishResponseInfo();
 }
 
@@ -307,15 +312,15 @@ void UnitTestPublish::test3()
     unitTestReceiveMessage(pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, static_cast<CC_Mqtt5ReasonCode>(NoSubscribers));
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonStr, ReasonStr);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps.size(), 2U);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_key, UserPropKey1);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_value, UserPropVal1);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_key, UserPropKey2);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_value, UserPropVal2);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonCode, static_cast<CC_Mqtt5ReasonCode>(NoSubscribers));
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonStr, ReasonStr);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps.size(), 2U);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[1].m_key, UserPropKey2);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[1].m_value, UserPropVal2);
     unitTestPopPublishResponseInfo();
 }
 
@@ -369,8 +374,8 @@ void UnitTestPublish::test4()
     // Another timeout
     unitTestTick();
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopPublishResponseInfo();
 }
 
@@ -498,15 +503,15 @@ void UnitTestPublish::test5()
     unitTestReceiveMessage(pubcompMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_NoMatchingSubscribers);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonStr, ReasonStr);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps.size(), 2U);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_key, UserPropKey1);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[0].m_value, UserPropVal1);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_key, UserPropKey2);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_userProps[1].m_value, UserPropVal2);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_NoMatchingSubscribers);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonStr, ReasonStr);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps.size(), 2U);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[0].m_key, UserPropKey1);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[0].m_value, UserPropVal1);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[1].m_key, UserPropKey2);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_userProps[1].m_value, UserPropVal2);
 
     unitTestPopPublishResponseInfo();
 }
@@ -585,8 +590,8 @@ void UnitTestPublish::test6()
     // Another timeout
     unitTestTick();
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopPublishResponseInfo();   
 }
 
@@ -1002,8 +1007,8 @@ void UnitTestPublish::test11()
 
     unitTestTick(); // timeout
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopPublishResponseInfo();
 }
 
@@ -1073,8 +1078,8 @@ void UnitTestPublish::test12()
 
     unitTestTick(); // timeout
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopPublishResponseInfo();
 }
 
@@ -1148,8 +1153,8 @@ void UnitTestPublish::test13()
 
     unitTestTick(); // timeout
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
     unitTestPopPublishResponseInfo();
 }
 
@@ -1326,8 +1331,8 @@ void UnitTestPublish::test16()
     unitTestReceiveMessage(pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -1399,8 +1404,8 @@ void UnitTestPublish::test17()
     unitTestReceiveMessage(pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -1469,8 +1474,8 @@ void UnitTestPublish::test18()
     unitTestReceiveMessage(pubrecMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -1542,8 +1547,8 @@ void UnitTestPublish::test19()
     unitTestReceiveMessage(pubrecMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -1624,8 +1629,8 @@ void UnitTestPublish::test20()
     unitTestReceiveMessage(pubcompMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -1708,8 +1713,8 @@ void UnitTestPublish::test21()
     unitTestReceiveMessage(pubcompMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
     unitTestPopPublishResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
@@ -2379,9 +2384,9 @@ void UnitTestPublish::test31()
     unitTestReceiveMessage(pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
     unitTestPopPublishResponseInfo();    
 }
 
@@ -2432,9 +2437,9 @@ void UnitTestPublish::test32()
     unitTestReceiveMessage(pubrecMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
-    auto& pubackInfo = unitTestPublishResponseInfo();
-    TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    TS_ASSERT_EQUALS(pubackInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
+    auto& pubrespInfo = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    TS_ASSERT_EQUALS(pubrespInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_UnspecifiedError);
     unitTestPopPublishResponseInfo();    
 }
 
@@ -4010,4 +4015,531 @@ void UnitTestPublish::test45()
 
     // The topic alias should not be used in resend
     TS_ASSERT_EQUALS(propsHandler3.m_topicAlias, nullptr);
+}
+
+void UnitTestPublish::test46()
+{
+    // Testing out-of-order PUBACK
+    // [MQTT-4.6.0-1]
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().doesExist());
+    auto packetId1 = publishMsg1->field_packetId().field().value();
+    
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    auto packetId2 = publishMsg2->field_packetId().field().value();
+
+    // Out of order PUBACK
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg2;
+    pubackMsg2.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubackMsg2);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg3 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg3, nullptr);
+    TS_ASSERT(publishMsg3->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg3->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg3->field_packetId().field().value(), packetId1);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg4 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg4, nullptr);
+    TS_ASSERT(publishMsg4->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg4->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg4->field_packetId().field().value(), packetId2);  
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg1;
+    pubackMsg1.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg1);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();
+
+    unitTestReceiveMessage(pubackMsg2);
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();    
+}
+
+void UnitTestPublish::test47()
+{
+    // Testing allowed out-of-order PUBACK
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().doesExist());
+    auto packetId1 = publishMsg1->field_packetId().field().value();
+    
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    ec = unitTestPublishSetOutOfOrderAllowed(publish2, true);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    auto packetId2 = publishMsg2->field_packetId().field().value();
+
+    // Out of order PUBACK
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg2;
+    pubackMsg2.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubackMsg2);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();    
+
+    UnitTestPubackMsg pubackMsg1;
+    pubackMsg1.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg1);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();
+}
+
+void UnitTestPublish::test48()
+{
+    // Testing allowed out-of-order PUBACK and resending everything except one allowing out-of order
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().doesExist());
+    auto packetId1 = publishMsg1->field_packetId().field().value();
+    
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    ec = unitTestPublishSetOutOfOrderAllowed(publish2, true);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    [[maybe_unused]] auto packetId2 = publishMsg2->field_packetId().field().value();    
+
+    auto* publish3 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish3, nullptr);
+
+    ec = unitTestPublishConfigBasic(publish3, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish3, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish3));    
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg3 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg3, nullptr);
+    TS_ASSERT(publishMsg3->field_packetId().doesExist());    
+    auto packetId3 = publishMsg3->field_packetId().field().value();
+
+    // Out of order PUBACK
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg3;
+    pubackMsg3.field_packetId().setValue(packetId3);
+    unitTestReceiveMessage(pubackMsg3);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg4 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg4, nullptr);
+    TS_ASSERT(publishMsg4->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg4->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg4->field_packetId().field().value(), packetId1);
+
+    // packetId2 message is not re-sent
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg5 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg5, nullptr);
+    TS_ASSERT(publishMsg5->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg5->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg5->field_packetId().field().value(), packetId3);  
+}
+
+void UnitTestPublish::test49()
+{
+    // Testing out-of-order PUBREC
+    // [MQTT-4.6.0-1]
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().doesExist());
+    auto packetId1 = publishMsg1->field_packetId().field().value();
+    
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    auto packetId2 = publishMsg2->field_packetId().field().value();
+
+    // Out of order PUBREC
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg2;
+    pubrecMsg2.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg2);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg3 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg3, nullptr);
+    TS_ASSERT(publishMsg3->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg3->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg3->field_packetId().field().value(), packetId1);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg4 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg4, nullptr);
+    TS_ASSERT(publishMsg4->transportField_flags().field_dup().getBitValue_bit());
+    TS_ASSERT(publishMsg4->field_packetId().doesExist());
+    TS_ASSERT_EQUALS(publishMsg4->field_packetId().field().value(), packetId2);  
+
+    unitTestTick(1000);
+    UnitTestPubackMsg pubackMsg1;
+    pubackMsg1.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubackMsg1);
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();
+
+    unitTestReceiveMessage(pubrecMsg2);
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg4 = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg4, nullptr);
+    TS_ASSERT_EQUALS(pubrelMsg4->field_packetId().value(), packetId2);  
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg3;
+    pubcompMsg3.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg3);   
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();         
+}
+
+void UnitTestPublish::test50()
+{
+    // Testing out-of-order PUBCOMP
+    // [MQTT-4.6.0-1]
+
+    auto* client = unitTestAllocClient(true);
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(unitTestIsConnected(client));    
+
+    const std::string Topic("some/topic");
+    const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
+
+    auto config = CC_Mqtt5PublishBasicConfig();
+    unitTestPublishInitConfigBasic(&config);
+
+    config.m_topic = Topic.c_str();
+    config.m_data = &Data[0];
+    config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
+    config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+
+    auto* publish1 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish1, nullptr);
+
+    auto ec = unitTestPublishConfigBasic(publish1, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+    
+    ec = unitTestSendPublish(publish1);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg1 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg1, nullptr);
+    TS_ASSERT(publishMsg1->field_packetId().doesExist());
+    auto packetId1 = publishMsg1->field_packetId().field().value();
+    
+    auto* publish2 = unitTestPublishPrepare(client, nullptr);
+    TS_ASSERT_DIFFERS(publish2, nullptr);
+
+    ec = unitTestPublishConfigBasic(publish2, &config);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
+
+    ec = unitTestSendPublish(publish2, false);
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
+    TS_ASSERT(unitTestPublishWasInitiated(publish2));
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    auto* publishMsg2 = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(publishMsg2, nullptr);
+    TS_ASSERT(publishMsg2->field_packetId().doesExist());    
+    auto packetId2 = publishMsg2->field_packetId().field().value();
+
+    unitTestTick(1000);
+    UnitTestPubrecMsg pubrecMsg1;
+    pubrecMsg1.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubrecMsg1);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg1 = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg1, nullptr);
+    TS_ASSERT_EQUALS(pubrelMsg1->field_packetId().value(), packetId1);      
+
+    UnitTestPubrecMsg pubrecMsg2;
+    pubrecMsg2.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubrecMsg2);    
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg2 = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg2, nullptr);
+    TS_ASSERT_EQUALS(pubrelMsg2->field_packetId().value(), packetId2);        
+
+    // Out-of-order PUBCOMPS
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg2;
+    pubcompMsg2.field_packetId().setValue(packetId2);
+    unitTestReceiveMessage(pubcompMsg2);    
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg3 = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg3, nullptr);
+    TS_ASSERT_EQUALS(pubrelMsg3->field_packetId().value(), packetId1);
+
+    TS_ASSERT(unitTestHasSentMessage());
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pubrel);    
+    auto* pubrelMsg4 = dynamic_cast<UnitTestPubrelMsg*>(sentMsg.get());
+    TS_ASSERT_DIFFERS(pubrelMsg4, nullptr);
+    TS_ASSERT_EQUALS(pubrelMsg4->field_packetId().value(), packetId2);
+
+    unitTestTick(1000);
+    UnitTestPubcompMsg pubcompMsg1;
+    pubcompMsg1.field_packetId().setValue(packetId1);
+    unitTestReceiveMessage(pubcompMsg1); 
+
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo1 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo1.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();
+
+    unitTestReceiveMessage(pubcompMsg2);
+    TS_ASSERT(unitTestIsPublishComplete());
+    auto& pubrespInfo2 = unitTestPublishResponseInfo();
+    TS_ASSERT_EQUALS(pubrespInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
+    unitTestPopPublishResponseInfo();         
 }

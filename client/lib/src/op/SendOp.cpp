@@ -43,15 +43,11 @@ SendOp::~SendOp()
 void SendOp::handle(PubackMsg& msg)
 {
     static_assert(Config::MaxQos >= 1);
-    if (m_pubMsg.field_packetId().field().value() != msg.field_packetId().value()) {
-        return;
-    }
+    COMMS_ASSERT(m_pubMsg.field_packetId().field().value() == msg.field_packetId().value());
+    COMMS_ASSERT(m_sent);
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
 
     m_responseTimer.cancel();
-
-    COMMS_ASSERT(m_sent);
-    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
-
     auto terminateOnExit = 
         comms::util::makeScopeGuard(
             [&cl = client()]()
@@ -696,6 +692,15 @@ void SendOp::postReconnectionResend()
     COMMS_ASSERT(m_sendAttempts > 0U);
     --m_sendAttempts;
     m_responseTimer.cancel();
+    resendDupMsg(); 
+}
+
+void SendOp::forceDupResend()
+{
+    if (m_paused) {
+        return;
+    }
+
     resendDupMsg(); 
 }
 

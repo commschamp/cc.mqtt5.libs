@@ -255,6 +255,10 @@ private:
     CC_Mqtt5ErrorCode initInternal();
     void resumeSendOpsSince(unsigned idx);
     void sessionExpiryTimeoutInternal();
+    op::SendOp* findSendOp(std::uint16_t packetId);
+    bool isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck = false) const;
+    void resendAllUntil(op::SendOp* sendOp);
+    bool processPublishAckMsg(ProtMessage& msg, std::uint16_t packetId, bool pubcompAck = false);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);

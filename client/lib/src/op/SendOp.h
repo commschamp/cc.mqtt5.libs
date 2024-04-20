@@ -71,6 +71,7 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
     void postReconnectionResend();
+    void forceDupResend();
     bool resume();
     bool isPaused() const
     {
@@ -80,6 +81,11 @@ public:
     bool isSent() const
     {
         return m_sent;
+    }
+
+    bool isAcked() const
+    {
+        return m_acked;
     }
 
     CC_Mqtt5ErrorCode setOutOfOrderAllowed(bool allowed)

@@ -723,25 +723,9 @@ void ClientImpl::handle(PublishMsg& msg)
 void ClientImpl::handle(PubackMsg& msg)
 {
     static_assert(Config::MaxQos >= 1);
-
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }            
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), false)) {
         errorLog("PUBACK with unknown packet id");
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 #endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
@@ -749,19 +733,7 @@ void ClientImpl::handle(PubackMsg& msg)
 void ClientImpl::handle(PubrecMsg& msg)
 {
     static_assert(Config::MaxQos >= 2);
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }  
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), false)) {
         errorLog("PUBREC with unknown packet id");
         PubrelMsg pubrelMsg;
         pubrelMsg.field_packetId().setValue(msg.field_packetId().value());
@@ -769,10 +741,7 @@ void ClientImpl::handle(PubrecMsg& msg)
         pubrelMsg.field_properties().setExists();        
         pubrelMsg.field_reasonCode().field().value() = PubrecMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubrelMsg);
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(PubrelMsg& msg)
@@ -807,24 +776,9 @@ void ClientImpl::handle(PubrelMsg& msg)
 
 void ClientImpl::handle(PubcompMsg& msg)
 {
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), true)) {
         errorLog("PUBCOMP with unknown packet id");
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 
 #endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
@@ -1249,6 +1203,90 @@ void ClientImpl::sessionExpiryTimeoutInternal()
 
         op->terminateOp(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     }
+}
+
+op::SendOp* ClientImpl::findSendOp(std::uint16_t packetId)
+{
+    auto iter = 
+        std::find_if(
+            m_sendOps.begin(), m_sendOps.end(),
+            [packetId](auto& opPtr)
+            {
+                return opPtr->packetId() == packetId;
+            });
+
+    if (iter == m_sendOps.end()) {
+        return nullptr;
+    }
+
+    return iter->get();
+}
+
+bool ClientImpl::isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck) const
+{
+    if (!sendOp->isSent()) {
+        return false;
+    }
+
+    if (sendOp->getOutOfOrderAllowed()) {
+        return true;
+    }
+
+    for (auto& sendOpPtr : m_sendOps) {
+        if (sendOpPtr.get() == sendOp) {
+            return true;
+        }
+
+        if (!sendOpPtr->isAcked()) {
+            return false;
+        }
+
+        if (sendOp->qos() < sendOpPtr->qos()) {
+            return false;
+        }
+
+        if (pubcompAck && (sendOp != m_sendOps.front().get())) {
+            return false;
+        }
+    }
+
+    COMMS_ASSERT(false); // Should not be reached;
+    return false;
+}
+
+void ClientImpl::resendAllUntil(op::SendOp* sendOp)
+{
+    for (auto& sendOpPtr : m_sendOps) {
+        if (sendOpPtr->getOutOfOrderAllowed()) {
+            COMMS_ASSERT(sendOpPtr.get() != sendOp);
+            continue;
+        }
+
+        sendOpPtr->forceDupResend();
+        if (sendOpPtr.get() == sendOp) {
+            break;
+        }
+    }
+}
+
+bool ClientImpl::processPublishAckMsg(ProtMessage& msg, std::uint16_t packetId, bool pubcompAck)
+{
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }     
+
+    auto* sendOp = findSendOp(packetId);
+    if (sendOp == nullptr) {
+        return false;
+    }
+
+    if (isLegitSendAck(sendOp, pubcompAck)) {
+        msg.dispatch(*sendOp);
+        return true;        
+    }
+
+    resendAllUntil(sendOp);
+    return true;
 }
 
 void ClientImpl::opComplete_Connect(const op::Op* op)

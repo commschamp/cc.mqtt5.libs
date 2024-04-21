@@ -573,7 +573,7 @@ void AppClient::brokerConnectedImpl()
     assert(false); // Expected to be overriden
 }
 
-void AppClient::brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info)
+void AppClient::brokerDisconnectedImpl([[maybe_unused]] CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 {
     logError() << "Broker disconnected." << std::endl;
     doTerminate();
@@ -754,7 +754,7 @@ bool AppClient::createSession()
         {
             assert(m_client);
             ::cc_mqtt5_client_notify_network_disconnected(m_client.get());
-            brokerDisconnectedImpl(nullptr);
+            doTerminate();
         }
     );
 
@@ -771,9 +771,9 @@ void AppClient::sendDataCb(void* data, const unsigned char* buf, unsigned bufLen
     asThis(data)->sendDataInternal(buf, bufLen);
 }
 
-void AppClient::brokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info)
+void AppClient::brokerDisconnectedCb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 {
-    asThis(data)->brokerDisconnectedImpl(info);
+    asThis(data)->brokerDisconnectedImpl(reason, info);
 }
 
 void AppClient::messageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info)

@@ -417,11 +417,11 @@ void IntegrationTestCommonBase::integrationTestPublishCompleteImpl(
 {
 }
 
-void IntegrationTestCommonBase::integrationTestBrokerDisconnectedInternal(const CC_Mqtt5DisconnectInfo* info)
+void IntegrationTestCommonBase::integrationTestBrokerDisconnectedInternal(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 {
     auto& out = integrationTestInfoLog() << "Disconnected ";
     if (info == nullptr) {
-        out << "by the client" << std::endl;
+        out << "by the client with reason: " << reason << std::endl;
         return;
     }
 
@@ -509,9 +509,9 @@ void IntegrationTestCommonBase::integrationTestSendDataCb(void* data, const unsi
     }
 }
 
-void IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info)
+void IntegrationTestCommonBase::integrationTestBrokerDisconnectedCb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 {
-    asObj(data)->integrationTestBrokerDisconnectedInternal(info);
+    asObj(data)->integrationTestBrokerDisconnectedInternal(reason, info);
 }
 
 void IntegrationTestCommonBase::integrationTestMessageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info)

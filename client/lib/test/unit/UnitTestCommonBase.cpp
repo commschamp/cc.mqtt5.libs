@@ -542,18 +542,18 @@ void UnitTestCommonBase::unitTestPopOutAuthInfo()
 
 bool UnitTestCommonBase::unitTestIsDisconnected() const
 {
-    return m_disconnected;
+    return !m_disconnectInfo.empty();
 }
 
 bool UnitTestCommonBase::unitTestHasDisconnectInfo() const
 {
-    return (!m_disconnectInfo.empty());
+    return (!m_disconnectInfo.empty()) && (m_disconnectInfo.front().m_info);
 }
 
 const UnitTestCommonBase::UnitTestDisconnectInfo& UnitTestCommonBase::unitTestDisconnectInfo() const
 {
-    test_assert(!m_disconnectInfo.empty());
-    return m_disconnectInfo.front();
+    test_assert((!m_disconnectInfo.empty()) && (m_disconnectInfo.front().m_info));
+    return m_disconnectInfo.front().m_info.value();
 }
 
 void UnitTestCommonBase::unitTestPopDisconnectInfo()
@@ -1222,7 +1222,6 @@ void UnitTestCommonBase::unitTestClearState(bool preserveTicks)
     m_outAuthInfo.clear();
     m_userPropsTmp.clear();
     m_disconnectInfo.clear();
-    m_disconnected = false;
 }
 
 void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const char* msg)
@@ -1230,14 +1229,15 @@ void UnitTestCommonBase::unitTestErrorLogCb([[maybe_unused]] void* obj, const ch
     std::cout << "ERROR: " << msg << std::endl;
 }
 
-void UnitTestCommonBase::unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info)
+void UnitTestCommonBase::unitTestBrokerDisconnectedCb(void* obj, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 {
     auto* realObj = reinterpret_cast<UnitTestCommonBase*>(obj);
-    test_assert(!realObj->m_disconnected);
-    realObj->m_disconnected = true;
+    test_assert(!realObj->unitTestHasDisconnectInfo());
+    realObj->m_disconnectInfo.resize(realObj->m_disconnectInfo.size() + 1U);
+    auto& elem = realObj->m_disconnectInfo.back();
+    elem.m_reason = reason;
     if (info != nullptr) {
-        test_assert(realObj->m_disconnectInfo.empty());
-        realObj->m_disconnectInfo.emplace_back(*info);
+        elem.m_info = *info;
     }
 }
 

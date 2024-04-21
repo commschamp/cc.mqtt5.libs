@@ -88,7 +88,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
             [this, &disconnectReason]()
             {
                 sendDisconnectMsg(disconnectReason);    
-                brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
+                brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_ProtocolError, CC_Mqtt5AsyncOpStatus_ProtocolError);
             });
 
     unsigned consumed = 0;
@@ -158,7 +158,7 @@ void ClientImpl::notifyNetworkDisconnected()
         return; // No need to go through broker disconnection
     }
     
-    brokerDisconnected(false);
+    brokerDisconnected();
 }
 
 bool ClientImpl::isNetworkDisconnected() const
@@ -720,7 +720,7 @@ void ClientImpl::handle(PublishMsg& msg)
     } while (false);
 
     if (disconnectSent) {
-        brokerDisconnected(true);
+        brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_ProtocolError);
         return;
     }
 }
@@ -940,11 +940,11 @@ void ClientImpl::brokerConnected(bool sessionPresent)
 }
 
 void ClientImpl::brokerDisconnected(
-    bool reportDisconnection, 
+    CC_Mqtt5BrokerDisconnectReason reason, 
     CC_Mqtt5AsyncOpStatus status, 
     const CC_Mqtt5DisconnectInfo* info)
 {
-    COMMS_ASSERT(reportDisconnection || (info == nullptr));
+    COMMS_ASSERT((reason == CC_Mqtt5BrokerDisconnectReason_DisconnectMsg) || (info == nullptr));
     m_clientState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
@@ -973,9 +973,9 @@ void ClientImpl::brokerDisconnected(
         }    
     }    
 
-    if (reportDisconnection) {
+    if (reason < CC_Mqtt5BrokerDisconnectReason_ValuesLimit) {
         COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);
-        m_brokerDisconnectReportCb(m_brokerDisconnectReportData, info);
+        m_brokerDisconnectReportCb(m_brokerDisconnectReportData, reason, info);
     }
 }
 

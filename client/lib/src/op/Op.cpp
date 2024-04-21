@@ -129,7 +129,11 @@ void Op::sendDisconnectWithReason(DisconnectReason reason)
 void Op::terminationWithReasonStatic(ClientImpl& client, DisconnectReason reason)
 {
     sendDisconnectWithReason(client, reason);
-    client.brokerDisconnected(true);
+    auto internalReason = CC_Mqtt5BrokerDisconnectReason_ProtocolError;
+    if (reason == DisconnectReason::ImplSpecificError) {
+        internalReason = CC_Mqtt5BrokerDisconnectReason_InternalError;
+    }
+    client.brokerDisconnected(internalReason);
 }
 
 void Op::terminationWithReason(DisconnectReason reason)

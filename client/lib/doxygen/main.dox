@@ -1,7 +1,7 @@
-/// @mainpage MQTT5 Client Library
+/// @mainpage MQTT v5 Client Library
 /// @tableofcontents
 /// @section doc_cc_mqtt5_client_overview Overview
-/// The <b>MQTT5 Client Library</b> from the <a href="https://commschamp.github.io/">CommsChampion Ecosystem</a>
+/// The <b>MQTT v5 Client Library</b> from the <a href="https://commschamp.github.io/">CommsChampion Ecosystem</a>
 /// provides simple, asynchronous, non-blocking,
 /// and easy to use interface to operate MQTT v5 client. The library doesn't
 /// make any assumption on the system it is running on, as well as on the type
@@ -11,7 +11,7 @@
 /// as well as measure time required for the correct operation of the MQTT v5 protocol.
 ///
 /// The library allows the application to have a full control over the raw data for
-/// any extra analysis and/or manipulation, such as encryption.
+/// any extra analysis and/or manipulation, such as encryption or extra framing.
 ///
 /// @section doc_cc_mqtt5_client_version Version of the Library
 /// The version is of the library applicable to this documentation is defined in 
@@ -21,7 +21,7 @@
 /// @li @ref CC_MQTT5_CLIENT_PATCH_VERSION
 ///
 /// @section cc_mqtt5_client_header Header
-/// To use this <b>MQTT5 Client Library</b> use the following single include statement:
+/// To use this <b>MQTT v5 Client Library</b> use the following single include statement:
 /// @code
 /// #include "cc_mqtt5_client/client.h"
 /// @endcode
@@ -90,7 +90,7 @@
 /// The client application must assign a callback for the library to report
 /// discovered broker disconnection.
 /// @code
-/// void my_broker_disconnected_cb(void* data, const CC_Mqtt5DisconnectInfo* info)
+/// void my_broker_disconnected_cb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 /// {
 ///     ... /* handle broker disconnection */
 ///     if (info != NULL) {
@@ -1724,7 +1724,8 @@
 ///     (except @ref doc_cc_mqtt5_client_publish "publish") passing
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function.
+///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_DisconnectMsg as the disconnection reason.
 ///     The information passed in the @b DISCONNECT message is used to populate reported
 ///     disconnection information.
 ///
@@ -1737,6 +1738,7 @@
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_NoBrokerResponse as the disconnection reason.
 ///     without any disconnection information.
 ///
 /// @subsection doc_cc_mqtt5_client_unsolicited_disconnect_protocol_error Detecting Protocol Error
@@ -1750,12 +1752,13 @@
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_ProtocolError as the disconnection reason.
 ///     without any disconnection information.
 ///
 /// With all said above it means that if application receives @ref CC_Mqtt5AsyncOpStatus_ProtocolError or
 /// @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status in the operation callback, then
 /// the application is expected to wait for the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     which will follow.
+/// which will follow.
 ///
 /// When the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback" is called the application is
 /// expected to go through the following steps:
@@ -1812,13 +1815,11 @@
 /// will return @b false.
 ///
 /// @section doc_cc_mqtt5_client_thread_safety Thread Safety
-/// In general the library is @b NOT thread safe. However, if each thread operates on a separate allocated
+/// In general the library is @b NOT thread safe. To support multi-threading the application
+/// is expected to use appropriate locking mechanisms before calling relevant API functions.
+/// However, if each thread operates on a separate allocated
 /// @ref doc_cc_mqtt5_client_allocation "client", then the locking is required only
 /// for the @ref doc_cc_mqtt5_client_allocation "client allocation logic".
-///
-/// If multiple threads work with the same @ref doc_cc_mqtt5_client_allocation "client"
-/// object (such as performing "publish" operations, or handling incoming messages in parallel),
-/// then explicit locking logic needs to be implemented by the application itself.
 ///
 /// @section doc_cc_mqtt5_client_debug_build Debug Build
 /// The client library uses <a href="https://commschamp.github.io/comms_doc/page_use_prot.html#page_use_prot_error_handling">COMMS_ASSERT()</a>

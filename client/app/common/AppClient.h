@@ -79,7 +79,7 @@ protected:
 
     virtual bool startImpl();
     virtual void brokerConnectedImpl();
-    virtual void brokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);
+    virtual void brokerDisconnectedImpl(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info);
     virtual void connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
@@ -98,7 +98,7 @@ private:
     bool createSession();
 
     static void sendDataCb(void* data, const unsigned char* buf, unsigned bufLen);
-    static void brokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info);
+    static void brokerDisconnectedCb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     static void messageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info);
     static void logMessageCb(void* data, const char* msg);
     static void nextTickProgramCb(void* data, unsigned duration);

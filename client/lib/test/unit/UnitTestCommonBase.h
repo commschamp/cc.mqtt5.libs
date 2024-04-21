@@ -8,6 +8,7 @@
 #include <cassert>
 #include <iostream>
 #include <iterator>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -334,7 +335,13 @@ protected:
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestAuthInfo m_response;
-    };          
+    };        
+
+    struct UnitTestBrokerDisconnectionReport
+    {
+        CC_Mqtt5BrokerDisconnectReason m_reason;
+        std::optional<UnitTestDisconnectInfo> m_info;
+    };
 
     struct TickInfo
     {
@@ -511,7 +518,7 @@ protected:
 private:
 
     static void unitTestErrorLogCb(void* obj, const char* msg);
-    static void unitTestBrokerDisconnectedCb(void* obj, const CC_Mqtt5DisconnectInfo* info);
+    static void unitTestBrokerDisconnectedCb(void* obj, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     static void unitTestMessageReceivedCb(void* obj, const CC_Mqtt5MessageInfo* info);
     static void unitTestSendOutputDataCb(void* obj, const unsigned char* buf, unsigned bufLen);
     static void unitTestProgramNextTickCb(void* obj, unsigned duration);
@@ -536,7 +543,6 @@ private:
     std::vector<UnitTestAuthInfo> m_inAuthInfo;
     std::vector<UnitTestAuthInfo> m_outAuthInfo;
     std::vector<CC_Mqtt5UserProp> m_userPropsTmp;
-    std::vector<UnitTestDisconnectInfo> m_disconnectInfo;
+    std::vector<UnitTestBrokerDisconnectionReport> m_disconnectInfo;
     std::vector<UnitTestMessageInfo> m_receivedMessages;
-    bool m_disconnected = false;
 };

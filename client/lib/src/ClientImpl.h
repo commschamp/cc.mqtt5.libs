@@ -160,7 +160,7 @@ public:
     void opComplete(const op::Op* op);
     void brokerConnected(bool sessionPresent);
     void brokerDisconnected(
-        bool reportDisconnection, 
+        CC_Mqtt5BrokerDisconnectReason reason = CC_Mqtt5BrokerDisconnectReason_ValuesLimit, 
         CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);

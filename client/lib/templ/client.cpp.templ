@@ -962,24 +962,6 @@ bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
     return sendOpFromHandle(handle)->isPublished();
 }
 
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_out_of_order_allowed(CC_Mqtt5PublishHandle handle, bool allowed)
-{
-    if (handle == nullptr) {
-        return CC_Mqtt5ErrorCode_BadParam;
-    }  
-
-    return sendOpFromHandle(handle)->setOutOfOrderAllowed(allowed);
-}
-
-bool cc_mqtt5_##NAME##client_publish_get_out_of_order_allowed(CC_Mqtt5PublishHandle handle)
-{
-    if (handle == nullptr) {
-        return false;
-    }
-
-    return sendOpFromHandle(handle)->getOutOfOrderAllowed();
-}
-
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_simple(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5PublishBasicConfig* basicConfig,

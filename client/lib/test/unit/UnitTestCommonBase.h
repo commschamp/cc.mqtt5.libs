@@ -100,8 +100,6 @@ public:
         CC_Mqtt5ErrorCode (*m_publish_send)(CC_Mqtt5PublishHandle, CC_Mqtt5PublishCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_cancel)(CC_Mqtt5PublishHandle) = nullptr;
         bool (*m_publish_was_initiated)(CC_Mqtt5PublishHandle) = nullptr;
-        CC_Mqtt5ErrorCode (*m_publish_set_out_of_order_allowed)(CC_Mqtt5PublishHandle, bool) = nullptr;
-        bool (*m_publish_get_out_of_order_allowed)(CC_Mqtt5PublishHandle) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_simple)(CC_Mqtt5ClientHandle, const CC_Mqtt5PublishBasicConfig*, CC_Mqtt5PublishCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_full)(CC_Mqtt5ClientHandle, const CC_Mqtt5PublishBasicConfig*, const CC_Mqtt5PublishExtraConfig*, CC_Mqtt5PublishCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_publish_set_ordering)(CC_Mqtt5ClientHandle, CC_Mqtt5PublishOrdering) = nullptr;
@@ -497,8 +495,6 @@ protected:
     CC_Mqtt5ErrorCode unitTestPublishAddUserProp(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop);
     CC_Mqtt5ErrorCode unitTestPublishCancel(CC_Mqtt5PublishHandle handle);
     bool unitTestPublishWasInitiated(CC_Mqtt5PublishHandle handle);
-    CC_Mqtt5ErrorCode unitTestPublishSetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle, bool allowed);
-    bool unitTestPublishGetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle);
     CC_Mqtt5ErrorCode unitTestPublishSetOrdering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering);
     CC_Mqtt5PublishOrdering unitTestPublishGetOrdering(CC_Mqtt5ClientHandle handle);
     CC_Mqtt5ReauthHandle unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);

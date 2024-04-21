@@ -86,8 +86,6 @@ const UnitTestBmBase::LibFuncs& UnitTestBmBase::getFuncs()
     funcs.m_publish_send = &cc_mqtt5_bm_client_publish_send;
     funcs.m_publish_cancel = &cc_mqtt5_bm_client_publish_cancel;    
     funcs.m_publish_was_initiated = &cc_mqtt5_bm_client_publish_was_initiated;    
-    funcs.m_publish_set_out_of_order_allowed = &cc_mqtt5_bm_client_publish_set_out_of_order_allowed;    
-    funcs.m_publish_get_out_of_order_allowed = &cc_mqtt5_bm_client_publish_get_out_of_order_allowed;    
     funcs.m_publish_simple = &cc_mqtt5_bm_client_publish_simple;    
     funcs.m_publish_full = &cc_mqtt5_bm_client_publish_full;      
     funcs.m_publish_set_ordering = &cc_mqtt5_bm_client_publish_set_ordering;

@@ -2224,9 +2224,6 @@ void UnitTestPublish::test30()
     auto* publish2 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish2, nullptr);
 
-    ec = unitTestPublishSetOutOfOrderAllowed(publish2, true);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-
     config.m_qos = CC_Mqtt5QoS_AtMostOnceDelivery;
     ec = unitTestPublishConfigBasic(publish2, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
@@ -3765,7 +3762,6 @@ void UnitTestPublish::test44()
 
     auto* publish1 = unitTestPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish1, nullptr);
-    TS_ASSERT(!unitTestPublishGetOutOfOrderAllowed(publish1));
 
     auto ec = unitTestPublishConfigBasic(publish1, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
@@ -3825,9 +3821,6 @@ void UnitTestPublish::test44()
     ec = unitTestPublishConfigBasic(publish4, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
 
-    ec = unitTestPublishSetOutOfOrderAllowed(publish4, true); 
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success); 
-    
     ec = unitTestSendPublish(publish4);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 

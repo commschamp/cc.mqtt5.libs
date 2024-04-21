@@ -121,8 +121,6 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_publish_send != nullptr);  
     test_assert(m_funcs.m_publish_cancel != nullptr);  
     test_assert(m_funcs.m_publish_was_initiated != nullptr);  
-    test_assert(m_funcs.m_publish_set_out_of_order_allowed != nullptr);
-    test_assert(m_funcs.m_publish_get_out_of_order_allowed != nullptr);
     test_assert(m_funcs.m_publish_simple != nullptr);  
     test_assert(m_funcs.m_publish_full != nullptr);  
     test_assert(m_funcs.m_publish_set_ordering != nullptr);  
@@ -1157,16 +1155,6 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishCancel(CC_Mqtt5PublishHandl
 bool UnitTestCommonBase::unitTestPublishWasInitiated(CC_Mqtt5PublishHandle handle)
 {
     return m_funcs.m_publish_was_initiated(handle);
-}
-
-CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishSetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle, bool allowed)
-{
-    return m_funcs.m_publish_set_out_of_order_allowed(handle, allowed);
-}
-
-bool UnitTestCommonBase::unitTestPublishGetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle)
-{
-    return m_funcs.m_publish_get_out_of_order_allowed(handle);
 }
 
 CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishSetOrdering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering)

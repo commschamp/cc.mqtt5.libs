@@ -1387,7 +1387,7 @@
 /// }
 /// @endcode
 /// However, when the "Receive Maximum" limit is reached and a new publish is issued by the application,
-/// its send will be postponed until one of the
+/// the library will postpone sending the actual @b PUBLISH message until one of the
 /// previous "publish" operations is complete. It is possible to inquire whether
 /// the operation was initiated (@b PUBLISH message is sent) via the
 /// @b cc_mqtt5_client_publish_was_initiated() function. If the function returns
@@ -1399,62 +1399,45 @@
 /// }
 /// @endcode
 /// Beware of calling
-/// @b cc_mqtt5_client_publish_was_initiated() when @b QoS0 publish operation
-/// issued. In case such message was sent and the passed completion callback is called
-/// the operation handle is no longer valid.
+/// @b cc_mqtt5_client_publish_was_initiated() when @b QoS0 publish operation is
+/// issued. In most cases the operation is completed right away and the operation
+/// handle is not valid any more when the @b cc_mqtt5_client_publish_send()
+/// invocation returns.
 ///
 /// @subsection doc_cc_mqtt5_client_publish_order Message Ordering
-/// The library implements strict message ordering policy. To avoid potential out-of-order
-/// message delivery in case one of the previously sent messages is not
-/// properly received, the following logic is implemented.
+/// The library implements strict message ordering for the @b same QoS messages
+/// required by the MQTT v5 specification. However, when @b different QoS messages
+/// are sent, the messages may arrive to the broker as well as recipient client
+/// in different order. For example, if all the publishes below issued together in the specified order, the
+/// @b Message2 and @b Message3 will be probably arrive before @b Message1.
+/// @li @b Message1 - QoS2
+/// @li @b Message2 - Qos1
+/// @li @b Message3 - QoS0
 ///
-/// @li The @b PUBLISH message is postponed if any of the statements below are true:
-///     * There are other postponed @b PUBLISH messages of previously issued "publish" operations.
-///     * There are previously issued and incomplete "publish" operation of @b higher QoS value.
-/// @li The out of order @b PUBACK, @b PUBREC, or @b PUBCOMP message will indicate the loss of
-///     previously sent message. The received acknowledgement message will be ignored and will cause
-///     re-send of some @b PUBLISH (with @b DUP flag set) and/or @b PUBREL messages.
+/// The library also provides an ability to force strict message ordering for
+/// @b all values of QoS using the @b cc_mqtt5_client_publish_set_ordering() function.
+/// @code
+/// ec = cc_mqtt5_client_publish_set_ordering(client, CC_Mqtt5PublishOrdering_Full);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Publish ordering configuration failed with ec=%d\n", ec);
+/// }
+/// @endcode
+/// The current configuration can be retrieved using @b cc_mqtt5_client_publish_get_ordering() function.
+/// The @b default publish ordering is @ref CC_Mqtt5PublishOrdering_SameQos.
+///
+/// When a strict message ordering for @b all the messages is enabled (by setting @ref CC_Mqtt5PublishOrdering_Full),
+/// The @b PUBLISH message is postponed if @b any of the statements below are true:
+/// @li There are other postponed @b PUBLISH messages of previously issued "publish" operations.
+/// @li There are previously issued and incomplete "publish" operation of @b higher QoS value.
 ///
 /// The rules above allow sending the same as well as increasing QoS messages in parallel.
 /// For example, if all the publishes below issued together in the specified order, the
-/// @b Message1 and @b Message2 will be sent, while @b Message3 and @b Message4 are postponed
-/// until the delivery of the @b Message2 is complete.
-/// @li Message1 - QoS1
-/// @li Message2 - Qos2
-/// @li Message3 - QoS0
-/// @li Message4 - QoS2
-///
-/// In some application such strict message ordering may be not really important.
-/// To avoid possible delays in the messages delivery, the application can
-/// allow out-of-order send of the issued operations by using the
-/// @b cc_mqtt5_client_publish_set_out_of_order_allowed() function.
-/// @code
-/// ec = cc_mqtt5_client_publish_set_out_of_order_allowed(publish, true);
-/// if (ec != CC_Mqtt5ErrorCode_Success) {
-///     printf("ERROR: Out of order configuration failed with ec=%d\n", ec);
-///     ...
-/// }
-/// @endcode
-/// To retrieve the current configuration use @b cc_mqtt5_client_publish_get_out_of_order_allowed().
-///
-/// When the out-of-order publish is enabled for the operation, the rules listed
-/// above are no longer applicable to the operation itself, but are still in
-/// play regarding all other in-order publish operations.
-///
-/// In the example above, if the @b Message3 is configured to allow out-of-order
-/// publish, then it will be published right away, releasing the @b Message4 to be
-/// published right away as well.
-///
-/// Also if in the example above the out-of-order publish is allowed for @b all the
-/// messages. The most probable order of the messages reception by the other client
-/// will be @b Message2, @b Message3, @b Message1, @b Message4.
-///
-/// Note that invocation of the @b cc_mqtt5_client_publish_set_out_of_order_allowed()
-/// must be during the message configuration and before it is @ref doc_cc_mqtt5_client_publish_send "sent".
-///
-/// Also note the allowing out-of-order publish of the @b QoS1 and @b QoS2 messages
-/// may still not release the message to be sent right away due to having
-/// @ref doc_cc_mqtt5_client_publish_recv_max "Receive Maximum" limit exceeded.
+/// @b Message11 and @b Message12 will be sent, while @b Message13 and @b Message14 are postponed
+/// until the delivery of the @b Message12 is complete.
+/// @li @b Message11 - QoS1
+/// @li @b Message12 - Qos2
+/// @li @b Message13 - QoS0
+/// @li @b Message14 - QoS2
 ///
 /// @subsection doc_cc_mqtt5_client_publish_simplify Simplifying the "Publish" Operation Preparation.
 /// In many use cases the "publish" operation can be quite simple with a lot of defaults.

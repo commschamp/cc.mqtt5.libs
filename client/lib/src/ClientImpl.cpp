@@ -609,6 +609,12 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
     }        
 }
 
+CC_Mqtt5ErrorCode ClientImpl::setPublishOrdering(CC_Mqtt5PublishOrdering ordering)
+{
+    m_configState.m_publishOrdering = ordering;
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 unsigned ClientImpl::pubTopicAliasCount() const
 {
     if constexpr (Config::HasTopicAliases) {
@@ -1228,20 +1234,12 @@ bool ClientImpl::isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck) const
         return false;
     }
 
-    if (sendOp->getOutOfOrderAllowed()) {
-        return true;
-    }
-
     for (auto& sendOpPtr : m_sendOps) {
         if (sendOpPtr.get() == sendOp) {
             return true;
         }
 
         if (!sendOpPtr->isAcked()) {
-            return false;
-        }
-
-        if (sendOp->qos() < sendOpPtr->qos()) {
             return false;
         }
 
@@ -1257,11 +1255,6 @@ bool ClientImpl::isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck) const
 void ClientImpl::resendAllUntil(op::SendOp* sendOp)
 {
     for (auto& sendOpPtr : m_sendOps) {
-        if (sendOpPtr->getOutOfOrderAllowed()) {
-            COMMS_ASSERT(sendOpPtr.get() != sendOp);
-            continue;
-        }
-
         sendOpPtr->forceDupResend();
         if (sendOpPtr.get() == sendOp) {
             break;

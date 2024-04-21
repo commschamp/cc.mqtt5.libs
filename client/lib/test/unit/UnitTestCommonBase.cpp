@@ -125,6 +125,8 @@ UnitTestCommonBase::UnitTestCommonBase(const LibFuncs& funcs) :
     test_assert(m_funcs.m_publish_get_out_of_order_allowed != nullptr);
     test_assert(m_funcs.m_publish_simple != nullptr);  
     test_assert(m_funcs.m_publish_full != nullptr);  
+    test_assert(m_funcs.m_publish_set_ordering != nullptr);  
+    test_assert(m_funcs.m_publish_get_ordering != nullptr);  
     test_assert(m_funcs.m_reauth_prepare != nullptr);  
     test_assert(m_funcs.m_reauth_init_config_auth != nullptr);  
     test_assert(m_funcs.m_reauth_set_response_timeout != nullptr);  
@@ -1165,6 +1167,16 @@ CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishSetOutOfOrderAllowed(CC_Mqt
 bool UnitTestCommonBase::unitTestPublishGetOutOfOrderAllowed(CC_Mqtt5PublishHandle handle)
 {
     return m_funcs.m_publish_get_out_of_order_allowed(handle);
+}
+
+CC_Mqtt5ErrorCode UnitTestCommonBase::unitTestPublishSetOrdering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering)
+{
+    return m_funcs.m_publish_set_ordering(handle, ordering);
+}
+
+CC_Mqtt5PublishOrdering UnitTestCommonBase::unitTestPublishGetOrdering(CC_Mqtt5ClientHandle handle)
+{
+    return m_funcs.m_publish_get_ordering(handle);
 }
 
 CC_Mqtt5ReauthHandle UnitTestCommonBase::unitTestReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec)

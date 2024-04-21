@@ -866,16 +866,16 @@ bool SendOp::canSend() const
     auto qos = m_pubMsg.transportField_flags().field_qos().value();
 
     if (reachedLimit) {
-        if ((m_outOfOrderAllowed) && (qos == Qos::AtMostOnceDelivery)) {
-            return true;
-        }
-
-        return false;
+        return 
+            (qos == Qos::AtMostOnceDelivery) &&
+            (client().configState().m_publishOrdering == CC_Mqtt5PublishOrdering_SameQos);
     }
 
-    if (m_outOfOrderAllowed) {
+    if (client().configState().m_publishOrdering == CC_Mqtt5PublishOrdering_SameQos) {
         return true;
     }
+
+    COMMS_ASSERT(client().configState().m_publishOrdering == CC_Mqtt5PublishOrdering_Full);
 
     if ((client().hasPausedSendsBefore(this)) ||
         (client().hasHigherQosSendsBefore(this, qos))) {

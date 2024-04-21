@@ -793,6 +793,22 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
     CC_Mqtt5PublishCompleteCb cb, 
     void* cbData);
 
+/// @brief Configure the global ordering of the published messages.
+/// @details The ordering configuration is expected to be performed before any 
+///     "publish" operation is issued. The configuration is persistent between
+///      re-connects.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
+/// @param[in] ordering Ordering configuration.
+/// @return Result code of the call.
+/// @ingroup publish
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_ordering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering);    
+
+/// @brief Retrieve the configured the publish operations ordering.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
+/// @return Current ordering configuraiton.
+/// @ingroup publish
+CC_Mqtt5PublishOrdering cc_mqtt5_##NAME##client_publish_get_ordering(CC_Mqtt5ClientHandle handle);    
+
 /// @brief Prepare "reauth" operation.
 /// @details For successful operation the client needs to be in the "connected" state and 
 ///     there is no other incomplete "reauth" operation.

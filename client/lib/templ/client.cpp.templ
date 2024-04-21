@@ -1027,6 +1027,24 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
     return cc_mqtt5_##NAME##client_publish_send(publish, cb, cbData);    
 }
 
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_ordering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    return clientFromHandle(handle)->setPublishOrdering(ordering);
+}
+
+CC_Mqtt5PublishOrdering cc_mqtt5_##NAME##client_publish_get_ordering(CC_Mqtt5ClientHandle handle)
+{
+    if (handle == nullptr) {
+        return CC_Mqtt5PublishOrdering_ValuesLimit;
+    }   
+
+     return clientFromHandle(handle)->getPublishOrdering();
+}
+
 CC_Mqtt5ReauthHandle cc_mqtt5_##NAME##client_reauth_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
 {
     if (handle == nullptr) {

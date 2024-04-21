@@ -77,6 +77,12 @@ public:
     
     CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, unsigned qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
+    CC_Mqtt5ErrorCode setPublishOrdering(CC_Mqtt5PublishOrdering ordering);
+    CC_Mqtt5PublishOrdering getPublishOrdering() const
+    {
+        return m_configState.m_publishOrdering;
+    }
+
     unsigned pubTopicAliasCount() const;
     bool pubTopicAliasIsAllocated(const char* topic) const;
 
@@ -171,6 +177,11 @@ public:
     {
         return m_configState;
     }
+
+    const ConfigState& configState() const
+    {
+        return m_configState;
+    }    
 
     ClientState& clientState()
     {

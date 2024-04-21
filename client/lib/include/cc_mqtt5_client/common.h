@@ -188,6 +188,15 @@ typedef enum
     CC_Mqtt5TopicAliasPreference_ValuesLimit ///< Limit for the values
 } CC_Mqtt5TopicAliasPreference;
 
+/// @brief Publish ordering configuration
+/// @ingroup publish
+typedef enum
+{
+    CC_Mqtt5PublishOrdering_SameQos, ///< Preserve strict order only between same QoS messages.
+    CC_Mqtt5PublishOrdering_Full, ///< Preserve strict order between @b all messages.
+    CC_Mqtt5PublishOrdering_ValuesLimit ///< Limit for the values
+} CC_Mqtt5PublishOrdering;
+
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ClientHandle
 /// @ingroup client
 struct CC_Mqtt5Client;

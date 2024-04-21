@@ -902,7 +902,7 @@
 /// topicConfig.m_topic = "some/topic";
 /// topicConfig.m_noLocal = true;
 ///
-/// ec = cc_mqtt5_client_subscribe_simple(client, topicConfig, &my_subscribe_complete_cb, data);
+/// ec = cc_mqtt5_client_subscribe_simple(client, &topicConfig, &my_subscribe_complete_cb, data);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Failed to send subscribe request with ec=%d\n", ec);
 ///     ...
@@ -1083,7 +1083,7 @@
 /// // Update values
 /// topicConfig.m_topic = "some/topic";
 ///
-/// ec = cc_mqtt5_client_unsubscribe_simple(client, topicConfig, &my_unsubscribe_complete_cb, data);
+/// ec = cc_mqtt5_client_unsubscribe_simple(client, &topicConfig, &my_unsubscribe_complete_cb, data);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Failed to send unsubscribe request with ec=%d\n", ec);
 ///     ...
@@ -1131,7 +1131,7 @@
 /// not acknowledged, then the publish operation is terminated with appropriate
 /// status report. It is possible to change the default by using
 /// @b cc_mqtt5_client_publish_set_resend_attempts() function. The @b DUP flag
-/// will be sent for all the re-sent @b PUBLISH messages.
+/// will be set in all the re-sent @b PUBLISH messages.
 /// @code
 /// ec = cc_mqtt5_client_publish_set_resend_attempts(publish, 3);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
@@ -1409,7 +1409,7 @@
 /// required by the MQTT v5 specification. However, when @b different QoS messages
 /// are sent, the messages may arrive to the broker as well as recipient client
 /// in different order. For example, if all the publishes below issued together in the specified order, the
-/// @b Message2 and @b Message3 will be probably arrive before @b Message1.
+/// @b Message2 and @b Message3 will probably arrive before @b Message1.
 /// @li @b Message1 - QoS2
 /// @li @b Message2 - Qos1
 /// @li @b Message3 - QoS0
@@ -1458,7 +1458,7 @@
 /// basicConfig.m_data = ...;
 /// ...
 ///
-/// ec = cc_mqtt5_client_publish_simple(client, basicConfig, &my_publish_complete_cb, data);
+/// ec = cc_mqtt5_client_publish_simple(client, &basicConfig, &my_publish_complete_cb, data);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Failed to send publish request with ec=%d\n", ec);
 ///     ...

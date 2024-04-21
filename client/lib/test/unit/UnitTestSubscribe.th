@@ -39,15 +39,16 @@ void UnitTestSubscribe::test1()
 {
     // Simple subscribe and ack
     // [MQTT-3.8.4-5]
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
 
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     const std::string SubTopic1 = "/sub/topic/1";
@@ -56,14 +57,14 @@ void UnitTestSubscribe::test1()
     const bool SubNoLocal1 = true;
     const bool SubRetainAsPublish1 = true;
     auto subscribeConfig1 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig1);
+    apiSubscribeInitConfigTopic(&subscribeConfig1);
     TS_ASSERT_EQUALS(subscribeConfig1.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig1.m_topic = SubTopic1.c_str();
     subscribeConfig1.m_maxQos = SubQos1;
     subscribeConfig1.m_retainHandling = SubRetainHandling1;
     subscribeConfig1.m_noLocal = SubNoLocal1;
     subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig1);
+    auto ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string SubTopic2 = "/sub/topic/2";
@@ -72,14 +73,14 @@ void UnitTestSubscribe::test1()
     const bool SubNoLocal2 = true;
     const bool SubRetainAsPublish2 = false;
     auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig2);
+    apiSubscribeInitConfigTopic(&subscribeConfig2);
     TS_ASSERT_EQUALS(subscribeConfig2.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig2.m_topic = SubTopic2.c_str();
     subscribeConfig2.m_maxQos = SubQos2;
     subscribeConfig2.m_retainHandling = SubRetainHandling2;
     subscribeConfig2.m_noLocal = SubNoLocal2;
     subscribeConfig2.m_retainAsPublished = SubRetainAsPublish2;
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig2);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig2);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -106,13 +107,13 @@ void UnitTestSubscribe::test1()
     TS_ASSERT_EQUALS(elem1.field_options().field_bits().getBitValue_RAP(), SubRetainAsPublish2);
     TS_ASSERT_EQUALS(static_cast<CC_Mqtt5RetainHandling>(elem1.field_options().field_retainHandling().value()), SubRetainHandling2);
 
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
     UnitTestSubackMsg subackMsg;
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(2);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos1);
     subackMsg.field_list().value()[1].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -128,14 +129,15 @@ void UnitTestSubscribe::test1()
 void UnitTestSubscribe::test2()
 {
     // Parallel subscribe
-    auto* client = unitTestAllocClient(true);
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
     
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive
 
-    auto subscribe1 = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe1 = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe1, nullptr);
 
     const std::string SubTopic1 = "/sub/topic/1";
@@ -147,26 +149,26 @@ void UnitTestSubscribe::test2()
     const std::string SubUserPropKey1 = "Key1";
     const std::string SubUserPropVal1 = "Val1";
     auto subscribeConfig1 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig1);
+    apiSubscribeInitConfigTopic(&subscribeConfig1);
     TS_ASSERT_EQUALS(subscribeConfig1.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig1.m_topic = SubTopic1.c_str();
     subscribeConfig1.m_maxQos = SubQos1;
     subscribeConfig1.m_retainHandling = SubRetainHandling1;
     subscribeConfig1.m_noLocal = SubNoLocal1;
     subscribeConfig1.m_retainAsPublished = SubRetainAsPublish1;
-    auto ec = unitTestSubscribeConfigTopic(subscribe1, &subscribeConfig1);
+    auto ec = apiSubscribeConfigTopic(subscribe1, &subscribeConfig1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto subcribeExtra1 = CC_Mqtt5SubscribeExtraConfig();
-    unitTestSubscribeInitConfigExtra(&subcribeExtra1);
+    apiSubscribeInitConfigExtra(&subcribeExtra1);
     subcribeExtra1.m_subId = SubId1;
-    ec = unitTestSubscribeConfigExtra(subscribe1, &subcribeExtra1);
+    ec = apiSubscribeConfigExtra(subscribe1, &subcribeExtra1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto userProp1 = CC_Mqtt5UserProp();
     userProp1.m_key = SubUserPropKey1.c_str();
     userProp1.m_value = SubUserPropVal1.c_str();
-    ec = unitTestSubscribeAddUserProp(subscribe1, &userProp1);
+    ec = apiSubscribeAddUserProp(subscribe1, &userProp1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe1);
@@ -189,7 +191,7 @@ void UnitTestSubscribe::test2()
     TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_first().value(), SubUserPropKey1);    
     TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_second().value(), SubUserPropVal1);    
 
-    auto subscribe2 = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe2 = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe2, nullptr);
 
     const std::string SubTopic2 = "/sub/topic/2";
@@ -198,14 +200,14 @@ void UnitTestSubscribe::test2()
     const bool SubNoLocal2 = true;
     const bool SubRetainAsPublish2 = false;
     auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig2);
+    apiSubscribeInitConfigTopic(&subscribeConfig2);
     TS_ASSERT_EQUALS(subscribeConfig2.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig2.m_topic = SubTopic2.c_str();
     subscribeConfig2.m_maxQos = SubQos2;
     subscribeConfig2.m_retainHandling = SubRetainHandling2;
     subscribeConfig2.m_noLocal = SubNoLocal2;
     subscribeConfig2.m_retainAsPublished = SubRetainAsPublish2;
-    ec = unitTestSubscribeConfigTopic(subscribe2, &subscribeConfig2);
+    ec = apiSubscribeConfigTopic(subscribe2, &subscribeConfig2);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe2);
@@ -219,12 +221,12 @@ void UnitTestSubscribe::test2()
     TS_ASSERT_DIFFERS(subscribeMsg2, nullptr);
     TS_ASSERT_DIFFERS(subscribeMsg1->field_packetId().value(), subscribeMsg2->field_packetId().value());
     
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
     UnitTestSubackMsg subackMsg1;
     subackMsg1.field_packetId().value() = subscribeMsg1->field_packetId().value();
     subackMsg1.field_list().value().resize(1);
     subackMsg1.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_ServerBusy);
-    unitTestReceiveMessage(subackMsg1);
+    unitTestReceiveMessage(client, subackMsg1);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -234,7 +236,7 @@ void UnitTestSubscribe::test2()
     unitTestPopSubscribeResponseInfo();
 
     TS_ASSERT(!unitTestIsSubscribeComplete());
-    unitTestTick(); // Timeout of the op
+    unitTestTick(client); // Timeout of the op
     TS_ASSERT(unitTestIsSubscribeComplete());
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_Timeout);
 }
@@ -248,66 +250,67 @@ void UnitTestSubscribe::test3()
     // [MQTT-4.7.3-1]
     // [MQTT-4.8.2-1]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
 
     config.m_topic = "++";
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    auto ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "#+";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     config.m_topic = "#/hello";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "hello+/bla";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "#hello";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "+hello";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     config.m_topic = "$share/";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "$share//";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
 
     config.m_topic = "$share/#";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);      
 
     config.m_topic = "$share/+";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 
     config.m_topic = "$share/ShareName";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);   
 
     config.m_topic = "$share/ShareName/";
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);         
 
     ec = unitTestSendSubscribe(subscribe);
@@ -319,19 +322,20 @@ void UnitTestSubscribe::test4()
     // Testing invalid suback;
     // [MQTT-2.2.1-6]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
     TS_ASSERT_EQUALS(config.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     config.m_topic = "/sub/topic/1";
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    auto ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -344,15 +348,15 @@ void UnitTestSubscribe::test4()
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     auto packetId = subscribeMsg->field_packetId().value();
 
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
     UnitTestSubackMsg subackMsg;
     subackMsg.field_packetId().setValue(packetId + 1U);
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(!unitTestIsSubscribeComplete());
 
-    unitTestTick(); // Timeout
+    unitTestTick(client); // Timeout
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -365,25 +369,26 @@ void UnitTestSubscribe::test5()
     // Canceling subscribe operation when network is disconnected 
     // [MQTT-3.1.2-23]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     const unsigned SessionExpiryInterval = 10;
     unitTestPerformSessionExpiryConnect(client, __FUNCTION__, SessionExpiryInterval);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
     TS_ASSERT_EQUALS(config.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     config.m_topic = "/sub/topic/1";
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     const unsigned ResponseTimeout = 2000;
-    auto ec = unitTestSubscribeSetResponseTimeout(subscribe, ResponseTimeout);
+    auto ec = apiSubscribeSetResponseTimeout(subscribe, ResponseTimeout);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-    ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -399,8 +404,8 @@ void UnitTestSubscribe::test5()
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, ResponseTimeout);
 
-    unitTestTick(1000);
-    unitTestNotifyNetworkDisconnected(client);
+    unitTestTick(client, 1000);
+    apiNotifyNetworkDisconnected(client);
     TS_ASSERT(!unitTestIsDisconnected());
 
     TS_ASSERT(unitTestIsSubscribeComplete());
@@ -413,29 +418,30 @@ void UnitTestSubscribe::test6()
 {
     // Testing properties in SUBACK
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    unitTestConnectInitConfigBasic(&basicConfig);
+    apiConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
-    unitTestConnectInitConfigExtra(&extraConfig);
+    apiConnectInitConfigExtra(&extraConfig);
     extraConfig.m_requestProblemInfo = true;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
     TS_ASSERT_EQUALS(config.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     config.m_topic = "/sub/topic/1";
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    auto ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -470,7 +476,7 @@ void UnitTestSubscribe::test6()
         field.field_value().field_second().value() = SubackUserPropVal1;
     } while (false);    
 
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -489,19 +495,20 @@ void UnitTestSubscribe::test7()
     // Testing rejection of "Reason String" in SUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
     TS_ASSERT_EQUALS(config.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     config.m_topic = "/sub/topic/1";
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    auto ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -527,7 +534,7 @@ void UnitTestSubscribe::test7()
         field.field_value().value() = ReasonStr;
     } while (false);
 
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     
     TS_ASSERT(unitTestIsSubscribeComplete());
 
@@ -544,19 +551,20 @@ void UnitTestSubscribe::test8()
     // Testing rejection of "User properties" in SUBACK
     // [MQTT-3.1.2-29]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&config);
+    apiSubscribeInitConfigTopic(&config);
     TS_ASSERT_EQUALS(config.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     config.m_topic = "/sub/topic/1";
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &config);
+    auto ec = apiSubscribeConfigTopic(subscribe, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -584,7 +592,7 @@ void UnitTestSubscribe::test8()
         field.field_value().field_second().value() = SubackUserPropVal1;
     } while (false);    
 
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -599,10 +607,11 @@ void UnitTestSubscribe::test9()
 {
     // Testing wildcard subscriptions disabled
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    unitTestConnectInitConfigBasic(&basicConfig);
+    apiConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -612,26 +621,26 @@ void UnitTestSubscribe::test9()
 
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig);
+    apiSubscribeInitConfigTopic(&subscribeConfig);
     subscribeConfig.m_topic = "#";
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    auto ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     subscribeConfig.m_topic = "hello/#";
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     subscribeConfig.m_topic = "hello/+";
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     subscribeConfig.m_topic = "hello/1";
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 }
 
@@ -639,10 +648,11 @@ void UnitTestSubscribe::test10()
 {
     // Testing subscription IDs disabled
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    unitTestConnectInitConfigBasic(&basicConfig);
+    apiConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -652,21 +662,21 @@ void UnitTestSubscribe::test10()
 
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&topicConfig);
+    apiSubscribeInitConfigTopic(&topicConfig);
     topicConfig.m_topic = "#";
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &topicConfig);
+    auto ec = apiSubscribeConfigTopic(subscribe, &topicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto extraConfig = CC_Mqtt5SubscribeExtraConfig();
-    unitTestSubscribeInitConfigExtra(&extraConfig);
+    apiSubscribeInitConfigExtra(&extraConfig);
     extraConfig.m_subId = 10;
 
-    ec = unitTestSubscribeConfigExtra(subscribe, &extraConfig);
+    ec = apiSubscribeConfigExtra(subscribe, &extraConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 }
 
@@ -674,10 +684,11 @@ void UnitTestSubscribe::test11()
 {
     // Testing shared subscriptions disabled
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    unitTestConnectInitConfigBasic(&basicConfig);
+    apiConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 
@@ -686,16 +697,16 @@ void UnitTestSubscribe::test11()
     responseConfig.m_sharedSubsAvailable = &sharedSubsAvailable;
 
     unitTestPerformConnect(client, &basicConfig, nullptr, nullptr, nullptr, &responseConfig);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&topicConfig);
+    apiSubscribeInitConfigTopic(&topicConfig);
     topicConfig.m_topic = "$share/ShareName/#";
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &topicConfig);
+    auto ec = apiSubscribeConfigTopic(subscribe, &topicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -704,20 +715,21 @@ void UnitTestSubscribe::test12()
     // Testing rejection of the "No Local" bit set for shared subscriptions
     // [MQTT-3.8.3-4]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&topicConfig);
+    apiSubscribeInitConfigTopic(&topicConfig);
     topicConfig.m_topic = "$share/ShareName/#";
     topicConfig.m_noLocal = true;
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &topicConfig);
+    auto ec = apiSubscribeConfigTopic(subscribe, &topicConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
 }
 
@@ -725,35 +737,36 @@ void UnitTestSubscribe::test13()
 {
     // Simple SUBACK with wrong number of reason codes
     // [MQTT-3.8.4-6]
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
 
-    auto subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
     const std::string SubTopic1 = "/sub/topic/1";
     const CC_Mqtt5QoS SubQos1 = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto subscribeConfig1 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig1);
+    apiSubscribeInitConfigTopic(&subscribeConfig1);
     TS_ASSERT_EQUALS(subscribeConfig1.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig1.m_topic = SubTopic1.c_str();
     subscribeConfig1.m_maxQos = SubQos1;
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig1);
+    auto ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string SubTopic2 = "/sub/topic/2";
     const CC_Mqtt5QoS SubQos2 = CC_Mqtt5QoS_ExactlyOnceDelivery;
     auto subscribeConfig2 = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig2);
+    apiSubscribeInitConfigTopic(&subscribeConfig2);
     TS_ASSERT_EQUALS(subscribeConfig2.m_maxQos, CC_Mqtt5QoS_ExactlyOnceDelivery);
     subscribeConfig2.m_topic = SubTopic2.c_str();
     subscribeConfig2.m_maxQos = SubQos2;
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig2);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig2);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -774,12 +787,12 @@ void UnitTestSubscribe::test13()
     TS_ASSERT_EQUALS(elem1.field_topic().value(), SubTopic2);
     TS_ASSERT_EQUALS(static_cast<CC_Mqtt5QoS>(elem1.field_options().field_qos().value()), SubQos2);
 
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
     UnitTestSubackMsg subackMsg;
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
@@ -795,10 +808,11 @@ void UnitTestSubscribe::test14()
     // Testing Qos2 subscription when broker doesn't support Qos2 publish.
     // [MQTT-3.8.4-6]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
-    unitTestConnectInitConfigBasic(&basicConfig);
+    apiConnectInitConfigBasic(&basicConfig);
     basicConfig.m_clientId = __FUNCTION__;
     basicConfig.m_cleanStart = true;
 

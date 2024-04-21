@@ -24,23 +24,24 @@ private:
 void UnitTestQos1Subscribe::test1()
 {
     // Rejection QoS2 subscription attempt
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));    
 
     auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig);
+    apiSubscribeInitConfigTopic(&subscribeConfig);
     subscribeConfig.m_topic = "#";
     subscribeConfig.m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto* subscribe = unitTestSubscribePrepare(client, nullptr);
+    auto* subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
 
-    auto ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    auto ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     subscribeConfig.m_maxQos = CC_Mqtt5QoS_AtLeastOnceDelivery;
-    ec = unitTestSubscribeConfigTopic(subscribe, &subscribeConfig);
+    ec = apiSubscribeConfigTopic(subscribe, &subscribeConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendSubscribe(subscribe);
@@ -57,7 +58,7 @@ void UnitTestQos1Subscribe::test1()
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
     
-    unitTestReceiveMessage(subackMsg);
+    unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();

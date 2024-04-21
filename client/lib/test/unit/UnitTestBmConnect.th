@@ -24,10 +24,11 @@ private:
 void UnitTestBmConnect::test1()
 {
     // Simple connect and ack
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
     TS_ASSERT(unitTestCheckNoTicks());
-    TS_ASSERT(!unitTestIsConnected(client));
+    TS_ASSERT(!apiIsConnected(client));
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 }

@@ -26,12 +26,14 @@ private:
 void UnitTestBmReceive::test1()
 {
     // Simple receive of Qos0
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
+
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
 
     const std::string Topic = "some/topic";
     const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
@@ -40,7 +42,7 @@ void UnitTestBmReceive::test1()
     publishMsg.field_topic().value() = Topic;
     publishMsg.field_payload().value() = Data;
     publishMsg.doRefresh();
-    unitTestReceiveMessage(publishMsg);
+    unitTestReceiveMessage(client, publishMsg);
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -54,12 +56,13 @@ void UnitTestBmReceive::test1()
 void UnitTestBmReceive::test2()
 {
     // Testing ignore of the user properties
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
 
     const std::string Topic = "some/topic";
     const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
@@ -79,7 +82,7 @@ void UnitTestBmReceive::test2()
     } while (false);
 
     publishMsg.doRefresh();
-    unitTestReceiveMessage(publishMsg);
+    unitTestReceiveMessage(client, publishMsg);
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();
@@ -94,12 +97,13 @@ void UnitTestBmReceive::test2()
 void UnitTestBmReceive::test3()
 {
     // Testing ignore of the too many properties
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     unitTestPerformBasicSubscribe(client, "#");
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
 
     const std::string Topic = "some/topic";
     const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
@@ -163,7 +167,7 @@ void UnitTestBmReceive::test3()
     } while (false);    
 
     publishMsg.doRefresh();
-    unitTestReceiveMessage(publishMsg);
+    unitTestReceiveMessage(client, publishMsg);
 
     TS_ASSERT(unitTestHasMessageRecieved());
     auto& msgInfo = unitTestReceivedMessageInfo();

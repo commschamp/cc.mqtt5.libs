@@ -28,13 +28,14 @@ private:
 void UnitTestDisconnect::test1()
 {
     // Simple disconnect from broker
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
     UnitTestDisconnectMsg disconnectMsg;
-    unitTestReceiveMessage(disconnectMsg);
+    unitTestReceiveMessage(client, disconnectMsg);
 
     TS_ASSERT(unitTestIsDisconnected());
     TS_ASSERT(unitTestHasDisconnectInfo());
@@ -47,14 +48,15 @@ void UnitTestDisconnect::test2()
 {
     // Bad reserved bits DISCONNECT from broker
     // [MQTT-3.14.1-1]
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
     UnitTestDisconnectMsg disconnectMsg;
     disconnectMsg.transportField_flags().field_qos().setValue(CC_Mqtt5QoS_AtLeastOnceDelivery);
-    unitTestReceiveMessage(disconnectMsg);
+    unitTestReceiveMessage(client, disconnectMsg);
 
     TS_ASSERT(unitTestIsDisconnected());
     TS_ASSERT(!unitTestHasDisconnectInfo());
@@ -69,20 +71,21 @@ void UnitTestDisconnect::test3()
     // If the Session Expiry Interval in the CONNECT packet was zero, then it is a Protocol Error to set a non-
     // zero Session Expiry Interval in the DISCONNECT packet sent by the Client
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
 
     auto config = CC_Mqtt5DisconnectConfig();
-    unitTestDisconnectInitConfig(&config);
+    apiDisconnectInitConfig(&config);
 
     unsigned expiryInterval = 10;
     config.m_sessionExpiryInterval = &expiryInterval;
 
-    auto* disconnect = unitTestDisconnectPrepare(client, nullptr);
+    auto* disconnect = apiDisconnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(disconnect, nullptr);
-    auto ec = unitTestDisconnectConfig(disconnect, &config);
+    auto ec = apiDisconnectConfig(disconnect, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
@@ -91,32 +94,33 @@ void UnitTestDisconnect::test4()
     // Testing rejection any operation (except connect) after disconnect
     // [MQTT-3.14.4-1]
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     auto config = CC_Mqtt5DisconnectConfig();
-    unitTestDisconnectInitConfig(&config);
+    apiDisconnectInitConfig(&config);
     unitTestPerformDisconnect(client, &config);
 
-    TS_ASSERT(!unitTestIsConnected(client));
+    TS_ASSERT(!apiIsConnected(client));
 
     CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_Success;
-    auto* subscribe = unitTestSubscribePrepare(client, &ec);
+    auto* subscribe = apiSubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(subscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* unsubscribe = unitTestUnsubscribePrepare(client, &ec);
+    auto* unsubscribe = apiUnsubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(unsubscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);    
 
-    auto* publish = unitTestPublishPrepare(client, &ec);
+    auto* publish = apiPublishPrepare(client, &ec);
     TS_ASSERT_EQUALS(publish, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);       
 
-    auto* disconnect = unitTestDisconnectPrepare(client, &ec);
+    auto* disconnect = apiDisconnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(disconnect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);       
 }
@@ -125,15 +129,16 @@ void UnitTestDisconnect::test5()
 {
     // Testing DISCONNECT message and network disconnection that follows
 
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
 
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
-    unitTestTick(100);
+    unitTestTick(client, 100);
     UnitTestDisconnectMsg disconnectMsg;
-    unitTestReceiveMessage(disconnectMsg);
+    unitTestReceiveMessage(client, disconnectMsg);
 
     TS_ASSERT(unitTestIsDisconnected());
     TS_ASSERT(unitTestHasDisconnectInfo());
@@ -142,5 +147,5 @@ void UnitTestDisconnect::test5()
     unitTestPopDisconnectInfo();    
     TS_ASSERT(unitTestCheckNoTicks());
 
-    unitTestNotifyNetworkDisconnected(client);
+    apiNotifyNetworkDisconnected(client);
 }

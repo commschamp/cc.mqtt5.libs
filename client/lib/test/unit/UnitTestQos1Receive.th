@@ -24,12 +24,13 @@ private:
 void UnitTestQos1Receive::test1()
 {
     // Rejection QoS2 reception
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));    
 
     auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
-    unitTestSubscribeInitConfigTopic(&subscribeConfig);
+    apiSubscribeInitConfigTopic(&subscribeConfig);
     subscribeConfig.m_topic = "#";
     subscribeConfig.m_maxQos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
@@ -46,7 +47,7 @@ void UnitTestQos1Receive::test1()
     publishMsg.field_payload().value() = Data;
 
     publishMsg.doRefresh();
-    unitTestReceiveMessage(publishMsg);
+    unitTestReceiveMessage(client, publishMsg);
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::QosNotSupported);
     TS_ASSERT(unitTestIsDisconnected());      

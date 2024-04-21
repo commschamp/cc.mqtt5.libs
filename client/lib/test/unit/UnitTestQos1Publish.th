@@ -24,30 +24,31 @@ private:
 void UnitTestQos1Publish::test1()
 {
     // Rejecting Qos2 configuration
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
-    auto* publish = unitTestPublishPrepare(client, nullptr);
+    auto* publish = apiPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
-    TS_ASSERT_EQUALS(unitTestPublishCount(client), 1U);
+    TS_ASSERT_EQUALS(apiPublishCount(client), 1U);
 
     const std::string Topic("some/topic");
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    unitTestPublishInitConfigBasic(&config);
+    apiPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
     config.m_dataLen = static_cast<decltype(config.m_dataLen)>(Data.size());
     config.m_qos = CC_Mqtt5QoS_ExactlyOnceDelivery;
 
-    auto ec = unitTestPublishConfigBasic(publish, &config);
+    auto ec = apiPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
-    ec = unitTestPublishConfigBasic(publish, &config);
+    ec = apiPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);
@@ -65,10 +66,10 @@ void UnitTestQos1Publish::test1()
     TS_ASSERT(publishMsg->field_packetId().doesExist());
     TS_ASSERT_EQUALS(publishMsg->field_payload().value(), Data);
 
-    unitTestTick(1000);
+    unitTestTick(client, 1000);
     UnitTestPubackMsg pubackMsg;
     pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
-    unitTestReceiveMessage(pubackMsg); 
+    unitTestReceiveMessage(client, pubackMsg); 
 
     TS_ASSERT(unitTestIsPublishComplete());
     auto& pubackInfo = unitTestPublishResponseInfo();

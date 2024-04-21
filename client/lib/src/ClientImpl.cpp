@@ -611,6 +611,11 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
 
 CC_Mqtt5ErrorCode ClientImpl::setPublishOrdering(CC_Mqtt5PublishOrdering ordering)
 {
+    if (CC_Mqtt5PublishOrdering_ValuesLimit <= ordering) {
+        errorLog("Bad publish ordering value");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
     m_configState.m_publishOrdering = ordering;
     return CC_Mqtt5ErrorCode_Success;
 }

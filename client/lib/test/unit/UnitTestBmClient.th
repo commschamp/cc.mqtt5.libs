@@ -24,9 +24,9 @@ private:
 void UnitTestBmClient::test1()
 {
     // Testing allocation
-    auto client1 = unitTestAlloc();
+    auto client1 = apiAlloc();
     TS_ASSERT(client1);
 
-    auto client2 = unitTestAlloc();
+    auto client2 = apiAlloc();
     TS_ASSERT(!client2);
 }

@@ -1491,6 +1491,11 @@
 /// @endcode
 /// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_msg_subscribed() function.
 ///
+/// @b WARNING: When the incoming message subscription verification is disabled, the
+/// library does @b NOT track any new @ref doc_cc_mqtt5_client_subscribe "subscription"
+/// requests, which can result in dropping legit messages and not reporting them to the application
+/// after the subscription verification is re-enabled later.
+///
 /// Similarly, the library also <b>by default</b> verifies the incoming topic format, that it doesn't contain
 /// wildcard characters. To enable / disable such verification use the @b cc_mqtt5_client_set_verify_incoming_topic_enabled()
 /// function.
@@ -1499,9 +1504,9 @@
 /// @endcode
 /// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_topic_enabled() function.
 ///
-/// To insure the required in-order reception of the messages, the
-///  @ref doc_cc_mqtt5_client_callbacks_message "message report callback" is invoked immediately on
-/// reception of the @b PUBLISH message. Just like it is described in section 4.3 of the
+/// To prioritize the in-order reception of the messages, the
+/// @ref doc_cc_mqtt5_client_callbacks_message "message report callback" is invoked immediately on
+/// reception of the QoS2 @b PUBLISH message. Just like it is shown in the "Figure 4.3" of the
 /// MQTT v5 specification.
 ///
 /// The @b QoS2 publish operation initiated by the broker requires exchange of multiple messages

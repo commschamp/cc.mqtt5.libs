@@ -184,14 +184,14 @@ std::string AppClient::toString(CC_Mqtt5ErrorCode val)
 std::string AppClient::toString(CC_Mqtt5AsyncOpStatus val)
 {
     static const std::string Map[] = {
-        "CC_Mqtt5AsyncOpStatus_Complete",
-        "CC_Mqtt5AsyncOpStatus_InternalError",
-        "CC_Mqtt5AsyncOpStatus_Timeout",
-        "CC_Mqtt5AsyncOpStatus_ProtocolError",
-        "CC_Mqtt5AsyncOpStatus_Aborted",
-        "CC_Mqtt5AsyncOpStatus_BrokerDisconnected",
-        "CC_Mqtt5AsyncOpStatus_OutOfMemory",
-        "CC_Mqtt5AsyncOpStatus_BadParam",
+        "Complete",
+        "Internal Error",
+        "Timeout",
+        "Protocol Error",
+        "Aborted",
+        "Broker Disconnected",
+        "Out Of Memory",
+        "Bad Param",
     };
     static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == CC_Mqtt5AsyncOpStatus_ValuesLimit);
@@ -310,7 +310,7 @@ void AppClient::print(const CC_Mqtt5MessageInfo& info, bool printMessage)
     if (printMessage) {
         std::cout << 
             "\tTopic: " << info.m_topic << '\n' <<
-            "\tData: " << toString(info.m_data, info.m_dataLen) << '\n';
+            "\tData: " << toString(info.m_data, info.m_dataLen, m_opts.subBinary()) << '\n';
     }
 
     printString("Response Topic", info.m_responseTopic);
@@ -389,7 +389,7 @@ bool AppClient::sendConnect(CC_Mqtt5ConnectHandle connect)
 {
     auto ec = ::cc_mqtt5_client_connect_send(connect, &AppClient::connectCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to send connect request with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to send connect request: " << toString(ec) << std::endl;
         return false;
     }    
     return true;
@@ -411,7 +411,7 @@ void AppClient::doComplete()
     auto ec = CC_Mqtt5ErrorCode_Success;
     auto disconnect = ::cc_mqtt5_client_disconnect_prepare(m_client.get(), &ec);
     if (disconnect == nullptr) {
-        logError() << "Failed to prepare disconnect with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to prepare disconnect: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }
@@ -425,14 +425,14 @@ void AppClient::doComplete()
 
     ec = ::cc_mqtt5_client_disconnect_config(disconnect, &config);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to apply disconnect configuration with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to apply disconnect configuration: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }        
 
     ec = ::cc_mqtt5_client_disconnect_send(disconnect);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to send disconnect with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to send disconnect: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }       
@@ -450,7 +450,7 @@ bool AppClient::startImpl()
     auto ec = CC_Mqtt5ErrorCode_Success;
     auto connect = ::cc_mqtt5_client_connect_prepare(m_client.get(), &ec);
     if (connect == nullptr) {
-        logError() << "Failed to prepare connect with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to prepare connect: " << toString(ec) << std::endl;
         return false;
     }
 
@@ -478,7 +478,7 @@ bool AppClient::startImpl()
 
     ec = ::cc_mqtt5_client_connect_config_basic(connect, &basicConfig);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to apply basic connect configuration with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to apply basic connect configuration: " << toString(ec) << std::endl;
         return false;
     }    
 
@@ -519,7 +519,7 @@ bool AppClient::startImpl()
 
         ec = ::cc_mqtt5_client_connect_config_will(connect, &willConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to apply will configuration with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to apply will configuration: " << toString(ec) << std::endl;
             return false;
         }      
 
@@ -531,7 +531,7 @@ bool AppClient::startImpl()
 
             ec = ::cc_mqtt5_client_connect_add_will_user_prop(connect, &info);
             if (ec != CC_Mqtt5ErrorCode_Success) {
-                logError() << "Failed to add connect user property with ec=" << toString(ec) << std::endl;
+                logError() << "Failed to add connect user property: " << toString(ec) << std::endl;
                 return false;
             }         
         }        
@@ -548,7 +548,7 @@ bool AppClient::startImpl()
 
     ec = ::cc_mqtt5_client_connect_config_extra(connect, &extraConfig);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to apply extra connect configuration with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to apply extra connect configuration: " << toString(ec) << std::endl;
         return false;
     }      
 
@@ -560,7 +560,7 @@ bool AppClient::startImpl()
 
         ec = ::cc_mqtt5_client_connect_add_user_prop(connect, &info);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to add connect user property with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to add connect user property: " << toString(ec) << std::endl;
             return false;
         }         
     }

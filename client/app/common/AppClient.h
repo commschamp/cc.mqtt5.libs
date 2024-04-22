@@ -38,7 +38,7 @@ public:
     static std::string toString(CC_Mqtt5ReasonCode val);
     static std::string toString(const std::uint8_t* data, unsigned dataLen, bool forceBinary = false);
     static void print(const CC_Mqtt5DisconnectInfo& info);
-    static void print(const CC_Mqtt5MessageInfo& info, bool printMessage = true);
+    void print(const CC_Mqtt5MessageInfo& info, bool printMessage = true);
     static void print(const CC_Mqtt5ConnectResponse& response);
     static void print(const CC_Mqtt5PublishResponse& response);
     static void print(const CC_Mqtt5SubscribeResponse& response);

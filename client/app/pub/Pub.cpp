@@ -53,14 +53,14 @@ void Pub::brokerConnectedImpl()
     auto ec = CC_Mqtt5ErrorCode_InternalError;
     auto* publish = ::cc_mqtt5_client_publish_prepare(client(), &ec);
     if (publish == nullptr) {
-        logError() << "Failed to allocate publish message with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to allocate publish message: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }
 
     ec = ::cc_mqtt5_client_publish_config_basic(publish, &basicConfig);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to perform basic publish configuration with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to perform basic publish configuration: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }
@@ -85,7 +85,7 @@ void Pub::brokerConnectedImpl()
 
     ec = ::cc_mqtt5_client_publish_config_extra(publish, &extraConfig);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to perform extra publish configuration with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to perform extra publish configuration: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }    
@@ -98,7 +98,7 @@ void Pub::brokerConnectedImpl()
 
         ec = ::cc_mqtt5_client_publish_add_user_prop(publish, &info);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to add publish user property with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to add publish user property: " << toString(ec) << std::endl;
             doTerminate();
             return;
         }         
@@ -106,7 +106,7 @@ void Pub::brokerConnectedImpl()
 
     ec = ::cc_mqtt5_client_publish_send(publish, &Pub::publishCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to send PUBLISH message with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to send PUBLISH message: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }    
@@ -115,7 +115,7 @@ void Pub::brokerConnectedImpl()
 void Pub::publishCompleteInternal([[maybe_unused]] CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
-        logError() << "Publish failed with status=" << toString(status) << std::endl;
+        logError() << "Publish failed: " << toString(status) << std::endl;
         doTerminate();
         return;
     }

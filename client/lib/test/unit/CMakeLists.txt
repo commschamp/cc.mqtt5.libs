@@ -18,10 +18,6 @@ target_include_directories(
             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/client/lib/include>
 )
 
-if (TARGET cc::cc_mqtt5_client)
-    list (APPEND COMMON_BASE_SRC "UnitTestDefaultBase.cpp")
-endif ()    
-
 ##################################
 
 function (cc_mqtt5_client_add_unit_test name test_lib)

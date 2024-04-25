@@ -730,8 +730,9 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle);
 
 /// @brief Check whether the "publish" operation was actually initiated (PUBLISH was sent)
-/// @details In case the the amount of outgoing publish messages exceeds the "Receive Maximum" limit
-///     set by the broker, the requested "publish" operation can be paused. This API 
+/// @details In case the amount of outgoing publish messages exceeds the "Receive Maximum" limit
+///     set by the broker, or due to message ordering configuration, 
+///     the requested "publish" operation can be paused. This API 
 ///     call checks whether the @b PUBLISH message was already sent to the broker.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
 /// @return @b true in case @b PUBLISH message has already been sent.

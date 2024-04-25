@@ -4,7 +4,7 @@ on: [push]
 
 env:
   COMMS_TAG: v5.2.3
-  CC_MQTT5_TAG: v2.7
+  CC_MQTT311_TAG: v2.7
 
 jobs:
   build_gcc_ubuntu_22_04:
@@ -42,7 +42,7 @@ jobs:
         COMMON_BUILD_TYPE: ${{matrix.type}}
         COMMON_CXX_STANDARD: ${{matrix.cpp}}
         COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+        CC_MQTT311_TAG: ${{env.CC_MQTT311_TAG}}
 
     - name: Configure CMake
       shell: bash
@@ -50,10 +50,10 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
+          -DCC_MQTT311_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT311_BUILD_UNIT_TESTS=ON -DCC_MQTT311_BUILD_INTEGRATION_TESTS=ON \
+          -DCC_MQTT311_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
+          -DCC_MQTT311_CLIENT_AFL_FUZZ=ON 
       env:
         CC: gcc-${{matrix.cc_ver}}
         CXX: g++-${{matrix.cc_ver}}
@@ -112,7 +112,7 @@ jobs:
         COMMON_BUILD_TYPE: ${{matrix.type}}
         COMMON_CXX_STANDARD: ${{matrix.cpp}}
         COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+        CC_MQTT311_TAG: ${{env.CC_MQTT311_TAG}}
 
     - name: Configure CMake
       shell: bash
@@ -120,10 +120,10 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
+          -DCC_MQTT311_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT311_BUILD_UNIT_TESTS=ON -DCC_MQTT311_BUILD_INTEGRATION_TESTS=ON \
+          -DCC_MQTT311_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
+          -DCC_MQTT311_CLIENT_AFL_FUZZ=ON 
       env:
         CC: clang-${{matrix.cc_ver}}
         CXX: clang++-${{matrix.cc_ver}}
@@ -171,7 +171,7 @@ jobs:
         COMMON_BUILD_TYPE: ${{matrix.type}}
         COMMON_CXX_STANDARD: ${{matrix.cpp}}
         COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+        CC_MQTT311_TAG: ${{env.CC_MQTT311_TAG}}
 
     - name: Configure CMake
       shell: cmd
@@ -179,9 +179,9 @@ jobs:
       run: |
         cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} -DBoost_USE_STATIC_LIBS=ON ^
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON
+          -DCC_MQTT311_BUILD_UNIT_TESTS=ON ^
+          -DCC_MQTT311_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
+          -DCC_MQTT311_CLIENT_AFL_FUZZ=ON
 
     - name: Build Target 
       working-directory: ${{runner.workspace}}/build
@@ -227,7 +227,7 @@ jobs:
         COMMON_BUILD_TYPE: ${{matrix.type}}
         COMMON_CXX_STANDARD: ${{matrix.cpp}}
         COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+        CC_MQTT311_TAG: ${{env.CC_MQTT311_TAG}}
 
     - name: Configure CMake
       shell: cmd
@@ -235,9 +235,9 @@ jobs:
       run: |
         cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} -DBoost_USE_STATIC_LIBS=ON ^
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
-          -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
+          -DCC_MQTT311_BUILD_UNIT_TESTS=ON ^
+          -DCC_MQTT311_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
+          -DCC_MQTT311_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT311_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
       env:
         HAS_BOOST: "${{ matrix.arch == 'x64' && 'ON' || 'OFF' }}"
 

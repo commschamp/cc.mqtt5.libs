@@ -72,3 +72,6 @@ set (CC_MQTT5_CLIENT_HAS_SUB_TOPIC_VERIFICATION FALSE)
 
 # Limit the amount of topic filters to store when the subscription verification is enabled
 #set (CC_MQTT5_CLIENT_SUB_FILTERS_LIMIT 20)
+
+# Limit to QoS1
+set (CC_MQTT5_CLIENT_MAX_QOS 1)

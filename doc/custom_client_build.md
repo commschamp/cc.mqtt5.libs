@@ -9,7 +9,7 @@ way the client library is built.
 This page describes and explains the meaning of these variables.
 
 ## Variables
-In general, the client library implements all the features specified in the MQTT5 
+In general, the client library implements all the features specified in the MQTT v5
 specification. Some of the variables below allow removing some specific features 
 from the compilation reducing the total library size as well as improving performance. 
 
@@ -67,7 +67,7 @@ library will be requested to allocate, use **CC_MQTT5_CLIENT_ALLOC_LIMIT**
 variable to specify such limit. If the limit is specified the library will
 use static pool for allocation and won't use heap for this purpose.
 ```
-# Only 1 MQTT5 client will be allocated
+# Only 1 client object will be allocated
 set(CC_MQTT5_CLIENT_ALLOC_LIMIT 1)
 ```
 Having **CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC** set to **FALSE** requires setting
@@ -439,6 +439,21 @@ is used instead. It can be useful for bare-metal embedded systems without heap.
 Having **CC_MQTT5_CLIENT_HAS_DYN_MEM_ALLOC** set to **FALSE** and
 **CC_MQTT5_CLIENT_HAS_TOPIC_FORMAT_VERIFICATION** set to **TRUE** requires setting
 of the **CC_MQTT5_CLIENT_SUB_FILTERS_LIMIT** to a non-**0** value.
+
+---
+### CC_MQTT5_CLIENT_MAX_QOS
+By default the library supports all the QoS values (0, 1, and 2). It is possible to
+disable support for high QoS values at compile time and as the result reducing
+the library's code size. It can be useful for bare-metal embedded system with
+a small ROM size.
+
+```
+# Support only QoS0 and QoS1 messages
+set (CC_MQTT5_CLIENT_MAX_QOS 1)
+```
+
+When **CC_MQTT5_CLIENT_MAX_QOS** is set to value below **2**, the
+**CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT** value has no influence and is ignored.
 
 ---
 ## Example for Bare-Metal Without Heap Configuration 

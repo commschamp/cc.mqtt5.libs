@@ -610,7 +610,7 @@ unsigned cc_mqtt5_##NAME##client_subscribe_get_response_timeout(CC_Mqtt5Subscrib
 void cc_mqtt5_##NAME##client_subscribe_init_config_topic(CC_Mqtt5SubscribeTopicConfig* config)
 {
     *config = CC_Mqtt5SubscribeTopicConfig();
-    config->m_maxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
+    config->m_maxQos = static_cast<decltype(config->m_maxQos)>(cc_mqtt5_client::Config::MaxQos);
 }
 
 void cc_mqtt5_##NAME##client_subscribe_init_config_extra(CC_Mqtt5SubscribeExtraConfig* config)

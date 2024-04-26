@@ -29,7 +29,7 @@ struct Config
     static_assert(HasDynMemAlloc || (StringFieldFixedLen > 0U), "Must use CC_MQTT5_CLIENT_STRING_FIELD_FIXED_LEN in configuration to limit string field length");
     static_assert(HasDynMemAlloc || (MaxOutputPacketSize > 0U), "Must use CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE in configuration to limit packet size");
     static_assert(HasDynMemAlloc || (!HasUserProps) || (UserPropsLimit > 0U), "Must use CC_MQTT5_CLIENT_USER_PROPS_LIMIT in configuration to limit amount of user properties");    
-    static_assert(HasDynMemAlloc || (ReceiveMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT in configuration to limit amount of messages to receive");    
+    static_assert(HasDynMemAlloc || (ReceiveMaxLimit > 0U) || (MaxQos < 2), "Must use CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (SendMaxLimit > 0U), "Must use CC_MQTT5_CLIENT_SEND_MAX_LIMIT in configuration to limit amount of messages to receive");    
     static_assert(HasDynMemAlloc || (!HasTopicAliases) || (TopicAliasesLimit > 0U), "Must use CC_MQTT5_CLIENT_TOPIC_ALIASES_LIMIT in configuration to limit amount of user properties");        
     static_assert(HasDynMemAlloc || (!HasSubIds) || (SubIdsLimit > 0U), "Must use CC_MQTT5_CLIENT_SUB_IDS_LIMIT in configuration to limit amount of sub ids");        

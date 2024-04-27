@@ -22,7 +22,7 @@ namespace
 {
 
 template <typename TList>
-void eraseFromList(const op::Op* op, TList& list)
+unsigned eraseFromList(const op::Op* op, TList& list)
 {
     auto iter = 
         std::find_if(
@@ -32,12 +32,14 @@ void eraseFromList(const op::Op* op, TList& list)
                 return op == opPtr.get();
             });
 
+    auto result = static_cast<unsigned>(std::distance(list.begin(), iter));
+
     COMMS_ASSERT(iter != list.end());
-    if (iter == list.end()) {
-        return;
+    if (iter != list.end()) {
+        list.erase(iter);
     }
 
-    list.erase(iter);
+    return result;
 }
 
 void updateEc(CC_Mqtt5ErrorCode* ec, CC_Mqtt5ErrorCode val)
@@ -86,7 +88,7 @@ unsigned ClientImpl::processData(const std::uint8_t* iter, unsigned len)
             [this, &disconnectReason]()
             {
                 sendDisconnectMsg(disconnectReason);    
-                brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_ProtocolError);
+                brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_ProtocolError, CC_Mqtt5AsyncOpStatus_ProtocolError);
             });
 
     unsigned consumed = 0;
@@ -156,7 +158,7 @@ void ClientImpl::notifyNetworkDisconnected()
         return; // No need to go through broker disconnection
     }
     
-    brokerDisconnected(false);
+    brokerDisconnected();
 }
 
 bool ClientImpl::isNetworkDisconnected() const
@@ -170,7 +172,7 @@ op::ConnectOp* ClientImpl::connectPrepare(CC_Mqtt5ErrorCode* ec)
     do {
         m_clientState.m_networkDisconnected = false;
 
-        if (!m_sessionState.m_initialized) {
+        if (!m_clientState.m_initialized) {
             if (m_apiEnterCount > 0U) {
                 errorLog("Cannot prepare connect from within callback");
                 updateEc(ec, CC_Mqtt5ErrorCode_RetryLater);
@@ -607,6 +609,17 @@ CC_Mqtt5ErrorCode ClientImpl::freePubTopicAlias(const char* topic)
     }        
 }
 
+CC_Mqtt5ErrorCode ClientImpl::setPublishOrdering(CC_Mqtt5PublishOrdering ordering)
+{
+    if (CC_Mqtt5PublishOrdering_ValuesLimit <= ordering) {
+        errorLog("Bad publish ordering value");
+        return CC_Mqtt5ErrorCode_BadParam;
+    }
+
+    m_configState.m_publishOrdering = ordering;
+    return CC_Mqtt5ErrorCode_Success;
+}
+
 unsigned ClientImpl::pubTopicAliasCount() const
 {
     if constexpr (Config::HasTopicAliases) {
@@ -667,7 +680,7 @@ void ClientImpl::handle(PublishMsg& msg)
                 msg.dispatch(*m_recvOps.back());
             };
 
-        using Qos = PublishMsg::TransportField_flags::Field_qos::ValueType;
+        using Qos = op::Op::Qos;
         auto qos = msg.transportField_flags().field_qos().value();
         if ((qos == Qos::AtMostOnceDelivery) || 
             (qos == Qos::AtLeastOnceDelivery)) {
@@ -712,7 +725,7 @@ void ClientImpl::handle(PublishMsg& msg)
     } while (false);
 
     if (disconnectSent) {
-        brokerDisconnected(true);
+        brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_ProtocolError);
         return;
     }
 }
@@ -721,25 +734,9 @@ void ClientImpl::handle(PublishMsg& msg)
 void ClientImpl::handle(PubackMsg& msg)
 {
     static_assert(Config::MaxQos >= 1);
-
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }            
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), false)) {
         errorLog("PUBACK with unknown packet id");
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 #endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
@@ -747,19 +744,7 @@ void ClientImpl::handle(PubackMsg& msg)
 void ClientImpl::handle(PubrecMsg& msg)
 {
     static_assert(Config::MaxQos >= 2);
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }  
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), false)) {
         errorLog("PUBREC with unknown packet id");
         PubrelMsg pubrelMsg;
         pubrelMsg.field_packetId().setValue(msg.field_packetId().value());
@@ -767,10 +752,7 @@ void ClientImpl::handle(PubrecMsg& msg)
         pubrelMsg.field_properties().setExists();        
         pubrelMsg.field_reasonCode().field().value() = PubrecMsg::Field_reasonCode::Field::ValueType::PacketIdNotFound;
         sendMessage(pubrelMsg);
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 
 void ClientImpl::handle(PubrelMsg& msg)
@@ -805,24 +787,9 @@ void ClientImpl::handle(PubrelMsg& msg)
 
 void ClientImpl::handle(PubcompMsg& msg)
 {
-    for (auto& opPtr : m_keepAliveOps) {
-        msg.dispatch(*opPtr);
-    }
-
-    auto iter = 
-        std::find_if(
-            m_sendOps.begin(), m_sendOps.end(),
-            [&msg](auto& opPtr)
-            {
-                return opPtr->packetId() == msg.field_packetId().value();
-            });
-
-    if (iter == m_sendOps.end()) {
+    if (!processPublishAckMsg(msg, msg.field_packetId().value(), true)) {
         errorLog("PUBCOMP with unknown packet id");
-        return;
     }
-
-    msg.dispatch(**iter);
 }
 
 #endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
@@ -978,12 +945,12 @@ void ClientImpl::brokerConnected(bool sessionPresent)
 }
 
 void ClientImpl::brokerDisconnected(
-    bool reportDisconnection, 
+    CC_Mqtt5BrokerDisconnectReason reason, 
     CC_Mqtt5AsyncOpStatus status, 
     const CC_Mqtt5DisconnectInfo* info)
 {
-    COMMS_ASSERT(reportDisconnection || (info == nullptr));
-    m_sessionState.m_initialized = false; // Require re-initialization
+    COMMS_ASSERT((reason == CC_Mqtt5BrokerDisconnectReason_DisconnectMsg) || (info == nullptr));
+    m_clientState.m_initialized = false; // Require re-initialization
     m_sessionState.m_connected = false;
 
     bool preserveSendRecv = 
@@ -1011,9 +978,9 @@ void ClientImpl::brokerDisconnected(
         }    
     }    
 
-    if (reportDisconnection) {
+    if (reason < CC_Mqtt5BrokerDisconnectReason_ValuesLimit) {
         COMMS_ASSERT(m_brokerDisconnectReportCb != nullptr);
-        m_brokerDisconnectReportCb(m_brokerDisconnectReportData, info);
+        m_brokerDisconnectReportCb(m_brokerDisconnectReportData, reason, info);
     }
 }
 
@@ -1047,6 +1014,22 @@ bool ClientImpl::hasPausedSendsBefore(const op::SendOp* sendOp) const
 
     auto& prevSendOpPtr = m_sendOps[idx - 1U];
     return prevSendOpPtr->isPaused();
+}
+
+bool ClientImpl::hasHigherQosSendsBefore(const op::SendOp* sendOp, op::Op::Qos qos) const
+{
+    for (auto& sendOpPtr : m_sendOps) {
+        if (sendOpPtr.get() == sendOp) {
+            return false;
+        }
+
+        if (sendOpPtr->qos() > qos) {
+            return true;
+        }
+    }
+
+    COMMS_ASSERT(false); // Mustn't reach here
+    return false;
 }
 
 void ClientImpl::allowNextPrepare()
@@ -1193,7 +1176,7 @@ CC_Mqtt5ErrorCode ClientImpl::initInternal()
 
     terminateOps(CC_Mqtt5AsyncOpStatus_Aborted, TerminateMode_KeepSendRecvOps);
     m_sessionState = SessionState();
-    m_sessionState.m_initialized = true;
+    m_clientState.m_initialized = true;
     return CC_Mqtt5ErrorCode_Success;
 }
 
@@ -1233,6 +1216,91 @@ void ClientImpl::sessionExpiryTimeoutInternal()
     }
 }
 
+op::SendOp* ClientImpl::findSendOp(std::uint16_t packetId)
+{
+    auto iter = 
+        std::find_if(
+            m_sendOps.begin(), m_sendOps.end(),
+            [packetId](auto& opPtr)
+            {
+                return opPtr->packetId() == packetId;
+            });
+
+    if (iter == m_sendOps.end()) {
+        return nullptr;
+    }
+
+    return iter->get();
+}
+
+bool ClientImpl::isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck) const
+{
+    if (!sendOp->isPublished()) {
+        return false;
+    }
+
+    for (auto& sendOpPtr : m_sendOps) {
+        if (sendOpPtr.get() == sendOp) {
+            return true;
+        }
+
+        if (!sendOpPtr->isAcked()) {
+            return false;
+        }
+
+        if (pubcompAck && (sendOp != m_sendOps.front().get())) {
+            return false;
+        }
+    }
+
+    COMMS_ASSERT(false); // Should not be reached;
+    return false;
+}
+
+void ClientImpl::resendAllUntil(op::SendOp* sendOp)
+{
+    // Do index controlled iteration because forcing dup resend can
+    // cause early message destruction.
+    for (auto idx = 0U; idx < m_sendOps.size();) {
+        auto& sendOpPtr = m_sendOps[idx];
+        COMMS_ASSERT(sendOpPtr);
+        auto* opBeforeResend = sendOpPtr.get();
+        sendOpPtr->forceDupResend(); // can destruct object
+        if (opBeforeResend == sendOp) {
+            break;
+        }
+
+        auto* opAfterResend = sendOpPtr.get();
+        if (opBeforeResend != opAfterResend) {
+            // The op object was destructed and erased, 
+            // do not increment index;
+            continue;
+        }
+
+        ++idx;
+    }
+}
+
+bool ClientImpl::processPublishAckMsg(ProtMessage& msg, std::uint16_t packetId, bool pubcompAck)
+{
+    for (auto& opPtr : m_keepAliveOps) {
+        msg.dispatch(*opPtr);
+    }     
+
+    auto* sendOp = findSendOp(packetId);
+    if (sendOp == nullptr) {
+        return false;
+    }
+
+    if (isLegitSendAck(sendOp, pubcompAck)) {
+        msg.dispatch(*sendOp);
+        return true;        
+    }
+
+    resendAllUntil(sendOp);
+    return true;
+}
+
 void ClientImpl::opComplete_Connect(const op::Op* op)
 {
     eraseFromList(op, m_connectOps);
@@ -1265,17 +1333,11 @@ void ClientImpl::opComplete_Recv(const op::Op* op)
 
 void ClientImpl::opComplete_Send(const op::Op* op)
 {
-    eraseFromList(op, m_sendOps);
+    auto idx = eraseFromList(op, m_sendOps);
     if (m_sessionState.m_disconnecting) {
         return;
     }
 
-    COMMS_ASSERT(0U < m_sessionState.m_highQosSendLimit);
-    if (m_sendOps.size() < m_sessionState.m_highQosSendLimit) {
-        return;
-    }
-
-    auto idx = m_sessionState.m_highQosSendLimit - 1U;
     resumeSendOpsSince(idx);
 }
 

@@ -757,7 +757,10 @@
     * Tested in multiple unit-tests.
 - [MQTT-4.6.0-1]: When the Client re-sends any PUBLISH packets, it MUST re-send them in the order in which the
     original PUBLISH packets were sent (this applies to QoS 1 and QoS 2 messages)
-    * Tested in UnitTestPublish::test33 and UnitTestPublish::test34.
+    * Strict ordering is implemented.
+    * Not allowing reception of out of order acknowledgements, in case out-of-order ack is received prevous 
+      publishes are resent.
+    * Tested in multiple UnitTestPublish tests.
 - [MQTT-4.6.0-2]: The Client MUST send PUBACK packets in the order in which the corresponding PUBLISH
     packets were received (QoS 1 messages).
     * Complies by the nature of implementation, the client sends responses right away when processing

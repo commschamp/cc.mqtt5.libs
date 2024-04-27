@@ -24,15 +24,17 @@ private:
 void UnitTestBmPublish::test1()
 {
     // Qos0 publish with properties
-    auto* client = unitTestAllocClient();
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
+
     unitTestPerformPubTopicAliasConnect(client, __FUNCTION__, 10);
-    TS_ASSERT(unitTestIsConnected(client));
+    TS_ASSERT(apiIsConnected(client));
 
     const std::string Topic("some/topic");
-    auto ec = unitTestPubTopicAliasAlloc(client, Topic.c_str(), 1U);
+    auto ec = apiPubTopicAliasAlloc(client, Topic.c_str(), 1U);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);
 
-    auto* publish = unitTestPublishPrepare(client, nullptr);
+    auto* publish = apiPublishPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(publish, nullptr);
 
     const UnitTestData Data = { 0x1, 0x2, 0x3, 0x4, 0x5};
@@ -40,7 +42,7 @@ void UnitTestBmPublish::test1()
     const bool Retain = true;
 
     auto config = CC_Mqtt5PublishBasicConfig();
-    unitTestPublishInitConfigBasic(&config);
+    apiPublishInitConfigBasic(&config);
 
     config.m_topic = Topic.c_str();
     config.m_data = &Data[0];
@@ -49,7 +51,7 @@ void UnitTestBmPublish::test1()
     TS_ASSERT_EQUALS(config.m_topicAliasPref, CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable);
     config.m_retain = Retain;
 
-    ec = unitTestPublishConfigBasic(publish, &config);
+    ec = apiPublishConfigBasic(publish, &config);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string PubUserPropKey1 = "Key1";
@@ -57,7 +59,7 @@ void UnitTestBmPublish::test1()
     auto userProp1 = CC_Mqtt5UserProp();
     userProp1.m_key = PubUserPropKey1.c_str();
     userProp1.m_value = PubUserPropVal1.c_str();
-    ec = unitTestPublishAddUserProp(publish, &userProp1);
+    ec = apiPublishAddUserProp(publish, &userProp1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);    
 
     const std::string ContentType("ContentType");
@@ -67,14 +69,14 @@ void UnitTestBmPublish::test1()
     const CC_Mqtt5PayloadFormat Format = CC_Mqtt5PayloadFormat_Utf8;
 
     auto extra = CC_Mqtt5PublishExtraConfig();
-    unitTestPublishInitConfigExtra(&extra);
+    apiPublishInitConfigExtra(&extra);
     extra.m_contentType = ContentType.c_str();
     extra.m_responseTopic = ResponseTopic.c_str();
     extra.m_correlationData = &CorrelationData[0];
     extra.m_correlationDataLen = static_cast<decltype(extra.m_correlationDataLen)>(CorrelationData.size());
     extra.m_messageExpiryInterval = MsgExpiry;
     extra.m_format = Format;
-    ec = unitTestPublishConfigExtra(publish, &extra);
+    ec = apiPublishConfigExtra(publish, &extra);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendPublish(publish);

@@ -1,4 +1,4 @@
-macro (cc_mqttsn_compile)
+macro (cc_mqtt5_compile)
     set (compile_opts)
     if (CC_MQTT5_USE_CCACHE)
         list (APPEND compile_opts USE_CCACHE)

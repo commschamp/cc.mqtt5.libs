@@ -687,9 +687,7 @@ void ConnectOp::handle(ConnackMsg& msg)
 
     auto& state = client().sessionState();
     if (!connected) {
-        state.m_keepAliveMs = 0U;
-        state.m_highQosSendLimit = 0U;
-        state.m_subIdsAvailable = false;
+        state = SessionState();
         return;
     }
 
@@ -760,7 +758,7 @@ void ConnectOp::handle(DisconnectMsg& msg)
     completeOpInternal(CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     // No members access after this point, the op will be deleted    
 
-    cl.brokerDisconnected(true, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
+    cl.brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_DisconnectMsg, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
 }
 
 void ConnectOp::handle(AuthMsg& msg)

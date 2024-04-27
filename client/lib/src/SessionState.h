@@ -40,7 +40,6 @@ struct SessionState
     unsigned m_maxSendPacketSize = 0U;
     CC_Mqtt5QoS m_pubMaxQos = CC_Mqtt5QoS_ExactlyOnceDelivery;
     bool m_problemInfoAllowed = false;
-    bool m_initialized = false;
     bool m_connected = false;
     bool m_disconnecting = false;
     bool m_wildcardSubAvailable = false;

@@ -161,7 +161,7 @@ public:
                 if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
                     infoLog() << "Insufficient data in buffer (" << dataLen << "), reporting network disconnected..." << std::endl;
                     cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get());
-                    brokerDisconnectReportCb(this, nullptr);
+                    brokerDisconnectReportCb(this, CC_Mqtt5BrokerDisconnectReason_ValuesLimit, nullptr);
                     continue;
                 }
 
@@ -194,6 +194,7 @@ public:
                 if (!cc_mqtt5_##NAME##client_is_network_disconnected(m_client.get())) {
                     infoLog() << "No data consumed and no more input, reporting network disconnected..." << std::endl;
                     cc_mqtt5_##NAME##client_notify_network_disconnected(m_client.get());
+                    brokerDisconnectReportCb(this, CC_Mqtt5BrokerDisconnectReason_ValuesLimit, nullptr);
                     continue;
                 }
 
@@ -630,7 +631,7 @@ private:
         }
     }
 
-    static void brokerDisconnectReportCb(void* data, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
+    static void brokerDisconnectReportCb(void* data, [[maybe_unused]] CC_Mqtt5BrokerDisconnectReason reason, [[maybe_unused]] const CC_Mqtt5DisconnectInfo* info)
     {
         asThis(data)->m_logger.infoLog() << "Broker disconnected\n";
         auto& state = asThis(data)->m_state;
@@ -664,7 +665,7 @@ private:
         } while (false);
 
         CC_Mqtt5ErrorCode ec = CC_Mqtt5ErrorCode_ValuesLimit;
-        auto* publish = ::cc_mqtt5_##NAME##client_publish_prepare(thisPtr->m_client.get(), &ec);
+        auto* publish = ::cc_mqtt5_##NAME##client_publish_prepare(client, &ec);
         assert(ec == CC_Mqtt5ErrorCode_Success);
         if (publish == nullptr) {
             thisPtr->errorLog() << "Unexpected failure in publish allocation\n";

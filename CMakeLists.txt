@@ -7,7 +7,7 @@ option (CC_MQTT5_CLIENT_LIB_FORCE_PIC "Force Position Independent Code (PIC) whe
 option (CC_MQTT5_CLIENT_APPS "Build and install client applications" ${CC_MQTT5_CLIENT_DEFAULT_LIB})
 option (CC_MQTT5_CLIENT_AFL_FUZZ "Build and install client AFL++ fuzzing application" OFF)
 option (CC_MQTT5_WARN_AS_ERR "Treat warning as error" ON)
-option (CC_MQTT5_USE_CCACHE "Use ccache on unix system" ON)
+option (CC_MQTT5_USE_CCACHE "Use ccache" OFF)
 option (CC_MQTT5_BUILD_UNIT_TESTS "Build unit tests" OFF)
 option (CC_MQTT5_BUILD_INTEGRATION_TESTS "Build integration tests which require MQTT broker on local port 1883." OFF)
 option (CC_MQTT5_WITH_DEFAULT_SANITIZERS "Build with sanitizers" OFF)
@@ -33,7 +33,7 @@ find_package(LibComms REQUIRED)
 find_package(cc_mqtt5 REQUIRED)
 
 include (${PROJECT_SOURCE_DIR}/cmake/Compile.cmake)
-cc_mqttsn_compile ()
+cc_mqtt5_compile ()
 
 while (TRUE)
     if ((NOT CC_MQTT5_BUILD_UNIT_TESTS) AND (NOT CC_MQTT5_BUILD_INTEGRATION_TESTS))

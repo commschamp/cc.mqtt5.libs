@@ -16,6 +16,7 @@ struct ConfigState
 {
     static constexpr unsigned DefaultResponseTimeoutMs = 2000;
     unsigned m_responseTimeoutMs = DefaultResponseTimeoutMs;
+    CC_Mqtt5PublishOrdering m_publishOrdering = CC_Mqtt5PublishOrdering_SameQos;
     bool m_verifyOutgoingTopic = Config::HasTopicFormatVerification;
     bool m_verifyIncomingTopic = Config::HasTopicFormatVerification;
     bool m_verifySubFilter = Config::HasSubTopicVerification;

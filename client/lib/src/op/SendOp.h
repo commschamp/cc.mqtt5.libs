@@ -58,6 +58,11 @@ public:
         return m_pubMsg.field_packetId().field().value();
     }
 
+    Qos qos() const 
+    {
+        return m_pubMsg.transportField_flags().field_qos().value();
+    }
+
     CC_Mqtt5ErrorCode configBasic(const CC_Mqtt5PublishBasicConfig& config);
     CC_Mqtt5ErrorCode configExtra(const CC_Mqtt5PublishExtraConfig& config);
     CC_Mqtt5ErrorCode addUserProp(const CC_Mqtt5UserProp& prop);
@@ -66,26 +71,21 @@ public:
     CC_Mqtt5ErrorCode send(CC_Mqtt5PublishCompleteCb cb, void* cbData);
     CC_Mqtt5ErrorCode cancel();
     void postReconnectionResend();
+    void forceDupResend();
     bool resume();
     bool isPaused() const
     {
         return m_paused;
     }
 
-    bool isSent() const
+    bool isPublished() const
     {
-        return m_sent;
+        return m_published;
     }
 
-    CC_Mqtt5ErrorCode setOutOfOrderAllowed(bool allowed)
+    bool isAcked() const
     {
-        m_outOfOrderAllowed = allowed;
-        return CC_Mqtt5ErrorCode_Success;
-    }
-
-    bool getOutOfOrderAllowed() const
-    {
-        return m_outOfOrderAllowed;
+        return m_acked;
     }
 
 protected:
@@ -112,8 +112,7 @@ private:
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
-    bool m_outOfOrderAllowed = false;
-    bool m_sent = false;
+    bool m_published = false;
     bool m_acked = false;
     bool m_registeredAlias = false;
     bool m_topicConfigured = false;

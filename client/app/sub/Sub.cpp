@@ -41,7 +41,7 @@ void Sub::brokerConnectedImpl()
     auto ec = CC_Mqtt5ErrorCode_InternalError;
     auto* subscribe = ::cc_mqtt5_client_subscribe_prepare(client(), &ec);
     if (subscribe == nullptr) {
-        logError() << "Failed to allocate subscribe message with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to allocate subscribe message: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }
@@ -61,7 +61,7 @@ void Sub::brokerConnectedImpl()
 
         ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to configure topic \"" << topics[idx] << "\" with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to configure topic \"" << topics[idx] << "\": " << toString(ec) << std::endl;
             doTerminate();
             return;
         }        
@@ -75,7 +75,7 @@ void Sub::brokerConnectedImpl()
 
         ec = ::cc_mqtt5_client_subscribe_config_extra(subscribe, &extraConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to configure extra subscribe properties with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to configure extra subscribe properties: " << toString(ec) << std::endl;
             doTerminate();
             return;
         }           
@@ -89,7 +89,7 @@ void Sub::brokerConnectedImpl()
 
         ec = ::cc_mqtt5_client_subscribe_add_user_prop(subscribe, &info);
         if (ec != CC_Mqtt5ErrorCode_Success) {
-            logError() << "Failed to add subscribe user property with ec=" << toString(ec) << std::endl;
+            logError() << "Failed to add subscribe user property: " << toString(ec) << std::endl;
             doTerminate();
             return;
         }         
@@ -97,7 +97,7 @@ void Sub::brokerConnectedImpl()
 
     ec = ::cc_mqtt5_client_subscribe_send(subscribe, &Sub::subscribeCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
-        logError() << "Failed to send SUBSCRIBE message with ec=" << toString(ec) << std::endl;
+        logError() << "Failed to send SUBSCRIBE message: " << toString(ec) << std::endl;
         doTerminate();
         return;
     }        
@@ -122,7 +122,7 @@ void Sub::subscribeCompleteInternal(
     const CC_Mqtt5SubscribeResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
-        logError() << "Subscribe failed with status=" << toString(status) << std::endl;
+        logError() << "Subscribe failed: " << toString(status) << std::endl;
         doTerminate();
         return;
     }

@@ -77,6 +77,12 @@ public:
     
     CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, unsigned qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
+    CC_Mqtt5ErrorCode setPublishOrdering(CC_Mqtt5PublishOrdering ordering);
+    CC_Mqtt5PublishOrdering getPublishOrdering() const
+    {
+        return m_configState.m_publishOrdering;
+    }
+
     unsigned pubTopicAliasCount() const;
     bool pubTopicAliasIsAllocated(const char* topic) const;
 
@@ -154,11 +160,12 @@ public:
     void opComplete(const op::Op* op);
     void brokerConnected(bool sessionPresent);
     void brokerDisconnected(
-        bool reportDisconnection, 
+        CC_Mqtt5BrokerDisconnectReason reason = CC_Mqtt5BrokerDisconnectReason_ValuesLimit, 
         CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
     bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
+    bool hasHigherQosSendsBefore(const op::SendOp* sendOp, op::Op::Qos qos) const;
     void allowNextPrepare();
 
     TimerMgr& timerMgr()
@@ -170,6 +177,11 @@ public:
     {
         return m_configState;
     }
+
+    const ConfigState& configState() const
+    {
+        return m_configState;
+    }    
 
     ClientState& clientState()
     {
@@ -254,6 +266,10 @@ private:
     CC_Mqtt5ErrorCode initInternal();
     void resumeSendOpsSince(unsigned idx);
     void sessionExpiryTimeoutInternal();
+    op::SendOp* findSendOp(std::uint16_t packetId);
+    bool isLegitSendAck(const op::SendOp* sendOp, bool pubcompAck = false) const;
+    void resendAllUntil(op::SendOp* sendOp);
+    bool processPublishAckMsg(ProtMessage& msg, std::uint16_t packetId, bool pubcompAck = false);
 
     void opComplete_Connect(const op::Op* op);
     void opComplete_KeepAlive(const op::Op* op);

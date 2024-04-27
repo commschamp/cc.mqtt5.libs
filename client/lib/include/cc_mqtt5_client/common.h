@@ -6,7 +6,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file
-/// @brief Common definition for MQTT-SN clients.
+/// @brief Common definition for MQTT v5 clients.
 
 #pragma once
 
@@ -21,7 +21,7 @@ extern "C" {
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 4U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 5U
 
 /// @brief Patch level of the library
 /// @ingroup global
@@ -82,7 +82,7 @@ typedef enum
     CC_Mqtt5ErrorCode_ValuesLimit ///< Limit for the values
 } CC_Mqtt5ErrorCode;
 
-/// @brief Payload Format Indicator values as defined by the MQTT5 protocol
+/// @brief Payload Format Indicator values as defined by the MQTT v5 protocol
 /// @ingroup global
 typedef enum
 {
@@ -95,14 +95,14 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5AsyncOpStatus_Complete, ///< The requested operation has been completed, refer to reported extra details for information.
-    CC_Mqtt5AsyncOpStatus_InternalError, ///< Internal library error, please submit bug report    
-    CC_Mqtt5AsyncOpStatus_Timeout, ///< The required response from broker hasn't been received in time
-    CC_Mqtt5AsyncOpStatus_ProtocolError, ///< The broker's response doesn't comply with MQTT5 specification.
-    CC_Mqtt5AsyncOpStatus_Aborted, ///< The operation has been aborted before completion due to client's side operation.
-    CC_Mqtt5AsyncOpStatus_BrokerDisconnected, ///< The operation has been aborted before completion due to broker's disconnection.
-    CC_Mqtt5AsyncOpStatus_OutOfMemory, ///< The client library wasn't able to allocate necessary memory.
-    CC_Mqtt5AsyncOpStatus_BadParam, ///< Bad value has been returned from the relevant callback.
+    CC_Mqtt5AsyncOpStatus_Complete = 0, ///< The requested operation has been completed, refer to reported extra details for information.
+    CC_Mqtt5AsyncOpStatus_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5AsyncOpStatus_Timeout = 2, ///< The required response from broker hasn't been received in time
+    CC_Mqtt5AsyncOpStatus_ProtocolError = 3, ///< The broker's response doesn't comply with MQTT5 specification.
+    CC_Mqtt5AsyncOpStatus_Aborted = 4, ///< The operation has been aborted before completion due to client's side operation.
+    CC_Mqtt5AsyncOpStatus_BrokerDisconnected = 5, ///< The operation has been aborted before completion due to broker's disconnection.
+    CC_Mqtt5AsyncOpStatus_OutOfMemory = 6, ///< The client library wasn't able to allocate necessary memory.
+    CC_Mqtt5AsyncOpStatus_BadParam = 7, ///< Bad value has been returned from the relevant callback.
     CC_Mqtt5AsyncOpStatus_ValuesLimit ///< Limit for the values
 } CC_Mqtt5AsyncOpStatus;
 
@@ -110,12 +110,12 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5AuthErrorCode_Continue, ///< Continue the authentication process
-    CC_Mqtt5AuthErrorCode_Disconnect, ///< Stop the authentication, send DISCONNECT to broker
-    CC_Mqtt5AuthErrorCode_ValuesLimit ///< Limit for the values
+    CC_Mqtt5AuthErrorCode_Continue = 0, ///< Continue the authentication process
+    CC_Mqtt5AuthErrorCode_Disconnect = 1, ///< Stop the authentication, send DISCONNECT to broker
+    CC_Mqtt5AuthErrorCode_ValuesLimit = 2 ///< Limit for the values
 } CC_Mqtt5AuthErrorCode;
 
-/// @brief "Reason Code" as defined in MQTT5 specification
+/// @brief "Reason Code" as defined in MQTT v5 specification
 /// @ingroup global
 typedef enum
 {
@@ -166,7 +166,7 @@ typedef enum
     CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
 } CC_Mqtt5ReasonCode;
 
-/// @brief "Retain Handling" option as defined by the MQTT5 specification.
+/// @brief "Retain Handling" option as defined by the MQTT v5 specification.
 /// @details It is used during the "subscribe" operation topic configuration.
 /// @ingroup subscribe
 typedef enum
@@ -181,12 +181,32 @@ typedef enum
 /// @ingroup publish
 typedef enum
 {
-    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable, ///< Use topic alias if such is available
-    CC_Mqtt5TopicAliasPreference_ForceAliasOnly, ///< Force sending topic alias, requires topic alias to be allocated.
-    CC_Mqtt5TopicAliasPreference_ForceTopicOnly, ///< Force sending topic string even if topic alias is available.
-    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias, ///< Force sending both topic string and its numeric alias.
+    CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable = 0, ///< Use topic alias if such is available
+    CC_Mqtt5TopicAliasPreference_ForceAliasOnly = 1, ///< Force sending topic alias, requires topic alias to be allocated.
+    CC_Mqtt5TopicAliasPreference_ForceTopicOnly = 2, ///< Force sending topic string even if topic alias is available.
+    CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias = 3, ///< Force sending both topic string and its numeric alias.
     CC_Mqtt5TopicAliasPreference_ValuesLimit ///< Limit for the values
 } CC_Mqtt5TopicAliasPreference;
+
+/// @brief Publish ordering configuration
+/// @ingroup publish
+typedef enum
+{
+    CC_Mqtt5PublishOrdering_SameQos, ///< Preserve strict order only between same QoS messages.
+    CC_Mqtt5PublishOrdering_Full, ///< Preserve strict order between @b all messages.
+    CC_Mqtt5PublishOrdering_ValuesLimit ///< Limit for the values
+} CC_Mqtt5PublishOrdering;
+
+/// @brief Reason for reporting unsolicited broker disconnection
+/// @ingroup global
+typedef enum
+{
+    CC_Mqtt5BrokerDisconnectReason_DisconnectMsg = 0, ///< The broker sent @b DISCONNECT message.
+    CC_Mqtt5BrokerDisconnectReason_InternalError = 1, ///< The library encountered internal error and there is a need to close network connection
+    CC_Mqtt5BrokerDisconnectReason_NoBrokerResponse = 2, ///< No messages from the broker and no response to @b PINGREQ
+    CC_Mqtt5BrokerDisconnectReason_ProtocolError = 3, ///< Protocol error was detected.
+    CC_Mqtt5BrokerDisconnectReason_ValuesLimit ///< Limit for the values
+} CC_Mqtt5BrokerDisconnectReason;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ClientHandle
 /// @ingroup client
@@ -511,10 +531,12 @@ typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, u
 ///     message from the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
+/// @param[in] reason Reson for reporting unsolicited broker disconnection.
 /// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 
+///     Not null, <b>if and only if</b> the @b reason is @ref CC_Mqtt5BrokerDisconnectReason_DisconnectMsg.
 /// @post The data members of the reported info can NOT be accessed after the function returns.
 /// @ingroup client
-typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, const CC_Mqtt5DisconnectInfo* info);
+typedef void (*CC_Mqtt5BrokerDisconnectReportCb)(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
 
 /// @brief Callback used to report new message received of the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to

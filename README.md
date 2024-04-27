@@ -1,5 +1,5 @@
 # Overview
-This repository provides well documented and easy to use MQTT5 client library.
+This repository provides well documented and easy to use MQTT v5 client library.
 It is:
 
 - single threaded
@@ -13,7 +13,7 @@ over the I/O link as well as perform extra manipulation on the exchanged
 raw data (such as encryption or extra framing).
 
 # Client Library
-The MQTT5 **client** library is implemented
+The MQTT v5 **client** library is implemented
 using **C++(17)** programming language, but provides **C** interface. The library's
 code doesn't use [RTTI](https://en.wikipedia.org/wiki/Run-time_type_information)
 or exceptions, but by default
@@ -51,7 +51,7 @@ Detailed instructions on how to build and install all the components can be
 found in [doc/BUILD.md](doc/BUILD.md) file.
 
 # How to Fuzz Test
-The provided MQTT5 client library as well as its dependencies from the
+The provided MQTT v5 client library as well as its dependencies from the
 [CommsChampion Ecosystem](https://commschamp.github.io/) have been designed with
 reliability in mind and to be able to safely handle malformed data as well as
 withstand unexpected behaviour from a MQTT broker. In order to

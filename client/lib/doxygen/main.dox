@@ -1,7 +1,7 @@
-/// @mainpage MQTT5 Client Library
+/// @mainpage MQTT v5 Client Library
 /// @tableofcontents
 /// @section doc_cc_mqtt5_client_overview Overview
-/// The <b>MQTT5 Client Library</b> from the <a href="https://commschamp.github.io/">CommsChampion Ecosystem</a>
+/// The <b>MQTT v5 Client Library</b> from the <a href="https://commschamp.github.io/">CommsChampion Ecosystem</a>
 /// provides simple, asynchronous, non-blocking,
 /// and easy to use interface to operate MQTT v5 client. The library doesn't
 /// make any assumption on the system it is running on, as well as on the type
@@ -11,7 +11,7 @@
 /// as well as measure time required for the correct operation of the MQTT v5 protocol.
 ///
 /// The library allows the application to have a full control over the raw data for
-/// any extra analysis and/or manipulation, such as encryption.
+/// any extra analysis and/or manipulation, such as encryption or extra framing.
 ///
 /// @section doc_cc_mqtt5_client_version Version of the Library
 /// The version is of the library applicable to this documentation is defined in 
@@ -21,7 +21,7 @@
 /// @li @ref CC_MQTT5_CLIENT_PATCH_VERSION
 ///
 /// @section cc_mqtt5_client_header Header
-/// To use this <b>MQTT5 Client Library</b> use the following single include statement:
+/// To use this <b>MQTT v5 Client Library</b> use the following single include statement:
 /// @code
 /// #include "cc_mqtt5_client/client.h"
 /// @endcode
@@ -90,7 +90,7 @@
 /// The client application must assign a callback for the library to report
 /// discovered broker disconnection.
 /// @code
-/// void my_broker_disconnected_cb(void* data, const CC_Mqtt5DisconnectInfo* info)
+/// void my_broker_disconnected_cb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info)
 /// {
 ///     ... /* handle broker disconnection */
 ///     if (info != NULL) {
@@ -902,7 +902,7 @@
 /// topicConfig.m_topic = "some/topic";
 /// topicConfig.m_noLocal = true;
 ///
-/// ec = cc_mqtt5_client_subscribe_simple(client, topicConfig, &my_subscribe_complete_cb, data);
+/// ec = cc_mqtt5_client_subscribe_simple(client, &topicConfig, &my_subscribe_complete_cb, data);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Failed to send subscribe request with ec=%d\n", ec);
 ///     ...
@@ -1083,7 +1083,7 @@
 /// // Update values
 /// topicConfig.m_topic = "some/topic";
 ///
-/// ec = cc_mqtt5_client_unsubscribe_simple(client, topicConfig, &my_unsubscribe_complete_cb, data);
+/// ec = cc_mqtt5_client_unsubscribe_simple(client, &topicConfig, &my_unsubscribe_complete_cb, data);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
 ///     printf("ERROR: Failed to send unsubscribe request with ec=%d\n", ec);
 ///     ...
@@ -1131,7 +1131,7 @@
 /// not acknowledged, then the publish operation is terminated with appropriate
 /// status report. It is possible to change the default by using
 /// @b cc_mqtt5_client_publish_set_resend_attempts() function. The @b DUP flag
-/// will be sent for all the re-sent @b PUBLISH messages.
+/// will be set in all the re-sent @b PUBLISH messages.
 /// @code
 /// ec = cc_mqtt5_client_publish_set_resend_attempts(publish, 3);
 /// if (ec != CC_Mqtt5ErrorCode_Success) {
@@ -1297,92 +1297,6 @@
 /// called before the @b cc_mqtt5_client_publish_cancel(), the operation is
 /// cancelled @b without callback invocation.
 ///
-/// @subsection doc_cc_mqtt5_client_publish_recv_max Exceeding "Receive Maximum" Set by the Broker
-/// When the @ref doc_cc_mqtt5_client_connect "connect" operation is complete, the
-/// "Receive Maximum" property set by the broker is reported via the
-/// @ref CC_Mqtt5ConnectResponse::m_highQosSendLimit value. The application can
-/// monitor amount of incomplete "publish" operations using the
-/// @b cc_mqtt5_client_publish_count() function and decide whether to issue
-/// any new publishes.
-/// @code
-/// unsigned count = cc_mqtt5_client_publish_count(client);
-/// if (count >= max_allowed) {
-///     ...
-/// }
-/// @endcode
-/// However, when the "Receive Maximum" limit is reached and a new @b QoS1
-/// or @b QoS2 publish is issued by the application, its send will be paused until one of the
-/// previous "publish" operations is complete. It is possible to inquire whether
-/// the operation was initiated (@b PUBLISH message is sent) via the
-/// @b cc_mqtt5_client_publish_was_initiated() function. If the function returns
-/// @b false, the "publish" operation can be safely @ref doc_cc_mqtt5_client_publish_cancel "cancelled"
-/// without any possible side effects.
-/// @code
-/// if (!cc_mqtt5_client_publish_was_initiated(publish)) {
-///     cc_mqtt5_client_publish_cancel(publish);
-/// }
-/// @endcode
-/// When it comes to publishing the @b QoS0 messages after the "Receive Maximum" limit
-/// is reached the library checks whether there are other previous "publish" operations
-/// which are @b paused. If the requested @b QoS0 "publish" is the only one to exceed
-/// the "Receive Maximum" limit, it is sent right away because @b QoS0 messages
-/// do not require acknowledgement and are not influenced by the "Receive Maximum" limit.
-/// However, when there are previously issued @b QoS1 / @b QoS2 publish messages
-/// which are paused (due to exceeding the "Receive Maximum" limit), the issued
-/// @b QoS0 "publish" operation is also paused until all other previously issued "publish"-es
-/// send their first @b PUBLISH message. It is done to ensure in-order send of
-/// the messages regardless of their QoS value.
-///
-/// The MQTT v5 specification allows out-of-order reception of the messages with different
-/// QoS values. The library provides means to allow out-of-order sending of the @b QoS0
-/// messages, send of which could have been delayed in the default operation mode described above.
-/// To allow the immediate send of the @b QoS0 message (even if there other paused publishes
-/// that haven't sent their @b PUBLISH message yet) use @b cc_mqtt5_client_publish_set_out_of_order_allowed()
-/// function to override the default behaviour.
-/// @code
-/// ec = cc_mqtt5_client_publish_set_out_of_order_allowed(publish, true);
-/// if (ec != CC_Mqtt5ErrorCode_Success) {
-///     printf("ERROR: Out of order configuration failed with ec=%d\n", ec);
-///     ...
-/// }
-/// @endcode
-/// Note that the out-of-order configuration set by the @b cc_mqtt5_client_publish_set_out_of_order_allowed()
-/// function applicable only to @b QoS0 messages and doesn't have any effect for
-/// the @b QoS1 and @b QoS2 ones.
-///
-/// To retrieve the current configuration use @b cc_mqtt5_client_publish_get_out_of_order_allowed().
-///
-/// @subsection doc_cc_mqtt5_client_publish_simplify Simplifying the "Publish" Operation Preparation.
-/// In many use cases the "publish" operation can be quite simple with a lot of defaults.
-/// To simplify the sequence of the operation preparation and handling of errors,
-/// the library provides several wrapper functions that can be used:
-/// @li @b cc_mqtt5_client_publish_simple()
-/// @li @b cc_mqtt5_client_publish_full()
-///
-/// For example:
-/// @code
-/// CC_Mqtt5PublishBasicConfig basicConfig;
-///
-/// // Assign default values to the configuration
-/// cc_mqtt5_client_publish_init_config_basic(&basicConfig);
-///
-/// // Update values
-/// basicConfig.m_topic = "some/topic";
-/// basicConfig.m_data = ...;
-/// ...
-///
-/// ec = cc_mqtt5_client_publish_simple(client, basicConfig, &my_publish_complete_cb, data);
-/// if (ec != CC_Mqtt5ErrorCode_Success) {
-///     printf("ERROR: Failed to send publish request with ec=%d\n", ec);
-///     ...
-/// }
-/// @endcode
-/// Note that the wrapper functions do NOT expose the handle returned by the
-/// @b cc_mqtt5_client_publish_prepare(). It means that it's not possible to
-/// cancel the "publish" operation before its completion or identify the
-/// publish operation by the reported handle when the completion callback
-/// is invoked.
-///
 /// @subsection doc_cc_mqtt5_client_publish_alias Using Topic Alias
 /// The MQTT v5 specification allows usage of the numeric topic aliases to
 /// be able to reduce amount of bytes per publish. In order for the library to start
@@ -1459,6 +1373,103 @@
 /// @li @ref CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias - Forces sending both topic
 ///     alias and topic string even if it is safe to send topic alias only.
 ///
+/// @subsection doc_cc_mqtt5_client_publish_recv_max Exceeding "Receive Maximum" Set by the Broker
+/// When the @ref doc_cc_mqtt5_client_connect "connect" operation is complete, the
+/// "Receive Maximum" property set by the broker is reported via the
+/// @ref CC_Mqtt5ConnectResponse::m_highQosSendLimit value. The application can
+/// monitor amount of incomplete "publish" operations using the
+/// @b cc_mqtt5_client_publish_count() function and decide whether to issue
+/// any new publishes.
+/// @code
+/// unsigned count = cc_mqtt5_client_publish_count(client);
+/// if (count >= max_allowed) {
+///     ...
+/// }
+/// @endcode
+/// However, when the "Receive Maximum" limit is reached and a new publish is issued by the application,
+/// the library will postpone sending the actual @b PUBLISH message until one of the
+/// previous "publish" operations is complete. It is possible to inquire whether
+/// the operation was initiated (@b PUBLISH message is sent) via the
+/// @b cc_mqtt5_client_publish_was_initiated() function. If the function returns
+/// @b false, the "publish" operation can be safely @ref doc_cc_mqtt5_client_publish_cancel "cancelled"
+/// without any possible side effects.
+/// @code
+/// if (!cc_mqtt5_client_publish_was_initiated(publish)) {
+///     cc_mqtt5_client_publish_cancel(publish);
+/// }
+/// @endcode
+/// Beware of calling
+/// @b cc_mqtt5_client_publish_was_initiated() when @b QoS0 publish operation is
+/// issued. In most cases the operation is completed right away and the operation
+/// handle is not valid any more when the @b cc_mqtt5_client_publish_send()
+/// invocation returns.
+///
+/// @subsection doc_cc_mqtt5_client_publish_order Message Ordering
+/// The library implements strict message ordering for the @b same QoS messages
+/// required by the MQTT v5 specification. However, when @b different QoS messages
+/// are sent, the messages may arrive to the broker as well as recipient client
+/// in different order. For example, if all the publishes below issued together in the specified order, the
+/// @b Message2 and @b Message3 will probably arrive before @b Message1.
+/// @li @b Message1 - QoS2
+/// @li @b Message2 - Qos1
+/// @li @b Message3 - QoS0
+///
+/// The library also provides an ability to force strict message ordering for
+/// @b all values of QoS using the @b cc_mqtt5_client_publish_set_ordering() function.
+/// @code
+/// ec = cc_mqtt5_client_publish_set_ordering(client, CC_Mqtt5PublishOrdering_Full);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Publish ordering configuration failed with ec=%d\n", ec);
+/// }
+/// @endcode
+/// The current configuration can be retrieved using @b cc_mqtt5_client_publish_get_ordering() function.
+/// The @b default publish ordering is @ref CC_Mqtt5PublishOrdering_SameQos.
+///
+/// When a strict message ordering for @b all the messages is enabled (by setting @ref CC_Mqtt5PublishOrdering_Full),
+/// The @b PUBLISH message is postponed if @b any of the statements below are true:
+/// @li There are other postponed @b PUBLISH messages of previously issued "publish" operations.
+/// @li There are previously issued and incomplete "publish" operation of @b higher QoS value.
+///
+/// The rules above allow sending the same as well as increasing QoS messages in parallel.
+/// For example, if all the publishes below issued together in the specified order, the
+/// @b Message11 and @b Message12 will be sent, while @b Message13 and @b Message14 are postponed
+/// until the delivery of the @b Message12 is complete.
+/// @li @b Message11 - QoS1
+/// @li @b Message12 - Qos2
+/// @li @b Message13 - QoS0
+/// @li @b Message14 - QoS2
+///
+/// @subsection doc_cc_mqtt5_client_publish_simplify Simplifying the "Publish" Operation Preparation.
+/// In many use cases the "publish" operation can be quite simple with a lot of defaults.
+/// To simplify the sequence of the operation preparation and handling of errors,
+/// the library provides several wrapper functions that can be used:
+/// @li @b cc_mqtt5_client_publish_simple()
+/// @li @b cc_mqtt5_client_publish_full()
+///
+/// For example:
+/// @code
+/// CC_Mqtt5PublishBasicConfig basicConfig;
+///
+/// // Assign default values to the configuration
+/// cc_mqtt5_client_publish_init_config_basic(&basicConfig);
+///
+/// // Update values
+/// basicConfig.m_topic = "some/topic";
+/// basicConfig.m_data = ...;
+/// ...
+///
+/// ec = cc_mqtt5_client_publish_simple(client, &basicConfig, &my_publish_complete_cb, data);
+/// if (ec != CC_Mqtt5ErrorCode_Success) {
+///     printf("ERROR: Failed to send publish request with ec=%d\n", ec);
+///     ...
+/// }
+/// @endcode
+/// Note that the wrapper functions do NOT expose the handle returned by the
+/// @b cc_mqtt5_client_publish_prepare(). It means that it's not possible to
+/// cancel the "publish" operation before its completion or identify the
+/// publish operation by the reported handle when the completion callback
+/// is invoked.
+///
 /// @section doc_cc_mqtt5_client_receive Receiving Messages
 /// Right after the successful "connect" operation, the library starts expecting
 /// the arrival of the new messages and reports it via the @ref doc_cc_mqtt5_client_callbacks_message
@@ -1480,6 +1491,11 @@
 /// @endcode
 /// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_msg_subscribed() function.
 ///
+/// @b WARNING: When the incoming message subscription verification is disabled, the
+/// library does @b NOT track any new @ref doc_cc_mqtt5_client_subscribe "subscription"
+/// requests, which can result in dropping legit messages and not reporting them to the application
+/// after the subscription verification is re-enabled later.
+///
 /// Similarly, the library also <b>by default</b> verifies the incoming topic format, that it doesn't contain
 /// wildcard characters. To enable / disable such verification use the @b cc_mqtt5_client_set_verify_incoming_topic_enabled()
 /// function.
@@ -1488,9 +1504,9 @@
 /// @endcode
 /// To retrieve the current configuration use the @b cc_mqtt5_client_get_verify_incoming_topic_enabled() function.
 ///
-/// To insure the required in-order reception of the messages, the
-///  @ref doc_cc_mqtt5_client_callbacks_message "message report callback" is invoked immediately on
-/// reception of the @b PUBLISH message. Just like it is described in section 4.3 of the
+/// To prioritize the in-order reception of the messages, the
+/// @ref doc_cc_mqtt5_client_callbacks_message "message report callback" is invoked immediately on
+/// reception of the QoS2 @b PUBLISH message. Just like it is shown in the "Figure 4.3" of the
 /// MQTT v5 specification.
 ///
 /// The @b QoS2 publish operation initiated by the broker requires exchange of multiple messages
@@ -1708,7 +1724,8 @@
 ///     (except @ref doc_cc_mqtt5_client_publish "publish") passing
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function.
+///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_DisconnectMsg as the disconnection reason.
 ///     The information passed in the @b DISCONNECT message is used to populate reported
 ///     disconnection information.
 ///
@@ -1721,6 +1738,7 @@
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_NoBrokerResponse as the disconnection reason.
 ///     without any disconnection information.
 ///
 /// @subsection doc_cc_mqtt5_client_unsolicited_disconnect_protocol_error Detecting Protocol Error
@@ -1734,12 +1752,13 @@
 ///     the @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected as their status report.
 /// @li Invokes the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
 ///     registered using the @b cc_mqtt5_client_set_broker_disconnect_report_callback() function
+///     reporting @ref CC_Mqtt5BrokerDisconnectReason_ProtocolError as the disconnection reason.
 ///     without any disconnection information.
 ///
 /// With all said above it means that if application receives @ref CC_Mqtt5AsyncOpStatus_ProtocolError or
 /// @ref CC_Mqtt5AsyncOpStatus_BrokerDisconnected status in the operation callback, then
 /// the application is expected to wait for the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback"
-///     which will follow.
+/// which will follow.
 ///
 /// When the @ref doc_cc_mqtt5_client_callbacks_broker_disconnect "disconnection report callback" is called the application is
 /// expected to go through the following steps:
@@ -1796,13 +1815,11 @@
 /// will return @b false.
 ///
 /// @section doc_cc_mqtt5_client_thread_safety Thread Safety
-/// In general the library is @b NOT thread safe. However, if each thread operates on a separate allocated
+/// In general the library is @b NOT thread safe. To support multi-threading the application
+/// is expected to use appropriate locking mechanisms before calling relevant API functions.
+/// However, if each thread operates on a separate allocated
 /// @ref doc_cc_mqtt5_client_allocation "client", then the locking is required only
 /// for the @ref doc_cc_mqtt5_client_allocation "client allocation logic".
-///
-/// If multiple threads work with the same @ref doc_cc_mqtt5_client_allocation "client"
-/// object (such as performing "publish" operations, or handling incoming messages in parallel),
-/// then explicit locking logic needs to be implemented by the application itself.
 ///
 /// @section doc_cc_mqtt5_client_debug_build Debug Build
 /// The client library uses <a href="https://commschamp.github.io/comms_doc/page_use_prot.html#page_use_prot_error_handling">COMMS_ASSERT()</a>

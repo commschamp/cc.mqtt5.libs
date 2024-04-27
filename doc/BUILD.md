@@ -17,8 +17,7 @@ via standard **CMAKE_PREFIX_PATH** cmake variable. There are also scripts (
 [script/prepare_externals.sh](script/prepare_externals.sh) for Linux and
 [script/prepare_externals.bat](script/prepare_externals.bat) for Windows)
 which can help in preparation of these dependencies. They are also used
-in configuration of the [github actions](.github/workflows/actions_build.yml) and
-[appveyor](.appveyor.yml).
+in configuration of the [github actions](.github/workflows/actions_build.yml).
 
 The provided **applications** use [Boost](https://www.boost.org) libraries to
 parse their command line arguments as well as manage their event loop / network

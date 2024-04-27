@@ -32,7 +32,17 @@ struct ExtConfig : public Config
     static constexpr unsigned SendOpTimers = 1U;    
     static constexpr unsigned ReauthOpsLimit = HasDynMemAlloc ? 0 : 1U;
     static constexpr unsigned ReauthOpTimers = 1U;    
-    static constexpr unsigned TimersLimit = 
+    static constexpr bool HasOpsLimit = 
+        (ConnectOpsLimit > 0U) && 
+        (KeepAliveOpsLimit > 0U) &&
+        (DisconnectOpsLimit > 0U) &&
+        (SubscribeOpsLimit > 0U) &&
+        (UnsubscribeOpsLimit > 0U) &&
+        (RecvOpsLimit > 0U) &&
+        (SendOpsLimit > 0U) &&
+        (ReauthOpsLimit > 0U);    
+
+    static constexpr unsigned MaxTimersLimit = 
         (ClientTimersLimit * ClientTimers) +
         (ConnectOpsLimit * ConnectOpTimers) + 
         (KeepAliveOpsLimit * KeepAliveOpTimers) + 
@@ -43,7 +53,9 @@ struct ExtConfig : public Config
         (SendOpsLimit * SendOpTimers) +
         (ReauthOpsLimit * ReauthOpTimers);
 
-    static const unsigned OpsLimit = 
+    static constexpr unsigned TimersLimit = HasOpsLimit ? MaxTimersLimit : 0U;
+
+    static const unsigned MaxOpsLimit = 
         ConnectOpsLimit + 
         KeepAliveOpsLimit + 
         DisconnectOpsLimit + 
@@ -52,6 +64,8 @@ struct ExtConfig : public Config
         RecvOpsLimit + 
         SendOpsLimit + 
         ReauthOpsLimit;
+
+    static const unsigned OpsLimit = HasOpsLimit ? MaxOpsLimit : 0U;
 
     static const unsigned PacketIdsLimitSumTmp = 
         SubscribeOpsLimit + 

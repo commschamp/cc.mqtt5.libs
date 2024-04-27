@@ -195,7 +195,7 @@ void cc_mqtt5_##NAME##client_connect_init_config_basic(CC_Mqtt5ConnectBasicConfi
 /// @ingroup connect
 void cc_mqtt5_##NAME##client_connect_init_config_will(CC_Mqtt5ConnectWillConfig* config);
 
-/// @brief Intialize the @ref CC_Mqtt5ConnectWillConfig configuration structure.
+/// @brief Intialize the @ref CC_Mqtt5ConnectExtraConfig configuration structure.
 /// @param[out] config Configuration structure. Must not be NULL.
 /// @ingroup connect
 void cc_mqtt5_##NAME##client_connect_init_config_extra(CC_Mqtt5ConnectExtraConfig* config);
@@ -730,27 +730,14 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle han
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle);
 
 /// @brief Check whether the "publish" operation was actually initiated (PUBLISH was sent)
-/// @details In case the the amount of outgoing publish messages exceeds the "Receive Maximum" limit
-///     set by the broker, the requested "publish" operation can be paused. This API 
+/// @details In case the amount of outgoing publish messages exceeds the "Receive Maximum" limit
+///     set by the broker, or due to message ordering configuration, 
+///     the requested "publish" operation can be paused. This API 
 ///     call checks whether the @b PUBLISH message was already sent to the broker.
 /// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
 /// @return @b true in case @b PUBLISH message has already been sent.
 /// @ingroup publish
 bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle);
-
-/// @brief Configure whether sending the prepared @b PUBLISH message can be sent out-of-order.
-/// @details Applicable only to the "publish" operations with QoS0.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
-/// @param[in] allowed Out-of-order allowed value 
-/// @return Result code of the call.
-/// @ingroup publish
-CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_out_of_order_allowed(CC_Mqtt5PublishHandle handle, bool allowed);
-
-/// @brief Get current configuration whether the sending the @b PUBLISH message out of order is allowed.
-/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
-/// @return @b true in case out of order send is allowed, @b false otherwise
-/// @ingroup publish
-bool cc_mqtt5_##NAME##client_publish_get_out_of_order_allowed(CC_Mqtt5PublishHandle handle);
 
 /// @brief Prepare, configure, and send "publish" request in one go (simple version) 
 /// @details Abstracts away sequence of the following functions invocation:
@@ -792,6 +779,22 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
     const CC_Mqtt5PublishExtraConfig* extraConfig,
     CC_Mqtt5PublishCompleteCb cb, 
     void* cbData);
+
+/// @brief Configure the ordering of the published messages.
+/// @details The ordering configuration is expected to be performed before any 
+///     "publish" operation is issued. The configuration is persistent between
+///      re-connects.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
+/// @param[in] ordering Ordering configuration.
+/// @return Result code of the call.
+/// @ingroup publish
+CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_ordering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering);    
+
+/// @brief Retrieve the configured the publish operations ordering.
+/// @param[in] handle Handle returned by @ref cc_mqtt5_##NAME##client_publish_prepare() function.
+/// @return Current ordering configuraiton.
+/// @ingroup publish
+CC_Mqtt5PublishOrdering cc_mqtt5_##NAME##client_publish_get_ordering(CC_Mqtt5ClientHandle handle);    
 
 /// @brief Prepare "reauth" operation.
 /// @details For successful operation the client needs to be in the "connected" state and 

@@ -76,7 +76,7 @@ protected:
 private:
     void integrationTestDoReadInternal();
     void integrationTestDoTestTimeoutInternal();
-    void integrationTestBrokerDisconnectedInternal(const CC_Mqtt5DisconnectInfo* info);    
+    void integrationTestBrokerDisconnectedInternal(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);    
     void integrationTestMessageReceivedInternal(const CC_Mqtt5MessageInfo* info);
     void integrationTestConnectCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     void integrationTestSubscribeCompleteInternal(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
@@ -85,7 +85,7 @@ private:
     static void integrationTestTickProgramCb(void* data, unsigned ms);
     static unsigned integrationTestCancelTickWaitCb(void* data);
     static void integrationTestSendDataCb(void* data, const unsigned char* buf, unsigned bufLen);
-    static void integrationTestBrokerDisconnectedCb(void* data, const CC_Mqtt5DisconnectInfo* info);
+    static void integrationTestBrokerDisconnectedCb(void* data, CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     static void integrationTestMessageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info);
     static void integrationTestConnectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     static void integrationTestSubscribeCompleteCb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);

@@ -86,10 +86,10 @@ const UnitTestQos0Base::LibFuncs& UnitTestQos0Base::getFuncs()
     funcs.m_publish_send = &cc_mqtt5_qos0_client_publish_send;
     funcs.m_publish_cancel = &cc_mqtt5_qos0_client_publish_cancel;    
     funcs.m_publish_was_initiated = &cc_mqtt5_qos0_client_publish_was_initiated;    
-    funcs.m_publish_set_out_of_order_allowed = &cc_mqtt5_qos0_client_publish_set_out_of_order_allowed;    
-    funcs.m_publish_get_out_of_order_allowed = &cc_mqtt5_qos0_client_publish_get_out_of_order_allowed;    
     funcs.m_publish_simple = &cc_mqtt5_qos0_client_publish_simple;    
-    funcs.m_publish_full = &cc_mqtt5_qos0_client_publish_full;      
+    funcs.m_publish_full = &cc_mqtt5_qos0_client_publish_full; 
+    funcs.m_publish_set_ordering = &cc_mqtt5_qos0_client_publish_set_ordering;
+    funcs.m_publish_get_ordering = &cc_mqtt5_qos0_client_publish_get_ordering;         
     funcs.m_reauth_prepare = &cc_mqtt5_qos0_client_reauth_prepare;    
     funcs.m_reauth_init_config_auth = &cc_mqtt5_qos0_client_reauth_init_config_auth;
     funcs.m_reauth_set_response_timeout = &cc_mqtt5_qos0_client_reauth_set_response_timeout;

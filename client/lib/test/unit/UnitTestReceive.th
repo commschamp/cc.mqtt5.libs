@@ -33,6 +33,8 @@ public:
     void test24();
     void test25();
     void test26();
+    void test27();
+    void test28();
 
 private:
     virtual void setUp() override
@@ -1858,4 +1860,86 @@ void UnitTestReceive::test26()
     TS_ASSERT_EQUALS(msgInfo.m_data, Data);
     unitTestPopReceivedMessageInfo();
     TS_ASSERT(!unitTestHasMessageRecieved());
+}
+
+void UnitTestReceive::test27()
+{
+    // Receiving message together with PINGRESP
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(apiIsConnected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    unitTestTick(client); 
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);    
+
+    unitTestTick(client, 100);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;    
+    unitTestReceiveMessage(client, publishMsg, false);
+
+    UnitTestPingrespMsg pingrespMsg;
+    unitTestReceiveMessage(client, pingrespMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();
+
+    unitTestTick(client); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);    
+}
+
+void UnitTestReceive::test28()
+{
+    // Receiving message together with PINGRESP
+    auto clientPtr = apiAllocClient();
+    auto* client = clientPtr.get();
+
+    unitTestPerformBasicConnect(client, __FUNCTION__);
+    TS_ASSERT(apiIsConnected(client));
+
+    unitTestPerformBasicSubscribe(client, "#");
+
+    unitTestTick(client); 
+    auto sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);    
+
+    unitTestTick(client, 100);
+
+    const std::string Topic = "some/topic";
+    const UnitTestData Data = {'h', 'e', 'l', 'l', 'o'};
+
+    UnitTestPingrespMsg pingrespMsg;
+    unitTestReceiveMessage(client, pingrespMsg, false);    
+
+    UnitTestPublishMsg publishMsg;
+    publishMsg.field_topic().value() = Topic;
+    publishMsg.field_payload().value() = Data;    
+    unitTestReceiveMessage(client, publishMsg);
+
+    TS_ASSERT(unitTestHasMessageRecieved());
+    auto& msgInfo = unitTestReceivedMessageInfo();
+    TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
+    TS_ASSERT_EQUALS(msgInfo.m_data, Data);
+    unitTestPopReceivedMessageInfo();
+
+    unitTestTick(client); 
+    sentMsg = unitTestGetSentMessage();
+    TS_ASSERT(sentMsg);
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);    
 }

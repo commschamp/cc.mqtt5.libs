@@ -21,7 +21,6 @@ public:
     {
         CC_Mqtt5ClientHandle (*m_alloc)() = nullptr;
         void (*m_free)(CC_Mqtt5ClientHandle) = nullptr;
-        CC_Mqtt5ErrorCode (*m_init)(CC_Mqtt5ClientHandle) = nullptr;
         void (*m_tick)(CC_Mqtt5ClientHandle, unsigned) = nullptr;
         unsigned (*m_process_data)(CC_Mqtt5ClientHandle, const unsigned char*, unsigned) = nullptr;
         void (*m_notify_network_disconnected)(CC_Mqtt5ClientHandle) = nullptr;

@@ -550,7 +550,7 @@
 /// called before the @b cc_mqtt5_client_connect_cancel(), the operation is
 /// cancelled @b without callback invocation.
 ///
-/// @subsection doc_cc_mqtt5_client_connect_simplify Simplifying the "Connect" Operation Preparation.
+/// @subsection doc_cc_mqtt5_client_connect_simplify Simplifying the "Connect" Operation Preparation
 /// In many use cases the "connect" operation can be quite simple with a lot of defaults.
 /// To simplify the sequence of the operation preparation and handling of errors,
 /// the library provides several wrapper functions that can be used:

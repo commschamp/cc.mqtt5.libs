@@ -17,15 +17,15 @@ extern "C" {
 
 /// @brief Major verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MAJOR_VERSION 0U
+#define CC_MQTT5_CLIENT_MAJOR_VERSION 1U
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 5U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 0U
 
 /// @brief Patch level of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_PATCH_VERSION 1U
+#define CC_MQTT5_CLIENT_PATCH_VERSION 0U
 
 /// @brief Macro to create numeric version as single unsigned number
 /// @ingroup global

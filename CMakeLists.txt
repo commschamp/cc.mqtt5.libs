@@ -17,6 +17,7 @@ option (BUILD_SHARED_LIBS "Build as shared library" OFF)
 
 # Extra Configuration Variables
 # CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES - List of custom client configuration files
+# CC_MQTT5_CCACHE_EXECUTABLE - Custom ccache executable
 
 # Other variables
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")

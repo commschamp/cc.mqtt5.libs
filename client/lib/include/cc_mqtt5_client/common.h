@@ -12,16 +12,17 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else // #ifdef __cplusplus      
 #include <stdbool.h>
 #endif // #ifdef __cplusplus
 
 /// @brief Major verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MAJOR_VERSION 0U
+#define CC_MQTT5_CLIENT_MAJOR_VERSION 1U
 
 /// @brief Minor verion of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_MINOR_VERSION 5U
+#define CC_MQTT5_CLIENT_MINOR_VERSION 0U
 
 /// @brief Patch level of the library
 /// @ingroup global
@@ -215,7 +216,7 @@ struct CC_Mqtt5Client;
 /// @brief Handle used to access client specific data structures.
 /// @details Returned by cc_mqtt5_client_alloc() function.
 /// @ingroup client
-typedef CC_Mqtt5Client* CC_Mqtt5ClientHandle;
+typedef struct CC_Mqtt5Client* CC_Mqtt5ClientHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ConnectHandle
 /// @ingroup connect
@@ -224,7 +225,7 @@ struct CC_Mqtt5Connect;
 /// @brief Handle for "connect" operation.
 /// @details Returned by cc_mqtt5_client_connect_prepare() function.
 /// @ingroup connect
-typedef CC_Mqtt5Connect* CC_Mqtt5ConnectHandle;
+typedef struct CC_Mqtt5Connect* CC_Mqtt5ConnectHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5DisconnectHandle
 /// @ingroup disconnect
@@ -233,7 +234,7 @@ struct CC_Mqtt5Disconnect;
 /// @brief Handle for "disconnect" operation.
 /// @details Returned by cc_mqtt5_client_disconnect_prepare() function.
 /// @ingroup disconnect
-typedef CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
+typedef struct CC_Mqtt5Disconnect* CC_Mqtt5DisconnectHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5SubscribeHandle
 /// @ingroup subscribe
@@ -242,7 +243,7 @@ struct CC_Mqtt5Subscribe;
 /// @brief Handle for "subscribe" operation.
 /// @details Returned by cc_mqtt5_client_subscribe_prepare() function.
 /// @ingroup subscribe
-typedef CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
+typedef struct CC_Mqtt5Subscribe* CC_Mqtt5SubscribeHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5UnsubscribeHandle
 /// @ingroup unsubscribe
@@ -251,7 +252,7 @@ struct CC_Mqtt5Unsubscribe;
 /// @brief Handle for "unsubscribe" operation.
 /// @details Returned by cc_mqtt5_client_unsubscribe_prepare() function.
 /// @ingroup unsubscribe
-typedef CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
+typedef struct CC_Mqtt5Unsubscribe* CC_Mqtt5UnsubscribeHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5PublishHandle
 /// @ingroup publish
@@ -260,7 +261,7 @@ struct CC_Mqtt5Publish;
 /// @brief Handle for "publish" operation.
 /// @details Returned by cc_mqtt5_client_publish_prepare() function.
 /// @ingroup publish
-typedef CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
+typedef struct CC_Mqtt5Publish* CC_Mqtt5PublishHandle;
 
 /// @brief Declaration of the hidden structure used to define @ref CC_Mqtt5ReauthHandle
 /// @ingroup reauth
@@ -269,7 +270,7 @@ struct CC_Mqtt5Reauth;
 /// @brief Handle for "reauth" operation.
 /// @details Returned by cc_mqtt5_client_reauth_prepare() function.
 /// @ingroup reauth
-typedef CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
+typedef struct CC_Mqtt5Reauth* CC_Mqtt5ReauthHandle;
 
 /// @brief Wraping structre of the single "User Property".
 /// @see @b cc_mqtt5_client_init_user_prop()

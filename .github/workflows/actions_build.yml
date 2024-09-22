@@ -69,6 +69,70 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: ctest -V
+
+  build_gcc_ubuntu_24_04:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [Debug, Release, MinSizeRel]
+        cc_ver: [13, 14]
+        cpp: [17, 20, 23]
+        exclude:
+          - cc_ver: 13
+            cpp: 23          
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Prepare Install
+      run: sudo apt-get update --fix-missing    
+      
+    - name: Install Packages
+      run: sudo apt install libboost-all-dev mosquitto gcc-${{matrix.cc_ver}} g++-${{matrix.cc_ver}}
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build      
+
+    - name: Prepare externals
+      shell: bash
+      run: $GITHUB_WORKSPACE/script/prepare_externals.sh
+      env:
+        BUILD_DIR: ${{runner.workspace}}/build
+        CC: gcc-${{matrix.cc_ver}}
+        CXX: g++-${{matrix.cc_ver}}
+        EXTERNALS_DIR: ${{runner.workspace}}/externals
+        COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
+        COMMON_BUILD_TYPE: ${{matrix.type}}
+        COMMON_CXX_STANDARD: ${{matrix.cpp}}
+        COMMS_TAG: ${{env.COMMS_TAG}}
+        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
+          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
+          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
+      env:
+        CC: gcc-${{matrix.cc_ver}}
+        CXX: g++-${{matrix.cc_ver}}
+
+    - name: Build Target 
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: cmake --build . --config ${{matrix.type}} --target install
+      env:
+        VERBOSE: 1
+
+    - name: Testing
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: ctest -V
       
 
   build_clang_ubuntu_22_04:
@@ -87,6 +151,70 @@ jobs:
           - cc_ver: 14
             cpp: 20  
 
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Prepare Install
+      run: sudo apt-get update --fix-missing    
+      
+    - name: Install Packages
+      run: sudo apt install libboost-all-dev mosquitto clang-${{matrix.cc_ver}}
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build      
+
+    - name: Prepare externals
+      shell: bash
+      run: $GITHUB_WORKSPACE/script/prepare_externals.sh
+      env:
+        BUILD_DIR: ${{runner.workspace}}/build
+        CC: clang-${{matrix.cc_ver}}
+        CXX: clang++-${{matrix.cc_ver}}
+        EXTERNALS_DIR: ${{runner.workspace}}/externals
+        COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
+        COMMON_BUILD_TYPE: ${{matrix.type}}
+        COMMON_CXX_STANDARD: ${{matrix.cpp}}
+        COMMS_TAG: ${{env.COMMS_TAG}}
+        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
+          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
+          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
+      env:
+        CC: clang-${{matrix.cc_ver}}
+        CXX: clang++-${{matrix.cc_ver}}
+
+    - name: Build Target 
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: cmake --build . --config ${{matrix.type}} --target install
+      env:
+        VERBOSE: 1 
+    - name: Testing
+      working-directory: ${{runner.workspace}}/build
+      shell: bash
+      run: ctest -V
+
+  build_clang_ubuntu_24_04:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cc_ver: [16, 17, 18]
+        cpp: [17, 20, 23]
+        exclude:
+          - cc_ver: 16
+            cpp: 23
+          - cc_ver: 17
+            cpp: 23  
 
     steps:
     - uses: actions/checkout@v4

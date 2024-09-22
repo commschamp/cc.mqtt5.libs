@@ -215,6 +215,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        type: [Debug, Release, MinSizeRel]
         cc_ver: [16, 17, 18]
         cpp: [17, 20, 23]
         sanitize: [ON, OFF]

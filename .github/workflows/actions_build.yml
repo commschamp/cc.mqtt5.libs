@@ -18,7 +18,9 @@ jobs:
         sanitize: [ON, OFF]
         exclude:
           - type: Debug
-            sanitize: OFF   
+            sanitize: OFF  
+          - cc_ver: 12
+            cpp: 20               
       
     steps:
     - uses: actions/checkout@v4

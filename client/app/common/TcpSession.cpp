@@ -82,6 +82,7 @@ void TcpSession::doRead()
             auto buf = &m_inData[0];
             auto bufLen = bytesCount;
             if (!m_buf.empty()) {
+                m_buf.reserve(m_buf.size() + bytesCount);
                 m_buf.insert(m_buf.end(), m_inData.begin(), m_inData.begin() + bytesCount);
                 buf = &m_buf[0];
                 bufLen = m_buf.size();
@@ -101,6 +102,7 @@ void TcpSession::doRead()
                 }
 
                 assert(buf == &m_inData[0]);
+                m_buf.reserve(m_buf.size() + (bytesCount - consumed));
                 m_buf.insert(m_buf.end(), m_inData.begin() + consumed, m_inData.begin() + bytesCount);
             } while (false);
 

@@ -31,7 +31,8 @@ macro (cc_mqtt5_compile)
         )
     endif ()
 
-    if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND ("${CMAKE_CXX_STANDARD}" STREQUAL "20"))
+    if (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND 
+        ("${CMAKE_CXX_STANDARD}" GREATER_EQUAL "20"))
         list (APPEND extra_flags_list
             "-Wno-tautological-constant-out-of-range-compare"
         )

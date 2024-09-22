@@ -15,9 +15,11 @@ jobs:
         type: [Debug, Release, MinSizeRel]
         cpp: [17, 20]
         cc_ver: [9, 10, 11, 12]
+        sanitize: [ON, OFF]
         exclude:
-          - cc_ver: 12
-            cpp: 20        
+          - type: Debug
+            sanitize: OFF   
+      
     steps:
     - uses: actions/checkout@v4
 
@@ -50,7 +52,7 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=${{matrix.sanitize}} \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
@@ -78,7 +80,10 @@ jobs:
         type: [Debug, Release, MinSizeRel]
         cc_ver: [13, 14]
         cpp: [17, 20, 23]
+        sanitize: [ON, OFF]
         exclude:
+          - type: Debug
+            sanitize: OFF  
           - cc_ver: 13
             cpp: 23          
 
@@ -114,7 +119,7 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=${{matrix.sanitize}} \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
@@ -143,14 +148,16 @@ jobs:
         type: [Debug, Release, MinSizeRel]
         cc_ver: [12, 13, 14, 15]
         cpp: [17, 20]
+        sanitize: [ON, OFF]
         exclude:
+          - type: Debug
+            sanitize: OFF         
           - cc_ver: 12
             cpp: 20
           - cc_ver: 13
             cpp: 20        
           - cc_ver: 14
             cpp: 20  
-
 
     steps:
     - uses: actions/checkout@v4
@@ -184,7 +191,7 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=${{matrix.sanitize}} \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
@@ -210,7 +217,10 @@ jobs:
       matrix:
         cc_ver: [16, 17, 18]
         cpp: [17, 20, 23]
+        sanitize: [ON, OFF]
         exclude:
+          - type: Debug
+            sanitize: OFF 
           - cc_ver: 16
             cpp: 23
           - cc_ver: 17
@@ -248,7 +258,7 @@ jobs:
       run: |
         cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
           -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=ON \
+          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=${{matrix.sanitize}} \
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
           -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 

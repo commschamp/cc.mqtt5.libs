@@ -344,6 +344,7 @@ void IntegrationTestCommonBase::integrationTestDoReadInternal()
             auto bufLen = static_cast<unsigned>(bytesCount);
             bool useVector = !m_inData.empty();
             if (useVector) {
+                m_inData.reserve(m_inData.size() + bufLen);
                 m_inData.insert(m_inData.end(), buf, buf + bufLen);
                 buf = &m_inData[0];
                 bufLen = static_cast<decltype(bufLen)>(m_inData.size());

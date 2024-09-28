@@ -136,6 +136,7 @@ public:
             auto dataLen = static_cast<std::size_t>(len);
             bool hasPrevData = false;
             if (!m_inData.empty()) {
+                m_inData.reserve(m_inData.size() + dataLen);
                 m_inData.insert(m_inData.end(), dataPtr, dataPtr + dataLen);
                 static const auto MaxLen = std::numeric_limits<unsigned>::max();
 
@@ -590,6 +591,7 @@ private:
         m_generator->setDataReportCb(
             [this](const std::uint8_t* buf, std::size_t bufLen)
             {
+                m_inData.reserve(m_inData.size() + bufLen);
                 m_inData.insert(m_inData.end(), buf, buf + bufLen);
                 infoLog() << "Appended " << bufLen << " bytes to buffer, totaling " << m_inData.size() << " bytes\n";
             });

@@ -3,8 +3,8 @@ name: Github Actions Build
 on: [push]
 
 env:
-  COMMS_TAG: develop
-  CC_MQTT5_TAG: develop
+  COMMS_TAG: v5.2.7
+  CC_MQTT5_TAG: v2.9
 
 jobs:
   build_gcc_ubuntu_22_04:

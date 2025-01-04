@@ -304,7 +304,7 @@ jobs:
       if: matrix.arch == 'x64'
       shell: cmd
       run: |
-        choco install boost-msvc-14.2 --version=1.85.0 --ignore-checksums
+        choco install boost-msvc-14.2 --version=1.85.0
 
     - name: Prepare externals
       shell: cmd
@@ -363,7 +363,7 @@ jobs:
       if: matrix.arch == 'x64'
       shell: cmd
       run: |
-        choco install boost-msvc-14.3 --version=1.85.0 --ignore-checksums
+        choco install boost-msvc-14.3 --version=1.85.0
 
     - name: Prepare externals
       shell: cmd

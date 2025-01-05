@@ -11,13 +11,13 @@
 
 #include "comms/util/ScopeGuard.h"
 
-struct CC_Mqtt5Client {};
-struct CC_Mqtt5Connect {};
-struct CC_Mqtt5Disconnect {};
-struct CC_Mqtt5Subscribe {};
-struct CC_Mqtt5Unsubscribe {};
-struct CC_Mqtt5Publish {};
-struct CC_Mqtt5Reauth {};
+struct alignas(alignof(cc_mqtt5_client::ClientImpl)) CC_Mqtt5Client {};
+struct alignas(alignof(cc_mqtt5_client::op::ConnectOp)) CC_Mqtt5Connect {};
+struct alignas(alignof(cc_mqtt5_client::op::DisconnectOp)) CC_Mqtt5Disconnect {};
+struct alignas(alignof(cc_mqtt5_client::op::SubscribeOp)) CC_Mqtt5Subscribe {};
+struct alignas(alignof(cc_mqtt5_client::op::UnsubscribeOp)) CC_Mqtt5Unsubscribe {};
+struct alignas(alignof(cc_mqtt5_client::op::SendOp)) CC_Mqtt5Publish {};
+struct alignas(alignof(cc_mqtt5_client::op::ReauthOp)) CC_Mqtt5Reauth {};
 
 namespace
 {

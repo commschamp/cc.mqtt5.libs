@@ -47,7 +47,7 @@ to parse the command line arguments and
 the events loop and manage network connection(s)).
 
 # How to Build
-This project has several external dependencies. It is highly recommended to use
+This project has several external dependencies. It is highly recommended to use the
 [cc.cmake](https://github.com/commschamp/cc.cmake) project to bring in all the
 necessary components of the [CommsChampion Ecosystem](https://commschamp.github.io)
 (including this one as well) into a third party project.

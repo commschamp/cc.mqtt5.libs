@@ -8,8 +8,10 @@ on:
       - '**'
 
 env:
-  COMMS_TAG: v5.2.7
-  CC_MQTT5_TAG: v2.9
+  COMMS_TAG: v5.3
+  CC_MQTT5_TAG: v3.0
+  WIN_BOOST_VERSION: "1.87.0"
+  WIN_BOOST_DIR: "C:/local/boost_1_87_0"
 
 jobs:
   build_gcc_ubuntu_22_04:
@@ -304,7 +306,8 @@ jobs:
       if: matrix.arch == 'x64'
       shell: cmd
       run: |
-        choco install boost-msvc-14.2 --version=1.85.0
+        choco install boost-msvc-14.2 --version=${{env.WIN_BOOST_VERSION}}      
+        echo BOOST_DIR=${{env.WIN_BOOST_DIR}}/lib64-msvc-14.2/cmake >>%GITHUB_ENV%         
 
     - name: Prepare externals
       shell: cmd
@@ -325,8 +328,8 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
         cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
-          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
-          -DCMAKE_POLICY_DEFAULT_CMP0167=OLD -DBoost_USE_STATIC_LIBS=ON ^
+          -DCMAKE_PREFIX_PATH="${{runner.workspace}}/build/install;%BOOST_DIR%" -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
+          -DCMAKE_POLICY_DEFAULT_CMP0167=NEW ^
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
           -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
@@ -363,7 +366,8 @@ jobs:
       if: matrix.arch == 'x64'
       shell: cmd
       run: |
-        choco install boost-msvc-14.3 --version=1.85.0
+        choco install boost-msvc-14.3 --version=${{env.WIN_BOOST_VERSION}}      
+        echo BOOST_DIR=${{env.WIN_BOOST_DIR}}/lib64-msvc-14.3/cmake >>%GITHUB_ENV%
 
     - name: Prepare externals
       shell: cmd
@@ -384,8 +388,8 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
         cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
-          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
-          -DCMAKE_POLICY_DEFAULT_CMP0167=OLD -DBoost_USE_STATIC_LIBS=ON ^
+          -DCMAKE_PREFIX_PATH="${{runner.workspace}}/build/install;%BOOST_DIR%" -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
+          -DCMAKE_POLICY_DEFAULT_CMP0167=NEW ^
           -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
           -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
           -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}

@@ -81,6 +81,22 @@ void ProgramOptions::addNetwork(std::uint16_t port)
     m_desc.add(opts);
 }
 
+void ProgramOptions::addTls()
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+    po::options_description opts("TLS Options");
+    opts.add_options()
+        ("tls", "Enable TLS encryption")
+        ("tls-ca", po::value<std::string>()->default_value(std::string()), "Path to the CA certificate(s) file (PEM)")
+        ("tls-key", po::value<std::string>()->default_value(std::string()), "Path to the private key file (PEM)")
+        ("tls-key-pass", po::value<std::string>()->default_value(std::string()), "Private key password")
+        ("tls-cert", po::value<std::string>()->default_value(std::string()), "Path to the certificate file (PEM)")
+    ;    
+
+    m_desc.add(opts);
+#endif     
+}
+
 void ProgramOptions::addPublish()
 {
     po::options_description opts("Publish Options");
@@ -143,8 +159,68 @@ bool ProgramOptions::verbose() const
 
 ProgramOptions::ConnectionType ProgramOptions::connectionType() const
 {
-    // Hardcoded for now
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+    if (isTls()) {
+        return ConnectionType_Tls;
+    }
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+
     return ConnectionType_Tcp;
+}
+
+std::string ProgramOptions::networkAddress() const
+{
+    return m_vm["broker"].as<std::string>();
+}
+
+std::uint16_t ProgramOptions::networkPort() const
+{
+    return m_vm["port"].as<std::uint16_t>();
+}
+
+bool ProgramOptions::isTls() const
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+    return m_vm.count("tls") > 0U;
+#else
+    return false;
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL        
+}
+
+std::string ProgramOptions::tlsCa() const
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return m_vm["tls-ca"].as<std::string>();
+#else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return std::string();
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+}
+
+std::string ProgramOptions::tlsPrivateKey() const
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return m_vm["tls-key"].as<std::string>();
+#else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return std::string();
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+}
+
+std::string ProgramOptions::tlsPrivateKeyPass() const
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return m_vm["tls-key-pass"].as<std::string>();
+#else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return std::string();
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+}
+
+std::string ProgramOptions::tlsCert() const
+{
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return m_vm["tls-cert"].as<std::string>();
+#else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+    return std::string();
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
 }
 
 std::string ProgramOptions::clientId() const
@@ -255,16 +331,6 @@ unsigned ProgramOptions::willMessageFormat() const
 ProgramOptions::StringsList ProgramOptions::willUserProps() const
 {
     return stringListOpts("will-user-prop");
-}
-
-std::string ProgramOptions::networkAddress() const
-{
-    return m_vm["broker"].as<std::string>();
-}
-
-std::uint16_t ProgramOptions::networkPort() const
-{
-    return m_vm["port"].as<std::uint16_t>();
 }
 
 std::string ProgramOptions::pubTopic() const

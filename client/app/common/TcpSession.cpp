@@ -74,7 +74,7 @@ void TcpSession::doRead()
             }
 
             if (ec) {
-                logError() << "Failed to read data: " << ec.message();
+                logError() << "Failed to read data: " << ec.message() << std::endl;
                 reportNetworkDisconnected();
                 return;
             }

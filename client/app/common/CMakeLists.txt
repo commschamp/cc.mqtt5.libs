@@ -1,5 +1,4 @@
-find_package (OpenSSL QUIET)
-if (TARGET OpenSSL::SSL)
+if (CC_MQTT5_CLIENT_APPS_WITH_OPENSSL)
     find_package (OpenSSL REQUIRED)
 endif ()
 

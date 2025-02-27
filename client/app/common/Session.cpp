@@ -8,6 +8,7 @@
 #include "Session.h"
 
 #include "TcpSession.h"
+#include "TlsSession.h"
 
 #include <iostream>
 #include <type_traits>
@@ -19,7 +20,12 @@ Session::Ptr Session::create(boost::asio::io_context& io, const ProgramOptions& 
 {
     using CreateFunc = Ptr (*)(boost::asio::io_context&, const ProgramOptions&);
     static const CreateFunc Map[] = {
-        /* ConnectionType_Tcp */ &TcpSession::create
+        /* ConnectionType_Tcp */ &TcpSession::create,
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+        /* ConnectionType_Tls */ &TlsSession::create,
+#else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
+        /* ConnectionType_Tls */ nullptr,
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL       
     };
     static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == ProgramOptions::ConnectionType_ValuesLimit);
@@ -30,6 +36,9 @@ Session::Ptr Session::create(boost::asio::io_context& io, const ProgramOptions& 
     }
 
     auto func = Map[idx];
+    if (func == nullptr) {
+        return Ptr();
+    }
     return func(io, opts);
 }
 

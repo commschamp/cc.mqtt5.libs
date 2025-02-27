@@ -28,6 +28,7 @@ Pub::Pub(boost::asio::io_context& io, int& result) :
 {
     opts().addCommon();
     opts().addNetwork();
+    opts().addTls();
     opts().addConnect();
     opts().addPublish();
 }    

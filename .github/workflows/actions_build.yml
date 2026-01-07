@@ -12,90 +12,31 @@ env:
   CC_MQTT5_TAG: v3.0.3
   WIN_BOOST_VERSION: "1.87.0"
   WIN_BOOST_DIR: "C:/local/boost_1_87_0"
-  WIN_OPENSSL_VERSION: "3.4.1"  
+  WIN_OPENSSL_VERSION: "3.6.0"
 
 jobs:
-  build_gcc_ubuntu_22_04:
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [Debug, Release, MinSizeRel]
-        cpp: [17, 20]
-        cc_ver: [9, 10, 11, 12]
-        sanitize: [ON, OFF]
-        exclude:
-          - type: Debug
-            sanitize: OFF  
-          - cc_ver: 12
-            cpp: 20               
-      
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Prepare Install
-      run: sudo apt-get update --fix-missing    
-      
-    - name: Install Packages
-      run: sudo apt install libboost-all-dev libssl-dev mosquitto gcc-${{matrix.cc_ver}} g++-${{matrix.cc_ver}}
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build      
-
-    - name: Prepare externals
-      shell: bash
-      run: $GITHUB_WORKSPACE/script/prepare_externals.sh
-      env:
-        BUILD_DIR: ${{runner.workspace}}/build
-        CC: gcc-${{matrix.cc_ver}}
-        CXX: g++-${{matrix.cc_ver}}
-        EXTERNALS_DIR: ${{runner.workspace}}/externals
-        COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
-        COMMON_BUILD_TYPE: ${{matrix.type}}
-        COMMON_CXX_STANDARD: ${{matrix.cpp}}
-        COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
-
-    - name: Configure CMake
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: |
-        cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install \
-          -DCMAKE_PREFIX_PATH=${{runner.workspace}}/build/install -DCMAKE_CXX_STANDARD=${{matrix.cpp}} \
-          -DCC_MQTT5_WITH_DEFAULT_SANITIZERS=${{matrix.sanitize}} \
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON -DCC_MQTT5_BUILD_INTEGRATION_TESTS=ON \
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="$GITHUB_WORKSPACE/client/lib/script/BareMetalTestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos0TestConfig.cmake;$GITHUB_WORKSPACE/client/lib/script/Qos1TestConfig.cmake" \
-          -DCC_MQTT5_CLIENT_AFL_FUZZ=ON 
-      env:
-        CC: gcc-${{matrix.cc_ver}}
-        CXX: g++-${{matrix.cc_ver}}
-
-    - name: Build Target 
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      run: cmake --build . --config ${{matrix.type}} --target install
-      env:
-        VERBOSE: 1
-
-    - name: Testing
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      run: ctest -V
-
   build_gcc_ubuntu_24_04:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         type: [Debug, Release, MinSizeRel]
-        cc_ver: [13, 14]
-        cpp: [17, 20, 23]
+        cc_ver: [9, 10, 11, 12, 13, 14]
+        cpp: [17, 20, 23]        
         sanitize: [ON, OFF]
         exclude:
           - type: Debug
             sanitize: OFF  
+          - cc_ver: 9
+            cpp: 23    
+          - cc_ver: 10
+            cpp: 23   
+          - cc_ver: 11
+            cpp: 23   
+          - cc_ver: 12
+            cpp: 23                             
           - cc_ver: 13
-            cpp: 23          
+            cpp: 23         
 
     steps:
     - uses: actions/checkout@v4
@@ -156,18 +97,12 @@ jobs:
       fail-fast: false
       matrix:
         type: [Debug, Release, MinSizeRel]
-        cc_ver: [12, 13, 14, 15]
-        cpp: [17, 20]
+        cc_ver: [12, 13]
+        cpp: [17]
         sanitize: [ON, OFF]
         exclude:
           - type: Debug
             sanitize: OFF         
-          - cc_ver: 12
-            cpp: 20
-          - cc_ver: 13
-            cpp: 20        
-          - cc_ver: 14
-            cpp: 20  
 
     steps:
     - uses: actions/checkout@v4
@@ -226,12 +161,20 @@ jobs:
       fail-fast: false
       matrix:
         type: [Debug, Release, MinSizeRel]
-        cc_ver: [16, 17, 18]
+        cc_ver: [14, 15, 16, 17, 18, 19]
         cpp: [17, 20, 23]
         sanitize: [ON, OFF]
         exclude:
           - type: Debug
             sanitize: OFF 
+          - cc_ver: 14
+            cpp: 20  
+          - cc_ver: 14
+            cpp: 23   
+          - cc_ver: 15
+            cpp: 20              
+          - cc_ver: 15
+            cpp: 23 
           - cc_ver: 16
             cpp: 23
           - cc_ver: 17
@@ -286,72 +229,6 @@ jobs:
     - name: Testing
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      run: ctest -V
-
-  build_msvc_2019:
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [Debug, Release]
-        arch: [Win32, x64]
-        cpp: [17]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build   
-
-    - name: Install Boost
-      if: matrix.arch == 'x64'
-      shell: cmd
-      run: |
-        choco install boost-msvc-14.2 --version=${{env.WIN_BOOST_VERSION}}      
-        echo BOOST_DIR=${{env.WIN_BOOST_DIR}}/lib64-msvc-14.2/cmake >>%GITHUB_ENV%         
-
-    - name: Install OpenSSL
-      if: matrix.arch == 'x64'
-      shell: cmd
-      run: |
-        choco install openssl --version=${{env.WIN_OPENSSL_VERSION}}      
-
-    - name: Prepare externals
-      shell: cmd
-      run: |
-        %GITHUB_WORKSPACE%\script\prepare_externals.bat
-      env:
-        BUILD_DIR: ${{runner.workspace}}/build
-        PLATFORM: ${{matrix.arch}}
-        EXTERNALS_DIR: ${{runner.workspace}}/externals
-        COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
-        COMMON_BUILD_TYPE: ${{matrix.type}}
-        COMMON_CXX_STANDARD: ${{matrix.cpp}}
-        COMMS_TAG: ${{env.COMMS_TAG}}
-        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
-
-    - name: Configure CMake
-      shell: cmd
-      working-directory: ${{runner.workspace}}/build
-      run: |
-        cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
-          -DCMAKE_PREFIX_PATH="${{runner.workspace}}/build/install;%BOOST_DIR%" -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
-          -DCMAKE_POLICY_DEFAULT_CMP0167=NEW ^
-          -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
-          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
-          -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
-      env:
-        HAS_BOOST: "${{ matrix.arch == 'x64' && 'ON' || 'OFF' }}"
-
-    - name: Build Target 
-      working-directory: ${{runner.workspace}}/build
-      shell: cmd
-      run: cmake --build . --config ${{matrix.type}} --target install
-      env:
-        VERBOSE: 1 
-    - name: Testing
-      working-directory: ${{runner.workspace}}/build
-      shell: cmd
       run: ctest -V
 
   build_msvc_2022:
@@ -419,4 +296,70 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       shell: cmd
       run: ctest -V
+
+  build_msvc_2025:
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [Debug, Release]
+        arch: [Win32, x64]
+        cpp: [17, 20, 23]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build   
+
+    - name: Install Boost
+      if: matrix.arch == 'x64'
+      shell: cmd
+      run: |
+        choco install boost-msvc-14.3 --version=${{env.WIN_BOOST_VERSION}}      
+        echo BOOST_DIR=${{env.WIN_BOOST_DIR}}/lib64-msvc-14.3/cmake >>%GITHUB_ENV%
+
+    - name: Install OpenSSL
+      if: matrix.arch == 'x64'
+      shell: cmd
+      run: |
+        choco install openssl --version=${{env.WIN_OPENSSL_VERSION}}        
+
+    - name: Prepare externals
+      shell: cmd
+      run: |
+        %GITHUB_WORKSPACE%\script\prepare_externals.bat
+      env:
+        BUILD_DIR: ${{runner.workspace}}/build
+        PLATFORM: ${{matrix.arch}}
+        EXTERNALS_DIR: ${{runner.workspace}}/externals
+        COMMON_INSTALL_DIR: ${{runner.workspace}}/build/install
+        COMMON_BUILD_TYPE: ${{matrix.type}}
+        COMMON_CXX_STANDARD: ${{matrix.cpp}}
+        COMMS_TAG: ${{env.COMMS_TAG}}
+        CC_MQTT5_TAG: ${{env.CC_MQTT5_TAG}}
+
+    - name: Configure CMake
+      shell: cmd
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake %GITHUB_WORKSPACE% -A ${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{matrix.type}} -DCMAKE_INSTALL_PREFIX=install ^
+          -DCMAKE_PREFIX_PATH="${{runner.workspace}}/build/install;%BOOST_DIR%" -DCMAKE_CXX_STANDARD=${{matrix.cpp}} ^
+          -DCMAKE_POLICY_DEFAULT_CMP0167=NEW ^
+          -DCC_MQTT5_BUILD_UNIT_TESTS=ON ^
+          -DCC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES="%GITHUB_WORKSPACE%/client/lib/script/BareMetalTestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos0TestConfig.cmake;%GITHUB_WORKSPACE%/client/lib/script/Qos1TestConfig.cmake" ^
+          -DCC_MQTT5_CLIENT_APPS=${{env.HAS_BOOST}} -DCC_MQTT5_CLIENT_AFL_FUZZ=${{env.HAS_BOOST}}
+      env:
+        HAS_BOOST: "${{ matrix.arch == 'x64' && 'ON' || 'OFF' }}"
+
+    - name: Build Target 
+      working-directory: ${{runner.workspace}}/build
+      shell: cmd
+      run: cmake --build . --config ${{matrix.type}} --target install
+      env:
+        VERBOSE: 1 
+    - name: Testing
+      working-directory: ${{runner.workspace}}/build
+      shell: cmd
+      run: ctest -V      
 

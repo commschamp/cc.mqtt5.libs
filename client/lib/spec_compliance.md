@@ -19,7 +19,7 @@
     * Implemented by the protocol messages definition schema.
 - [MQTT-2.2.1-3]: Each time a Client sends a new SUBSCRIBE, UNSUBSCRIBE,or PUBLISH (where QoS > 0) MQTT
     Control Packet it MUST assign it a non-zero Packet Identifier that is currently unused.
-    * Implemented as round-robin allocation for the whole std::uint16_t range, skipping the 0, and 
+    * Implemented as round-robin allocation for the whole std::uint16_t range, skipping the 0, and
       keeping track of currently allocating numbers to avoid allocation of the packet ID in use.
     * Not really tested (yet).
 - [MQTT-2.2.1-4]: Each time a Server sends a new PUBLISH (with QoS > 0) MQTT Control Packet it MUST assign it a non
@@ -27,13 +27,13 @@
     * Server specific, client rejects such Qos2 messages (without dup flag) with "Packet ID in use" reason code in PUBREC message.
     * Tested in UnitTestReceive::test4.
 - [MQTT-2.2.1-5]: A PUBACK, PUBREC , PUBREL, or PUBCOMP packet MUST contain the same Packet Identifier as the
-    PUBLISH packet that was originally sent     
+    PUBLISH packet that was originally sent
     * Correct behaviour is tested throughout all the unit / integration testing.
     * Ignoring reception of invalid PUBACK is tested in UnitTestPublish::test11.
     * On reception of invalid PUBREC, sending PUBREL with "Packet Identifier not found" reason code, tested in UnitTestPublish::test12
     * On reception of invalid PUBREL, sending PUBCOMP with "Packet Identifier not found" reason code, tested in UnitTestReceive::test5
     * Ignoring reception of invalid PUBCOMP is tested in UnitTestPublish::test13.
-- [MQTT-2.2.1-6]: A SUBACK and UNSUBACK MUST contain the Packet Identifier that was used in the corresponding SUBSCRIBE and UNSUBSCRIBE packet  
+- [MQTT-2.2.1-6]: A SUBACK and UNSUBACK MUST contain the Packet Identifier that was used in the corresponding SUBSCRIBE and UNSUBSCRIBE packet
     respectively.
     * Ignoring reception of invalid SUBACK is tested in UnitTestSubscribe::test4.
     * Ignoring reception of invalid UNSUBACK is tested in UnitTestUnsubscribe::test4.
@@ -145,29 +145,29 @@
 - [MQTT-3.1.2-26]: The Server MUST NOT send a Topic Alias in a PUBLISH packet to the Client greater than Topic Alias Maximum.
     * Server specific
 - [MQTT-3.1.2-27]: If Topic Alias Maximum is absent or zero, the Server MUST NOT send any Topic Aliases
-    to the Client 
+    to the Client
     * Server specific
 - [MQTT-3.1.2-28]:  A value of 0 (for "Request Response Information" in CONNECT) indicates that the Server MUST NOT return Response Information.
     * Server specific
 - [MQTT-3.1.2-29]: If the value of Request Problem Information is 0, the Server MAY return a Reason String or User
     Properties on a CONNACK or DISCONNECT packet, but MUST NOT send a Reason String or User
-    Properties on any packet other than PUBLISH, CONNACK, or DISCONNECT 
-    * Spec: If the value is 0 (of Request Problem Information in CONNECT) and the Client receives a Reason String or 
+    Properties on any packet other than PUBLISH, CONNACK, or DISCONNECT
+    * Spec: If the value is 0 (of Request Problem Information in CONNECT) and the Client receives a Reason String or
     User Properties in a packet other than PUBLISH, CONNACK, or DISCONNECT, it uses a DISCONNECT packet with Reason Code 0x82 (Protocol Error)
     * Rejecting "Reason String" in SUBACK message is tested in UnitTestSubscribe::test7.
     * Rejecting "User Properties" in SUBACK message is tested in UnitTestSubscribe::test8.
     * Rejecting "Reason String" in UNSUBACK message is tested in UnitTestUnsubscribe::test7.
     * Rejecting "User Properties" in UNSUBACK message is tested in UnitTestUnsubscribe::test8.
     * Rejecting "Reason String" in PUBACK message is tested in UnitTestPublish::test16.
-    * Rejecting "User Properties" in PUBACK message is tested in UnitTestPublish::test17.    
+    * Rejecting "User Properties" in PUBACK message is tested in UnitTestPublish::test17.
     * Rejecting "Reason String" in PUBREC message is tested in UnitTestPublish::test18.
-    * Rejecting "User Properties" in PUBREC message is tested in UnitTestPublish::test19.        
+    * Rejecting "User Properties" in PUBREC message is tested in UnitTestPublish::test19.
     * Rejecting "Reason String" in PUBREL message is tested in UnitTestReceive::test9.
-    * Rejecting "User Properties" in PUBREL message is tested in UnitTestReceive::test10.        
+    * Rejecting "User Properties" in PUBREL message is tested in UnitTestReceive::test10.
     * Rejecting "Reason String" in PUBCOMP message is tested in UnitTestPublish::test20.
-    * Rejecting "User Properties" in PUBCOMP message is tested in UnitTestPublish::test21.        
+    * Rejecting "User Properties" in PUBCOMP message is tested in UnitTestPublish::test21.
     * Rejecting "Reason String" in AUTH message is tested in UnitTestConnect::test12.
-    * Rejecting "User Properties" in AUTH message is tested in UnitTestConnect::test13.            
+    * Rejecting "User Properties" in AUTH message is tested in UnitTestConnect::test13.
 - [MQTT-3.1.2-30]: If a Client sets an Authentication Method in the CONNECT, the Client MUST NOT send any packets other
     than AUTH or DISCONNECT packets until it has received a CONNACK packet.
     * Inability to send any other packet is tested in UnitTestConnect::test6.
@@ -227,7 +227,7 @@
 - [MQTT-3.1.4-3]: If the ClientID represents a Client already connected to the Server, the Server sends a
     DISCONNECT packet to the existing Client with Reason Code of 0x8E (Session taken over) as
     described in section 4.13 and MUST close the Network Connection of the existing Client
-    * Client reporting disconnection is tested in 
+    * Client reporting disconnection is tested in
 - [MQTT-3.1.4-4]: The Server MUST perform the processing of Clean Start that is described in section 3.1.2.4
     * Server specific
 - [MQTT-3.1.4-5]: The Server MUST acknowledge the CONNECT packet with a CONNACK packet containing a
@@ -318,10 +318,10 @@
 - [MQTT-3.2.2-18]: If Topic Alias Maximum is absent or 0, the Client MUST NOT send any Topic Aliases on to the Server.
     * 0 limit works the same way as with [MQTT-3.2.2-17]
     * Tested in UnitTestConnect::test26.
-- [MQTT-3.2.2-19]: The Server MUST NOT send this property (Reason String) if it would increase the size of the CONNACK packet 
+- [MQTT-3.2.2-19]: The Server MUST NOT send this property (Reason String) if it would increase the size of the CONNACK packet
     beyond the Maximum Packet Size specified by the Client.
     * Server specific.
-- [MQTT-3.2.2-20]: The Server MUST NOT send this property (User Property) if it would increase the size of the CONNACK packet 
+- [MQTT-3.2.2-20]: The Server MUST NOT send this property (User Property) if it would increase the size of the CONNACK packet
     beyond the Maximum Packet Size specified by the Client.
     * Server specific.
 - [MQTT-3.2.2-21]:  If the Server sends a Server Keep Alive on the CONNACK packet, the Client MUST use this value instead of the Keep Alive
@@ -331,7 +331,7 @@
     * Server specific.
 - [MQTT-3.3.1-1]: The DUP flag MUST be set to 1 by the Client or Server when it attempts to re-deliver a PUBLISH packet.
     * Send tested in UnitTestPublish::test4 and UnitTestPublish::test6.
-    * When DUP flag is cleared and the publish is not complete, the publish is rejected with "Packet Id in Use" error, tested in    
+    * When DUP flag is cleared and the publish is not complete, the publish is rejected with "Packet Id in Use" error, tested in
         UnitTestReceive::test4.
     * Receiving DUP flag set when broker didn't receive PUBREL is tested in UnitTestReceive::test11.
     * Receiving DUP flag set when first PUBLISH from the broker hasn't been received is tested in UnitTestReceive::test12.
@@ -369,10 +369,10 @@
     * Client library doesn't track the subscription flags, assuming broker behaves.
 - [MQTT-3.3.1-12]: If the value of Retain As Published subscription option is set to 0, the Server MUST set the RETAIN
     flag to 0 when forwarding an Application Message regardless of how the RETAIN flag was set in the
-    received PUBLISH packet 
+    received PUBLISH packet
     * Server specific
 - [MQTT-3.3.1-13]: If the value of Retain As Published subscription option is set to 1, the Server MUST set the RETAIN
-    flag equal to the RETAIN flag in the received PUBLISH packet 
+    flag equal to the RETAIN flag in the received PUBLISH packet
     * Server specific
 - [MQTT-3.3.2-1]: The Topic Name MUST be present as the first field in the PUBLISH packet Variable Header. It MUST be
     a UTF-8 Encoded String
@@ -383,7 +383,7 @@
     Subscription’s Topic Filter
     * Reception of the unsolicited messages is tested in UnitTestReceive::test13.
 - [MQTT-3.3.2-4]: A Server MUST send the Payload Format Indicator unaltered to all subscribers receiving the Application
-    Message    
+    Message
     * Server specific
     * Support for the "Payload Format Indicator" is tested in UnitTestPublish::test1.
     * Reception of the "Payload Format Indicator" is tested in UnitTestReceive::test1 and UnitTestReceive::test3.
@@ -405,7 +405,7 @@
 - [MQTT-3.3.2-9]: A Client MUST NOT send a PUBLISH packet with a Topic Alias greater than the Topic Alias Maximum
     value returned by the Server in the CONNACK packet.
     * Client prevents allocating extra topic aliases. Tested in UnitTestConnect::test25.
-- [MQTT-3.3.2-10]: A Client MUST accept all Topic Alias values greater than 0 and less than or equal 
+- [MQTT-3.3.2-10]: A Client MUST accept all Topic Alias values greater than 0 and less than or equal
     to the Topic Alias Maximum value that it sent in the CONNECT packet.
     * Tested in UnitTestReceive::test14.
 - [MQTT-3.3.2-11]: A Server MUST NOT send a PUBLISH packet with a Topic Alias greater than the Topic Alias Maximum
@@ -486,7 +486,7 @@
 - [MQTT-3.5.2-1]: The Client or Server sending the PUBREC packet MUST use one of the PUBREC Reason Code values.
     * When client sends PUBREC only specified reason codes are used.
     * When PUBREC received from the server, the reason code "as-is" reported via callback to the client or ignored if "success".
-- [MQTT-3.5.2-2]:  The sender MUST NOT send this property (Reason String) 
+- [MQTT-3.5.2-2]:  The sender MUST NOT send this property (Reason String)
     if it would increase the size of the PUBREC packet beyond the Maximum Packet Size specified by the receiver
     * Client side never sends "Reason String" in its PUBREC.
 - [MQTT-3.5.2-3]: The sender MUST NOT send this property (User Property) if it would increase the size of the PUBREC
@@ -500,7 +500,7 @@
 - [MQTT-3.6.2-1]: The Client or Server sending the PUBREL packet MUST use one of the PUBREL Reason Code values
     * When client sends PUBACK only specified reason codes are used.
     * When non-success PUBREL is received, the reception of the message is dropped.
-- [MQTT-3.6.2-2]: The sender MUST NOT send this Property (Reason String) 
+- [MQTT-3.6.2-2]: The sender MUST NOT send this Property (Reason String)
     if it would increase the size of the PUBREL packet beyond the Maximum Packet Size
     specified by the receiver
     * Client side never sends "Reason String" in its PUBREL.
@@ -549,7 +549,7 @@
     Subscription’s Topic Filter for the current Session, then it MUST replace that existing Subscription with a
     new Subscription.
     * Server specific.
-- [MQTT-3.8.4-4]: If the Retain Handling option is 0, 
+- [MQTT-3.8.4-4]: If the Retain Handling option is 0,
     any existing retained messages matching the Topic Filter MUST be re-sent, but Applicaton
     Messages MUST NOT be lost due to replacing the Subscription.
     * Server specific.
@@ -565,11 +565,11 @@
 - [MQTT-3.8.4-7]: This Reason Code MUST either show the maximum QoS
     that was granted for that Subscription or indicate that the subscription failed
     * The reported reason code is reported to the application "as-is".
-- [MQTT-3.8.4-8]: The QoS of Application Messages sent in response to a Subscription MUST be the minimum of the QoS of the originally published 
+- [MQTT-3.8.4-8]: The QoS of Application Messages sent in response to a Subscription MUST be the minimum of the QoS of the originally published
     message and the Maximum QoS granted by the Server.
     * Server specific.
     * The client doesn't preserve subscription QoS, just obeys the published QoS.
-- [MQTT-3.9.2-1]: The Server MUST NOT send this Property (Reason String) if it would increase 
+- [MQTT-3.9.2-1]: The Server MUST NOT send this Property (Reason String) if it would increase
     the size of the SUBACK packet beyond the Maximum Packet Size specified by the Client.
     * Server specific.
 - [MQTT-3.9.2-2]: The Server MUST NOT send this property (User Property) if it would increase the size of the SUBACK packet
@@ -584,7 +584,7 @@
     * The received reason code just reported to the application.
 - [MQTT-3.10.1-1]: Bits 3,2,1 and 0 of the Fixed Header of the UNSUBSCRIBE packet are reserved and MUST be set to
     0,0,1 and 0 respectively. The Server MUST treat any other value as malformed and close the Network
-    Connection    
+    Connection
     * Part of protocol definition.
 - [MQTT-3.10.3-1]: The Topic Filters in an UNSUBSCRIBE packet MUST be UTF-8 Encoded Strings
     * The topic parameter is zero terminated C-string.
@@ -597,10 +597,10 @@
     any filter matches exactly then its owning Subscription MUST be deleted.
     * Client doesn't allow configuring UNSUBSCRIBE topic that didn't go through SUBSCRIBE before.
     * Tested in UnitTestUnsubscribe::test9.
-- [MQTT-3.10.4-2]: When a Server receives UNSUBSCRIBE It MUST stop adding any new messages 
+- [MQTT-3.10.4-2]: When a Server receives UNSUBSCRIBE It MUST stop adding any new messages
     which match the Topic Filters, for delivery to the Client.
     * Server specific
-- [MQTT-3.10.4-3]: When a Server receives UNSUBSCRIBE It MUST complete the delivery of any 
+- [MQTT-3.10.4-3]: When a Server receives UNSUBSCRIBE It MUST complete the delivery of any
     QoS 1 or QoS 2 messages which match the Topic Filters and it has started to send to the Client.
     * Server specific.
     * Finishing reception of Qos2 message is tested in UnitTestReceive::test18
@@ -613,17 +613,17 @@
     packet as if it had received a sequence of multiple UNSUBSCRIBE packets, except that it sends just one
     UNSUBACK response.
     * Server specific.
-- [MQTT-3.11.2-1]: The Server MUST NOT send this Property (Reason String) 
-    if it would increase the size of the UNSUBACK packet beyond the Maximum Packet Size specified by the Client 
+- [MQTT-3.11.2-1]: The Server MUST NOT send this Property (Reason String)
+    if it would increase the size of the UNSUBACK packet beyond the Maximum Packet Size specified by the Client
     * Server specific.
 - [MQTT-3.11.2-2]: The Server MUST NOT send this property (User Property) if it would increase the size of the UNSUBACK
-    packet beyond the Maximum Packet Size specified by the Client 
+    packet beyond the Maximum Packet Size specified by the Client
     * Server specific.
 - [MQTT-3.11.3-1]: The order of Reason Codes in the UNSUBACK packet MUST match the order of Topic Filters in the UNSUBSCRIBE packet.
     * Multiple reason codes are tested in UnitTestUnsubscribe::test1.
     * Unexpected amount of reason codes causes "Protocol Error" disconnection. Tested in UnitTestUnsubscribe::test10.
 - [MQTT-3.11.3-2]: The Server sending an UNSUBACK packet MUST use one of the Unsubscribe Reason Code values for each Topic Filter
-    received    
+    received
     * The reason codes are reported to the application "as-is"
 - [MQTT-3.12.4-1]: The Server MUST send a PINGRESP packet in response to a PINGREQ packet.
     * Tested in UnitTestConnect::test5.
@@ -633,15 +633,15 @@
 - [MQTT-3.14.1-1]: The Client or Server MUST validate that reserved bits are set to 0. If they are not zero it sends a
     DISCONNECT packet with a Reason code of 0x81 (Malformed Packet).
 - [MQTT-3.14.2-2]: The Session Expiry Interval MUST NOT be sent on a DISCONNECT by the Server
-    * The value if send is just ignored by the client.    
+    * The value if send is just ignored by the client.
 - [MQTT-3.14.2-3]: The sender MUST NOT send this Property (Reason String) if it would increase the size of the DISCONNECT packet
-    beyond the Maximum Packet Size specified by the receiver    
+    beyond the Maximum Packet Size specified by the receiver
     * Server specific
 - [MQTT-3.14.2-4]: The sender MUST NOT send this property (User Property) if it would increase the size of the DISCONNECT
     packet beyond the Maximum Packet Size specified by the receiver.
     * Server specific
 - [MQTT-3.14.4-1]: After sending a DISCONNECT packet the sender MUST NOT send any more MQTT Control Packets on that Network Connection
-    * After disconnect request client doesn't allow sending any more packets without explicit (re)initialization. 
+    * After disconnect request client doesn't allow sending any more packets without explicit (re)initialization.
         Tested in UnitTestDisconnect::test4.
     * The application is expected to close the network connection and on new connection do the re-init.
 - [MQTT-3.14.4-2]: After sending a DISCONNECT packet the sender MUST close the Network Connection.
@@ -677,66 +677,66 @@
 - [MQTT-4.3.1-1]: In the QoS 0 delivery protocol, the sender MUST send a PUBLISH packet with QoS 0 and DUP flag set to 0.
     * Client complies and doesn't provide an ability to change DUP flag.
     * Tested in UnitTestPublish::test1.
-- [MQTT-4.3.2-1]: In the QoS 1 delivery protocol, the sender MUST assign an unused Packet Identifier 
+- [MQTT-4.3.2-1]: In the QoS 1 delivery protocol, the sender MUST assign an unused Packet Identifier
     each time it has a new Application Message to publish.
     * Packet ID is allocated by wrapping around incremental integer.
     * After the wrap around the client makes sure the newly allocated packet ID is not currently in use.
     * Not really tested.
-- [MQTT-4.3.2-2]: In the QoS 1 delivery protocol, the sender MUST send a PUBLISH packet containing this 
+- [MQTT-4.3.2-2]: In the QoS 1 delivery protocol, the sender MUST send a PUBLISH packet containing this
     Packet Identifier with QoS 1 and DUP flag set to 0.
     * Client complies and doesn't provide an ability to change DUP flag.
     * Tested in UnitTestPublish::test2.
-- [MQTT-4.3.2-3]: In the QoS 1 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged” 
+- [MQTT-4.3.2-3]: In the QoS 1 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged”
     until it has received the corresponding PUBACK packet from the receiver.
     * Tested in multiple unit tests.
 - [MQTT-4.3.2-4]: In the QoS 1 delivery protocol, the receiver MUST respond with a PUBACK packet containing the Packet Identifier from the  incoming PUBLISH packet, having accepted ownership of the Application Message.
     * Client acknowledgement is tested in UnitTestReceive::test2.
-- [MQTT-4.3.2-5]: In the QoS 1 delivery protocol, the receiver After it has sent a PUBACK packet the receiver MUST treat any incoming PUBLISH   
+- [MQTT-4.3.2-5]: In the QoS 1 delivery protocol, the receiver After it has sent a PUBACK packet the receiver MUST treat any incoming PUBLISH
     packet that contains the same Packet Identifier as being a new Application Message, irrespective of the
-    setting of its DUP flag    
+    setting of its DUP flag
     * Tested in UnitTestReceive::test19.
-- [MQTT-4.3.3-1]: In the QoS2 delivery protocol, the sender MUST assign an unused Packet Identifier when 
+- [MQTT-4.3.3-1]: In the QoS2 delivery protocol, the sender MUST assign an unused Packet Identifier when
     it has a new Application Message to publish
     * Packet ID is allocated by wrapping around incremental integer.
     * After the wrap around the client makes sure the newly allocated packet ID is not currently in use.
     * Not really tested.
-- [MQTT-4.3.3-2]: In the QoS2 delivery protocol, the sender MUST send a PUBLISH packet containing this 
+- [MQTT-4.3.3-2]: In the QoS2 delivery protocol, the sender MUST send a PUBLISH packet containing this
     Packet Identifier with QoS 2 and DUP flag set to 0.
     * Tested in UnitTestPublish::test5.
-- [MQTT-4.3.3-3]: In the QoS2 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged” until 
+- [MQTT-4.3.3-3]: In the QoS2 delivery protocol, the sender MUST treat the PUBLISH packet as “unacknowledged” until
     it has received the corresponding PUBREC packet from the receiver.
     * Tested in multiple unit tests.
-- [MQTT-4.3.3-4]: In the QoS2 delivery protocol, the sender MUST send a PUBREL packet when it receives a PUBREC 
+- [MQTT-4.3.3-4]: In the QoS2 delivery protocol, the sender MUST send a PUBREL packet when it receives a PUBREC
     packet from the receiver with a Reason Code value less than 0x80. This PUBREL packet MUST contain the same Packet
     Identifier as the original PUBLISH packet.
     * Tested in UnitTestPublish::test5.
-- [MQTT-4.3.3-5]: In the QoS2 delivery protocol, the sender MUST treat the PUBREL packet as “unacknowledged” until 
+- [MQTT-4.3.3-5]: In the QoS2 delivery protocol, the sender MUST treat the PUBREL packet as “unacknowledged” until
     it has received the corresponding PUBCOMP packet from the receiver.
     * Tested in UnitTestPublish::test6.
-- [MQTT-4.3.3-6]: In the QoS2 delivery protocol, the sender MUST NOT re-send the PUBLISH once it 
+- [MQTT-4.3.3-6]: In the QoS2 delivery protocol, the sender MUST NOT re-send the PUBLISH once it
     has sent the corresponding PUBREL packet.
     * Tested in UnitTestPublish::test6.
 - [MQTT-4.3.3-7]: In the QoS2 delivery protocol, the sender MUST NOT apply Message expiry if a PUBLISH packet has been sent.
     * Server specific.
     * Client's acknowledgement timeout doesn't depend on "Message Expiry" configuration.
-- [MQTT-4.3.3-8]: In the QoS2 delivery protocol, the receiver MUST respond with a PUBREC containing the 
+- [MQTT-4.3.3-8]: In the QoS2 delivery protocol, the receiver MUST respond with a PUBREC containing the
     Packet Identifier from the incoming PUBLISH packet, having accepted ownership of the Application Message
     * Tested in UnitTestReceive::test3.
-- [MQTT-4.3.3-9]: In the QoS2 delivery protocol, the receiver If it has sent a PUBREC with a Reason Code of 
-    0x80 or greater, the receiver MUST treat any subsequent PUBLISH packet that contains that Packet Identifier as 
+- [MQTT-4.3.3-9]: In the QoS2 delivery protocol, the receiver If it has sent a PUBREC with a Reason Code of
+    0x80 or greater, the receiver MUST treat any subsequent PUBLISH packet that contains that Packet Identifier as
     being a new Application Message.
     * Tested in UnitTestReceive::test20.
-- [MQTT-4.3.3-10]: In the QoS2 delivery protocol, the receiver Until it has received the corresponding PUBREL packet, 
-    the receiver MUST acknowledge any subsequent PUBLISH packet with the same Packet Identifier by sending a PUBREC. 
+- [MQTT-4.3.3-10]: In the QoS2 delivery protocol, the receiver Until it has received the corresponding PUBREL packet,
+    the receiver MUST acknowledge any subsequent PUBLISH packet with the same Packet Identifier by sending a PUBREC.
     It MUST NOT cause duplicate messages to be delivered to any onward recipients in this case
     * Tested in UnitTestReceive::test11.
-- [MQTT-4.3.3-11]: In the QoS2 delivery protocol, the receiver MUST respond to a PUBREL packet by sending a 
+- [MQTT-4.3.3-11]: In the QoS2 delivery protocol, the receiver MUST respond to a PUBREL packet by sending a
     PUBCOMP packet containing the same Packet Identifier as the PUBREL
     * Tested in UnitTestReceive::test3.
-- [MQTT-4.3.3-12]: In the QoS2 delivery protocol, the receiver After it has sent a PUBCOMP, the receiver 
+- [MQTT-4.3.3-12]: In the QoS2 delivery protocol, the receiver After it has sent a PUBCOMP, the receiver
     MUST treat any subsequent PUBLISH packet that contains that Packet Identifier as being a new Application Message.
     * Tested in UnitTestReceive::test21.
-- [MQTT-4.3.3-13]: In the QoS2 delivery protocol, the receiver MUST continue the QoS 2 acknowledgement sequence 
+- [MQTT-4.3.3-13]: In the QoS2 delivery protocol, the receiver MUST continue the QoS 2 acknowledgement sequence
     even if it has applied message expiry.
     * Client's acknowledgement timeout doesn't depend on "Message Expiry" configuration.
 - [MQTT-4.4.0-1]: When a Client reconnects with Clean Start set to 0 and a session is present, both the Client and Server
@@ -758,7 +758,7 @@
 - [MQTT-4.6.0-1]: When the Client re-sends any PUBLISH packets, it MUST re-send them in the order in which the
     original PUBLISH packets were sent (this applies to QoS 1 and QoS 2 messages)
     * Strict ordering is implemented.
-    * Not allowing reception of out of order acknowledgements, in case out-of-order ack is received prevous 
+    * Not allowing reception of out of order acknowledgements, in case out-of-order ack is received prevous
       publishes are resent.
     * Tested in multiple UnitTestPublish tests.
 - [MQTT-4.6.0-2]: The Client MUST send PUBACK packets in the order in which the corresponding PUBLISH
@@ -773,8 +773,8 @@
     packets were received (QoS 2 messages)
     * Complies by the nature of implementation, the client sends responses right away when processing
             incoming messages
-- [MQTT-4.6.0-5]: When a Server processes a message that has been published to an Ordered Topic, it MUST 
-    send PUBLISH packets to consumers (for the same Topic and QoS) in the order that they were received 
+- [MQTT-4.6.0-5]: When a Server processes a message that has been published to an Ordered Topic, it MUST
+    send PUBLISH packets to consumers (for the same Topic and QoS) in the order that they were received
     from any given Client
     * Server specific.
 - [MQTT-4.6.0-6]: By default, a Server MUST treat every Topic as an Ordered Topic when it is forwarding messages on
@@ -787,7 +787,7 @@
     be the last character specified in the Topic Filter
     * Tested in UnitTestSubscribe::test3.
 - [MQTT-4.7.1-2]: The single-level wildcard can be used at any level in the Topic Filter, including first and last levels. Where
-    it is used, it MUST occupy an entire level of the filter 
+    it is used, it MUST occupy an entire level of the filter
     * Tested in UnitTestSubscribe::test3.
 - [MQTT-4.7.2-1]: The Server MUST NOT match Topic Filters starting with a wildcard character (# or +) with Topic Names
     beginning with a $ character
@@ -809,7 +809,7 @@
     least one character long.
     * Tested in UnitTestSubscribe::test3.
 - [MQTT-4.8.2-2]: The ShareName MUST NOT contain the characters "/", "+" or
-    "#", but MUST be followed by a "/" character. This "/" character MUST be followed by a Topic Filter    
+    "#", but MUST be followed by a "/" character. This "/" character MUST be followed by a Topic Filter
     * Tested in UnitTestSubscribe::test3.
 - [MQTT-4.8.2-3]: When sending an Application Message to a Client the Server MUST respect the granted QoS for the Client's subscription
     * Server specific.
@@ -822,7 +822,7 @@
     to send it to any other Subscriber.
     * Server specific.
 - [MQTT-4.9.0-1]: The Client or Server MUST set its initial send quota to a non-zero value not exceeding the Receive
-    Maximum 
+    Maximum
     * Client data structures allows reception of the configured high qos messages.
 - [MQTT-4.9.0-2]: Each time the Client or Server sends a PUBLISH packet at QoS > 0, it decrements the send quota. If the
     send quota reaches zero, the Client or Server MUST NOT send any more PUBLISH packets with QoS > 0
@@ -843,7 +843,7 @@
     * Tested in UnitTestConnect::test3.
 - [MQTT-4.12.0-4]: The Server can reject the authentication at any point in this process. It MAY send a
     CONNACK with a Reason Code of 0x80 or above as described in section 4.13, and MUST close the
-    Network Connection   
+    Network Connection
     * Tested in UnitTestConnect::test29.
 - [MQTT-4.12.0-5]: If the initial CONNECT packet included an Authentication Method property then all AUTH packets, and
     any successful CONNACK packet MUST include an Authentication Method Property with the same value
@@ -876,4 +876,4 @@
     Network Connection will be closed. If a Reason Code of 0x80 or greater is specified, then the Network
     Connection MUST be closed whether or not the CONNACK or DISCONNECT is sent.
     * Responsibility of the application.
-- 
+-

@@ -62,5 +62,5 @@ void UnitTestQos0Publish::test1()
     TS_ASSERT(unitTestIsPublishComplete());
     auto& pubackInfo = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    unitTestPopPublishResponseInfo();       
+    unitTestPopPublishResponseInfo();
 }

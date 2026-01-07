@@ -29,8 +29,8 @@ struct ClientState
     SendTopicsMap m_sendTopicAliases;
     PacketIdsList m_allocatedPacketIds;
     std::uint16_t m_lastPacketId = 0U;
-    unsigned m_inFlightSends = 0U;    
-    
+    unsigned m_inFlightSends = 0U;
+
     bool m_initialized = false;
     bool m_firstConnect = true;
     bool m_networkDisconnected = false;

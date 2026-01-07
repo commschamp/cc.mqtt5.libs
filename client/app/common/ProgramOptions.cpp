@@ -20,7 +20,7 @@ void ProgramOptions::addCommon()
     opts.add_options()
         ("help,h", "Display help message")
         ("verbose,v", "Verbose output")
-    ;    
+    ;
 
     m_desc.add(opts);
 }
@@ -41,31 +41,31 @@ void ProgramOptions::addConnect()
         ("req-problem-info", "Set \"Request Problem Information\" property flag.")
         ("connect-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to CONNECT message.")
         ("will-topic", po::value<std::string>()->default_value(std::string()), "Will topic.")
-        ("will-msg", po::value<std::string>()->default_value(std::string()), 
+        ("will-msg", po::value<std::string>()->default_value(std::string()),
             "Will message data, use \"\\x\" prefix to specify hexadecimal value of a single byte."
             "Applicable only if will-topic is set.")
-        ("will-qos", po::value<unsigned>()->default_value(0U), "Will Message QoS: 0, 1, or 2")            
-        ("will-retain", "Set \"retain\" flag on the will message.")            
-        ("will-content-type", po::value<std::string>()->default_value(std::string()), 
+        ("will-qos", po::value<unsigned>()->default_value(0U), "Will Message QoS: 0, 1, or 2")
+        ("will-retain", "Set \"retain\" flag on the will message.")
+        ("will-content-type", po::value<std::string>()->default_value(std::string()),
             "Will \"Content Type\" property."
             "Applicable only if will-topic is set.")
-        ("will-response-topic", po::value<std::string>()->default_value(std::string()), 
+        ("will-response-topic", po::value<std::string>()->default_value(std::string()),
             "Will \"Response Topic\" property."
-            "Applicable only if will-topic is set.")    
-        ("will-correlation-data", po::value<std::string>()->default_value(std::string()), 
+            "Applicable only if will-topic is set.")
+        ("will-correlation-data", po::value<std::string>()->default_value(std::string()),
             "Will \"Correlation Data\" property, use \"\\x\" prefix to specify hexadecimal value of a single byte."
-            "Applicable only if will-topic is set.")        
-        ("will-delay", po::value<unsigned>()->default_value(0), 
+            "Applicable only if will-topic is set.")
+        ("will-delay", po::value<unsigned>()->default_value(0),
             "Will \"Delay Interval\" property."
-            "Applicable only if will-topic is set.") 
-        ("will-message-expiry", po::value<unsigned>()->default_value(0), 
+            "Applicable only if will-topic is set.")
+        ("will-message-expiry", po::value<unsigned>()->default_value(0),
             "Will \"Message Expiry Interval\" property."
-            "Applicable only if will-topic is set.") 
-        ("will-message-format", po::value<unsigned>()->default_value(0), 
+            "Applicable only if will-topic is set.")
+        ("will-message-format", po::value<unsigned>()->default_value(0),
             "Will \"Payload Format Indicator\" property."
-            "Applicable only if will-topic is set.")      
+            "Applicable only if will-topic is set.")
         ("will-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the will message.")
-    ;    
+    ;
 
     m_desc.add(opts);
 }
@@ -76,14 +76,14 @@ void ProgramOptions::addNetwork(std::uint16_t port)
     opts.add_options()
         ("broker,b", po::value<std::string>()->default_value("127.0.0.1"), "Broker address to connect to")
         ("port,p", po::value<std::uint16_t>()->default_value(port), "Network port")
-    ;    
+    ;
 
     m_desc.add(opts);
 }
 
 void ProgramOptions::addTls()
 {
-#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
     po::options_description opts("TLS Options");
     opts.add_options()
         ("tls", "Enable TLS encryption")
@@ -91,10 +91,10 @@ void ProgramOptions::addTls()
         ("tls-key", po::value<std::string>()->default_value(std::string()), "Path to the private key file (PEM)")
         ("tls-key-pass", po::value<std::string>()->default_value(std::string()), "Private key password")
         ("tls-cert", po::value<std::string>()->default_value(std::string()), "Path to the certificate file (PEM)")
-    ;    
+    ;
 
     m_desc.add(opts);
-#endif     
+#endif
 }
 
 void ProgramOptions::addPublish()
@@ -107,13 +107,13 @@ void ProgramOptions::addPublish()
         ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")
         ("pub-retain", po::value<bool>()->default_value(false), "Retain the publish message")
         ("pub-content-type", po::value<std::string>()->default_value(std::string()), "\"Content Type\" property.")
-        ("pub-response-topic", po::value<std::string>()->default_value(std::string()), "\"Response Topic\" property.")        
-        ("pub-correlation-data", po::value<std::string>()->default_value(std::string()), 
-            "\"Correlation Data\" property, use \"\\x\" prefix to specify hexadecimal value of a single byte.")        
-        ("pub-message-expiry", po::value<unsigned>()->default_value(0), "\"Message Expiry Interval\" property.") 
-        ("pub-message-format", po::value<unsigned>()->default_value(0), "\"Payload Format Indicator\" property.")      
+        ("pub-response-topic", po::value<std::string>()->default_value(std::string()), "\"Response Topic\" property.")
+        ("pub-correlation-data", po::value<std::string>()->default_value(std::string()),
+            "\"Correlation Data\" property, use \"\\x\" prefix to specify hexadecimal value of a single byte.")
+        ("pub-message-expiry", po::value<unsigned>()->default_value(0), "\"Message Expiry Interval\" property.")
+        ("pub-message-format", po::value<unsigned>()->default_value(0), "\"Payload Format Indicator\" property.")
         ("pub-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the message.")
-    ;    
+    ;
 
     m_desc.add(opts);
 }
@@ -129,7 +129,7 @@ void ProgramOptions::addSubscribe()
         ("sub-binary", "Force binary output of the received message data")
         ("sub-id", po::value<unsigned>()->default_value(0), "\"Subscription Identifier\" property.")
         ("sub-user-prop", po::value<StringsList>(), "Add \"User Property\" in \"key=value\" format to the SUBSCRIBE request.")
-    ;    
+    ;
 
     m_desc.add(opts);
 }
@@ -142,7 +142,7 @@ void ProgramOptions::printHelp()
 bool ProgramOptions::parseArgs(int argc, const char* argv[])
 {
     po::store(po::parse_command_line(argc, argv, m_desc), m_vm);
-    po::notify(m_vm);  
+    po::notify(m_vm);
 
     return true;
 }
@@ -159,11 +159,11 @@ bool ProgramOptions::verbose() const
 
 ProgramOptions::ConnectionType ProgramOptions::connectionType() const
 {
-#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
     if (isTls()) {
         return ConnectionType_Tls;
     }
-#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
 
     return ConnectionType_Tcp;
 }
@@ -180,11 +180,11 @@ std::uint16_t ProgramOptions::networkPort() const
 
 bool ProgramOptions::isTls() const
 {
-#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL    
+#ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
     return m_vm.count("tls") > 0U;
 #else
     return false;
-#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL        
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
 }
 
 std::string ProgramOptions::tlsCa() const
@@ -396,7 +396,7 @@ ProgramOptions::UnsignedsList ProgramOptions::subQoses() const
         result = m_vm[id].as<UnsignedsList>();
     }
 
-    return result;    
+    return result;
 }
 
 bool ProgramOptions::subNoRetained() const
@@ -426,7 +426,7 @@ ProgramOptions::StringsList ProgramOptions::stringListOpts(const std::string& na
         result = m_vm[name].as<StringsList>();
     }
 
-    return result;    
+    return result;
 }
 
 } // namespace cc_mqtt5_client_app

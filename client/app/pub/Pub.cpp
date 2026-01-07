@@ -12,7 +12,7 @@
 namespace cc_mqtt5_client_app
 {
 
-namespace 
+namespace
 {
 
 Pub* asThis(void* data)
@@ -20,10 +20,9 @@ Pub* asThis(void* data)
     return reinterpret_cast<Pub*>(data);
 }
 
-} // namespace 
-    
+} // namespace
 
-Pub::Pub(boost::asio::io_context& io, int& result) : 
+Pub::Pub(boost::asio::io_context& io, int& result) :
     Base(io, result)
 {
     opts().addCommon();
@@ -31,7 +30,7 @@ Pub::Pub(boost::asio::io_context& io, int& result) :
     opts().addTls();
     opts().addConnect();
     opts().addPublish();
-}    
+}
 
 void Pub::brokerConnectedImpl()
 {
@@ -39,7 +38,7 @@ void Pub::brokerConnectedImpl()
     auto data = parseBinaryData(opts().pubMessage());
     auto contentType = opts().pubContentType();
     auto responseTopic = opts().pubResponseTopic();
-    auto correlationData = parseBinaryData(opts().pubCorrelationData());    
+    auto correlationData = parseBinaryData(opts().pubCorrelationData());
 
     auto basicConfig = CC_Mqtt5PublishBasicConfig();
     ::cc_mqtt5_client_publish_init_config_basic(&basicConfig);
@@ -89,7 +88,7 @@ void Pub::brokerConnectedImpl()
         logError() << "Failed to perform extra publish configuration: " << toString(ec) << std::endl;
         doTerminate();
         return;
-    }    
+    }
 
     auto props = parseUserProps(opts().pubUserProps());
     for (auto& p : props) {
@@ -102,15 +101,15 @@ void Pub::brokerConnectedImpl()
             logError() << "Failed to add publish user property: " << toString(ec) << std::endl;
             doTerminate();
             return;
-        }         
-    }    
+        }
+    }
 
     ec = ::cc_mqtt5_client_publish_send(publish, &Pub::publishCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to send PUBLISH message: " << toString(ec) << std::endl;
         doTerminate();
         return;
-    }    
+    }
 }
 
 void Pub::publishCompleteInternal([[maybe_unused]] CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response)
@@ -141,6 +140,5 @@ void Pub::publishCompleteCb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5As
 {
     asThis(data)->publishCompleteInternal(handle, status, response);
 }
-
 
 } // namespace cc_mqtt5_client_app

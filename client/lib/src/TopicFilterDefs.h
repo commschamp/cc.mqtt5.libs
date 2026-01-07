@@ -11,12 +11,10 @@
 #include "ObjListType.h"
 #include "ProtocolDefs.h"
 
-
 namespace cc_mqtt5_client
 {
 
 using TopicFilterStr = SubscribeMsg::Field_list::ValueType::value_type::Field_topic::ValueType;
 using SubFiltersMap = ObjListType<TopicFilterStr, Config::SubFiltersLimit, Config::HasSubTopicVerification>;
-
 
 } // namespace cc_mqtt5_client

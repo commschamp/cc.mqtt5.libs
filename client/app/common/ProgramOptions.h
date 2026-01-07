@@ -50,7 +50,7 @@ public:
 
     // Network Options
     std::string networkAddress() const;
-    std::uint16_t networkPort() const;    
+    std::uint16_t networkPort() const;
 
     // TLS Options
     bool isTls() const;

@@ -12,7 +12,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#else // #ifdef __cplusplus      
+#else // #ifdef __cplusplus
 #include <stdbool.h>
 #endif // #ifdef __cplusplus
 
@@ -65,7 +65,7 @@ typedef enum
 typedef enum
 {
     CC_Mqtt5ErrorCode_Success = 0, ///< The requested function executed successfully.
-    CC_Mqtt5ErrorCode_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5ErrorCode_InternalError = 1, ///< Internal library error, please submit bug report
     CC_Mqtt5ErrorCode_NotIntitialized = 2, ///< The allocated client hasn't been initialized.
     CC_Mqtt5ErrorCode_Busy = 3, ///< The client library is in the middle of previous operation(s), cannot start a new one.
     CC_Mqtt5ErrorCode_NotConnected = 4, ///< The client library is not connected to the broker. Returned by operations that require connection to the broker.
@@ -97,7 +97,7 @@ typedef enum
 typedef enum
 {
     CC_Mqtt5AsyncOpStatus_Complete = 0, ///< The requested operation has been completed, refer to reported extra details for information.
-    CC_Mqtt5AsyncOpStatus_InternalError = 1, ///< Internal library error, please submit bug report    
+    CC_Mqtt5AsyncOpStatus_InternalError = 1, ///< Internal library error, please submit bug report
     CC_Mqtt5AsyncOpStatus_Timeout = 2, ///< The required response from broker hasn't been received in time
     CC_Mqtt5AsyncOpStatus_ProtocolError = 3, ///< The broker's response doesn't comply with MQTT5 specification.
     CC_Mqtt5AsyncOpStatus_Aborted = 4, ///< The operation has been aborted before completion due to client's side operation.
@@ -120,51 +120,51 @@ typedef enum
 /// @ingroup global
 typedef enum
 {
-    CC_Mqtt5ReasonCode_Success = 0, ///< value @b Success. 
-    CC_Mqtt5ReasonCode_NormalDisconnection = 0, ///< value <b>Normal Disconnection</b>. 
-    CC_Mqtt5ReasonCode_GrantedQos0 = 0, ///< value <b>Granted QoS0</b>. 
-    CC_Mqtt5ReasonCode_GrantedQos1 = 1, ///< value <b>Granted QoS1</b>. 
-    CC_Mqtt5ReasonCode_GrantedQos2 = 2, ///< value <b>Granted QoS2</b>. 
-    CC_Mqtt5ReasonCode_DisconnectWithWill = 4, ///< value <b>Disconnect w/ Will</b>. 
-    CC_Mqtt5ReasonCode_NoMatchingSubscribers = 16, ///< value <b>No Matching Subscribers</b>. 
-    CC_Mqtt5ReasonCode_NoSubscriptionExisted = 17, ///< value <b>No Subscription Existed</b>. 
-    CC_Mqtt5ReasonCode_ContinueAuth = 24, ///< value <b>Continue authentication</b>. 
-    CC_Mqtt5ReasonCode_ReAuth = 25, ///< value <b>Re-authenticate</b>. 
-    CC_Mqtt5ReasonCode_UnspecifiedError = 128, ///< value <b>Unspecified error</b>. 
-    CC_Mqtt5ReasonCode_MalformedPacket = 129, ///< value <b>Malformed Packet</b>. 
-    CC_Mqtt5ReasonCode_ProtocolError = 130, ///< value <b>Protocol Error</b>. 
-    CC_Mqtt5ReasonCode_ImplSpecificError = 131, ///< value <b>Impl. Specific Error</b>. 
-    CC_Mqtt5ReasonCode_UnsupportedVersion = 132, ///< value <b>Unsupported Version</b>. 
-    CC_Mqtt5ReasonCode_ClientIdInvalid = 133, ///< value <b>Client ID Invalid</b>. 
-    CC_Mqtt5ReasonCode_BadUserPassword = 134, ///< value <b>Bad Username/Password</b>. 
-    CC_Mqtt5ReasonCode_NotAuthorized = 135, ///< value <b>Not authorized</b>. 
-    CC_Mqtt5ReasonCode_ServerUnavailable = 136, ///< value <b>Server unavailable</b>. 
-    CC_Mqtt5ReasonCode_ServerBusy = 137, ///< value <b>Server busy</b>. 
-    CC_Mqtt5ReasonCode_Banned = 138, ///< value @b Banned. 
-    CC_Mqtt5ReasonCode_ServerShuttingDown = 139, ///< value <b>Server shutting down</b>. 
-    CC_Mqtt5ReasonCode_BadAuthMethod = 140, ///< value <b>Bad auth method</b>. 
-    CC_Mqtt5ReasonCode_KeepAliveTimeout = 141, ///< value <b>Keep Alive timeout</b>. 
-    CC_Mqtt5ReasonCode_SessionTakenOver = 142, ///< value <b>Session taken over</b>. 
-    CC_Mqtt5ReasonCode_TopicFilterInvalid = 143, ///< value <b>Topic Filter invalid</b>. 
-    CC_Mqtt5ReasonCode_TopicNameInvalid = 144, ///< value <b>Topic Name invalid</b>. 
-    CC_Mqtt5ReasonCode_PacketIdInUse = 145, ///< value <b>Packet ID in use</b>. 
-    CC_Mqtt5ReasonCode_PacketIdNotFound = 146, ///< value <b>Packet ID not found</b>. 
-    CC_Mqtt5ReasonCode_ReceiveMaxExceeded = 147, ///< value <b>Receive Max exceeded</b>. 
-    CC_Mqtt5ReasonCode_TopicAliasInvalid = 148, ///< value <b>Topic Alias invalid</b>. 
-    CC_Mqtt5ReasonCode_PacketTooLarge = 149, ///< value <b>Packet too large</b>. 
-    CC_Mqtt5ReasonCode_MsgRateTooHigh = 150, ///< value <b>Message rate too high</b>. 
-    CC_Mqtt5ReasonCode_QuotaExceeded = 151, ///< value <b>Quota exceeded</b>. 
-    CC_Mqtt5ReasonCode_AdministrativeAction = 152, ///< value <b>Administrative action</b>. 
-    CC_Mqtt5ReasonCode_PayloadFormatInvalid = 153, ///< value <b>Payload format invalid</b>. 
-    CC_Mqtt5ReasonCode_RetainNotSupported = 154, ///< value <b>Retain not supported</b>. 
-    CC_Mqtt5ReasonCode_QosNotSupported = 155, ///< value <b>QoS not supported</b>. 
-    CC_Mqtt5ReasonCode_UseAnotherServer = 156, ///< value <b>Use another server</b>. 
-    CC_Mqtt5ReasonCode_ServerMoved = 157, ///< value <b>Server moved</b>. 
-    CC_Mqtt5ReasonCode_SharedSubNotSuppored = 158, ///< value <b>Shared Sub not supported</b>. 
-    CC_Mqtt5ReasonCode_ConnectionRateExceeded = 159, ///< value <b>Connection rate exceeded</b>. 
-    CC_Mqtt5ReasonCode_MaxConnectTime = 160, ///< value <b>Maximum connect time</b>. 
-    CC_Mqtt5ReasonCode_SubIdsNotSupported = 161, ///< value <b>Sub IDs not supported</b>. 
-    CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>. 
+    CC_Mqtt5ReasonCode_Success = 0, ///< value @b Success.
+    CC_Mqtt5ReasonCode_NormalDisconnection = 0, ///< value <b>Normal Disconnection</b>.
+    CC_Mqtt5ReasonCode_GrantedQos0 = 0, ///< value <b>Granted QoS0</b>.
+    CC_Mqtt5ReasonCode_GrantedQos1 = 1, ///< value <b>Granted QoS1</b>.
+    CC_Mqtt5ReasonCode_GrantedQos2 = 2, ///< value <b>Granted QoS2</b>.
+    CC_Mqtt5ReasonCode_DisconnectWithWill = 4, ///< value <b>Disconnect w/ Will</b>.
+    CC_Mqtt5ReasonCode_NoMatchingSubscribers = 16, ///< value <b>No Matching Subscribers</b>.
+    CC_Mqtt5ReasonCode_NoSubscriptionExisted = 17, ///< value <b>No Subscription Existed</b>.
+    CC_Mqtt5ReasonCode_ContinueAuth = 24, ///< value <b>Continue authentication</b>.
+    CC_Mqtt5ReasonCode_ReAuth = 25, ///< value <b>Re-authenticate</b>.
+    CC_Mqtt5ReasonCode_UnspecifiedError = 128, ///< value <b>Unspecified error</b>.
+    CC_Mqtt5ReasonCode_MalformedPacket = 129, ///< value <b>Malformed Packet</b>.
+    CC_Mqtt5ReasonCode_ProtocolError = 130, ///< value <b>Protocol Error</b>.
+    CC_Mqtt5ReasonCode_ImplSpecificError = 131, ///< value <b>Impl. Specific Error</b>.
+    CC_Mqtt5ReasonCode_UnsupportedVersion = 132, ///< value <b>Unsupported Version</b>.
+    CC_Mqtt5ReasonCode_ClientIdInvalid = 133, ///< value <b>Client ID Invalid</b>.
+    CC_Mqtt5ReasonCode_BadUserPassword = 134, ///< value <b>Bad Username/Password</b>.
+    CC_Mqtt5ReasonCode_NotAuthorized = 135, ///< value <b>Not authorized</b>.
+    CC_Mqtt5ReasonCode_ServerUnavailable = 136, ///< value <b>Server unavailable</b>.
+    CC_Mqtt5ReasonCode_ServerBusy = 137, ///< value <b>Server busy</b>.
+    CC_Mqtt5ReasonCode_Banned = 138, ///< value @b Banned.
+    CC_Mqtt5ReasonCode_ServerShuttingDown = 139, ///< value <b>Server shutting down</b>.
+    CC_Mqtt5ReasonCode_BadAuthMethod = 140, ///< value <b>Bad auth method</b>.
+    CC_Mqtt5ReasonCode_KeepAliveTimeout = 141, ///< value <b>Keep Alive timeout</b>.
+    CC_Mqtt5ReasonCode_SessionTakenOver = 142, ///< value <b>Session taken over</b>.
+    CC_Mqtt5ReasonCode_TopicFilterInvalid = 143, ///< value <b>Topic Filter invalid</b>.
+    CC_Mqtt5ReasonCode_TopicNameInvalid = 144, ///< value <b>Topic Name invalid</b>.
+    CC_Mqtt5ReasonCode_PacketIdInUse = 145, ///< value <b>Packet ID in use</b>.
+    CC_Mqtt5ReasonCode_PacketIdNotFound = 146, ///< value <b>Packet ID not found</b>.
+    CC_Mqtt5ReasonCode_ReceiveMaxExceeded = 147, ///< value <b>Receive Max exceeded</b>.
+    CC_Mqtt5ReasonCode_TopicAliasInvalid = 148, ///< value <b>Topic Alias invalid</b>.
+    CC_Mqtt5ReasonCode_PacketTooLarge = 149, ///< value <b>Packet too large</b>.
+    CC_Mqtt5ReasonCode_MsgRateTooHigh = 150, ///< value <b>Message rate too high</b>.
+    CC_Mqtt5ReasonCode_QuotaExceeded = 151, ///< value <b>Quota exceeded</b>.
+    CC_Mqtt5ReasonCode_AdministrativeAction = 152, ///< value <b>Administrative action</b>.
+    CC_Mqtt5ReasonCode_PayloadFormatInvalid = 153, ///< value <b>Payload format invalid</b>.
+    CC_Mqtt5ReasonCode_RetainNotSupported = 154, ///< value <b>Retain not supported</b>.
+    CC_Mqtt5ReasonCode_QosNotSupported = 155, ///< value <b>QoS not supported</b>.
+    CC_Mqtt5ReasonCode_UseAnotherServer = 156, ///< value <b>Use another server</b>.
+    CC_Mqtt5ReasonCode_ServerMoved = 157, ///< value <b>Server moved</b>.
+    CC_Mqtt5ReasonCode_SharedSubNotSuppored = 158, ///< value <b>Shared Sub not supported</b>.
+    CC_Mqtt5ReasonCode_ConnectionRateExceeded = 159, ///< value <b>Connection rate exceeded</b>.
+    CC_Mqtt5ReasonCode_MaxConnectTime = 160, ///< value <b>Maximum connect time</b>.
+    CC_Mqtt5ReasonCode_SubIdsNotSupported = 161, ///< value <b>Sub IDs not supported</b>.
+    CC_Mqtt5ReasonCode_WildcardSubsNotSupported = 162, ///< value <b>Wildcard Subs not supported</b>.
 } CC_Mqtt5ReasonCode;
 
 /// @brief "Retain Handling" option as defined by the MQTT v5 specification.
@@ -329,7 +329,7 @@ typedef struct
 
 /// @brief Response information from broker to "connect" request
 /// @ingroup connect
-typedef struct 
+typedef struct
 {
     CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" reported by the broker
     const char* m_assignedClientId; ///< "Assigned Client Identifier" property, NULL if not reported
@@ -344,7 +344,7 @@ typedef struct
     unsigned m_highQosSendLimit; ///< "Receive Maximum" property.
     unsigned m_maxPacketSize; ///< "Maximum Packet Size" property, 0 if not reported.
     unsigned m_topicAliasMax; ///< "Topic Alias Maximum" property, 0 if not reported.
-    CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" property, 
+    CC_Mqtt5QoS m_maxQos; ///< "Maximum QoS" property,
     bool m_sessionPresent; ///< "Session Present" indication.
     bool m_retainAvailable; ///< "Retain Available" indication.
     bool m_wildcardSubAvailable; ///< "Wildcard Subscription Available" indication.
@@ -372,7 +372,7 @@ typedef struct
     const char* m_reasonStr; ///< "Reason String" property, NULL if not reported
     const char* m_serverRef; ///< "Server Reference" property, NULL if not reported
     const CC_Mqtt5UserProp* m_userProps; ///< Pointer to "User Properties" array, can be NULL
-    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.  
+    unsigned m_userPropsCount; ///< Amount of elements in the "User Properties" array, defaults to 0, not added when 0.
 } CC_Mqtt5DisconnectInfo;
 
 /// @brief Configuration structure of the "disconnect" operation.
@@ -407,7 +407,7 @@ typedef struct
 
 /// @brief Response information from broker to "subscribe" request
 /// @ingroup subscribe
-typedef struct 
+typedef struct
 {
     const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic subscription reason codes.
     unsigned m_reasonCodesCount; ///< Amount of reason codes in the array.
@@ -426,7 +426,7 @@ typedef struct
 
 /// @brief Response information from broker to "unsubscribe" request
 /// @ingroup unsubscribe
-typedef struct 
+typedef struct
 {
     const CC_Mqtt5ReasonCode* m_reasonCodes; ///< Pointer to array contianing per-topic unsubscription reason codes.
     unsigned m_reasonCodesCount; ///< Amount of reason codes in the array.
@@ -441,7 +441,7 @@ typedef struct
 {
     const char* m_topic; ///< Topic used to publish the message
     const unsigned char* m_data; ///< Pointer to the temporary buffer containin message data
-    unsigned m_dataLen; ///< Amount of data bytes 
+    unsigned m_dataLen; ///< Amount of data bytes
     const char* m_responseTopic; ///< "Response Topic" property when provided, NULL if not.
     const unsigned char* m_correlationData; ///< Pointer to the "Correlation Data" property value when provided, NULL if not.
     unsigned m_correlationDataLen; ///< Amount of "Correlation Data" bytes;
@@ -484,7 +484,7 @@ typedef struct
 
 /// @brief Response information from broker to "publish" request
 /// @ingroup publish
-typedef struct 
+typedef struct
 {
     CC_Mqtt5ReasonCode m_reasonCode; ///< "Reason Code" of the operation
     const char* m_reasonStr; ///< "Reason String" property, can be NULL.
@@ -527,13 +527,13 @@ typedef unsigned (*CC_Mqtt5CancelNextTickWaitCb)(void* data);
 typedef void (*CC_Mqtt5SendOutputDataCb)(void* data, const unsigned char* buf, unsigned bufLen);
 
 /// @brief Callback used to report unsolicited disconnection of the broker.
-/// @details When invoked the "info" is present <b>if and only if</b> the 
+/// @details When invoked the "info" is present <b>if and only if</b> the
 ///     broker disconnection report is due to the reception of the @b DISCONNECT
 ///     message from the broker.
 /// @param[in] data Pointer to user data object, passed as the last parameter to
 ///     the request call.
 /// @param[in] reason Reson for reporting unsolicited broker disconnection.
-/// @param[in] info Extra disconnect information when reported by the broker. Can be NULL. 
+/// @param[in] info Extra disconnect information when reported by the broker. Can be NULL.
 ///     Not null, <b>if and only if</b> the @b reason is @ref CC_Mqtt5BrokerDisconnectReason_DisconnectMsg.
 /// @post The data members of the reported info can NOT be accessed after the function returns.
 /// @ingroup client
@@ -573,8 +573,8 @@ typedef CC_Mqtt5AuthErrorCode (*CC_Mqtt5AuthCb)(void* data, const CC_Mqtt5AuthIn
 /// @brief Callback used to report completion of the "subscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_subscribe_send().
-/// @param[in] handle Handle returned by @b cc_mqtt5_client_subscribe_prepare() function. When the 
-///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_subscribe_prepare() function. When the
+///     callback is invoked the handle is already invalid and cannot be used in any relevant
 ///     function invocation, but it allows end application to identify the original "subscribe" operation
 ///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "subscribe" operation.
@@ -587,8 +587,8 @@ typedef void (*CC_Mqtt5SubscribeCompleteCb)(void* data, CC_Mqtt5SubscribeHandle 
 /// @brief Callback used to report completion of the "unsubscribe" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_unsubscribe_send().
-/// @param[in] handle Handle returned by @b cc_mqtt5_client_unsubscribe_prepare() function. When the 
-///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_unsubscribe_prepare() function. When the
+///     callback is invoked the handle is already invalid and cannot be used in any relevant
 ///     function invocation, but it allows end application to identify the original "unsubscribe" operation
 ///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "unsubscribe" operation.
@@ -601,8 +601,8 @@ typedef void (*CC_Mqtt5UnsubscribeCompleteCb)(void* data, CC_Mqtt5UnsubscribeHan
 /// @brief Callback used to report completion of the "publish" operation.
 /// @param[in] data Pointer to user data object passed as last parameter to the
 ///     @b cc_mqtt5_client_publish_send().
-/// @param[in] handle Handle returned by @b cc_mqtt5_client_publish_prepare() function. When the 
-///     callback is invoked the handle is already invalid and cannot be used in any relevant 
+/// @param[in] handle Handle returned by @b cc_mqtt5_client_publish_prepare() function. When the
+///     callback is invoked the handle is already invalid and cannot be used in any relevant
 ///     function invocation, but it allows end application to identify the original "publish" operation
 ///     and use the same callback function in parallel requests.
 /// @param[in] status Status of the "publish" operation.

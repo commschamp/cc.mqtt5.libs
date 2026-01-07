@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-static_assert(COMMS_MAKE_VERSION(3, 0, 5) <= CC_MQTT5_VERSION, 
+static_assert(COMMS_MAKE_VERSION(3, 0, 5) <= CC_MQTT5_VERSION,
     "The version of the cc_mqtt5 library is too low.");
 
 namespace cc_mqtt5_client
@@ -61,9 +61,9 @@ using Qos0ClientInputMessages =
         cc_mqtt5::message::Pingresp<TBase, TOpt>,
         cc_mqtt5::message::Disconnect<TBase, TOpt>,
         cc_mqtt5::message::Auth<TBase, TOpt>
-    >; 
+    >;
 
-using ProtInputMessages = 
+using ProtInputMessages =
     std::conditional_t<
         2 <= Config::MaxQos,
         cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions>,

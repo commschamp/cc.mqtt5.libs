@@ -22,7 +22,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 inline ReauthOp* asReauthOp(void* data)
@@ -30,14 +30,13 @@ inline ReauthOp* asReauthOp(void* data)
     return reinterpret_cast<ReauthOp*>(data);
 }
 
-} // namespace 
-    
+} // namespace
 
-ReauthOp::ReauthOp(ClientImpl& client) : 
+ReauthOp::ReauthOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-}   
+}
 
 CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
 {
@@ -47,7 +46,7 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
     }
 
     auto& connectAuthMethod = client().sessionState().m_authMethod;
-    COMMS_ASSERT(!connectAuthMethod.empty()); // The op mustn't be created 
+    COMMS_ASSERT(!connectAuthMethod.empty()); // The op mustn't be created
     if ((config.m_authMethod != nullptr) && (connectAuthMethod != config.m_authMethod)) {
         errorLog("Authentication method must match the one used during CONNECT.");
         return CC_Mqtt5ErrorCode_BadParam;
@@ -58,7 +57,7 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
 
     m_authMsg.field_reasonCode().setExists();
     m_authMsg.field_reasonCode().field().value() = AuthMsg::Field_reasonCode::Field::ValueType::ReAuth;
-    
+
     m_authMsg.field_properties().setExists();
     auto& propsField = m_authMsg.field_properties().field();
 
@@ -70,7 +69,7 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_authMethod();
-        auto& valueField = propBundle.field_value();        
+        auto& valueField = propBundle.field_value();
         valueField.value() = connectAuthMethod;
 
         COMMS_ASSERT(valueField.value().size() <= maxStringLen());
@@ -89,14 +88,14 @@ CC_Mqtt5ErrorCode ReauthOp::configAuth(const CC_Mqtt5AuthConfig& config)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_authData();
-        auto& valueField = propBundle.field_value();        
-        comms::util::assign(valueField.value(), config.m_authData, config.m_authData + config.m_authDataLen); 
+        auto& valueField = propBundle.field_value();
+        comms::util::assign(valueField.value(), config.m_authData, config.m_authData + config.m_authDataLen);
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Auth data value is too big.");
             discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
-        }         
+        }
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -109,11 +108,11 @@ CC_Mqtt5ErrorCode ReauthOp::addUserProp(const CC_Mqtt5UserProp& prop)
     return addUserPropToList(propsField, prop);
 }
 
-CC_Mqtt5ErrorCode ReauthOp::send(CC_Mqtt5ReauthCompleteCb cb, void* cbData) 
+CC_Mqtt5ErrorCode ReauthOp::send(CC_Mqtt5ReauthCompleteCb cb, void* cbData)
 {
     client().allowNextPrepare();
 
-    auto completeOnError = 
+    auto completeOnError =
         comms::util::makeScopeGuard(
             [this]()
             {
@@ -128,7 +127,7 @@ CC_Mqtt5ErrorCode ReauthOp::send(CC_Mqtt5ReauthCompleteCb cb, void* cbData)
     if (!m_timer.isValid()) {
         errorLog("The library cannot allocate required number of timers.");
         return CC_Mqtt5ErrorCode_InternalError;
-    }    
+    }
 
     if (m_authCb == nullptr) {
         errorLog("Authentication hasn't been configred.");
@@ -137,8 +136,8 @@ CC_Mqtt5ErrorCode ReauthOp::send(CC_Mqtt5ReauthCompleteCb cb, void* cbData)
 
     m_cb = cb;
     m_cbData = cbData;
-    
-    auto result = client().sendMessage(m_authMsg); 
+
+    auto result = client().sendMessage(m_authMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
     }
@@ -155,7 +154,7 @@ CC_Mqtt5ErrorCode ReauthOp::cancel()
         // hasn't been sent yet
         client().allowNextPrepare();
     }
-        
+
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
 }
@@ -169,31 +168,30 @@ void ReauthOp::handle(AuthMsg& msg)
     auto info = CC_Mqtt5AuthInfo();
 
     auto disconnectReason = DisconnectReason::ProtocolError;
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client(), &disconnectReason]()
             {
                 terminationWithReasonStatic(cl, disconnectReason);
-            });     
+            });
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &info]()
             {
                 auto* infoPtr = &info;
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     infoPtr = nullptr;
-                }                
+                }
                 completeOpInternal(status, infoPtr);
             });
 
-
-    bool continueAuth = 
-        msg.field_reasonCode().doesExist() && 
+    bool continueAuth =
+        msg.field_reasonCode().doesExist() &&
         msg.field_reasonCode().field().value() == AuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
 
-    bool complete = 
-        msg.field_reasonCode().isMissing() || 
+    bool complete =
+        msg.field_reasonCode().isMissing() ||
         msg.field_reasonCode().field().value() == AuthMsg::Field_reasonCode::Field::ValueType::Success;
 
     if ((!continueAuth) && (!complete)) {
@@ -210,24 +208,24 @@ void ReauthOp::handle(AuthMsg& msg)
         if (propsHandler.isProtocolError()) {
             errorLog("Protocol error in AUTH properties");
             return;
-        }    
+        }
 
         // Auth method needs to be the same
         if ((propsHandler.m_authMethod != nullptr) && (client().sessionState().m_authMethod != propsHandler.m_authMethod->field_value().value())) {
             errorLog("Invalid authentication method in AUTH.");
             return;
-        }      
-        
+        }
+
         // Auth method needs to be the same
         if (propsHandler.m_authMethod == nullptr) {
             errorLog("No authentication method in AUTH.");
             return;
         }
-        
+
         if (propsHandler.m_reasonStr != nullptr) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received reason string in AUTH when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             info.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
@@ -245,7 +243,7 @@ void ReauthOp::handle(AuthMsg& msg)
             if (!propsHandler.m_userProps.empty()) {
                 if (!client().sessionState().m_problemInfoAllowed) {
                     errorLog("Received user properties in AUTH when \"problem information\" was disabled in CONNECT.");
-                    return; 
+                    return;
                 }
 
                 fillUserProps(propsHandler, userProps);
@@ -293,7 +291,7 @@ void ReauthOp::handle(AuthMsg& msg)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_authMethod();
-        auto& valueField = propBundle.field_value();        
+        auto& valueField = propBundle.field_value();
         valueField.value() = client().sessionState().m_authMethod.c_str();
         COMMS_ASSERT(valueField.value().size() <= maxStringLen());
     }
@@ -312,15 +310,15 @@ void ReauthOp::handle(AuthMsg& msg)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_authData();
-        auto& valueField = propBundle.field_value();        
-        comms::util::assign(valueField.value(), outInfo.m_authData, outInfo.m_authData + outInfo.m_authDataLen); 
+        auto& valueField = propBundle.field_value();
+        comms::util::assign(valueField.value(), outInfo.m_authData, outInfo.m_authData + outInfo.m_authDataLen);
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Auth data value is too long");
             status = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;            
-        }         
-    }    
+            return;
+        }
+    }
 
     if (outInfo.m_reasonStr != nullptr) {
         if (!canAddProp(propsField)) {
@@ -331,14 +329,14 @@ void ReauthOp::handle(AuthMsg& msg)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_reasonStr();
-        auto& valueField = propBundle.field_value();  
-        valueField.value() = outInfo.m_reasonStr;           
+        auto& valueField = propBundle.field_value();
+        valueField.value() = outInfo.m_reasonStr;
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Auth reason string is too long");
             status = CC_Mqtt5AsyncOpStatus_BadParam;
-            return;            
-        }        
+            return;
+        }
     }
 
     if (outInfo.m_userPropsCount > 0U) {
@@ -362,7 +360,7 @@ void ReauthOp::handle(AuthMsg& msg)
                 {CC_Mqtt5ErrorCode_NotSupported, CC_Mqtt5AsyncOpStatus_BadParam},
             };
 
-            auto errorIter = 
+            auto errorIter =
                 std::find_if(
                     std::begin(Map), std::end(Map),
                     [ec](auto& ecInfo)
@@ -375,7 +373,7 @@ void ReauthOp::handle(AuthMsg& msg)
                 return;
             }
 
-            COMMS_ASSERT(false); // Should not happen            
+            COMMS_ASSERT(false); // Should not happen
         }
     }
 
@@ -407,7 +405,7 @@ void ReauthOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5Au
     auto* cbData = m_cbData;
     opComplete(); // mustn't access data members after destruction
     if (cb != nullptr) {
-        cb(cbData, status, response);    
+        cb(cbData, status, response);
     }
 }
 

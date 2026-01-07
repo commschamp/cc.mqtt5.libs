@@ -31,7 +31,7 @@ class AppClient
     };
 
 public:
-    bool start(int argc, const char* argv[]);    
+    bool start(int argc, const char* argv[]);
 
     static std::string toString(CC_Mqtt5ErrorCode val);
     static std::string toString(CC_Mqtt5AsyncOpStatus val);

@@ -1,6 +1,6 @@
 # How to Build
 This project uses [CMake](https://cmake.org) cross-platform build system to
-generate required build files native to the platform. Please refer to the 
+generate required build files native to the platform. Please refer to the
 main [CMakeLists.txt](../CMakeLists.txt) file for the info on available configuration options and
 variables.
 
@@ -8,7 +8,7 @@ variables.
 The provided **library** depend on several external projects:
 - [cc.mqtt5.generated](https://github.com/commschamp/cc.mqtt5.generated) -
   provides definition of the MQTT v5 protocol.
-- [comms](https://github.com/commschamp/comms) - 
+- [comms](https://github.com/commschamp/comms) -
   provides [COMMS library](https://github.com/commschamp/comms)
   which is used to define the protocol.
 
@@ -22,9 +22,9 @@ in configuration of the [github actions](../.github/workflows/actions_build.yml)
 The provided **applications** use [Boost](https://www.boost.org) libraries to
 parse their command line arguments as well as manage their event loop / network
 connections. In case the application are compiled and the [Boost](https://www.boost.org) libraries
-do not reside in a default system location, use the relevant variables described in the 
+do not reside in a default system location, use the relevant variables described in the
 [FindBoost](https://cmake.org/cmake/help/latest/module/FindBoost.html)
-documentation to help with finding appropriate boost libraries. 
+documentation to help with finding appropriate boost libraries.
 
 ## Choosing C++ Standard
 The default and minimal required C++ standard version to build this project is **17**. However it
@@ -55,7 +55,6 @@ later versions of cmake also **-A** option to specify the architecture, such as
 Please review the examples below and use appropriate option that suites your
 needs. Remember to use **-DCMAKE_BUILD_TYPE=Release** option for release
 builds.
-
 
 ### Build Library and Applications
 ```

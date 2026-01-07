@@ -27,7 +27,7 @@ void UnitTestQos1Receive::test1()
     auto clientPtr = apiAllocClient();
     auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(apiIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));
 
     auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
     apiSubscribeInitConfigTopic(&subscribeConfig);
@@ -50,5 +50,5 @@ void UnitTestQos1Receive::test1()
     unitTestReceiveMessage(client, publishMsg);
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::QosNotSupported);
-    TS_ASSERT(unitTestIsDisconnected());      
+    TS_ASSERT(unitTestIsDisconnected());
 }

@@ -26,7 +26,7 @@ class TlsSession final : public Session
 public:
     static Ptr create(boost::asio::io_context& io, const ProgramOptions& opts);
 
-protected:    
+protected:
     virtual bool startImpl() override;
     virtual void sendDataImpl(const std::uint8_t* buf, std::size_t bufLen) override;
 

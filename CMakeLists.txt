@@ -49,7 +49,7 @@ while (TRUE)
     endif ()
 
     message (STATUS "Unit / Integration testts are enabled")
-    
+
     if (NOT EXISTS ${LibComms_DIR}/CC_CxxtestFuncs.cmake)
         message (WARNING "Unexpected COMMS cmake scripts installation path, cannot test")
         break ()

@@ -4,11 +4,11 @@
 #include <cstring>
 #include <iostream>
 
-namespace 
+namespace
 {
 
 const std::string DefaultHost("127.0.0.1");
-const std::string DefaultPort("1883");    
+const std::string DefaultPort("1883");
 
 IntegrationTestCommonBase* asObj(void* data)
 {
@@ -23,7 +23,7 @@ std::ostream& errorLog(const std::string& name)
     }
 
     return std::cerr;
-}    
+}
 
 std::ostream& infoLog(const std::string& name)
 {
@@ -33,10 +33,9 @@ std::ostream& infoLog(const std::string& name)
     }
 
     return std::cout;
-}    
+}
 
-} // namespace 
-
+} // namespace
 
 IntegrationTestCommonBase::IntegrationTestCommonBase(boost::asio::io_context& io, const std::string& clientId) :
     m_io(io),
@@ -65,7 +64,7 @@ bool IntegrationTestCommonBase::integrationTestStart()
 
     boost::system::error_code ioEc;
     boost::asio::ip::tcp::resolver resolver(m_io);
-    boost::asio::connect(m_socket, resolver.resolve(m_host, m_port), ioEc);    
+    boost::asio::connect(m_socket, resolver.resolve(m_host, m_port), ioEc);
     if (ioEc) {
         errorLog(m_clientId) << "Failed to connect to " << m_host << ":" << m_port << " with error: " << ioEc.message() << std::endl;
         return false;
@@ -139,12 +138,12 @@ bool IntegrationTestCommonBase::integrationTestStartBasicConnect(bool cleanStart
         errorLog(m_clientId) << "Failed to configure connect" << std::endl;
         return false;
     }
-    
+
     ec = integrationTestSendConnect(connect);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         errorLog(m_clientId) << "Failed to send connect" << std::endl;
         return false;
-    } 
+    }
 
     integrationTestInfoLog() << "Sent connect request" << std::endl;
     return true;
@@ -173,7 +172,7 @@ bool IntegrationTestCommonBase::integrationTestStartBasicSubscribe(const char* t
     if (ec != CC_Mqtt5ErrorCode_Success) {
         integrationTestErrorLog() << "Failed to send subscribe" << std::endl;
         return false;
-    }     
+    }
 
     integrationTestInfoLog() << "Sent subscribe to " << topic << std::endl;
     return true;
@@ -205,7 +204,7 @@ bool IntegrationTestCommonBase::integrationTestStartBasicPublish(const char* top
     if (ec != CC_Mqtt5ErrorCode_Success) {
         integrationTestErrorLog() << "Failed to send publish." << std::endl;
         return false;
-    }     
+    }
 
     integrationTestInfoLog() << "Sent publish of " << topic << std::endl;
     return true;
@@ -227,13 +226,13 @@ bool IntegrationTestCommonBase::integrationTestStartBasicDisconnect(CC_Mqtt5Reas
     auto ec = cc_mqtt5_client_disconnect_config(disconnect, &config);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         integrationTestErrorLog() << "Failed to configure disconnect" << std::endl;
-        return false;             
+        return false;
     }
 
     ec = ::cc_mqtt5_client_disconnect_send(disconnect);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         integrationTestErrorLog() << "Failed to send disconnect" << std::endl;
-        return false;             
+        return false;
     }
 
     return true;
@@ -248,12 +247,12 @@ bool IntegrationTestCommonBase::integrationTestVerifyConnectSuccessful(CC_Mqtt5A
 
     if (response == nullptr) {
         integrationTestErrorLog() << "Connection response is not provided" << std::endl;
-        return false;            
+        return false;
     }
 
     if (response->m_reasonCode >= CC_Mqtt5ReasonCode_UnspecifiedError) {
         integrationTestErrorLog() << "Unexpected connection reason code: " << response->m_reasonCode << std::endl;
-        return false; 
+        return false;
     }
 
     integrationTestInfoLog() << "Connection successful" << std::endl;
@@ -261,9 +260,9 @@ bool IntegrationTestCommonBase::integrationTestVerifyConnectSuccessful(CC_Mqtt5A
 }
 
 bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(
-    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, 
-    CC_Mqtt5AsyncOpStatus status, 
-    const CC_Mqtt5SubscribeResponse* response, 
+    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle,
+    CC_Mqtt5AsyncOpStatus status,
+    const CC_Mqtt5SubscribeResponse* response,
     unsigned reasonCodesCount)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
@@ -273,19 +272,19 @@ bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(
 
     if (response == nullptr) {
         integrationTestErrorLog() << "Subscription response is not provided" << std::endl;
-        return false;            
+        return false;
     }
 
     if (response->m_reasonCodesCount != reasonCodesCount) {
         integrationTestErrorLog() << "Unexpected amount of susbscription reason codes: " << response->m_reasonCodesCount << std::endl;
-        return false; 
+        return false;
     }
 
     for (auto idx = 0U; idx < response->m_reasonCodesCount; ++idx) {
         if (response->m_reasonCodes[idx] >= CC_Mqtt5ReasonCode_UnspecifiedError) {
             integrationTestErrorLog() << "Unexpected subscription reason code idx=" << idx << ": " << response->m_reasonCodes[0] << std::endl;
-            return false; 
-        }        
+            return false;
+        }
     }
 
     integrationTestInfoLog() << "Subscription successful" << std::endl;
@@ -293,8 +292,8 @@ bool IntegrationTestCommonBase::integrationTestVerifySubscribeSuccessful(
 }
 
 bool IntegrationTestCommonBase::integrationTestVerifyPublishSuccessful(
-    [[maybe_unused]] CC_Mqtt5PublishHandle handle, 
-    CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] CC_Mqtt5PublishHandle handle,
+    CC_Mqtt5AsyncOpStatus status,
     const CC_Mqtt5PublishResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
@@ -303,11 +302,11 @@ bool IntegrationTestCommonBase::integrationTestVerifyPublishSuccessful(
     }
 
     if (response == nullptr) {
-        return true;            
+        return true;
     }
     if (response->m_reasonCode >= CC_Mqtt5ReasonCode_UnspecifiedError) {
         integrationTestErrorLog() << "Unexpected publish reason code: " << response->m_reasonCode << std::endl;
-        return false; 
+        return false;
     }
 
     return true;
@@ -399,21 +398,21 @@ void IntegrationTestCommonBase::integrationTestMessageReceivedImpl([[maybe_unuse
 }
 
 void IntegrationTestCommonBase::integrationTestConnectCompleteImpl(
-    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status,
     [[maybe_unused]] const CC_Mqtt5ConnectResponse* response)
 {
 }
 
 void IntegrationTestCommonBase::integrationTestSubscribeCompleteImpl(
     [[maybe_unused]] CC_Mqtt5SubscribeHandle handle,
-    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status,
     [[maybe_unused]] const CC_Mqtt5SubscribeResponse* response)
 {
 }
 
 void IntegrationTestCommonBase::integrationTestPublishCompleteImpl(
-    [[maybe_unused]] CC_Mqtt5PublishHandle handle, 
-    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] CC_Mqtt5PublishHandle handle,
+    [[maybe_unused]] CC_Mqtt5AsyncOpStatus status,
     [[maybe_unused]] const CC_Mqtt5PublishResponse* response)
 {
 }

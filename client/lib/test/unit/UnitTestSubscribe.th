@@ -21,7 +21,6 @@ public:
     void test12();
     void test13();
     void test14();
-    
 
 private:
     virtual void setUp() override
@@ -46,7 +45,6 @@ void UnitTestSubscribe::test1()
 
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // default keep alive
-
 
     auto subscribe = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe, nullptr);
@@ -89,7 +87,7 @@ void UnitTestSubscribe::test1()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
     TS_ASSERT(subscribeMsg->field_properties().value().empty());
@@ -133,7 +131,7 @@ void UnitTestSubscribe::test2()
     auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
     TS_ASSERT(apiIsConnected(client));
-    
+
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, 60000); // Default keep alive
 
@@ -177,7 +175,7 @@ void UnitTestSubscribe::test2()
 
     auto sentMsg1 = unitTestGetSentMessage();
     TS_ASSERT(sentMsg1);
-    TS_ASSERT_EQUALS(sentMsg1->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg1->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg1 = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg1.get());
 
     UnitTestPropsHandler propsHandler1;
@@ -185,11 +183,11 @@ void UnitTestSubscribe::test2()
         p.currentFieldExec(propsHandler1);
     }
 
-    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds.size(), 1U);    
-    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds[0]->field_value().value(), SubId1);    
-    TS_ASSERT_EQUALS(propsHandler1.m_userProps.size(), 1U);    
-    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_first().value(), SubUserPropKey1);    
-    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_second().value(), SubUserPropVal1);    
+    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds.size(), 1U);
+    TS_ASSERT_EQUALS(propsHandler1.m_subscriptionIds[0]->field_value().value(), SubId1);
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_first().value(), SubUserPropKey1);
+    TS_ASSERT_EQUALS(propsHandler1.m_userProps[0]->field_value().field_second().value(), SubUserPropVal1);
 
     auto subscribe2 = apiSubscribePrepare(client, nullptr);
     TS_ASSERT_DIFFERS(subscribe2, nullptr);
@@ -216,11 +214,11 @@ void UnitTestSubscribe::test2()
 
     auto sentMsg2 = unitTestGetSentMessage();
     TS_ASSERT(sentMsg2);
-    TS_ASSERT_EQUALS(sentMsg2->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg2->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg2 = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg2.get());
     TS_ASSERT_DIFFERS(subscribeMsg2, nullptr);
     TS_ASSERT_DIFFERS(subscribeMsg1->field_packetId().value(), subscribeMsg2->field_packetId().value());
-    
+
     unitTestTick(client, 1000);
     UnitTestSubackMsg subackMsg1;
     subackMsg1.field_packetId().value() = subscribeMsg1->field_packetId().value();
@@ -267,51 +265,51 @@ void UnitTestSubscribe::test3()
 
     config.m_topic = "#+";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "#/hello";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "hello+/bla";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "#hello";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "+hello";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share/";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share//";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share/#";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);      
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share/+";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share/ShareName";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);   
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "$share/ShareName/";
     ec = apiSubscribeConfigTopic(subscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);         
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     ec = unitTestSendSubscribe(subscribe);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);
@@ -344,7 +342,7 @@ void UnitTestSubscribe::test4()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     auto packetId = subscribeMsg->field_packetId().value();
 
@@ -366,7 +364,7 @@ void UnitTestSubscribe::test4()
 
 void UnitTestSubscribe::test5()
 {
-    // Canceling subscribe operation when network is disconnected 
+    // Canceling subscribe operation when network is disconnected
     // [MQTT-3.1.2-23]
 
     auto clientPtr = apiAllocClient();
@@ -397,7 +395,7 @@ void UnitTestSubscribe::test5()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
 
@@ -450,7 +448,7 @@ void UnitTestSubscribe::test6()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
 
@@ -474,7 +472,7 @@ void UnitTestSubscribe::test6()
         auto& field = propsVec.back().initField_userProperty();
         field.field_value().field_first().value() = SubackUserPropKey1;
         field.field_value().field_second().value() = SubackUserPropVal1;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
@@ -487,7 +485,7 @@ void UnitTestSubscribe::test6()
     TS_ASSERT_EQUALS(subackInfo.m_response.m_userProps.size(), 1U);
     TS_ASSERT_EQUALS(subackInfo.m_response.m_userProps[0].m_key, SubackUserPropKey1);
     TS_ASSERT_EQUALS(subackInfo.m_response.m_userProps[0].m_value, SubackUserPropVal1);
-    unitTestPopSubscribeResponseInfo();    
+    unitTestPopSubscribeResponseInfo();
 }
 
 void UnitTestSubscribe::test7()
@@ -517,7 +515,7 @@ void UnitTestSubscribe::test7()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
 
@@ -535,15 +533,15 @@ void UnitTestSubscribe::test7()
     } while (false);
 
     unitTestReceiveMessage(client, subackMsg);
-    
+
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopSubscribeResponseInfo();    
+    unitTestPopSubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestSubscribe::test8()
@@ -573,7 +571,7 @@ void UnitTestSubscribe::test8()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
 
@@ -590,17 +588,17 @@ void UnitTestSubscribe::test8()
         auto& field = propsVec.back().initField_userProperty();
         field.field_value().field_first().value() = SubackUserPropKey1;
         field.field_value().field_second().value() = SubackUserPropVal1;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopSubscribeResponseInfo();    
+    unitTestPopSubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestSubscribe::test9()
@@ -677,7 +675,7 @@ void UnitTestSubscribe::test10()
     extraConfig.m_subId = 10;
 
     ec = apiSubscribeConfigExtra(subscribe, &extraConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
 void UnitTestSubscribe::test11()
@@ -730,7 +728,7 @@ void UnitTestSubscribe::test12()
     topicConfig.m_noLocal = true;
 
     auto ec = apiSubscribeConfigTopic(subscribe, &topicConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
 void UnitTestSubscribe::test13()
@@ -775,7 +773,7 @@ void UnitTestSubscribe::test13()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
     TS_ASSERT(subscribeMsg->field_properties().value().empty());
@@ -800,7 +798,7 @@ void UnitTestSubscribe::test13()
     unitTestPopSubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());       
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestSubscribe::test14()

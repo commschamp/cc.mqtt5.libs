@@ -22,37 +22,37 @@ class ProtocolOptions : public cc_mqtt5::options::ClientDefaultOptions
 public:
     struct field : public BaseImpl::field
     {
-        using BinData = 
+        using BinData =
             std::tuple<
                 ##FIELD_BIN_DATA##,
                 BaseImpl::field::BinData
             >;
 
-        using PropertiesList = 
+        using PropertiesList =
             std::tuple<
                 ##FIELD_PROPERTIES_LIST##,
                 BaseImpl::field::PropertiesList
             >;
 
-        using ProtocolName = 
+        using ProtocolName =
             std::tuple<
                 ##FIELD_PROTOCOL_NAME##,
                 BaseImpl::field::ProtocolName
             >;
 
-        using String = 
+        using String =
             std::tuple<
                 ##FIELD_STRING##,
                 BaseImpl::field::String
             >;
 
-        using Topic = 
+        using Topic =
             std::tuple<
                 ##FIELD_TOPIC##,
                 BaseImpl::field::Topic
             >;
 
-    }; // struct field   
+    }; // struct field
 
     struct message : public BaseImpl::message
     {
@@ -61,7 +61,7 @@ public:
         {
             // using Properties = comms::option::EmptyOption;
 
-            using ClientId = 
+            using ClientId =
                 std::tuple<
                     ##MESSAGE_CONNECT_FIELDS_CLIENT_ID##,
                     BaseImpl::message::ConnectFields::ClientId
@@ -74,7 +74,7 @@ public:
 
             struct WillTopicMembers : public BaseImpl::message::ConnectFields::WillTopicMembers
             {
-                using WillTopic = 
+                using WillTopic =
                     std::tuple<
                         ##MESSAGE_CONNECT_FIELDS_WILL_TOPIC##,
                         BaseImpl::message::ConnectFields::WillTopicMembers::WillTopic
@@ -88,7 +88,7 @@ public:
 
             struct UserNameMembers : public BaseImpl::message::ConnectFields::UserNameMembers
             {
-                using UserName = 
+                using UserName =
                     std::tuple<
                         ##MESSAGE_CONNECT_FIELDS_USERNAME##,
                         BaseImpl::message::ConnectFields::UserNameMembers::UserName
@@ -97,7 +97,7 @@ public:
 
             struct PasswordMembers : public BaseImpl::message::ConnectFields::PasswordMembers
             {
-                using Password = 
+                using Password =
                     std::tuple<
                         ##MESSAGE_CONNECT_FIELDS_PASSWORD##,
                         BaseImpl::message::ConnectFields::PasswordMembers::Password
@@ -121,7 +121,7 @@ public:
                     ##MESSAGE_SUBSCRIBE_FIELDS_LIST##,
                     BaseImpl::message::SubackFields::List
                 >;
-        }; // struct SubackFields        
+        }; // struct SubackFields
 
         struct UnsubscribeFields : public BaseImpl::message::UnsubscribeFields
         {
@@ -142,7 +142,7 @@ public:
         }; // struct UnsubackFields
 
     }; // struct message
-    
+
     struct frame : public BaseImpl::frame
     {
         struct FrameLayers : public BaseImpl::frame::FrameLayers
@@ -162,7 +162,7 @@ public:
                     BaseImpl::frame::FrameLayers::IdAndFlags
                 >;
         }; // struct FrameLayers
-    }; // struct frame     
+    }; // struct frame
 };
 
 } // namespace cc_mqtt5_client

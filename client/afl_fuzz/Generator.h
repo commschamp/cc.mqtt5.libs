@@ -32,7 +32,7 @@ class Generator
 public:
     using RawDataBuf = std::vector<std::uint8_t>;
 
-    using Mqtt5Message = 
+    using Mqtt5Message =
         cc_mqtt5::Message<
             comms::option::app::ReadIterator<const std::uint8_t*>,
             comms::option::app::WriteIterator<std::back_insert_iterator<RawDataBuf>>,
@@ -112,7 +112,7 @@ private:
         void operator()(const TopicAliasMax& field)
         {
             m_topicAliasMax = field.field_value().getValue();
-        } 
+        }
 
         using MaxPacketSize = Property::Field_maxPacketSize;
         unsigned m_maxPacketSize = 0U;
@@ -120,7 +120,7 @@ private:
         void operator()(const MaxPacketSize& field)
         {
             m_maxPacketSize = field.field_value().getValue();
-        }      
+        }
 
     };
 

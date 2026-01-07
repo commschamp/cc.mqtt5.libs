@@ -19,7 +19,7 @@
 namespace cc_mqtt5_client_app
 {
 
-namespace 
+namespace
 {
 
 AppClient* asThis(void* data)
@@ -122,11 +122,11 @@ void printUserProperties(const CC_Mqtt5UserProp* props, unsigned propsCount)
     for (auto idx = 0U; idx < propsCount; ++idx) {
         auto& p = props[idx];
         std::cout << "\tUser Property: " << p.m_key << "=" << p.m_value << '\n';
-    }    
+    }
 }
 
-} // namespace 
-    
+} // namespace
+
 bool AppClient::start(int argc, const char* argv[])
 {
     if (!m_opts.parseArgs(argc, argv)) {
@@ -146,8 +146,7 @@ bool AppClient::start(int argc, const char* argv[])
     }
 
     return startImpl();
-}   
-
+}
 
 std::string AppClient::toString(CC_Mqtt5ErrorCode val)
 {
@@ -265,7 +264,7 @@ std::string AppClient::toString(const std::uint8_t* data, unsigned dataLen, bool
 {
     bool binary = forceBinary;
     if (!binary) {
-        binary = 
+        binary =
             std::any_of(
                 data, data + dataLen,
                 [](auto byte)
@@ -280,7 +279,7 @@ std::string AppClient::toString(const std::uint8_t* data, unsigned dataLen, bool
 
                     return false;
                 });
-    } 
+    }
 
     if (!binary) {
         return std::string(reinterpret_cast<const char*>(data), dataLen);
@@ -308,7 +307,7 @@ void AppClient::print(const CC_Mqtt5MessageInfo& info, bool printMessage)
 {
     std::cout << "[INFO]: Message Info:\n";
     if (printMessage) {
-        std::cout << 
+        std::cout <<
             "\tTopic: " << info.m_topic << '\n' <<
             "\tData: " << toString(info.m_data, info.m_dataLen, m_opts.subBinary()) << '\n';
     }
@@ -370,7 +369,7 @@ void AppClient::print(const CC_Mqtt5SubscribeResponse& response)
     std::cout << std::endl;
 }
 
-AppClient::AppClient(boost::asio::io_context& io, int& result) : 
+AppClient::AppClient(boost::asio::io_context& io, int& result) :
     m_io(io),
     m_result(result),
     m_timer(io),
@@ -391,7 +390,7 @@ bool AppClient::sendConnect(CC_Mqtt5ConnectHandle connect)
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to send connect request: " << toString(ec) << std::endl;
         return false;
-    }    
+    }
     return true;
 }
 
@@ -428,14 +427,14 @@ void AppClient::doComplete()
         logError() << "Failed to apply disconnect configuration: " << toString(ec) << std::endl;
         doTerminate();
         return;
-    }        
+    }
 
     ec = ::cc_mqtt5_client_disconnect_send(disconnect);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to send disconnect: " << toString(ec) << std::endl;
         doTerminate();
         return;
-    }       
+    }
 
     boost::asio::post(
         m_io,
@@ -480,7 +479,7 @@ bool AppClient::startImpl()
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to apply basic connect configuration: " << toString(ec) << std::endl;
         return false;
-    }    
+    }
 
     auto willTopic = m_opts.willTopic();
     if (!willTopic.empty()) {
@@ -488,7 +487,7 @@ bool AppClient::startImpl()
         auto willContentType = m_opts.willContentType();
         auto willResponseTopic = m_opts.willResponseTopic();
         auto willCorrelationData = parseBinaryData(m_opts.willCorrelationData());
-        
+
         auto willConfig = CC_Mqtt5ConnectWillConfig();
         ::cc_mqtt5_client_connect_init_config_will(&willConfig);
 
@@ -521,7 +520,7 @@ bool AppClient::startImpl()
         if (ec != CC_Mqtt5ErrorCode_Success) {
             logError() << "Failed to apply will configuration: " << toString(ec) << std::endl;
             return false;
-        }      
+        }
 
         auto willProps = parseUserProps(m_opts.willUserProps());
         for (auto& p : willProps) {
@@ -533,8 +532,8 @@ bool AppClient::startImpl()
             if (ec != CC_Mqtt5ErrorCode_Success) {
                 logError() << "Failed to add connect user property: " << toString(ec) << std::endl;
                 return false;
-            }         
-        }        
+            }
+        }
     }
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
@@ -550,7 +549,7 @@ bool AppClient::startImpl()
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to apply extra connect configuration: " << toString(ec) << std::endl;
         return false;
-    }      
+    }
 
     auto props = parseUserProps(m_opts.connectUserProps());
     for (auto& p : props) {
@@ -562,9 +561,9 @@ bool AppClient::startImpl()
         if (ec != CC_Mqtt5ErrorCode_Success) {
             logError() << "Failed to add connect user property: " << toString(ec) << std::endl;
             return false;
-        }         
+        }
     }
-    
+
     return sendConnect(connect);
 }
 
@@ -600,7 +599,7 @@ void AppClient::connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5
         if (m_opts.verbose()) {
             print(*response);
         }
-        
+
         if (CC_Mqtt5ReasonCode_UnspecifiedError <= response->m_reasonCode) {
             logError() << "Connection attempt was rejected" << std::endl;
             break;
@@ -620,7 +619,7 @@ std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)
     auto pos = 0U;
     while (pos < val.size()) {
         auto ch = val[pos];
-        auto addChar = 
+        auto addChar =
             [&result, &pos, ch]()
             {
                 result.push_back(static_cast<std::uint8_t>(ch));
@@ -691,7 +690,7 @@ std::vector<AppClient::UserPropInfo> AppClient::parseUserProps(const std::vector
             if (eqPos < str.size()) {
                 prop.m_value = str.substr(eqPos + 1U);
             }
-            
+
             return prop;
         });
     return result;

@@ -16,7 +16,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 inline RecvOp* asRecvOp(void* data)
@@ -37,14 +37,14 @@ bool isTopicMatch(std::string_view filter, std::string_view topic)
     auto filterSepPos = filter.find_first_of("/");
     auto topicSepPos = topic.find_first_of("/");
 
-    if ((filterSepPos == std::string_view::npos) && 
+    if ((filterSepPos == std::string_view::npos) &&
         (topicSepPos != std::string_view::npos)) {
         return false;
     }
 
     if (topicSepPos != std::string_view::npos) {
         COMMS_ASSERT(filterSepPos != std::string_view::npos);
-        if (((filter[0] == '+') && (filterSepPos == 1U)) || 
+        if (((filter[0] == '+') && (filterSepPos == 1U)) ||
             (filter.substr(0, filterSepPos) == topic.substr(0, topicSepPos))) {
             return isTopicMatch(filter.substr(filterSepPos + 1U), topic.substr(topicSepPos + 1U));
         }
@@ -59,7 +59,7 @@ bool isTopicMatch(std::string_view filter, std::string_view topic)
             return false;
         }
 
-        if (((filter[0] == '+') && (filterSepPos == 1U)) || 
+        if (((filter[0] == '+') && (filterSepPos == 1U)) ||
             (filter.substr(0, filterSepPos) == topic)) {
             return isTopicMatch(filter.substr(filterSepPos + 1U), std::string_view());
         }
@@ -70,8 +70,8 @@ bool isTopicMatch(std::string_view filter, std::string_view topic)
     COMMS_ASSERT(filterSepPos == std::string_view::npos);
     COMMS_ASSERT(topicSepPos == std::string_view::npos);
 
-    return 
-        (((filter[0] == '+') && (filter.size() == 1U)) || 
+    return
+        (((filter[0] == '+') && (filter.size() == 1U)) ||
          (filter == topic));
 }
 
@@ -82,14 +82,14 @@ bool isTopicMatch(const TopicFilterStr& filter, const TopicStr& topic)
     return isTopicMatch(std::string_view(filter.c_str(), filter.size()), std::string_view(topic.c_str(), topic.size()));
 }
 
-} // namespace     
+} // namespace
 
-RecvOp::RecvOp(ClientImpl& client) : 
+RecvOp::RecvOp(ClientImpl& client) :
     Base(client),
     m_responseTimer(client.timerMgr().allocTimer())
 {
     COMMS_ASSERT(m_responseTimer.isValid());
-}    
+}
 
 void RecvOp::handle(PublishMsg& msg)
 {
@@ -98,20 +98,20 @@ void RecvOp::handle(PublishMsg& msg)
     if (qos > Qos::ExactlyOnceDelivery) {
         errorLog("Received PUBLISH with unknown QoS value.");
         protocolErrorTermination();
-        return;         
-    }    
+        return;
+    }
 
     if (!verifyQosValid(qos)) {
         errorLog("Invalid QoS in PUBLISH from broker");
         terminationWithReason(DisconnectReason::QosNotSupported);
         return;
-    }    
+    }
 
     if constexpr (Config::MaxQos >= 2) {
-        if ((qos == Qos::ExactlyOnceDelivery) && 
-            (m_packetId != 0U) && 
+        if ((qos == Qos::ExactlyOnceDelivery) &&
+            (m_packetId != 0U) &&
             (msg.field_packetId().doesExist())) {
-            
+
             if (msg.field_packetId().field().value() != m_packetId) {
                 // Applicable to other RecvOp being handled in parallel
                 return;
@@ -130,18 +130,18 @@ void RecvOp::handle(PublishMsg& msg)
     auto& sessionState = client().sessionState();
 
     if constexpr (Config::MaxQos >= 1) {
-        if ((qos > Qos::AtMostOnceDelivery) && 
-            (0U < sessionState.m_highQosRecvLimit) && 
+        if ((qos > Qos::AtMostOnceDelivery) &&
+            (0U < sessionState.m_highQosRecvLimit) &&
             (sessionState.m_highQosRecvLimit < client().recvsCount())) {
             terminationWithReason(DisconnectReason::ReceiveMaxExceeded);
             return;
         }
     }
 
-    auto completeNotAuthorized = 
+    auto completeNotAuthorized =
         [this, &msg, qos]()
         {
-            auto sendNotAuthorized = 
+            auto sendNotAuthorized =
                 [this, &msg](auto& outMsg)
                 {
                     outMsg.field_packetId().value() = msg.field_packetId().field().value();
@@ -149,12 +149,12 @@ void RecvOp::handle(PublishMsg& msg)
                     outMsg.field_reasonCode().field().value() = PubackMsg::Field_reasonCode::Field::ValueType::NotAuthorized;
                     outMsg.field_properties().setExists();
                     sendMessage(outMsg);
-                };    
+                };
 
             do {
                 if (qos == Qos::AtMostOnceDelivery) {
                     break;
-                }    
+                }
 
                 if constexpr (Config::MaxQos >= 1) {
                     if (qos == Qos::AtLeastOnceDelivery) {
@@ -188,7 +188,7 @@ void RecvOp::handle(PublishMsg& msg)
     }
 
     UserPropsList userProps;
-    SubIdsStorage subIds;    
+    SubIdsStorage subIds;
 
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().value()) {
@@ -199,12 +199,12 @@ void RecvOp::handle(PublishMsg& msg)
         errorLog("Received PUBLISH with protocol error when parsing properties.");
         protocolErrorTermination();
         return;
-    }     
+    }
 
     if (topic.empty() && (propsHandler.m_topicAlias == nullptr)) {
         errorLog("Received PUBLISH without topic alias.");
         protocolErrorTermination();
-        return;        
+        return;
     }
 
     auto* topicPtr = &topic;
@@ -227,7 +227,7 @@ void RecvOp::handle(PublishMsg& msg)
             recvTopicAliases.resize(std::max(recvTopicAliases.size(), std::size_t(topicAlias + 1U)));
             recvTopicAliases[topicAlias] = topic;
             break;
-        }   
+        }
 
         if ((recvTopicAliases.size() <= topicAlias) ||
             (recvTopicAliases[topicAlias].empty())) {
@@ -244,7 +244,7 @@ void RecvOp::handle(PublishMsg& msg)
     if constexpr (Config::HasSubTopicVerification) {
         if (client().configState().m_verifySubFilter) {
             auto& subFilters = client().reuseState().m_subFilters;
-            auto iter = 
+            auto iter =
                 std::find_if(
                     subFilters.begin(), subFilters.end(),
                     [&topicStr = *topicPtr](auto& filter)
@@ -255,10 +255,10 @@ void RecvOp::handle(PublishMsg& msg)
             if (iter == subFilters.end()) {
                 errorLog("Received PUBLISH on non-subscribed topic");
                 completeNotAuthorized();
-                return;                
+                return;
             }
         }
-    }  
+    }
 
     auto info = CC_Mqtt5MessageInfo();
     info.m_topic = topicPtr->c_str();
@@ -286,13 +286,13 @@ void RecvOp::handle(PublishMsg& msg)
             comms::cast_assign(info.m_userPropsCount) = userProps.size();
             info.m_userProps = &userProps[0];
         }
-    }    
+    }
 
     if (propsHandler.m_contentType != nullptr) {
         auto& contentType = propsHandler.m_contentType->field_value().value();
         if (!contentType.empty()) {
-            info.m_contentType = contentType.c_str();    
-        }        
+            info.m_contentType = contentType.c_str();
+        }
     }
 
     if (!propsHandler.m_subscriptionIds.empty()) {
@@ -306,7 +306,7 @@ void RecvOp::handle(PublishMsg& msg)
     }
 
     comms::cast_assign(info.m_qos) = qos;
-    
+
     if (propsHandler.m_payloadFormatIndicator != nullptr) {
         comms::cast_assign(info.m_format) = propsHandler.m_payloadFormatIndicator->field_value().value();
     }
@@ -329,17 +329,17 @@ void RecvOp::handle(PublishMsg& msg)
             COMMS_ASSERT(ProtocolDecodingError);
             terminationWithReason(DisconnectReason::UnspecifiedError);
             return;
-        }    
+        }
 
         client().reportMsgInfo(info);
-    
+
         if (qos == Qos::AtLeastOnceDelivery) {
             PubackMsg pubackMsg;
             pubackMsg.field_packetId().value() = msg.field_packetId().field().value();
             sendMessage(pubackMsg);
             opComplete();
             return;
-        }    
+        }
     }
 
     if constexpr (Config::MaxQos >= 2) {
@@ -377,32 +377,32 @@ void RecvOp::handle(PubrelMsg& msg)
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received reason string in PUBREL when \"problem information\" was disabled in CONNECT.");
                 protocolErrorTermination();
-                return; 
+                return;
             }
 
             errorLog("PUBREL reason info:");
             errorLog(propsHandler.m_reasonStr->field_value().value().c_str());
-        }    
+        }
 
         if constexpr (Config::HasUserProps) {
             if (!propsHandler.m_userProps.empty()) {
                 if (!client().sessionState().m_problemInfoAllowed) {
                     errorLog("Received user properties in PUBREL when \"problem information\" was disabled in CONNECT.");
                     protocolErrorTermination();
-                    return; 
+                    return;
                 }
 
                 // User properties in PUBREL are ignored
             }
-        }     
-    }   
+        }
+    }
 
-    if ((msg.field_reasonCode().doesExist()) && 
+    if ((msg.field_reasonCode().doesExist()) &&
         (msg.field_reasonCode().field().value() != PubrelMsg::Field_reasonCode::Field::ValueType::Success)) {
         errorLog("Publish reception terminated due to error reason code in PUBREL message.");
         opComplete();
         return;
-    }    
+    }
 
     PubcompMsg pubcompMsg;
     pubcompMsg.field_packetId().setValue(m_packetId);
@@ -413,7 +413,7 @@ void RecvOp::handle(PubrelMsg& msg)
 
 void RecvOp::resetTimer()
 {
-    if constexpr (Config::MaxQos >= 2) {    
+    if constexpr (Config::MaxQos >= 2) {
         m_responseTimer.cancel();
     }
 }
@@ -441,10 +441,10 @@ void RecvOp::connectivityChangedImpl()
 
 void RecvOp::restartResponseTimer()
 {
-    if constexpr (Config::MaxQos >= 2) {    
+    if constexpr (Config::MaxQos >= 2) {
         auto& state = client().configState();
         m_responseTimer.wait(state.m_responseTimeoutMs, &RecvOp::recvTimeoutCb, this);
-    }        
+    }
 }
 
 void RecvOp::responseTimeoutInternal()

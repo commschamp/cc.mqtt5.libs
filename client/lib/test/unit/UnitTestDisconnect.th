@@ -62,7 +62,7 @@ void UnitTestDisconnect::test2()
     TS_ASSERT(!unitTestHasDisconnectInfo());
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::MalformedPacket);
-    TS_ASSERT(unitTestIsDisconnected());        
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestDisconnect::test3()
@@ -114,15 +114,15 @@ void UnitTestDisconnect::test4()
 
     auto* unsubscribe = apiUnsubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(unsubscribe, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
     auto* publish = apiPublishPrepare(client, &ec);
     TS_ASSERT_EQUALS(publish, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);       
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
     auto* disconnect = apiDisconnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(disconnect, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);       
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 }
 
 void UnitTestDisconnect::test5()
@@ -144,7 +144,7 @@ void UnitTestDisconnect::test5()
     TS_ASSERT(unitTestHasDisconnectInfo());
     auto& disconnectInfo = unitTestDisconnectInfo();
     TS_ASSERT_EQUALS(disconnectInfo.m_reasonCode, CC_Mqtt5ReasonCode_NormalDisconnection);
-    unitTestPopDisconnectInfo();    
+    unitTestPopDisconnectInfo();
     TS_ASSERT(unitTestCheckNoTicks());
 
     apiNotifyNetworkDisconnected(client);

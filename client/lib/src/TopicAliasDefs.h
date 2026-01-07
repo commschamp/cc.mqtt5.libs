@@ -11,7 +11,6 @@
 #include "ObjListType.h"
 #include "ProtocolDefs.h"
 
-
 namespace cc_mqtt5_client
 {
 

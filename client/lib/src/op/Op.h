@@ -62,18 +62,18 @@ public:
     void setResponseTimeout(unsigned ms)
     {
         m_responseTimeoutMs = ms;
-    }    
+    }
 
     void connectivityChanged()
     {
         connectivityChangedImpl();
     }
 
-    inline 
+    inline
     static bool verifyQosValid(Qos qos)
     {
         return (qos <= static_cast<decltype(qos)>(Config::MaxQos));
-    }    
+    }
 
 protected:
     using UserPropsList = ObjListType<CC_Mqtt5UserProp, Config::UserPropsLimit, Config::HasUserProps>;
@@ -98,7 +98,7 @@ protected:
     const ClientImpl& client() const
     {
         return m_client;
-    }    
+    }
 
     static void sendDisconnectWithReason(ClientImpl& client, DisconnectReason reason);
     void sendDisconnectWithReason(DisconnectReason reason);
@@ -121,7 +121,7 @@ protected:
         else {
             return true;
         }
-    }    
+    }
 
     inline bool verifyPubTopic(const char* topic, bool outgoing)
     {
@@ -131,7 +131,7 @@ protected:
         else {
             return true;
         }
-    }     
+    }
 
     static void fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProps);
 
@@ -146,7 +146,7 @@ protected:
     {
         auto& vec = field.value();
         vec.resize(vec.size() + 1U);
-        return vec.back();    
+        return vec.back();
     }
 
     template <typename TField>
@@ -172,7 +172,7 @@ protected:
                 errorLog("User property key is too long.");
                 discardLastProp(field);
                 return CC_Mqtt5ErrorCode_BadParam;
-            }            
+            }
 
             if (prop.m_value != nullptr) {
                 valueField.field_second().value() = prop.m_value;
@@ -182,15 +182,15 @@ protected:
                 errorLog("User property value is too long.");
                 discardLastProp(field);
                 return CC_Mqtt5ErrorCode_BadParam;
-            }              
+            }
 
             return CC_Mqtt5ErrorCode_Success;
         }
         else {
             errorLog("User properties are note supported.");
             return CC_Mqtt5ErrorCode_NotSupported;
-        }        
-    }    
+        }
+    }
 
     template <typename TField>
     void discardLastProp(TField& field)
@@ -211,7 +211,7 @@ private:
     bool verifySubFilterInternal(const char* filter);
     bool verifyPubTopicInternal(const char* topic, bool outgoing);
 
-    ClientImpl& m_client;    
+    ClientImpl& m_client;
     unsigned m_responseTimeoutMs = 0U;
 };
 

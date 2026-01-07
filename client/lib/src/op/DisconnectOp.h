@@ -28,7 +28,7 @@ public:
     CC_Mqtt5ErrorCode cancel();
 
 protected:
-    virtual Type typeImpl() const override;    
+    virtual Type typeImpl() const override;
 
 private:
 
@@ -36,6 +36,5 @@ private:
 };
 
 } // namespace op
-
 
 } // namespace cc_mqtt5_client

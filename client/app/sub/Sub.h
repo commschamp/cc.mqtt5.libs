@@ -22,9 +22,9 @@ public:
     Sub(boost::asio::io_context& io, int& result);
 
 protected:
-    virtual void brokerConnectedImpl() override;    
+    virtual void brokerConnectedImpl() override;
     virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info) override;
-    
+
 private:
     void subscribeCompleteInternal(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
 

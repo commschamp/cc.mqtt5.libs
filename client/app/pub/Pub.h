@@ -22,7 +22,7 @@ public:
     Pub(boost::asio::io_context& io, int& result);
 
 protected:
-    virtual void brokerConnectedImpl() override;    
+    virtual void brokerConnectedImpl() override;
 private:
     void publishCompleteInternal(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 

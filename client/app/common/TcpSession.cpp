@@ -31,7 +31,7 @@ bool TcpSession::startImpl()
     if (ec) {
         logError() << "Failed to connect: " << ec.message() << std::endl;
         return false;
-    }    
+    }
 
     doRead();
     return true;

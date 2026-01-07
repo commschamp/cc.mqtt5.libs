@@ -2,7 +2,7 @@
 The [BUILD.md](BUILD.md) file described general build process and explained
 usage of **CC_MQTT5_CUSTOM_CLIENT_CONFIG_FILES** option. Such option specifies
 a single custom client build configuration file or a list of such files. These
-files get included during the [CMake](https://cmake.org) parsing stage and 
+files get included during the [CMake](https://cmake.org) parsing stage and
 are expected to specify multiple variables, which in turn influence the
 way the client library is built.
 
@@ -10,12 +10,12 @@ This page describes and explains the meaning of these variables.
 
 ## Variables
 In general, the client library implements all the features specified in the MQTT v5
-specification. Some of the variables below allow removing some specific features 
-from the compilation reducing the total library size as well as improving performance. 
+specification. Some of the variables below allow removing some specific features
+from the compilation reducing the total library size as well as improving performance.
 
 The client library also uses
-[std::string](http://en.cppreference.com/w/cpp/string/basic_string) type to 
-hold strings and 
+[std::string](http://en.cppreference.com/w/cpp/string/basic_string) type to
+hold strings and
 [std::vector](http://en.cppreference.com/w/cpp/container/vector) type to hold
 various lists. It is because there is no known and predefined limit on string length
 and/or number of elements in the list. However, if such limit is specified, the
@@ -34,7 +34,7 @@ It will influence the names of the API functions. The **default** client build
 functions with `cc_mqtt5_client_`, while client with custom name will produce
 functions having `cc_mqtt5_<custom_name>_client_` prefix. For example having the
 `set (CC_MQTT5_CLIENT_CUSTOM_NAME "my_name")` statement in configuration file
-will produce a library which prefixes all API functions with 
+will produce a library which prefixes all API functions with
 `cc_mqtt5_my_name_client_`.
 
 The **CC_MQTT5_CLIENT_CUSTOM_NAME** variable is a **must have** one, without it
@@ -456,9 +456,9 @@ When **CC_MQTT5_CLIENT_MAX_QOS** is set to value below **2**, the
 **CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT** value has no influence and is ignored.
 
 ---
-## Example for Bare-Metal Without Heap Configuration 
+## Example for Bare-Metal Without Heap Configuration
 The content of the custom client configuration file, which explicitly specifies
-all compile time limits and constants to prevent usage of dynamic 
+all compile time limits and constants to prevent usage of dynamic
 memory allocation and STL types like [std::string](http://en.cppreference.com/w/cpp/string/basic_string)
 and [std::vector](http://en.cppreference.com/w/cpp/container/vector), may look
 like [this](../client/lib/script/BareMetalTestConfig.cmake):
@@ -471,5 +471,5 @@ CC_Mqtt5ClientHandle cc_mqtt5_bm_client_alloc();
 void cc_mqtt5_bm_client_free(CC_Mqtt5ClientHandle client);
 
 ...
-    
+
 ```

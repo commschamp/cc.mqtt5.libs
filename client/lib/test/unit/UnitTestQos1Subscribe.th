@@ -27,7 +27,7 @@ void UnitTestQos1Subscribe::test1()
     auto clientPtr = apiAllocClient();
     auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
-    TS_ASSERT(apiIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));
 
     auto subscribeConfig = CC_Mqtt5SubscribeTopicConfig();
     apiSubscribeInitConfigTopic(&subscribeConfig);
@@ -49,7 +49,7 @@ void UnitTestQos1Subscribe::test1()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Subscribe);
     auto* subscribeMsg = dynamic_cast<UnitTestSubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(subscribeMsg, nullptr);
 
@@ -57,14 +57,14 @@ void UnitTestQos1Subscribe::test1()
     subackMsg.field_packetId().value() = subscribeMsg->field_packetId().value();
     subackMsg.field_list().value().resize(1);
     subackMsg.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_GrantedQos2);
-    
+
     unitTestReceiveMessage(client, subackMsg);
     TS_ASSERT(unitTestIsSubscribeComplete());
 
     auto& subackInfo = unitTestSubscribeResponseInfo();
     TS_ASSERT_EQUALS(subackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopSubscribeResponseInfo();     
+    unitTestPopSubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }

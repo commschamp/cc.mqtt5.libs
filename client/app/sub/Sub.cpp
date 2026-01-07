@@ -12,7 +12,7 @@
 namespace cc_mqtt5_client_app
 {
 
-namespace 
+namespace
 {
 
 Sub* asThis(void* data)
@@ -20,10 +20,9 @@ Sub* asThis(void* data)
     return reinterpret_cast<Sub*>(data);
 }
 
-} // namespace 
-    
+} // namespace
 
-Sub::Sub(boost::asio::io_context& io, int& result) : 
+Sub::Sub(boost::asio::io_context& io, int& result) :
     Base(io, result)
 {
     opts().addCommon();
@@ -31,7 +30,7 @@ Sub::Sub(boost::asio::io_context& io, int& result) :
     opts().addTls();
     opts().addConnect();
     opts().addSubscribe();
-}    
+}
 
 void Sub::brokerConnectedImpl()
 {
@@ -49,7 +48,7 @@ void Sub::brokerConnectedImpl()
 
     for (auto idx = 0U; idx < topics.size(); ++idx) {
         auto topicConfig = CC_Mqtt5SubscribeTopicConfig();
-        ::cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);        
+        ::cc_mqtt5_client_subscribe_init_config_topic(&topicConfig);
         topicConfig.m_topic = topics[idx].c_str();
 
         if (idx < qoses.size()) {
@@ -57,7 +56,7 @@ void Sub::brokerConnectedImpl()
         }
 
         if (noRetained) {
-            topicConfig.m_retainHandling = CC_Mqtt5RetainHandling_DoNotSend;  
+            topicConfig.m_retainHandling = CC_Mqtt5RetainHandling_DoNotSend;
         }
 
         ec = ::cc_mqtt5_client_subscribe_config_topic(subscribe, &topicConfig);
@@ -65,7 +64,7 @@ void Sub::brokerConnectedImpl()
             logError() << "Failed to configure topic \"" << topics[idx] << "\": " << toString(ec) << std::endl;
             doTerminate();
             return;
-        }        
+        }
     }
 
     auto subId = opts().subId();
@@ -79,7 +78,7 @@ void Sub::brokerConnectedImpl()
             logError() << "Failed to configure extra subscribe properties: " << toString(ec) << std::endl;
             doTerminate();
             return;
-        }           
+        }
     }
 
     auto props = parseUserProps(opts().subUserProps());
@@ -93,15 +92,15 @@ void Sub::brokerConnectedImpl()
             logError() << "Failed to add subscribe user property: " << toString(ec) << std::endl;
             doTerminate();
             return;
-        }         
-    }     
+        }
+    }
 
     ec = ::cc_mqtt5_client_subscribe_send(subscribe, &Sub::subscribeCompleteCb, this);
     if (ec != CC_Mqtt5ErrorCode_Success) {
         logError() << "Failed to send SUBSCRIBE message: " << toString(ec) << std::endl;
         doTerminate();
         return;
-    }        
+    }
 }
 
 void Sub::messageReceivedImpl(const CC_Mqtt5MessageInfo* info)
@@ -111,15 +110,15 @@ void Sub::messageReceivedImpl(const CC_Mqtt5MessageInfo* info)
 
     if (opts().verbose()) {
         print(*info);
-    }   
+    }
     else {
         std::cout << info->m_topic << ": " << toString(info->m_data, info->m_dataLen, opts().subBinary()) << std::endl;
     }
 }
 
 void Sub::subscribeCompleteInternal(
-    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle, 
-    CC_Mqtt5AsyncOpStatus status, 
+    [[maybe_unused]] CC_Mqtt5SubscribeHandle handle,
+    CC_Mqtt5AsyncOpStatus status,
     const CC_Mqtt5SubscribeResponse* response)
 {
     if (status != CC_Mqtt5AsyncOpStatus_Complete) {
@@ -140,15 +139,14 @@ void Sub::subscribeCompleteInternal(
 
     if (opts().verbose()) {
         print(*response);
-    }    
+    }
 
-    // Listening to the messages    
+    // Listening to the messages
 }
 
 void Sub::subscribeCompleteCb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response)
 {
     asThis(data)->subscribeCompleteInternal(handle, status, response);
 }
-
 
 } // namespace cc_mqtt5_client_app

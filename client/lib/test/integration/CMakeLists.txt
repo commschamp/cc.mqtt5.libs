@@ -20,7 +20,7 @@ function (cc_mqtt5_client_add_integration_test name)
     add_executable(integration.${name} ${src})
     target_link_libraries(integration.${name} PRIVATE  ${COMMON_BASE_LIB_NAME} cc::cc_mqtt5_client)
     add_test(
-        NAME integration.${name} 
+        NAME integration.${name}
         COMMAND ${CMAKE_CURRENT_BINARY_DIR}/integration.${name})
 endfunction ()
 
@@ -28,5 +28,4 @@ endfunction ()
 
 cc_mqtt5_client_add_integration_test(IntegrationTestBasicConnect)
 cc_mqtt5_client_add_integration_test(IntegrationTestBasicPubSub)
-
 

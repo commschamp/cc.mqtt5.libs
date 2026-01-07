@@ -22,7 +22,7 @@ class TcpSession final : public Session
 public:
     static Ptr create(boost::asio::io_context& io, const ProgramOptions& opts);
 
-protected:    
+protected:
     virtual bool startImpl() override;
     virtual void sendDataImpl(const std::uint8_t* buf, std::size_t bufLen) override;
 
@@ -31,7 +31,7 @@ private:
     using InDataBuf = std::array<std::uint8_t, 4096>;
     using DataBuf = std::vector<std::uint8_t>;
 
-    TcpSession(boost::asio::io_context& io, const ProgramOptions& opts) : 
+    TcpSession(boost::asio::io_context& io, const ProgramOptions& opts) :
         Base(io, opts),
         m_socket(io)
     {

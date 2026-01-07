@@ -14,7 +14,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 inline KeepAliveOp* asKeepAliveOp(void* data)
@@ -22,9 +22,9 @@ inline KeepAliveOp* asKeepAliveOp(void* data)
     return reinterpret_cast<KeepAliveOp*>(data);
 }
 
-} // namespace     
+} // namespace
 
-KeepAliveOp::KeepAliveOp(ClientImpl& client) : 
+KeepAliveOp::KeepAliveOp(ClientImpl& client) :
     Base(client),
     m_pingTimer(client.timerMgr().allocTimer()),
     m_recvTimer(client.timerMgr().allocTimer()),
@@ -35,7 +35,7 @@ KeepAliveOp::KeepAliveOp(ClientImpl& client) :
     COMMS_ASSERT(m_respTimer.isValid());
 
     restartPingTimer();
-}    
+}
 
 void KeepAliveOp::messageSent()
 {
@@ -52,7 +52,7 @@ void KeepAliveOp::handle([[maybe_unused]] PingrespMsg& msg)
 void KeepAliveOp::handle(DisconnectMsg& msg)
 {
     m_pingTimer.cancel();
-    m_recvTimer.cancel();  
+    m_recvTimer.cancel();
     m_respTimer.cancel();
 
     if (!msg.doValid()) {
@@ -63,7 +63,7 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
     }
 
     auto info = CC_Mqtt5DisconnectInfo();
-    
+
     if (msg.field_reasonCode().doesExist()) {
         comms::cast_assign(info.m_reasonCode) = msg.field_reasonCode().field().value();
     }
@@ -72,11 +72,11 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
         PropsHandler propsHandler;
         for (auto& p : msg.field_properties().field().value()) {
             p.currentFieldExec(propsHandler);
-        } 
+        }
 
         if (propsHandler.m_reasonStr != nullptr) {
             info.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
-        }     
+        }
 
         if (propsHandler.m_serverRef != nullptr) {
             info.m_serverRef = propsHandler.m_serverRef->field_value().value().c_str();
@@ -89,11 +89,11 @@ void KeepAliveOp::handle(DisconnectMsg& msg)
                 info.m_userProps = &userProps[0];
                 comms::cast_assign(info.m_userPropsCount) = userProps.size();
             }
-        }        
+        }
     }
 
     client().brokerDisconnected(CC_Mqtt5BrokerDisconnectReason_DisconnectMsg, CC_Mqtt5AsyncOpStatus_BrokerDisconnected, &info);
-    // No members access after this point, the op will be deleted    
+    // No members access after this point, the op will be deleted
 }
 
 void KeepAliveOp::handle([[maybe_unused]] ProtMessage& msg)

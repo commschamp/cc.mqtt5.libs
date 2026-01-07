@@ -38,7 +38,7 @@ public:
     static CC_Mqtt5SubscribeHandle asHandle(SubscribeOp* obj)
     {
         return reinterpret_cast<CC_Mqtt5SubscribeHandle>(obj);
-    }    
+    }
 
     static SubscribeOp* fromHandle(CC_Mqtt5SubscribeHandle handle)
     {
@@ -49,7 +49,7 @@ public:
     virtual void handle(SubackMsg& msg) override;
 
 protected:
-    virtual Type typeImpl() const override;    
+    virtual Type typeImpl() const override;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
 
 private:
@@ -68,6 +68,5 @@ private:
 };
 
 } // namespace op
-
 
 } // namespace cc_mqtt5_client

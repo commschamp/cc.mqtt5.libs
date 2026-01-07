@@ -16,14 +16,14 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 template <typename TField, bool THasFixedLength>
 struct ReasonCodesCountHeper
 {
     static constexpr unsigned Value = 0U;
-};  
+};
 
 template <typename TField>
 struct ReasonCodesCountHeper<TField, true>
@@ -42,13 +42,13 @@ constexpr unsigned reasonCodesLength()
     return ReasonCodesCountHeper<TField, TField::hasFixedSize()>::Value;
 }
 
-} // namespace     
+} // namespace
 
-SubscribeOp::SubscribeOp(ClientImpl& client) : 
+SubscribeOp::SubscribeOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-}  
+}
 
 SubscribeOp::~SubscribeOp()
 {
@@ -70,11 +70,11 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
     if (config.m_noLocal && isSharedTopicFilter(config.m_topic)) {
         errorLog("Shared subscriptions cannot set \"no local\" flag.");
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     if (static_cast<decltype(config.m_maxQos)>(Config::MaxQos) < config.m_maxQos) {
         errorLog("Bad subscription qos value.");
-        return CC_Mqtt5ErrorCode_BadParam;        
+        return CC_Mqtt5ErrorCode_BadParam;
     }
 
     auto& topicVec = m_subMsg.field_list().value();
@@ -95,7 +95,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configTopic(const CC_Mqtt5SubscribeTopicConfig& c
         errorLog("Subscription topic value is too long");
         topicVec.pop_back();
         return CC_Mqtt5ErrorCode_BadParam;
-    }   
+    }
 
     return CC_Mqtt5ErrorCode_Success;
 }
@@ -123,7 +123,7 @@ CC_Mqtt5ErrorCode SubscribeOp::configExtra(const CC_Mqtt5SubscribeExtraConfig& c
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_subscriptionId();
-        auto& valueField = propBundle.field_value();        
+        auto& valueField = propBundle.field_value();
         valueField.setValue(config.m_subId);
     }
 
@@ -136,11 +136,11 @@ CC_Mqtt5ErrorCode SubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
     return addUserPropToList(propsField, prop);
 }
 
-CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData) 
+CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData)
 {
     client().allowNextPrepare();
-    
-    auto completeOnError = 
+
+    auto completeOnError =
         comms::util::makeScopeGuard(
             [this]()
             {
@@ -160,13 +160,13 @@ CC_Mqtt5ErrorCode SubscribeOp::send(CC_Mqtt5SubscribeCompleteCb cb, void* cbData
     if (!m_timer.isValid()) {
         errorLog("The library cannot allocate required number of timers.");
         return CC_Mqtt5ErrorCode_InternalError;
-    }    
+    }
 
     m_cb = cb;
     m_cbData = cbData;
 
     m_subMsg.field_packetId().setValue(allocPacketId());
-    auto result = client().sendMessage(m_subMsg); 
+    auto result = client().sendMessage(m_subMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
     }
@@ -204,15 +204,15 @@ void SubscribeOp::handle(SubackMsg& msg)
     auto response = CC_Mqtt5SubscribeResponse();
 
     auto terminationReason = DisconnectReason::ProtocolError;
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client(), &terminationReason]()
             {
                 terminationWithReasonStatic(cl, terminationReason);
             }
-        );    
+        );
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
@@ -221,7 +221,7 @@ void SubscribeOp::handle(SubackMsg& msg)
                     responsePtr = nullptr;
                 }
                 completeOpInternal(status, responsePtr);
-            });     
+            });
 
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().value()) {
@@ -231,7 +231,7 @@ void SubscribeOp::handle(SubackMsg& msg)
     if (propsHandler.isProtocolError()) {
         errorLog("Protocol error in SUBACK properties");
         return;
-    }  
+    }
 
     auto& topicsVec = m_subMsg.field_list().value();
     auto& reasonCodesVec = msg.field_list().value();
@@ -260,8 +260,8 @@ void SubscribeOp::handle(SubackMsg& msg)
             if (reqQos < ackQos) {
                 errorLog("Granted QoS in SUBACK is greater than requested");
                 return; // protocol error will be reported
-            }   
-        }     
+            }
+        }
 
         reasonCodes.push_back(rcCasted);
 
@@ -273,11 +273,11 @@ void SubscribeOp::handle(SubackMsg& msg)
             if (reasonCodes.back() >=  CC_Mqtt5ReasonCode_UnspecifiedError) {
                 // Subscribe is not confirmed
                 continue;
-            }            
-            
+            }
+
             auto& topicStr = m_subMsg.field_list().value()[idx].field_topic().value();
             auto& filtersMap = client().reuseState().m_subFilters;
-            auto iter = 
+            auto iter =
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), topicStr,
                     [](auto& storedTopic, auto& topicParam)
@@ -308,24 +308,24 @@ void SubscribeOp::handle(SubackMsg& msg)
     if (propsHandler.m_reasonStr != nullptr) {
         if (!client().sessionState().m_problemInfoAllowed) {
             errorLog("Received reason string in SUBACK when \"problem information\" was disabled in CONNECT.");
-            return; 
+            return;
         }
 
         response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
-    }       
+    }
 
     if constexpr (Config::HasUserProps) {
         if (!propsHandler.m_userProps.empty()) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received user properties in SUBACK when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             fillUserProps(propsHandler, userProps);
             response.m_userProps = &userProps[0];
             comms::cast_assign(response.m_userPropsCount) = userProps.size();
-        }  
-    }  
+        }
+    }
 
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
@@ -348,7 +348,7 @@ void SubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt
     auto handle = toHandle();
     opComplete(); // mustn't access data members after destruction
     if (cb != nullptr) {
-        cb(cbData, handle, status, response);    
+        cb(cbData, handle, status, response);
     }
 }
 

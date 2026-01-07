@@ -41,7 +41,7 @@ public:
     virtual void handle(AuthMsg& msg) override;
 
 protected:
-    virtual Type typeImpl() const override;    
+    virtual Type typeImpl() const override;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
     virtual void connectivityChangedImpl() override;
 
@@ -54,8 +54,8 @@ private:
 
     static void opTimeoutCb(void* data);
 
-    ConnectMsg m_connectMsg;  
-    TimerMgr::Timer m_timer;  
+    ConnectMsg m_connectMsg;
+    TimerMgr::Timer m_timer;
     CC_Mqtt5ConnectCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;
     CC_Mqtt5AuthCb m_authCb = nullptr;
@@ -70,6 +70,5 @@ private:
 };
 
 } // namespace op
-
 
 } // namespace cc_mqtt5_client

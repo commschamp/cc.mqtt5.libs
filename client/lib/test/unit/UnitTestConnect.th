@@ -62,7 +62,7 @@ void UnitTestConnect::test1()
     // [MQTT-3.1.2-13]
     // [MQTT-3.1.2-16]
     // [MQTT-3.1.2-18]
-    
+
     auto clientPtr = apiAllocClient();
     auto* client = clientPtr.get();
     TS_ASSERT_DIFFERS(client, nullptr);
@@ -192,7 +192,7 @@ void UnitTestConnect::test2()
     connectWillConfig.m_messageExpiryInterval = WillExpiryInterval;
     connectWillConfig.m_qos = WillQos;
     connectWillConfig.m_format = WillFormat;
-    connectWillConfig.m_retain = WillRetain;    
+    connectWillConfig.m_retain = WillRetain;
 
     ec = apiConnectConfigWill(connect, &connectWillConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -212,7 +212,7 @@ void UnitTestConnect::test2()
     connectExtraConfig.m_maxPacketSize = MaxPacketSize;
     connectExtraConfig.m_topicAliasMaximum = TopicAliasMax;
     connectExtraConfig.m_requestResponseInfo = RequestResponseInfo;
-    connectExtraConfig.m_requestProblemInfo = RequestProblemInfo;    
+    connectExtraConfig.m_requestProblemInfo = RequestProblemInfo;
 
     ec = apiConnectConfigExtra(connect, &connectExtraConfig);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -225,13 +225,12 @@ void UnitTestConnect::test2()
     ec = apiConnectAddUserProp(connect, &prop1);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
-
     const std::string UserPropKey2 = "key2";
     const std::string UserPropVal2 = "val2";
     auto prop2 = CC_Mqtt5UserProp();
     prop2.m_key = UserPropKey2.c_str();
     prop2.m_value = UserPropVal2.c_str();
-    ec = apiConnectAddUserProp(connect, &prop2);    
+    ec = apiConnectAddUserProp(connect, &prop2);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
@@ -275,11 +274,11 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(propsHandler.m_requestResponseInfo->field_value().value() == UnitTestPropsHandler::RequestResponseInfo::Field_value::ValueType::Enabled, RequestResponseInfo);
     TS_ASSERT_DIFFERS(propsHandler.m_requestProblemInfo, nullptr);
     TS_ASSERT_EQUALS(propsHandler.m_requestProblemInfo->field_value().value() == UnitTestPropsHandler::RequestProblemInfo::Field_value::ValueType::Enabled, RequestProblemInfo);
-    TS_ASSERT_EQUALS(propsHandler.m_userProps.size(), 2U);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_first().value(), UserPropKey1);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_second().value(), UserPropVal1);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[1]->field_value().field_first().value(), UserPropKey2);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[1]->field_value().field_second().value(), UserPropVal2);    
+    TS_ASSERT_EQUALS(propsHandler.m_userProps.size(), 2U);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_first().value(), UserPropKey1);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_second().value(), UserPropVal1);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[1]->field_value().field_first().value(), UserPropKey2);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[1]->field_value().field_second().value(), UserPropVal2);
 
     const std::string BrokerResponseInfo("BrokerResponse");
     const std::string BrokerReason("BrokerReason");
@@ -315,7 +314,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_reasonStr();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerReason;
-    } while (false);    
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -323,7 +322,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_serverRef();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerServerRef;
-    } while (false);    
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -331,7 +330,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_receiveMax();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerReceiveMax;
-    } while (false);   
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -339,7 +338,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_maxPacketSize();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerMaxPacketSize;
-    } while (false);   
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -347,7 +346,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_topicAliasMax();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerTopicAliasMax;
-    } while (false);       
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -355,7 +354,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_maxQos();
         auto& propValue = propBundle.field_value();
         comms::cast_assign(propValue.value()) = BrokerMaxQos;
-    } while (false);     
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -363,7 +362,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_retainAvailable();
         auto& propValue = propBundle.field_value();
         propValue.value() = ConnackProperty::Field_retainAvailable::Field_value::ValueType::Disabled;
-    } while (false);    
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -371,7 +370,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_wildcardSubAvail();
         auto& propValue = propBundle.field_value();
         propValue.value() = ConnackProperty::Field_wildcardSubAvail::Field_value::ValueType::Disabled;
-    } while (false);  
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -379,7 +378,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_subIdAvail();
         auto& propValue = propBundle.field_value();
         propValue.value() = ConnackProperty::Field_subIdAvail::Field_value::ValueType::Disabled;
-    } while (false);        
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -387,7 +386,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_sharedSubAvail();
         auto& propValue = propBundle.field_value();
         propValue.value() = ConnackProperty::Field_sharedSubAvail::Field_value::ValueType::Disabled;
-    } while (false);     
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -396,7 +395,7 @@ void UnitTestConnect::test2()
         auto& propValue = propBundle.field_value();
         propValue.field_first().value() = BrokerPropKey1;
         propValue.field_second().value() = BrokerPropVal1;
-    } while (false);     
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -405,7 +404,7 @@ void UnitTestConnect::test2()
         auto& propValue = propBundle.field_value();
         propValue.field_first().value() = BrokerPropKey2;
         propValue.field_second().value() = BrokerPropVal2;
-    } while (false);           
+    } while (false);
 
     do {
         propsVec.resize(propsVec.size() + 1U);
@@ -413,7 +412,7 @@ void UnitTestConnect::test2()
         auto& propBundle = propVar.initField_serverKeepAlive();
         auto& propValue = propBundle.field_value();
         propValue.setValue(BrokerKeepAlive);
-    } while (false);                 
+    } while (false);
 
     unitTestReceiveMessage(client, connackMsg);
     TS_ASSERT(unitTestIsConnectComplete());
@@ -430,7 +429,7 @@ void UnitTestConnect::test2()
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[0].m_key, BrokerPropKey1);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[0].m_value, BrokerPropVal1);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[1].m_key, BrokerPropKey2);
-    TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[1].m_value, BrokerPropVal2);    
+    TS_ASSERT_EQUALS(connectInfo.m_response.m_userProps[1].m_value, BrokerPropVal2);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_sessionExpiryInterval, SessionExpiryInterval);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_highQosSendLimit, BrokerReceiveMax);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_maxPacketSize, BrokerMaxPacketSize);
@@ -474,8 +473,8 @@ void UnitTestConnect::test3()
 
     auto connectExtraConfig = CC_Mqtt5ConnectExtraConfig();
     apiConnectInitConfigExtra(&connectExtraConfig);
-    connectExtraConfig.m_requestProblemInfo = true;    
-    ec = apiConnectConfigExtra(connect, &connectExtraConfig);    
+    connectExtraConfig.m_requestProblemInfo = true;
+    ec = apiConnectConfigExtra(connect, &connectExtraConfig);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -494,8 +493,8 @@ void UnitTestConnect::test3()
     TS_ASSERT_EQUALS(propsHandler.m_authMethod->field_value().value(), ConnectAuthMethod);
 
     TS_ASSERT_DIFFERS(propsHandler.m_authData, nullptr);
-    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ConnectAuthData);    
-    
+    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ConnectAuthData);
+
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
 
@@ -541,7 +540,7 @@ void UnitTestConnect::test3()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
+    } while (false);
 
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -549,7 +548,7 @@ void UnitTestConnect::test3()
         auto& propBundle = propVar.initField_reasonStr();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthReasonStr;
-    } while (false);     
+    } while (false);
 
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -558,8 +557,8 @@ void UnitTestConnect::test3()
         auto& propValue = propBundle.field_value();
         propValue.field_first().value() = BrokerAuthUserPropKey1;
         propValue.field_second().value() = BrokerAuthUserPropVal1;
-    } while (false);     
-    
+    } while (false);
+
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(!unitTestIsConnectComplete());
 
@@ -569,7 +568,7 @@ void UnitTestConnect::test3()
     TS_ASSERT_EQUALS(inAuthInfo.m_userProps.size(), 1U);
     TS_ASSERT_EQUALS(inAuthInfo.m_userProps[0].m_key, BrokerAuthUserPropKey1);
     TS_ASSERT_EQUALS(inAuthInfo.m_userProps[0].m_value, BrokerAuthUserPropVal1);
-    
+
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Auth);
@@ -582,14 +581,14 @@ void UnitTestConnect::test3()
     UnitTestPropsHandler authPropsHandler;
     for (auto& p : authMsg->field_properties().field().value()) {
         p.currentFieldExec(authPropsHandler);
-    }    
+    }
 
     TS_ASSERT_DIFFERS(authPropsHandler.m_authMethod, nullptr);
     TS_ASSERT_EQUALS(authPropsHandler.m_authMethod->field_value().value(), ConnectAuthMethod);
     TS_ASSERT_DIFFERS(authPropsHandler.m_authData, nullptr);
     TS_ASSERT_EQUALS(authPropsHandler.m_authData->field_value().value(), AuthData);
     TS_ASSERT_DIFFERS(authPropsHandler.m_reasonStr, nullptr);
-    TS_ASSERT_EQUALS(authPropsHandler.m_reasonStr->field_value().value(), AuthReasonStr);   
+    TS_ASSERT_EQUALS(authPropsHandler.m_reasonStr->field_value().value(), AuthReasonStr);
     TS_ASSERT_EQUALS(authPropsHandler.m_userProps.size(), 1U);
     TS_ASSERT_EQUALS(authPropsHandler.m_userProps[0]->field_value().field_first().value(), AuthUserPropKey1);
     TS_ASSERT_EQUALS(authPropsHandler.m_userProps[0]->field_value().field_second().value(), AuthUserPropVal1);
@@ -613,7 +612,7 @@ void UnitTestConnect::test3()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = ConnackAuthData;
-    } while (false);        
+    } while (false);
 
     do {
         connackPropsVec.resize(connackPropsVec.size() + 1U);
@@ -621,7 +620,7 @@ void UnitTestConnect::test3()
         auto& propBundle = propVar.initField_assignedClientId();
         auto& propValue = propBundle.field_value();
         propValue.value() = __FUNCTION__;
-    } while (false);        
+    } while (false);
 
     unitTestReceiveMessage(client, connackMsg);
     TS_ASSERT(unitTestIsConnectComplete());
@@ -630,7 +629,7 @@ void UnitTestConnect::test3()
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_Success);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_authData, ConnackAuthData);
-    unitTestPopConnectResponseInfo();    
+    unitTestPopConnectResponseInfo();
 }
 
 void UnitTestConnect::test4()
@@ -689,14 +688,14 @@ void UnitTestConnect::test4()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo();    
+    unitTestPopConnectResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
@@ -791,21 +790,21 @@ void UnitTestConnect::test6()
     TS_ASSERT_EQUALS(disconnect, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* subscribe = apiSubscribePrepare(client, &ec);    
+    auto* subscribe = apiSubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(subscribe, nullptr);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* unsubscribe = apiUnsubscribePrepare(client, &ec);    
+    auto* unsubscribe = apiUnsubscribePrepare(client, &ec);
     TS_ASSERT_EQUALS(unsubscribe, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* publish = apiPublishPrepare(client, &ec);    
+    auto* publish = apiPublishPrepare(client, &ec);
     TS_ASSERT_EQUALS(publish, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);        
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 
-    auto* reauth = apiReauthPrepare(client, &ec);    
+    auto* reauth = apiReauthPrepare(client, &ec);
     TS_ASSERT_EQUALS(reauth, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);      
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotConnected);
 }
 
 void UnitTestConnect::test7()
@@ -824,7 +823,7 @@ void UnitTestConnect::test7()
     auto ec = CC_Mqtt5ErrorCode_ValuesLimit;
     auto* connect = apiConnectPrepare(client, &ec);
     TS_ASSERT_EQUALS(connect, nullptr);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_AlreadyConnected);        
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_AlreadyConnected);
 }
 
 void UnitTestConnect::test8()
@@ -838,7 +837,7 @@ void UnitTestConnect::test8()
 
     auto* connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
-    
+
     auto config = CC_Mqtt5ConnectBasicConfig();
     apiConnectInitConfigBasic(&config);
 
@@ -859,7 +858,7 @@ void UnitTestConnect::test9()
 
     auto* connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
-    
+
     auto config = CC_Mqtt5ConnectBasicConfig();
     apiConnectInitConfigBasic(&config);
 
@@ -892,7 +891,7 @@ void UnitTestConnect::test10()
 
     auto* connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
-    
+
     auto config = CC_Mqtt5ConnectBasicConfig();
     apiConnectInitConfigBasic(&config);
 
@@ -966,7 +965,7 @@ void UnitTestConnect::test12()
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
 
     ec = unitTestConfigAuth(connect, AuthMethod, AuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -997,7 +996,7 @@ void UnitTestConnect::test12()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = AuthData;
-    } while (false);    
+    } while (false);
 
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -1005,14 +1004,14 @@ void UnitTestConnect::test12()
         auto& propBundle = propVar.initField_reasonStr();
         auto& propValue = propBundle.field_value();
         propValue.value() = "ReasonStr";
-    } while (false);     
+    } while (false);
 
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo();    
+    unitTestPopConnectResponseInfo();
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
@@ -1042,7 +1041,7 @@ void UnitTestConnect::test13()
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
 
     ec = unitTestConfigAuth(connect, AuthMethod, AuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -1073,7 +1072,7 @@ void UnitTestConnect::test13()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = AuthData;
-    } while (false);    
+    } while (false);
 
     do {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -1082,14 +1081,14 @@ void UnitTestConnect::test13()
         auto& propValue = propBundle.field_value();
         propValue.field_first().value() = "key1";
         propValue.field_second().value() = "val1";
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo();    
+    unitTestPopConnectResponseInfo();
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
@@ -1233,7 +1232,7 @@ void UnitTestConnect::test16()
     TS_ASSERT(!apiIsConnected(client));
 
     TS_ASSERT(unitTestCheckNoTicks());
-    apiNotifyNetworkDisconnected(client); 
+    apiNotifyNetworkDisconnected(client);
 }
 
 void UnitTestConnect::test17()
@@ -1323,7 +1322,7 @@ void UnitTestConnect::test19()
     auto& msgInfo = unitTestReceivedMessageInfo();
     TS_ASSERT_EQUALS(msgInfo.m_topic, Topic);
     TS_ASSERT_EQUALS(msgInfo.m_data, Data);
-    unitTestPopReceivedMessageInfo();    
+    unitTestPopReceivedMessageInfo();
 
     unitTestTick(client, 1000);
     unitTestPerformBasicDisconnect(client);
@@ -1401,7 +1400,7 @@ void UnitTestConnect::test22()
     willConfig.m_topic = WillTopic.c_str();
     willConfig.m_data = &WillData[0];
     willConfig.m_dataLen = static_cast<unsigned>(WillData.size());
-    willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;    
+    willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
 
     auto* connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
@@ -1410,7 +1409,7 @@ void UnitTestConnect::test22()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = apiConnectConfigWill(connect, &willConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -1458,7 +1457,7 @@ void UnitTestConnect::test23()
     willConfig.m_topic = WillTopic.c_str();
     willConfig.m_data = &WillData[0];
     willConfig.m_dataLen = static_cast<unsigned>(WillData.size());
-    willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;    
+    willConfig.m_qos = CC_Mqtt5QoS_AtLeastOnceDelivery;
     willConfig.m_retain = true;
 
     auto* connect = apiConnectPrepare(client, nullptr);
@@ -1468,7 +1467,7 @@ void UnitTestConnect::test23()
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = apiConnectConfigWill(connect, &willConfig);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -1508,7 +1507,7 @@ void UnitTestConnect::test24()
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     apiConnectInitConfigBasic(&basicConfig);
-    basicConfig.m_cleanStart = true;   
+    basicConfig.m_cleanStart = true;
 
     auto* connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
@@ -1518,7 +1517,7 @@ void UnitTestConnect::test24()
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
-    TS_ASSERT(!unitTestIsConnectComplete());    
+    TS_ASSERT(!unitTestIsConnectComplete());
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -1526,7 +1525,7 @@ void UnitTestConnect::test24()
     auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(connectMsg, nullptr);
     TS_ASSERT(connectMsg->field_clientId().value().empty());
-    
+
     const std::string BrokerClientId = __FUNCTION__;
 
     unitTestTick(client, 1000);
@@ -1541,7 +1540,7 @@ void UnitTestConnect::test24()
 
     unitTestReceiveMessage(client, connackMsg);
 
-    TS_ASSERT(unitTestIsConnectComplete());   
+    TS_ASSERT(unitTestIsConnectComplete());
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_assignedClientId, BrokerClientId);
@@ -1554,8 +1553,8 @@ void UnitTestConnect::test24()
 
     unitTestClearState();
 
-    basicConfig.m_cleanStart = false;   
-    
+    basicConfig.m_cleanStart = false;
+
     connect = apiConnectPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(connect, nullptr);
 
@@ -1628,7 +1627,7 @@ void UnitTestConnect::test27()
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
 
     ec = unitTestConfigAuth(connect, ConnectAuthMethod, ConnectAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -1638,7 +1637,7 @@ void UnitTestConnect::test27()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
     auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(connectMsg, nullptr);
-    
+
     const UnitTestData BrokerAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.transportField_flags().field_qos().setValue(CC_Mqtt5QoS_AtLeastOnceDelivery);
@@ -1660,7 +1659,7 @@ void UnitTestConnect::test27()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
@@ -1693,7 +1692,7 @@ void UnitTestConnect::test28()
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
 
     ec = unitTestConfigAuth(connect, ConnectAuthMethod, ConnectAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendConnect(connect);
     TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
@@ -1703,7 +1702,7 @@ void UnitTestConnect::test28()
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Connect);
     auto* connectMsg = dynamic_cast<UnitTestConnectMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(connectMsg, nullptr);
-    
+
     const UnitTestData BrokerAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
     UnitTestAuthMsg brokerAuthMsg;
     brokerAuthMsg.field_reasonCode().setExists();
@@ -1724,7 +1723,7 @@ void UnitTestConnect::test28()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
@@ -1797,15 +1796,15 @@ void UnitTestConnect::test29()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
-    
+    } while (false);
+
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(!unitTestIsConnectComplete());
 
     auto& inAuthInfo = unitTestInAuthInfo();
     TS_ASSERT_EQUALS(inAuthInfo.m_authData, BrokerAuthData);
     unitTestPopInAuthInfo();
-    
+
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Auth);
@@ -1831,7 +1830,7 @@ void UnitTestConnect::test29()
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(connectInfo.m_response.m_reasonCode, CC_Mqtt5ReasonCode_NotAuthorized);
-    unitTestPopConnectResponseInfo();    
+    unitTestPopConnectResponseInfo();
 }
 
 void UnitTestConnect::test30()
@@ -1897,15 +1896,15 @@ void UnitTestConnect::test30()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
-    
+    } while (false);
+
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(!unitTestIsConnectComplete());
 
     auto& inAuthInfo = unitTestInAuthInfo();
     TS_ASSERT_EQUALS(inAuthInfo.m_authData, BrokerAuthData);
     unitTestPopInAuthInfo();
-    
+
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Auth);
@@ -1930,9 +1929,9 @@ void UnitTestConnect::test30()
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo(); 
+    unitTestPopConnectResponseInfo();
 
-    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);   
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
 void UnitTestConnect::test31()
@@ -1998,16 +1997,16 @@ void UnitTestConnect::test31()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
-    
+    } while (false);
+
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo(); 
+    unitTestPopConnectResponseInfo();
 
-    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);   
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
 void UnitTestConnect::test32()
@@ -2063,16 +2062,16 @@ void UnitTestConnect::test32()
         auto& propBundle = propVar.initField_authData();
         auto& propValue = propBundle.field_value();
         propValue.value() = BrokerAuthData;
-    } while (false);    
-    
+    } while (false);
+
     unitTestReceiveMessage(client, brokerAuthMsg);
     TS_ASSERT(unitTestIsConnectComplete());
 
     auto& connectInfo = unitTestConnectResponseInfo();
     TS_ASSERT_EQUALS(connectInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopConnectResponseInfo(); 
+    unitTestPopConnectResponseInfo();
 
-    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);   
+    unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
 }
 
 void UnitTestConnect::test33()
@@ -2087,17 +2086,17 @@ void UnitTestConnect::test33()
 
     auto* tickReq = unitTestTickReq();
     TS_ASSERT_DIFFERS(tickReq, nullptr);
-    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);    
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);
 
     unitTestTick(client);
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
-    TS_ASSERT(!unitTestIsDisconnected()); 
+    TS_ASSERT(!unitTestIsDisconnected());
 
     tickReq = unitTestTickReq();
     TS_ASSERT_DIFFERS(tickReq, nullptr);
-    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);    
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultOpTimeoutMs);
 
     const unsigned PingDelay = 1;
     unitTestTick(client, PingDelay);
@@ -2106,24 +2105,24 @@ void UnitTestConnect::test33()
 
     tickReq = unitTestTickReq();
     auto nextTickMs = UnitTestDefaultKeepAliveMs - PingDelay;
-    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);   
+    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);
 
     unitTestTick(client);
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
     TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Pingreq);
-    TS_ASSERT(!unitTestIsDisconnected());  
+    TS_ASSERT(!unitTestIsDisconnected());
 
     tickReq = unitTestTickReq();
     TS_ASSERT_DIFFERS(tickReq, nullptr);
-    TS_ASSERT_EQUALS(tickReq->m_requested, PingDelay);   
+    TS_ASSERT_EQUALS(tickReq->m_requested, PingDelay);
 
     unitTestTick(client, PingDelay);
     TS_ASSERT(!unitTestHasSentMessage());
-    unitTestReceiveMessage(client, pingrespMsg);     
+    unitTestReceiveMessage(client, pingrespMsg);
     tickReq = unitTestTickReq();
     TS_ASSERT_DIFFERS(tickReq, nullptr);
-    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);    
+    TS_ASSERT_EQUALS(tickReq->m_requested, nextTickMs);
 
     unitTestTick(client, 6000);
     auto config = CC_Mqtt5DisconnectConfig();
@@ -2136,5 +2135,5 @@ void UnitTestConnect::test33()
 
     tickReq = unitTestTickReq();
     TS_ASSERT_DIFFERS(tickReq, nullptr);
-    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);    
+    TS_ASSERT_EQUALS(tickReq->m_requested, UnitTestDefaultKeepAliveMs);
 }

@@ -73,7 +73,7 @@ void UnitTestUnsubscribe::test1()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
     TS_ASSERT(unsubscribeMsg->field_properties().value().empty());
@@ -100,7 +100,7 @@ void UnitTestUnsubscribe::test1()
 
 void UnitTestUnsubscribe::test2()
 {
-    // Parallel unsubscribe 
+    // Parallel unsubscribe
     auto clientPtr = apiAllocClient();
     auto* client = clientPtr.get();
     unitTestPerformBasicConnect(client, __FUNCTION__);
@@ -133,7 +133,7 @@ void UnitTestUnsubscribe::test2()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg1 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg1, nullptr);
     TS_ASSERT(unsubscribeMsg1->field_properties().value().empty());
@@ -157,7 +157,7 @@ void UnitTestUnsubscribe::test2()
 
     sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg2 = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg2, nullptr);
     TS_ASSERT(unsubscribeMsg2->field_properties().value().empty());
@@ -185,7 +185,7 @@ void UnitTestUnsubscribe::test2()
     unsubackMsg2.field_list().value().resize(1);
     unsubackMsg2.field_list().value()[0].setValue(CC_Mqtt5ReasonCode_Success);
     unitTestReceiveMessage(client, unsubackMsg2);
-    TS_ASSERT(unitTestIsUnsubscribeComplete());    
+    TS_ASSERT(unitTestIsUnsubscribeComplete());
 
     auto& unsubackInfo2 = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo2.m_status, CC_Mqtt5AsyncOpStatus_Complete);
@@ -223,30 +223,30 @@ void UnitTestUnsubscribe::test3()
 
     config.m_topic = "#+";
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "#/hello";
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "hello+/bla";
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "#hello";
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);     
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "+hello";
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);       
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     config.m_topic = "+"; // valid topic but not subscribed
     ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);      
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 
     ec = unitTestSendUnsubscribe(unsubscribe);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);      
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_InsufficientConfig);
 }
 
 void UnitTestUnsubscribe::test4()
@@ -280,7 +280,7 @@ void UnitTestUnsubscribe::test4()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     auto packetId = unsubscribeMsg->field_packetId().value();
 
@@ -300,10 +300,9 @@ void UnitTestUnsubscribe::test4()
     unitTestPopUnsubscribeResponseInfo();
 }
 
-
 void UnitTestUnsubscribe::test5()
 {
-    // Canceling unsubscribe operation when network is disconnected 
+    // Canceling unsubscribe operation when network is disconnected
     // [MQTT-3.1.2-23]
 
     auto clientPtr = apiAllocClient();
@@ -338,7 +337,7 @@ void UnitTestUnsubscribe::test5()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
 
@@ -347,13 +346,13 @@ void UnitTestUnsubscribe::test5()
 
     unitTestTick(client, 1000);
     apiNotifyNetworkDisconnected(client);
-    TS_ASSERT(!unitTestIsDisconnected());   
+    TS_ASSERT(!unitTestIsDisconnected());
 
     TS_ASSERT(unitTestIsUnsubscribeComplete());
     auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     unitTestPopUnsubscribeResponseInfo();
-     
+
 }
 
 void UnitTestUnsubscribe::test6()
@@ -362,7 +361,6 @@ void UnitTestUnsubscribe::test6()
 
     auto clientPtr = apiAllocClient();
     auto* client = clientPtr.get();
-    
 
     auto basicConfig = CC_Mqtt5ConnectBasicConfig();
     apiConnectInitConfigBasic(&basicConfig);
@@ -394,7 +392,7 @@ void UnitTestUnsubscribe::test6()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
 
@@ -418,7 +416,7 @@ void UnitTestUnsubscribe::test6()
         auto& field = propsVec.back().initField_userProperty();
         field.field_value().field_first().value() = UnsubackUserPropKey1;
         field.field_value().field_second().value() = UnsubackUserPropVal1;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, unsubackMsg);
     TS_ASSERT(unitTestIsUnsubscribeComplete());
@@ -431,7 +429,7 @@ void UnitTestUnsubscribe::test6()
     TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps.size(), 1U);
     TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps[0].m_key, UnsubackUserPropKey1);
     TS_ASSERT_EQUALS(unsubackInfo.m_response.m_userProps[0].m_value, UnsubackUserPropVal1);
-    unitTestPopUnsubscribeResponseInfo();    
+    unitTestPopUnsubscribeResponseInfo();
 }
 
 void UnitTestUnsubscribe::test7()
@@ -462,7 +460,7 @@ void UnitTestUnsubscribe::test7()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
 
@@ -480,12 +478,12 @@ void UnitTestUnsubscribe::test7()
     } while (false);
 
     unitTestReceiveMessage(client, unsubackMsg);
-    
+
     TS_ASSERT(unitTestIsUnsubscribeComplete());
 
     auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopUnsubscribeResponseInfo();    
+    unitTestPopUnsubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
     TS_ASSERT(unitTestIsDisconnected());
@@ -519,7 +517,7 @@ void UnitTestUnsubscribe::test8()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
 
@@ -536,17 +534,17 @@ void UnitTestUnsubscribe::test8()
         auto& field = propsVec.back().initField_userProperty();
         field.field_value().field_first().value() = UnsubackUserPropKey1;
         field.field_value().field_second().value() = UnsubackUserPropVal1;
-    } while (false);    
+    } while (false);
 
     unitTestReceiveMessage(client, unsubackMsg);
     TS_ASSERT(unitTestIsUnsubscribeComplete());
 
     auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopUnsubscribeResponseInfo();    
+    unitTestPopUnsubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestUnsubscribe::test9()
@@ -569,7 +567,7 @@ void UnitTestUnsubscribe::test9()
     TS_ASSERT_DIFFERS(unsubscribe, nullptr);
 
     auto ec = apiUnsubscribeConfigTopic(unsubscribe, &config);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_BadParam);
 }
 
 void UnitTestUnsubscribe::test10()
@@ -616,7 +614,7 @@ void UnitTestUnsubscribe::test10()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Unsubscribe);
     auto* unsubscribeMsg = dynamic_cast<UnitTestUnsubscribeMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(unsubscribeMsg, nullptr);
     TS_ASSERT(unsubscribeMsg->field_properties().value().empty());
@@ -634,8 +632,8 @@ void UnitTestUnsubscribe::test10()
 
     auto& unsubackInfo = unitTestUnsubscribeResponseInfo();
     TS_ASSERT_EQUALS(unsubackInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopUnsubscribeResponseInfo();   
+    unitTestPopUnsubscribeResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }

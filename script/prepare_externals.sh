@@ -119,5 +119,3 @@ export VERBOSE=1
 build_comms
 build_mqtt5
 
-
-

@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,10 +16,10 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-DisconnectOp::DisconnectOp(ClientImpl& client) : 
+DisconnectOp::DisconnectOp(ClientImpl& client) :
     Base(client)
 {
-}    
+}
 
 CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& config)
 {
@@ -40,8 +40,8 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_sessionExpiryInterval();
-        auto& valueField = propBundle.field_value();        
-        comms::units::setSeconds(valueField, *config.m_sessionExpiryInterval);                
+        auto& valueField = propBundle.field_value();
+        comms::units::setSeconds(valueField, *config.m_sessionExpiryInterval);
     }
 
     if (config.m_reasonStr != nullptr) {
@@ -52,14 +52,14 @@ CC_Mqtt5ErrorCode DisconnectOp::configBasic(const CC_Mqtt5DisconnectConfig& conf
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_reasonStr();
-        auto& valueField = propBundle.field_value();        
+        auto& valueField = propBundle.field_value();
         valueField.value() = config.m_reasonStr;
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Reason string value is too long");
             discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
     }
 
     return CC_Mqtt5ErrorCode_Success;
@@ -75,7 +75,7 @@ CC_Mqtt5ErrorCode DisconnectOp::addUserProp(const CC_Mqtt5UserProp& prop)
 CC_Mqtt5ErrorCode DisconnectOp::send()
 {
     client().allowNextPrepare();
-    if ((m_disconnectMsg.field_reasonCode().field().value() != DisconnectReason::Success) || 
+    if ((m_disconnectMsg.field_reasonCode().field().value() != DisconnectReason::Success) ||
         (!m_disconnectMsg.field_properties().field().value().empty())) {
         m_disconnectMsg.field_reasonCode().setExists();
         m_disconnectMsg.field_properties().setExists();
@@ -100,7 +100,6 @@ Op::Type DisconnectOp::typeImpl() const
 {
     return Type_Disconnect;
 }
-
 
 } // namespace op
 

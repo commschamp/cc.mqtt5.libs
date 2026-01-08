@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,7 +59,7 @@ public:
     void operator()(const CorrelationData& field)
     {
         storeProp(field, m_correlationData);
-    }    
+    }
 
     using SubscriptionId = Property::Field_subscriptionId;
     using SubscriptionIdsList = ObjListType<const SubscriptionId*, Config::SubIdsLimit, Config::HasSubIds>;
@@ -76,8 +76,8 @@ public:
             if (field.field_value().value() == 0U) {
                 m_protocolError = true;
             }
-        }        
-    }        
+        }
+    }
 
     using SessionExpiryInterval = Property::Field_sessionExpiryInterval;
     const SessionExpiryInterval* m_sessionExpiryInterval = nullptr;
@@ -85,7 +85,7 @@ public:
     void operator()(const SessionExpiryInterval& field)
     {
         storeProp(field, m_sessionExpiryInterval);
-    }    
+    }
 
     using AssignedClientId = Property::Field_assignedClientId;
     const AssignedClientId* m_assignedClientId = nullptr;
@@ -125,7 +125,7 @@ public:
     void operator()(const RequestProblemInfo& field)
     {
         storeProp(field, m_requestProblemInfo);
-    }    
+    }
 
     using WillDelayInterval = Property::Field_willDelayInterval;
     const WillDelayInterval* m_willDelayInterval = nullptr;
@@ -141,7 +141,7 @@ public:
     void operator()(const RequestResponseInfo& field)
     {
         storeProp(field, m_requestResponseInfo);
-    }    
+    }
 
     using ResponseInfo = Property::Field_responseInfo;
     const ResponseInfo* m_responseInfo = nullptr;
@@ -149,7 +149,7 @@ public:
     void operator()(const ResponseInfo& field)
     {
         storeProp(field, m_responseInfo);
-    }   
+    }
 
     using ServerRef = Property::Field_serverRef;
     const ServerRef* m_serverRef = nullptr;
@@ -157,7 +157,7 @@ public:
     void operator()(const ServerRef& field)
     {
         storeProp(field, m_serverRef);
-    }   
+    }
 
     using ReasonStr = Property::Field_reasonStr;
     const ReasonStr* m_reasonStr = nullptr;
@@ -165,7 +165,7 @@ public:
     void operator()(const ReasonStr& field)
     {
         storeProp(field, m_reasonStr);
-    }      
+    }
 
     using ReceiveMax = Property::Field_receiveMax;
     const ReceiveMax* m_receiveMax = nullptr;
@@ -176,7 +176,7 @@ public:
         if (field.field_value().value() == 0U) {
             m_protocolError = true;
         }
-    }     
+    }
 
     using TopicAliasMax = Property::Field_topicAliasMax;
     const TopicAliasMax* m_topicAliasMax = nullptr;
@@ -184,7 +184,7 @@ public:
     void operator()(const TopicAliasMax& field)
     {
         storeProp(field, m_topicAliasMax);
-    } 
+    }
 
     using TopicAlias = Property::Field_topicAlias;
     const TopicAlias* m_topicAlias = nullptr;
@@ -192,7 +192,7 @@ public:
     void operator()(const TopicAlias& field)
     {
         storeProp(field, m_topicAlias);
-    } 
+    }
 
     using MaxQos = Property::Field_maxQos;
     const MaxQos* m_maxQos = nullptr;
@@ -203,7 +203,7 @@ public:
         if (field.field_value().value() >= MaxQos::Field_value::ValueType::ExactlyOnceDelivery) {
             m_protocolError = true;
         }
-    }          
+    }
 
     using RetainAvailable = Property::Field_retainAvailable;
     const RetainAvailable* m_retainAvailable = nullptr;
@@ -214,7 +214,7 @@ public:
         if (!field.field_value().valid()) {
             m_protocolError = true;
         }
-    }      
+    }
 
     using UserProperty = Property::Field_userProperty;
     using UserPropsList = ObjListType<const UserProperty*, Config::UserPropsLimit, Config::HasUserProps>;
@@ -229,7 +229,7 @@ public:
 
             m_userProps.push_back(&field);
         }
-    }     
+    }
 
     using MaxPacketSize = Property::Field_maxPacketSize;
     const MaxPacketSize* m_maxPacketSize = nullptr;
@@ -240,7 +240,7 @@ public:
         if (field.field_value().value() == 0U) {
             m_protocolError = true;
         }
-    }      
+    }
 
     using WildcardSubAvail = Property::Field_wildcardSubAvail;
     const WildcardSubAvail* m_wildcardSubAvail = nullptr;
@@ -250,8 +250,8 @@ public:
         storeProp(field, m_wildcardSubAvail);
         if (!field.field_value().valid()) {
             m_protocolError = true;
-        }        
-    }        
+        }
+    }
 
     using SubIdAvail = Property::Field_subIdAvail;
     const SubIdAvail* m_subIdAvail = nullptr;
@@ -261,8 +261,8 @@ public:
         storeProp(field, m_subIdAvail);
         if (!field.field_value().valid()) {
             m_protocolError = true;
-        }           
-    }   
+        }
+    }
 
     using SharedSubAvail = Property::Field_sharedSubAvail;
     const SharedSubAvail* m_sharedSubAvail = nullptr;
@@ -272,8 +272,8 @@ public:
         storeProp(field, m_sharedSubAvail);
         if (!field.field_value().valid()) {
             m_protocolError = true;
-        }             
-    }      
+        }
+    }
 
     bool isProtocolError() const
     {

@@ -57,7 +57,7 @@ void UnitTestQos1Publish::test1()
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
-    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);    
+    TS_ASSERT_EQUALS(sentMsg->getId(), cc_mqtt5::MsgId_Publish);
     auto* publishMsg = dynamic_cast<UnitTestPublishMsg*>(sentMsg.get());
     TS_ASSERT_DIFFERS(publishMsg, nullptr);
 
@@ -69,10 +69,10 @@ void UnitTestQos1Publish::test1()
     unitTestTick(client, 1000);
     UnitTestPubackMsg pubackMsg;
     pubackMsg.field_packetId().value() = publishMsg->field_packetId().field().value();
-    unitTestReceiveMessage(client, pubackMsg); 
+    unitTestReceiveMessage(client, pubackMsg);
 
     TS_ASSERT(unitTestIsPublishComplete());
     auto& pubackInfo = unitTestPublishResponseInfo();
     TS_ASSERT_EQUALS(pubackInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
-    unitTestPopPublishResponseInfo();       
+    unitTestPopPublishResponseInfo();
 }

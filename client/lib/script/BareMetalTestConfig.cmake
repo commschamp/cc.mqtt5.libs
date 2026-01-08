@@ -35,7 +35,7 @@ set (CC_MQTT5_CLIENT_MAX_OUTPUT_PACKET_SIZE 1024)
 set (CC_MQTT5_CLIENT_HAS_USER_PROPS FALSE)
 
 # Limit of user props in case they are enabled
-#set (CC_MQTT5_CLIENT_USER_PROPS_LIMIT 3) 
+#set (CC_MQTT5_CLIENT_USER_PROPS_LIMIT 3)
 
 # Limit the amount of incomplete QoS2 messages being received in parallel
 set (CC_MQTT5_CLIENT_RECEIVE_MAX_LIMIT 4)
@@ -61,7 +61,7 @@ set (CC_MQTT5_CLIENT_ASYNC_SUBS_LIMIT 3)
 # Limit the amount of ongoing (unacknowledged) unsubscribe operations
 set (CC_MQTT5_CLIENT_ASYNC_UNSUBS_LIMIT 1)
 
-# Disable the error logging functionality 
+# Disable the error logging functionality
 set (CC_MQTT5_CLIENT_HAS_ERROR_LOG FALSE)
 
 # Disable the topic format verification functionality

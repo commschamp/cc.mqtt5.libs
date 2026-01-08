@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-static_assert(COMMS_MAKE_VERSION(3, 0, 3) <= CC_MQTT5_VERSION, 
+static_assert(COMMS_MAKE_VERSION(3, 0, 5) <= CC_MQTT5_VERSION,
     "The version of the cc_mqtt5 library is too low.");
 
 namespace cc_mqtt5_client
@@ -61,9 +61,9 @@ using Qos0ClientInputMessages =
         cc_mqtt5::message::Pingresp<TBase, TOpt>,
         cc_mqtt5::message::Disconnect<TBase, TOpt>,
         cc_mqtt5::message::Auth<TBase, TOpt>
-    >; 
+    >;
 
-using ProtInputMessages = 
+using ProtInputMessages =
     std::conditional_t<
         2 <= Config::MaxQos,
         cc_mqtt5::input::ClientInputMessages<ProtMessage, ProtocolOptions>,

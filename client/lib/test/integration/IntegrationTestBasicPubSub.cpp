@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace 
+namespace
 {
 
 struct PubInfo
@@ -22,8 +22,7 @@ const PubInfo PubInfoMap[] = {
 };
 std::size_t PubInfoMapSize = std::extent<decltype(PubInfoMap)>::value;
 
-} // namespace 
-
+} // namespace
 
 class IntegrationTestBasicPubSub_Client1: public IntegrationTestCommonBase
 {
@@ -53,7 +52,7 @@ public:
 
         ++m_opCount;
 
-        return true;       
+        return true;
     }
 
 protected:
@@ -61,7 +60,7 @@ protected:
     {
         integrationTestErrorLog() << "Unexpected disconnection from broker" << std::endl;
         failTestInternal();
-    }  
+    }
 
     virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info) override
     {
@@ -87,7 +86,7 @@ protected:
 
         if (!integrationTestStartBasicSubscribe("#")) {
             failTestInternal();
-            return;            
+            return;
         }
 
         ++m_opCount;
@@ -97,24 +96,24 @@ protected:
         CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response) override
     {
         assert(m_opCount > 0U);
-        --m_opCount;        
+        --m_opCount;
         if (!integrationTestVerifySubscribeSuccessful(handle, status, response)) {
             failTestInternal();
             return;
         }
 
         // Wait for message
-    }    
+    }
 
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
         assert(m_opCount > 0U);
-        --m_opCount;  
+        --m_opCount;
 
         if (!integrationTestVerifyPublishSuccessful(handle, status, response)) {
             failTestInternal();
             return;
-        }        
+        }
     }
 
 private:
@@ -122,10 +121,10 @@ private:
     {
         assert(0);
         m_exitCode = -1;
-        io().stop();        
+        io().stop();
     }
 
-    int& m_exitCode; 
+    int& m_exitCode;
     unsigned& m_opCount;
 };
 
@@ -156,7 +155,7 @@ public:
         }
 
         ++m_opCount;
-        return true;       
+        return true;
     }
 
 protected:
@@ -164,7 +163,7 @@ protected:
     {
         integrationTestErrorLog() << "Unexpected disconnection from broker" << std::endl;
         failTestInternal();
-    }  
+    }
 
     virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info) override
     {
@@ -173,26 +172,26 @@ protected:
         if (info->m_topic != pubInfo.m_topic) {
             integrationTestErrorLog() << "Unexpected topic: " << info->m_topic << "!=" << pubInfo.m_topic << std::endl;
             failTestInternal();
-            return;            
+            return;
         }
 
         std::string data(reinterpret_cast<const char*>(info->m_data), info->m_dataLen);
         if (data != pubInfo.m_data) {
             integrationTestErrorLog() << "Unexpected data: " << info->m_data << "!=" << pubInfo.m_data << std::endl;
             failTestInternal();
-            return;    
+            return;
         }
 
         if (info->m_qos != pubInfo.m_qos) {
             integrationTestErrorLog() << "Unexpected qos: " << info->m_qos << "!=" << pubInfo.m_qos << std::endl;
             failTestInternal();
-            return;                
+            return;
         }
 
         integrationTestInfoLog() << "Publish " << m_pubCount << " is echoed back" << std::endl;
         ++m_pubCount;
         doNextPublish();
-    }    
+    }
 
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
     {
@@ -208,7 +207,7 @@ protected:
 
         if (!integrationTestStartBasicSubscribe("#")) {
             failTestInternal();
-            return;            
+            return;
         }
 
         ++m_opCount;
@@ -225,7 +224,7 @@ protected:
         }
 
         doNextPublish();
-    }    
+    }
 
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response) override
     {
@@ -235,15 +234,15 @@ protected:
         if (!integrationTestVerifyPublishSuccessful(handle, status, response)) {
             failTestInternal();
             return;
-        }        
-    }    
+        }
+    }
 
 private:
     void failTestInternal()
     {
         assert(0);
         m_exitCode = -1;
-        io().stop();        
+        io().stop();
     }
 
     void doNextPublish()
@@ -255,11 +254,11 @@ private:
         }
 
         auto& info = PubInfoMap[m_pubCount];
-        ++m_opCount;   
+        ++m_opCount;
         if (!integrationTestStartBasicPublish(info.m_topic.c_str(), info.m_data.c_str(), info.m_qos)) {
             failTestInternal();
-            return;            
-        }     
+            return;
+        }
     }
 
     void stopTestWhenReady()
@@ -279,9 +278,8 @@ private:
 
     int& m_exitCode;
     unsigned& m_opCount;
-    unsigned m_pubCount = 0U; 
+    unsigned m_pubCount = 0U;
 };
-
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
 {
@@ -293,7 +291,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
         IntegrationTestBasicPubSub_Client1 client1(io, exitCode, opCount);
         IntegrationTestBasicPubSub_Client2 client2(io, exitCode, opCount);
 
-        if ((!client1.start()) || 
+        if ((!client1.start()) ||
             (!client2.start())) {
             return -1;
         }

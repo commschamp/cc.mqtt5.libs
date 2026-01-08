@@ -46,7 +46,7 @@ void UnitTestReauth::test1()
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
     apiConnectInitConfigExtra(&extraConfig);
-    extraConfig.m_requestProblemInfo = true;     
+    extraConfig.m_requestProblemInfo = true;
 
     auto connectAuthConfig = CC_Mqtt5AuthConfig();
     apiConnectInitConfigAuth(&connectAuthConfig);
@@ -63,7 +63,7 @@ void UnitTestReauth::test1()
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     const std::string UserPropKey1 = "key1";
     const std::string UserPropVal1 = "val1";
@@ -71,10 +71,10 @@ void UnitTestReauth::test1()
     prop1.m_key = UserPropKey1.c_str();
     prop1.m_value = UserPropVal1.c_str();
     ec = apiReauthAddUserProp(reauth, &prop1);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -94,11 +94,11 @@ void UnitTestReauth::test1()
     TS_ASSERT_EQUALS(propsHandler.m_authMethod->field_value().value(), ConnectAuthMethod);
 
     TS_ASSERT_DIFFERS(propsHandler.m_authData, nullptr);
-    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ReAuthData);    
+    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ReAuthData);
 
-    TS_ASSERT_EQUALS(propsHandler.m_userProps.size(), 1U);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_first().value(), UserPropKey1);    
-    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_second().value(), UserPropVal1);    
+    TS_ASSERT_EQUALS(propsHandler.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_first().value(), UserPropKey1);
+    TS_ASSERT_EQUALS(propsHandler.m_userProps[0]->field_value().field_second().value(), UserPropVal1);
 
     TS_ASSERT(!unitTestIsReauthComplete());
 
@@ -108,8 +108,8 @@ void UnitTestReauth::test1()
     authOutInfo.m_authData = AuthData;
     authOutInfo.m_reasonStr = ReasonStr;
     authOutInfo.m_userProps.push_back({UserPropKey1, UserPropVal1});
-    unitTestAddOutAuth(authOutInfo);    
-    
+    unitTestAddOutAuth(authOutInfo);
+
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
@@ -126,7 +126,7 @@ void UnitTestReauth::test1()
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authData();
         comms::util::assign(field.field_value().value(), AuthData.begin(), AuthData.end());
-    }      
+    }
 
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
@@ -134,16 +134,16 @@ void UnitTestReauth::test1()
         auto& propValue = field.field_value();
         propValue.field_first().value() = UserPropKey1;
         propValue.field_second().value() = UserPropVal1;
-    }   
+    }
 
     {
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_reasonStr();
         comms::util::assign(field.field_value().value(), ReasonStr.begin(), ReasonStr.end());
-    }            
+    }
 
     unitTestReceiveMessage(client, brokerAuth);
-    TS_ASSERT(unitTestHasInAuthInfo()); 
+    TS_ASSERT(unitTestHasInAuthInfo());
     auto& inAuthInfo = unitTestInAuthInfo();
     TS_ASSERT_EQUALS(inAuthInfo.m_authData, AuthData);
     TS_ASSERT_EQUALS(inAuthInfo.m_reasonStr, ReasonStr);
@@ -172,20 +172,19 @@ void UnitTestReauth::test1()
     TS_ASSERT_EQUALS(propsHandler2.m_authMethod->field_value().value(), ConnectAuthMethod);
 
     TS_ASSERT_DIFFERS(propsHandler2.m_authData, nullptr);
-    TS_ASSERT_EQUALS(propsHandler2.m_authData->field_value().value(), AuthData);   
+    TS_ASSERT_EQUALS(propsHandler2.m_authData->field_value().value(), AuthData);
 
     TS_ASSERT_DIFFERS(propsHandler2.m_reasonStr, nullptr);
-    TS_ASSERT_EQUALS(propsHandler2.m_reasonStr->field_value().value(), ReasonStr);           
+    TS_ASSERT_EQUALS(propsHandler2.m_reasonStr->field_value().value(), ReasonStr);
 
-    TS_ASSERT_EQUALS(propsHandler2.m_userProps.size(), 1U);    
-    TS_ASSERT_EQUALS(propsHandler2.m_userProps[0]->field_value().field_first().value(), UserPropKey1);    
-    TS_ASSERT_EQUALS(propsHandler2.m_userProps[0]->field_value().field_second().value(), UserPropVal1);    
-
+    TS_ASSERT_EQUALS(propsHandler2.m_userProps.size(), 1U);
+    TS_ASSERT_EQUALS(propsHandler2.m_userProps[0]->field_value().field_first().value(), UserPropKey1);
+    TS_ASSERT_EQUALS(propsHandler2.m_userProps[0]->field_value().field_second().value(), UserPropVal1);
 
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::Success;
     unitTestReceiveMessage(client, brokerAuth);
     TS_ASSERT(unitTestIsReauthComplete());
-    
+
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     TS_ASSERT_EQUALS(respInfo.m_response.m_authData, AuthData);
@@ -230,7 +229,7 @@ void UnitTestReauth::test2()
     unitTestConfigReauth(reauth, std::string(), ReAuthData);
 
     auto ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -243,7 +242,7 @@ void UnitTestReauth::test2()
     TS_ASSERT(!unitTestIsReauthComplete());
 
     const UnitTestData AuthData = {0x11, 0x22, 0x33, 0x44};
-    
+
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::GrantedQos1;
@@ -260,16 +259,16 @@ void UnitTestReauth::test2()
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authData();
         comms::util::assign(field.field_value().value(), AuthData.begin(), AuthData.end());
-    }      
+    }
 
     unitTestReceiveMessage(client, brokerAuth);
     TS_ASSERT(unitTestIsReauthComplete());
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_ProtocolError);
-    unitTestPopReauthResponseInfo();    
+    unitTestPopReauthResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::ProtocolError);
-    TS_ASSERT(unitTestIsDisconnected());    
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestReauth::test3()
@@ -287,7 +286,7 @@ void UnitTestReauth::test3()
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
     apiConnectInitConfigExtra(&extraConfig);
-    extraConfig.m_requestProblemInfo = true;     
+    extraConfig.m_requestProblemInfo = true;
 
     const std::string ConnectAuthMethod = "AuthMethod";
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
@@ -295,22 +294,22 @@ void UnitTestReauth::test3()
     apiConnectInitConfigAuth(&connectAuthConfig);
     connectAuthConfig.m_authMethod = ConnectAuthMethod.c_str();
     connectAuthConfig.m_authData = &ConnectAuthData[0];
-    connectAuthConfig.m_authDataLen = static_cast<decltype(connectAuthConfig.m_authDataLen)>(ConnectAuthData.size());    
+    connectAuthConfig.m_authDataLen = static_cast<decltype(connectAuthConfig.m_authDataLen)>(ConnectAuthData.size());
 
     UnitTestConnectResponseConfig responseConfig;
     responseConfig.m_maxPacketSize = 200;
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig, &connectAuthConfig, &responseConfig);
-    TS_ASSERT(apiIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));
 
     auto* reauth = apiReauthPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(reauth, nullptr);
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);       
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -325,8 +324,8 @@ void UnitTestReauth::test3()
     UnitTestAuthInfo authOutInfo;
     authOutInfo.m_authData = AuthData;
     authOutInfo.m_reasonStr = ReasonStr;
-    unitTestAddOutAuth(authOutInfo);    
-    
+    unitTestAddOutAuth(authOutInfo);
+
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
@@ -342,19 +341,18 @@ void UnitTestReauth::test3()
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authData();
         comms::util::assign(field.field_value().value(), AuthData.begin(), AuthData.end());
-    }      
+    }
 
-    unitTestReceiveMessage(client, brokerAuth);    
+    unitTestReceiveMessage(client, brokerAuth);
 
     TS_ASSERT(unitTestIsReauthComplete());
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_OutOfMemory);
-    unitTestPopReauthResponseInfo();    
+    unitTestPopReauthResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::UnspecifiedError);
-    TS_ASSERT(unitTestIsDisconnected());        
+    TS_ASSERT(unitTestIsDisconnected());
 }
-
 
 void UnitTestReauth::test4()
 {
@@ -371,7 +369,7 @@ void UnitTestReauth::test4()
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
     apiConnectInitConfigExtra(&extraConfig);
-    extraConfig.m_requestProblemInfo = true;     
+    extraConfig.m_requestProblemInfo = true;
 
     const std::string ConnectAuthMethod = "AuthMethod";
     const UnitTestData ConnectAuthData = {0x1, 0x2, 0x3, 0x5, 0xa};
@@ -379,22 +377,22 @@ void UnitTestReauth::test4()
     apiConnectInitConfigAuth(&connectAuthConfig);
     connectAuthConfig.m_authMethod = ConnectAuthMethod.c_str();
     connectAuthConfig.m_authData = &ConnectAuthData[0];
-    connectAuthConfig.m_authDataLen = static_cast<decltype(connectAuthConfig.m_authDataLen)>(ConnectAuthData.size());    
+    connectAuthConfig.m_authDataLen = static_cast<decltype(connectAuthConfig.m_authDataLen)>(ConnectAuthData.size());
 
     UnitTestConnectResponseConfig responseConfig;
     responseConfig.m_maxPacketSize = 200;
     unitTestPerformConnect(client, &basicConfig, nullptr, &extraConfig, &connectAuthConfig, &responseConfig);
-    TS_ASSERT(apiIsConnected(client));    
+    TS_ASSERT(apiIsConnected(client));
 
     auto* reauth = apiReauthPrepare(client, nullptr);
     TS_ASSERT_DIFFERS(reauth, nullptr);
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);       
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -410,8 +408,8 @@ void UnitTestReauth::test4()
     UnitTestAuthInfo authOutInfo;
     authOutInfo.m_authData = AuthData;
     authOutInfo.m_userProps.push_back({UserPropKey, UserPropVal});
-    unitTestAddOutAuth(authOutInfo);    
-    
+    unitTestAddOutAuth(authOutInfo);
+
     UnitTestAuthMsg brokerAuth;
     brokerAuth.field_reasonCode().setExists();
     brokerAuth.field_reasonCode().field().value() = UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ContinueAuth;
@@ -427,17 +425,17 @@ void UnitTestReauth::test4()
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authData();
         comms::util::assign(field.field_value().value(), AuthData.begin(), AuthData.end());
-    }      
+    }
 
-    unitTestReceiveMessage(client, brokerAuth);    
+    unitTestReceiveMessage(client, brokerAuth);
 
     TS_ASSERT(unitTestIsReauthComplete());
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_OutOfMemory);
-    unitTestPopReauthResponseInfo();    
+    unitTestPopReauthResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::UnspecifiedError);
-    TS_ASSERT(unitTestIsDisconnected());        
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestReauth::test5()
@@ -488,10 +486,10 @@ void UnitTestReauth::test6()
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -520,22 +518,22 @@ void UnitTestReauth::test6()
         authPropsVec.resize(authPropsVec.size() + 1U);
         auto& field = authPropsVec.back().initField_authData();
         comms::util::assign(field.field_value().value(), BrokerAuthData.begin(), BrokerAuthData.end());
-    }      
+    }
 
     unitTestReceiveMessage(client, brokerAuth);
-    TS_ASSERT(unitTestHasInAuthInfo()); 
+    TS_ASSERT(unitTestHasInAuthInfo());
     auto& inAuthInfo = unitTestInAuthInfo();
     TS_ASSERT_EQUALS(inAuthInfo.m_authData, BrokerAuthData);
     unitTestPopInAuthInfo();
 
     TS_ASSERT(unitTestIsReauthComplete());
-    
+
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_Aborted);
     unitTestPopReauthResponseInfo();
 
     unitTestVerifyDisconnectSent(UnitTestDisconnectReason::NotAuthorized);
-    TS_ASSERT(unitTestIsDisconnected());            
+    TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestReauth::test7()
@@ -569,10 +567,10 @@ void UnitTestReauth::test7()
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -583,7 +581,7 @@ void UnitTestReauth::test7()
     TS_ASSERT_EQUALS(authMsg->field_reasonCode().field().value(), UnitTestAuthMsg::Field_reasonCode::Field::ValueType::ReAuth);
     TS_ASSERT(authMsg->field_properties().doesExist());
 
-    TS_ASSERT(!unitTestIsReauthComplete());    
+    TS_ASSERT(!unitTestIsReauthComplete());
 
     UnitTestDisconnectMsg disconnectMsg;
     disconnectMsg.field_reasonCode().setExists();
@@ -594,7 +592,7 @@ void UnitTestReauth::test7()
     // auto& respInfo = unitTestReauthResponseInfo();
     // TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_BrokerDisconnected);
     // unitTestPopReauthResponseInfo();
-    // TS_ASSERT(unitTestIsDisconnected());                      
+    // TS_ASSERT(unitTestIsDisconnected());
 }
 
 void UnitTestReauth::test8()
@@ -614,7 +612,7 @@ void UnitTestReauth::test8()
 
     auto extraConfig = CC_Mqtt5ConnectExtraConfig();
     apiConnectInitConfigExtra(&extraConfig);
-    extraConfig.m_requestProblemInfo = true;     
+    extraConfig.m_requestProblemInfo = true;
 
     auto connectAuthConfig = CC_Mqtt5AuthConfig();
     apiConnectInitConfigAuth(&connectAuthConfig);
@@ -631,10 +629,10 @@ void UnitTestReauth::test8()
 
     const UnitTestData ReAuthData = {0x1, 0x2, 0x3, 0x5, 0x6};
     auto ec = unitTestConfigReauth(reauth, std::string(), ReAuthData);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     ec = unitTestSendReauth(reauth);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_Success);
 
     auto sentMsg = unitTestGetSentMessage();
     TS_ASSERT(sentMsg);
@@ -654,14 +652,14 @@ void UnitTestReauth::test8()
     TS_ASSERT_EQUALS(propsHandler.m_authMethod->field_value().value(), ConnectAuthMethod);
 
     TS_ASSERT_DIFFERS(propsHandler.m_authData, nullptr);
-    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ReAuthData);    
+    TS_ASSERT_EQUALS(propsHandler.m_authData->field_value().value(), ReAuthData);
 
     TS_ASSERT(!unitTestIsReauthComplete());
 
     UnitTestAuthMsg brokerAuth;
     unitTestReceiveMessage(client, brokerAuth);
     TS_ASSERT(unitTestIsReauthComplete());
-    
+
     auto& respInfo = unitTestReauthResponseInfo();
     TS_ASSERT_EQUALS(respInfo.m_status, CC_Mqtt5AsyncOpStatus_Complete);
     unitTestPopReauthResponseInfo();

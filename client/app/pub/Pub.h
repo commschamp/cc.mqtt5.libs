@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ public:
     Pub(boost::asio::io_context& io, int& result);
 
 protected:
-    virtual void brokerConnectedImpl() override;    
+    virtual void brokerConnectedImpl() override;
 private:
     void publishCompleteInternal(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 

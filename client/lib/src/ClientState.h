@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,8 +29,8 @@ struct ClientState
     SendTopicsMap m_sendTopicAliases;
     PacketIdsList m_allocatedPacketIds;
     std::uint16_t m_lastPacketId = 0U;
-    unsigned m_inFlightSends = 0U;    
-    
+    unsigned m_inFlightSends = 0U;
+
     bool m_initialized = false;
     bool m_firstConnect = true;
     bool m_networkDisconnected = false;

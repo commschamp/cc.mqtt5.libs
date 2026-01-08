@@ -16,7 +16,7 @@ class IntegrationTestCommonBase
         {
             ::cc_mqtt5_client_free(ptr);
         }
-    }; 
+    };
 
 public:
     using ClientPtr = std::unique_ptr<CC_Mqtt5Client, ClientDeleter>;
@@ -61,12 +61,11 @@ public:
         return m_clientId;
     }
 
-
 protected:
     virtual unsigned integrationTestGetTimeoutSecImpl();
     virtual void integrationTestTimeoutImpl();
-    virtual void integrationTestBrokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);    
-    virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info);    
+    virtual void integrationTestBrokerDisconnectedImpl(const CC_Mqtt5DisconnectInfo* info);
+    virtual void integrationTestMessageReceivedImpl(const CC_Mqtt5MessageInfo* info);
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     virtual void integrationTestSubscribeCompleteImpl(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
     virtual void integrationTestPublishCompleteImpl(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
@@ -76,7 +75,7 @@ protected:
 private:
     void integrationTestDoReadInternal();
     void integrationTestDoTestTimeoutInternal();
-    void integrationTestBrokerDisconnectedInternal(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);    
+    void integrationTestBrokerDisconnectedInternal(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     void integrationTestMessageReceivedInternal(const CC_Mqtt5MessageInfo* info);
     void integrationTestConnectCompleteInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
     void integrationTestSubscribeCompleteInternal(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);

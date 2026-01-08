@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,14 +29,14 @@ public:
 
     using Base::handle;
 
-#if CC_MQTT5_CLIENT_MAX_QOS >= 1  
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1
     virtual void handle(PubackMsg& msg) override;
-#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1  
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
-#if CC_MQTT5_CLIENT_MAX_QOS >= 2  
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
     virtual void handle(PubrecMsg& msg) override;
     virtual void handle(PubcompMsg& msg) override;
-#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2    
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 2
 
     CC_Mqtt5PublishHandle toHandle()
     {
@@ -46,19 +46,19 @@ public:
     static CC_Mqtt5PublishHandle asHandle(SendOp* obj)
     {
         return reinterpret_cast<CC_Mqtt5PublishHandle>(obj);
-    }    
+    }
 
     static SendOp* fromHandle(CC_Mqtt5PublishHandle handle)
     {
         return reinterpret_cast<SendOp*>(handle);
-    }    
+    }
 
     unsigned packetId() const
     {
         return m_pubMsg.field_packetId().field().value();
     }
 
-    Qos qos() const 
+    Qos qos() const
     {
         return m_pubMsg.transportField_flags().field_qos().value();
     }
@@ -89,7 +89,7 @@ public:
     }
 
 protected:
-    virtual Type typeImpl() const override;    
+    virtual Type typeImpl() const override;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
     virtual void connectivityChangedImpl() override;
 
@@ -105,10 +105,10 @@ private:
 
     static void recvTimeoutCb(void* data);
 
-    TimerMgr::Timer m_responseTimer;  
+    TimerMgr::Timer m_responseTimer;
     PublishMsg m_pubMsg;
     CC_Mqtt5PublishCompleteCb m_cb = nullptr;
-    void* m_cbData = nullptr;    
+    void* m_cbData = nullptr;
     unsigned m_totalSendAttempts = DefaultSendAttempts;
     unsigned m_sendAttempts = 0U;
     CC_Mqtt5ReasonCode m_reasonCode = CC_Mqtt5ReasonCode_Success;
@@ -123,6 +123,5 @@ private:
 };
 
 } // namespace op
-
 
 } // namespace cc_mqtt5_client

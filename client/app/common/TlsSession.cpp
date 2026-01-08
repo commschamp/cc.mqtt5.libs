@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,13 +41,13 @@ bool TlsSession::startImpl()
     if (ec) {
         logError() << "Failed to connect: " << ec.message() << std::endl;
         return false;
-    }   
-    
+    }
+
     m_socket->handshake(Socket::handshake_type::client, ec);
     if (ec) {
         logError() << "Failed to perform SSL/TLS handshake: " << ec.message() << std::endl;
         return false;
-    }      
+    }
 
     doRead();
     return true;
@@ -79,7 +79,7 @@ void TlsSession::sendDataImpl(const std::uint8_t* buf, std::size_t bufLen)
     reportNetworkDisconnected();
 }
 
-TlsSession::TlsSession(boost::asio::io_context& io, const ProgramOptions& opts) : 
+TlsSession::TlsSession(boost::asio::io_context& io, const ProgramOptions& opts) :
     Base(io, opts)
 {
 }
@@ -136,7 +136,7 @@ bool TlsSession::configureSslContext()
 {
     m_ctx = std::make_unique<SslContext>(SslContext::sslv23_client);
 
-    return 
+    return
         configureSslCaCert() &&
         configureSslKey() &&
         configureSslCert();
@@ -153,7 +153,7 @@ bool TlsSession::configureSslCaCert()
         m_ctx->load_verify_file(tlsCa, ec);
         if (ec) {
             logError() << "Failed to parce CA file: " << ec.message() << std::endl;
-            return false;            
+            return false;
         }
 
         verifyMode = boost::asio::ssl::verify_peer;
@@ -162,8 +162,8 @@ bool TlsSession::configureSslCaCert()
     m_ctx->set_verify_mode(verifyMode, ec);
     if (ec) {
         logError() << "Failed to update verify mode: " << ec.message() << std::endl;
-        return false;            
-    }    
+        return false;
+    }
 
     return true;
 }
@@ -191,16 +191,15 @@ bool TlsSession::configureSslKey()
 
         if (ec) {
             logError() << "Failed to set password callback: " << ec.message() << std::endl;
-            return false;            
-        }        
+            return false;
+        }
     }
 
     m_ctx->use_private_key_file(key, SslContext::pem, ec);
     if (ec) {
         logError() << "Failed to update private key: " << ec.message() << std::endl;
-        return false;            
+        return false;
     }
-
 
     return true;
 }
@@ -217,12 +216,11 @@ bool TlsSession::configureSslCert()
     m_ctx->use_certificate_file(cert, SslContext::pem, ec);
     if (ec) {
         logError() << "Failed to update certificate: " << ec.message() << std::endl;
-        return false;            
+        return false;
     }
 
     return true;
 }
-
 
 } // namespace cc_mqtt5_client_app
 

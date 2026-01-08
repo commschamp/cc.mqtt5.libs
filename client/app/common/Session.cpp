@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@ Session::Ptr Session::create(boost::asio::io_context& io, const ProgramOptions& 
         /* ConnectionType_Tls */ &TlsSession::create,
 #else // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
         /* ConnectionType_Tls */ nullptr,
-#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL       
+#endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
     };
     static constexpr std::size_t MapSize = std::extent<decltype(Map)>::value;
     static_assert(MapSize == ProgramOptions::ConnectionType_ValuesLimit);
@@ -66,7 +66,7 @@ void Session::reportNetworkDisconnected()
     }
 
     m_networkDisconnected = true;
-    
+
     assert(m_networkDisconnectedReportCb);
     m_networkDisconnectedReportCb();
 }

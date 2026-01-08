@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,7 +103,7 @@ inline CC_Mqtt5ReauthHandle handleFromReauthOp(cc_mqtt5_client::op::ReauthOp* op
 CC_Mqtt5ClientHandle cc_mqtt5_##NAME##client_alloc()
 {
     auto client = getClientAllocator().alloc();
-    return handleFromClient(client.release());    
+    return handleFromClient(client.release());
 }
 
 void cc_mqtt5_##NAME##client_free(CC_Mqtt5ClientHandle handle)
@@ -157,7 +157,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_alloc(CC_Mqtt5ClientHa
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     return clientFromHandle(handle)->allocPubTopicAlias(topic, qos0RegsCount);
 }
@@ -166,7 +166,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_pub_topic_alias_free(CC_Mqtt5ClientHan
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
     return clientFromHandle(handle)->freePubTopicAlias(topic);
 }
@@ -175,7 +175,7 @@ unsigned cc_mqtt5_##NAME##client_pub_topic_alias_count(CC_Mqtt5ClientHandle hand
 {
     if (handle == nullptr) {
         return 0U;
-    }         
+    }
 
     return clientFromHandle(handle)->pubTopicAliasCount();
 }
@@ -184,16 +184,16 @@ bool cc_mqtt5_##NAME##client_pub_topic_alias_is_allocated(CC_Mqtt5ClientHandle h
 {
     if (handle == nullptr) {
         return 0U;
-    }         
+    }
 
-    return clientFromHandle(handle)->pubTopicAliasIsAllocated(topic);    
+    return clientFromHandle(handle)->pubTopicAliasIsAllocated(topic);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_outgoing_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }  
+    }
 
     if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         clientFromHandle(handle)->configState().m_verifyOutgoingTopic = enabled;
@@ -215,12 +215,11 @@ bool cc_mqtt5_##NAME##client_get_verify_outgoing_topic_enabled(CC_Mqtt5ClientHan
     }
 }
 
-
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_topic_enabled(CC_Mqtt5ClientHandle handle, bool enabled)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }  
+    }
 
     if constexpr (cc_mqtt5_client::Config::HasTopicFormatVerification) {
         clientFromHandle(handle)->configState().m_verifyIncomingTopic = enabled;
@@ -246,7 +245,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_set_verify_incoming_msg_subscribed(CC_
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }  
+    }
 
     if constexpr (cc_mqtt5_client::Config::HasSubTopicVerification) {
         clientFromHandle(handle)->configState().m_verifySubFilter = enabled;
@@ -278,7 +277,7 @@ CC_Mqtt5ConnectHandle cc_mqtt5_##NAME##client_connect_prepare(CC_Mqtt5ClientHand
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
@@ -356,7 +355,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_will(CC_Mqtt5ConnectHan
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     return connectOpFromHandle(handle)->configWill(*config);
 }
@@ -365,16 +364,16 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_extra(CC_Mqtt5ConnectHa
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
-    return connectOpFromHandle(handle)->configExtra(*config);    
+    return connectOpFromHandle(handle)->configExtra(*config);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_config_auth(CC_Mqtt5ConnectHandle handle, const CC_Mqtt5AuthConfig* config)
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
     return connectOpFromHandle(handle)->configAuth(*config);
 }
@@ -383,7 +382,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_user_prop(CC_Mqtt5ConnectH
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
     return connectOpFromHandle(handle)->addUserProp(*prop);
 }
@@ -392,7 +391,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_add_will_user_prop(CC_Mqtt5Con
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
     return connectOpFromHandle(handle)->addWillUserProp(*prop);
 }
@@ -410,21 +409,21 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_cancel(CC_Mqtt5ConnectHandle h
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return connectOpFromHandle(handle)->cancel();       
+    return connectOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_simple(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5ConnectBasicConfig* basicConfig,
-    CC_Mqtt5ConnectCompleteCb cb, 
+    CC_Mqtt5ConnectCompleteCb cb,
     void* cbData)
 {
-    return 
+    return
         cc_mqtt5_##NAME##client_connect_full(
-            handle, 
-            basicConfig, 
+            handle,
+            basicConfig,
             nullptr, // willConfig
             nullptr, // extraConfig,
             nullptr, // authConfig
@@ -438,7 +437,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_full(
     const CC_Mqtt5ConnectWillConfig* willConfig,
     const CC_Mqtt5ConnectExtraConfig* extraConfig,
     const CC_Mqtt5AuthConfig* authConfig,
-    CC_Mqtt5ConnectCompleteCb cb, 
+    CC_Mqtt5ConnectCompleteCb cb,
     void* cbData)
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
@@ -447,12 +446,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_full(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [connect]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_connect_cancel(connect);
-            });    
+            });
 
     if (basicConfig != nullptr) {
         ec = cc_mqtt5_##NAME##client_connect_config_basic(connect, basicConfig);
@@ -465,22 +464,22 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_connect_full(
         ec = cc_mqtt5_##NAME##client_connect_config_will(connect, willConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
+        }
     }
 
     if (extraConfig != nullptr) {
         ec = cc_mqtt5_##NAME##client_connect_config_extra(connect, extraConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
-    }  
+        }
+    }
 
     if (authConfig != nullptr) {
         ec = cc_mqtt5_##NAME##client_connect_config_auth(connect, authConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }            
-    }  
+        }
+    }
 
     cancelOnExitGuard.release();
     return cc_mqtt5_##NAME##client_connect_send(connect, cb, cbData);
@@ -500,11 +499,11 @@ CC_Mqtt5DisconnectHandle cc_mqtt5_##NAME##client_disconnect_prepare(CC_Mqtt5Clie
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
-    return handleFromDisconnectOp(clientFromHandle(handle)->disconnectPrepare(ec));    
+    return handleFromDisconnectOp(clientFromHandle(handle)->disconnectPrepare(ec));
 }
 
 void cc_mqtt5_##NAME##client_disconnect_init_config(CC_Mqtt5DisconnectConfig* config)
@@ -516,7 +515,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_config(CC_Mqtt5DisconnectHa
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     return disconnectOpFromHandle(handle)->configBasic(*config);
 }
@@ -525,16 +524,16 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_add_user_prop(CC_Mqtt5Disco
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
-    return disconnectOpFromHandle(handle)->addUserProp(*prop);    
+    return disconnectOpFromHandle(handle)->addUserProp(*prop);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_send(CC_Mqtt5DisconnectHandle handle)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }  
+    }
 
     return disconnectOpFromHandle(handle)->send();
 }
@@ -543,9 +542,9 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect_cancel(CC_Mqtt5DisconnectHa
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return disconnectOpFromHandle(handle)->cancel();       
+    return disconnectOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect(
@@ -558,12 +557,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [disconnect]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_disconnect_cancel(disconnect);
-            });    
+            });
 
     if (config != nullptr) {
         ec = cc_mqtt5_##NAME##client_disconnect_config(disconnect, config);
@@ -573,7 +572,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_disconnect(
     }
 
     cancelOnExitGuard.release();
-    return cc_mqtt5_##NAME##client_disconnect_send(disconnect);    
+    return cc_mqtt5_##NAME##client_disconnect_send(disconnect);
 }
 
 CC_Mqtt5SubscribeHandle cc_mqtt5_##NAME##client_subscribe_prepare(CC_Mqtt5ClientHandle handle, CC_Mqtt5ErrorCode* ec)
@@ -581,11 +580,11 @@ CC_Mqtt5SubscribeHandle cc_mqtt5_##NAME##client_subscribe_prepare(CC_Mqtt5Client
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
-    return handleFromSubscribeOp(clientFromHandle(handle)->subscribePrepare(ec));    
+    return handleFromSubscribeOp(clientFromHandle(handle)->subscribePrepare(ec));
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_set_response_timeout(CC_Mqtt5SubscribeHandle handle, unsigned ms)
@@ -633,16 +632,16 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_config_extra(CC_Mqtt5Subscri
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return subscribeOpFromHandle(handle)->configExtra(*config);    
+    return subscribeOpFromHandle(handle)->configExtra(*config);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_add_user_prop(CC_Mqtt5SubscribeHandle handle, const CC_Mqtt5UserProp* prop)
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return subscribeOpFromHandle(handle)->addUserProp(*prop);    
+    return subscribeOpFromHandle(handle)->addUserProp(*prop);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5SubscribeCompleteCb cb, void* cbData)
@@ -651,31 +650,31 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_send(CC_Mqtt5SubscribeHandle
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return subscribeOpFromHandle(handle)->send(cb, cbData);    
+    return subscribeOpFromHandle(handle)->send(cb, cbData);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_cancel(CC_Mqtt5SubscribeHandle handle)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return subscribeOpFromHandle(handle)->cancel();       
+    return subscribeOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_simple(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5SubscribeTopicConfig* topicConfig,
-    CC_Mqtt5SubscribeCompleteCb cb, 
+    CC_Mqtt5SubscribeCompleteCb cb,
     void* cbData)
 {
-    return 
+    return
         cc_mqtt5_##NAME##client_subscribe_full(
-            handle, 
+            handle,
             topicConfig,
             1U,
-            nullptr, 
-            cb, 
+            nullptr,
+            cb,
             cbData);
 }
 
@@ -684,7 +683,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_full(
     const CC_Mqtt5SubscribeTopicConfig* topicConfigs,
     unsigned topicConfigsCount,
     const CC_Mqtt5SubscribeExtraConfig* extraConfig,
-    CC_Mqtt5SubscribeCompleteCb cb, 
+    CC_Mqtt5SubscribeCompleteCb cb,
     void* cbData)
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
@@ -693,12 +692,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_full(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [subscribe]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_subscribe_cancel(subscribe);
-            });  
+            });
 
     COMMS_ASSERT((topicConfigsCount == 0U) || (topicConfigs != nullptr));
     for (auto idx = 0U; idx < topicConfigsCount; ++idx) {
@@ -713,7 +712,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_subscribe_full(
         ec = cc_mqtt5_##NAME##client_subscribe_config_extra(subscribe, extraConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
+        }
     }
 
     cancelOnExitGuard.release();
@@ -725,11 +724,11 @@ CC_Mqtt5UnsubscribeHandle cc_mqtt5_##NAME##client_unsubscribe_prepare(CC_Mqtt5Cl
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
-    return handleFromUnsubscribeOp(clientFromHandle(handle)->unsubscribePrepare(ec)); 
+    return handleFromUnsubscribeOp(clientFromHandle(handle)->unsubscribePrepare(ec));
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_set_response_timeout(CC_Mqtt5UnsubscribeHandle handle, unsigned ms)
@@ -739,7 +738,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_set_response_timeout(CC_Mq
     }
 
     unsubscribeOpFromHandle(handle)->setResponseTimeout(ms);
-    return CC_Mqtt5ErrorCode_Success;    
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 unsigned cc_mqtt5_##NAME##client_unsubscribe_get_response_timeout(CC_Mqtt5UnsubscribeHandle handle)
@@ -762,16 +761,16 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_config_topic(CC_Mqtt5Unsub
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return unsubscribeOpFromHandle(handle)->configTopic(*config);    
+    return unsubscribeOpFromHandle(handle)->configTopic(*config);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_add_user_prop(CC_Mqtt5UnsubscribeHandle handle, const CC_Mqtt5UserProp* prop)
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return unsubscribeOpFromHandle(handle)->addUserProp(*prop);      
+    return unsubscribeOpFromHandle(handle)->addUserProp(*prop);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHandle handle, CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData)
@@ -780,14 +779,14 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_send(CC_Mqtt5UnsubscribeHa
         return CC_Mqtt5ErrorCode_BadParam;
     }
 
-    return unsubscribeOpFromHandle(handle)->send(cb, cbData);      
+    return unsubscribeOpFromHandle(handle)->send(cb, cbData);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5UnsubscribeHandle handle)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     return unsubscribeOpFromHandle(handle)->cancel();
 }
@@ -795,15 +794,15 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_cancel(CC_Mqtt5Unsubscribe
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_simple(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5UnsubscribeTopicConfig* topicConfig,
-    CC_Mqtt5UnsubscribeCompleteCb cb, 
+    CC_Mqtt5UnsubscribeCompleteCb cb,
     void* cbData)
 {
-    return 
+    return
         cc_mqtt5_##NAME##client_unsubscribe_full(
-            handle, 
+            handle,
             topicConfig,
             1U,
-            cb, 
+            cb,
             cbData);
 }
 
@@ -811,7 +810,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_full(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5UnsubscribeTopicConfig* topicConfigs,
     unsigned topicConfigsCount,
-    CC_Mqtt5UnsubscribeCompleteCb cb, 
+    CC_Mqtt5UnsubscribeCompleteCb cb,
     void* cbData)
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
@@ -820,12 +819,12 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_unsubscribe_full(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [unsubscribe]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_unsubscribe_cancel(unsubscribe);
-            });  
+            });
 
     COMMS_ASSERT((topicConfigsCount == 0U) || (topicConfigs != nullptr));
     for (auto idx = 0U; idx < topicConfigsCount; ++idx) {
@@ -845,18 +844,18 @@ CC_Mqtt5PublishHandle cc_mqtt5_##NAME##client_publish_prepare(CC_Mqtt5ClientHand
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
-    return handleFromSendOp(clientFromHandle(handle)->publishPrepare(ec));     
+    return handleFromSendOp(clientFromHandle(handle)->publishPrepare(ec));
 }
 
 unsigned cc_mqtt5_##NAME##client_publish_count(CC_Mqtt5ClientHandle handle)
 {
     if (handle == nullptr) {
         return 0U;
-    }    
+    }
 
     return static_cast<unsigned>(clientFromHandle(handle)->sendsCount());
 }
@@ -878,7 +877,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_response_timeout(CC_Mqtt5P
     }
 
     sendOpFromHandle(handle)->setResponseTimeout(ms);
-    return CC_Mqtt5ErrorCode_Success;       
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 unsigned cc_mqtt5_##NAME##client_publish_get_response_timeout(CC_Mqtt5PublishHandle handle)
@@ -913,7 +912,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_basic(CC_Mqtt5PublishHa
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
-    
+
     return sendOpFromHandle(handle)->configBasic(*config);
 }
 
@@ -922,33 +921,33 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_config_extra(CC_Mqtt5PublishHa
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
     }
-    
-    return sendOpFromHandle(handle)->configExtra(*config);    
+
+    return sendOpFromHandle(handle)->configExtra(*config);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_add_user_prop(CC_Mqtt5PublishHandle handle, const CC_Mqtt5UserProp* prop)
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return sendOpFromHandle(handle)->addUserProp(*prop);       
+    return sendOpFromHandle(handle)->addUserProp(*prop);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_send(CC_Mqtt5PublishHandle handle, CC_Mqtt5PublishCompleteCb cb, void* cbData)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return sendOpFromHandle(handle)->send(cb, cbData);         
+    return sendOpFromHandle(handle)->send(cb, cbData);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_cancel(CC_Mqtt5PublishHandle handle)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     return sendOpFromHandle(handle)->cancel();
 }
@@ -957,7 +956,7 @@ bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
 {
     if (handle == nullptr) {
         return false;
-    }    
+    }
 
     return sendOpFromHandle(handle)->isPublished();
 }
@@ -965,7 +964,7 @@ bool cc_mqtt5_##NAME##client_publish_was_initiated(CC_Mqtt5PublishHandle handle)
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_simple(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5PublishBasicConfig* basicConfig,
-    CC_Mqtt5PublishCompleteCb cb, 
+    CC_Mqtt5PublishCompleteCb cb,
     void* cbData)
 {
     return cc_mqtt5_##NAME##client_publish_full(handle, basicConfig, nullptr, cb, cbData);
@@ -975,7 +974,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5PublishBasicConfig* basicConfig,
     const CC_Mqtt5PublishExtraConfig* extraConfig,
-    CC_Mqtt5PublishCompleteCb cb, 
+    CC_Mqtt5PublishCompleteCb cb,
     void* cbData)
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
@@ -984,29 +983,29 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_full(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [publish]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_publish_cancel(publish);
-            });  
+            });
 
     if (basicConfig != nullptr) {
         ec = cc_mqtt5_##NAME##client_publish_config_basic(publish, basicConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
+        }
     }
 
     if (extraConfig != nullptr) {
         ec = cc_mqtt5_##NAME##client_publish_config_extra(publish, extraConfig);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
+        }
     }
 
     cancelOnExitGuard.release();
-    return cc_mqtt5_##NAME##client_publish_send(publish, cb, cbData);    
+    return cc_mqtt5_##NAME##client_publish_send(publish, cb, cbData);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_publish_set_ordering(CC_Mqtt5ClientHandle handle, CC_Mqtt5PublishOrdering ordering)
@@ -1022,7 +1021,7 @@ CC_Mqtt5PublishOrdering cc_mqtt5_##NAME##client_publish_get_ordering(CC_Mqtt5Cli
 {
     if (handle == nullptr) {
         return CC_Mqtt5PublishOrdering_ValuesLimit;
-    }   
+    }
 
      return clientFromHandle(handle)->getPublishOrdering();
 }
@@ -1032,11 +1031,11 @@ CC_Mqtt5ReauthHandle cc_mqtt5_##NAME##client_reauth_prepare(CC_Mqtt5ClientHandle
     if (handle == nullptr) {
         if (ec != nullptr) {
             *ec = CC_Mqtt5ErrorCode_BadParam;
-        }        
+        }
         return nullptr;
     }
 
-    return handleFromReauthOp(clientFromHandle(handle)->reauthPrepare(ec));       
+    return handleFromReauthOp(clientFromHandle(handle)->reauthPrepare(ec));
 }
 
 void cc_mqtt5_##NAME##client_reauth_init_config_auth(CC_Mqtt5AuthConfig* config)
@@ -1051,7 +1050,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_set_response_timeout(CC_Mqtt5Re
     }
 
     reauthOpFromHandle(handle)->setResponseTimeout(ms);
-    return CC_Mqtt5ErrorCode_Success;  
+    return CC_Mqtt5ErrorCode_Success;
 }
 
 unsigned cc_mqtt5_##NAME##client_reauth_get_response_timeout(CC_Mqtt5ReauthHandle handle)
@@ -1067,7 +1066,7 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_config_auth(CC_Mqtt5ReauthHandl
 {
     if ((handle == nullptr) || (config == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }        
+    }
 
     return reauthOpFromHandle(handle)->configAuth(*config);
 }
@@ -1076,33 +1075,33 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_add_user_prop(CC_Mqtt5ReauthHan
 {
     if ((handle == nullptr) || (prop == nullptr)) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return reauthOpFromHandle(handle)->addUserProp(*prop);       
+    return reauthOpFromHandle(handle)->addUserProp(*prop);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_send(CC_Mqtt5ReauthHandle handle, CC_Mqtt5ReauthCompleteCb cb, void* cbData)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return reauthOpFromHandle(handle)->send(cb, cbData);    
+    return reauthOpFromHandle(handle)->send(cb, cbData);
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth_cancel(CC_Mqtt5ReauthHandle handle)
 {
     if (handle == nullptr) {
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
-    return reauthOpFromHandle(handle)->cancel();       
+    return reauthOpFromHandle(handle)->cancel();
 }
 
 CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth(
     CC_Mqtt5ClientHandle handle,
     const CC_Mqtt5AuthConfig* config,
-    CC_Mqtt5ReauthCompleteCb cb, 
+    CC_Mqtt5ReauthCompleteCb cb,
     void* cbData)
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
@@ -1111,18 +1110,18 @@ CC_Mqtt5ErrorCode cc_mqtt5_##NAME##client_reauth(
         return ec;
     }
 
-    auto cancelOnExitGuard = 
+    auto cancelOnExitGuard =
         comms::util::makeScopeGuard(
             [reauth]()
             {
                 [[maybe_unused]] auto ecTmp = cc_mqtt5_##NAME##client_reauth_cancel(reauth);
-            });  
+            });
 
     if (config != nullptr) {
         ec = cc_mqtt5_##NAME##client_reauth_config_auth(reauth, config);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             return ec;
-        }        
+        }
     }
 
     cancelOnExitGuard.release();

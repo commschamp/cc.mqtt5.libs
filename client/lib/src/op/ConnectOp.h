@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ public:
     virtual void handle(AuthMsg& msg) override;
 
 protected:
-    virtual Type typeImpl() const override;    
+    virtual Type typeImpl() const override;
     virtual void terminateOpImpl(CC_Mqtt5AsyncOpStatus status) override;
     virtual void connectivityChangedImpl() override;
 
@@ -54,8 +54,8 @@ private:
 
     static void opTimeoutCb(void* data);
 
-    ConnectMsg m_connectMsg;  
-    TimerMgr::Timer m_timer;  
+    ConnectMsg m_connectMsg;
+    TimerMgr::Timer m_timer;
     CC_Mqtt5ConnectCompleteCb m_cb = nullptr;
     void* m_cbData = nullptr;
     CC_Mqtt5AuthCb m_authCb = nullptr;
@@ -70,6 +70,5 @@ private:
 };
 
 } // namespace op
-
 
 } // namespace cc_mqtt5_client

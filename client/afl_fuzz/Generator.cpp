@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 namespace cc_mqtt5_client_afl_fuzz
 {
 
-namespace 
+namespace
 {
 
 template <typename TField>
@@ -23,7 +23,7 @@ decltype(auto) addProp(TField& field)
 {
     auto& vec = field.value();
     vec.resize(vec.size() + 1U);
-    return vec.back();    
+    return vec.back();
 }
 
 std::string pubTopicFromFilter(const std::string& filter)
@@ -38,7 +38,7 @@ std::string pubTopicFromFilter(const std::string& filter)
 
         result.append(filter.substr(pos, wildcardPos - pos));
         pos = wildcardPos + 1U;
-        
+
         if (filter[wildcardPos] == '#') {
             result.append("hash");
             pos = filter.size();
@@ -56,8 +56,7 @@ std::string pubTopicFromFilter(const std::string& filter)
     return result;
 }
 
-} // namespace 
-    
+} // namespace
 
 bool Generator::prepare(const std::string& inputFile)
 {
@@ -83,7 +82,7 @@ void Generator::handle(const Mqtt5ConnectMsg& msg)
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().value()) {
         p.currentFieldExec(propsHandler);
-    }    
+    }
 
     if (!propsHandler.m_authMethod.empty()) {
         m_cachedConnect = std::make_unique<Mqtt5ConnectMsg>(msg);
@@ -127,7 +126,7 @@ void Generator::handle(const Mqtt5PubrecMsg& msg)
     Mqtt5PubrelMsg outMsg;
     outMsg.field_packetId().setValue(msg.field_packetId().getValue());
     sendMessage(outMsg);
-    return;    
+    return;
 }
 
 void Generator::handle(const Mqtt5PubrelMsg& msg)
@@ -137,7 +136,7 @@ void Generator::handle(const Mqtt5PubrelMsg& msg)
     outMsg.field_packetId().setValue(msg.field_packetId().getValue());
     sendMessage(outMsg);
     doNextPublishIfNeeded();
-    return;    
+    return;
 }
 
 void Generator::handle(const Mqtt5SubscribeMsg& msg)
@@ -190,7 +189,7 @@ void Generator::handle(const Mqtt5AuthMsg& msg)
         PropsHandler propsHandler;
         for (auto& p : m_cachedConnect->field_properties().value()) {
             p.currentFieldExec(propsHandler);
-        }        
+        }
 
         sendConnack(*m_cachedConnect, propsHandler);
         m_cachedConnect.reset();
@@ -202,8 +201,7 @@ void Generator::handle(const Mqtt5AuthMsg& msg)
     PropsHandler propsHandler;
     for (auto& p : msg.field_properties().field().value()) {
         p.currentFieldExec(propsHandler);
-    }  
-
+    }
 
     if (msg.field_reasonCode().field().value() == Mqtt5AuthMsg::Field_reasonCode::Field::ValueType::ReAuth) {
         m_logger.infoLog() << "Re-authentication request\n";
@@ -253,7 +251,7 @@ void Generator::sendMessage(Mqtt5Message& msg)
     [[maybe_unused]] auto es = m_frame.write(msg, iter, outBuf.max_size());
     assert(es == comms::ErrorStatus::Success);
     assert(m_dataReportCb);
-    
+
     std::ostreambuf_iterator<char> outIter(m_stream);
     std::copy(outBuf.begin(), outBuf.end(), outIter);
     m_dataReportCb(outBuf.data(), outBuf.size());
@@ -267,38 +265,38 @@ void Generator::sendConnack(const Mqtt5ConnectMsg& msg, const PropsHandler& prop
     if (msg.field_clientId().value().empty()) {
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_assignedClientId();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue("some_client_id");                
+        auto& valueField = propBundle.field_value();
+        valueField.setValue("some_client_id");
     }
 
     if (propsHandler.m_receiveMax > 0U) {
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_receiveMax();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_receiveMax);        
+        auto& valueField = propBundle.field_value();
+        valueField.setValue(propsHandler.m_receiveMax);
     }
 
     if (propsHandler.m_maxPacketSize > 0U) {
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_maxPacketSize();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_maxPacketSize);        
+        auto& valueField = propBundle.field_value();
+        valueField.setValue(propsHandler.m_maxPacketSize);
     }
 
     if (propsHandler.m_topicAliasMax > 0U) {
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_topicAliasMax();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_topicAliasMax);        
+        auto& valueField = propBundle.field_value();
+        valueField.setValue(propsHandler.m_topicAliasMax);
         m_topicAliasLimit = propsHandler.m_topicAliasMax;
-    }  
+    }
 
     if (!propsHandler.m_authMethod.empty()) {
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_authMethod();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(propsHandler.m_authMethod);        
-    }    
+        auto& valueField = propBundle.field_value();
+        valueField.setValue(propsHandler.m_authMethod);
+    }
 
     sendMessage(outMsg);
     m_connected = true;
@@ -320,9 +318,9 @@ void Generator::sendPublish(const std::string& topic, unsigned qos)
         auto& propsField = outMsg.field_properties();
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_topicAlias();
-        auto& valueField = propBundle.field_value();        
-        valueField.setValue(topicAlias);        
-    } 
+        auto& valueField = propBundle.field_value();
+        valueField.setValue(topicAlias);
+    }
 
     sendMessage(outMsg);
     ++m_pubCount;
@@ -340,24 +338,23 @@ void Generator::sendAuth(const PropsHandler& propsHandler, Mqtt5AuthMsg::Field_r
         outMsg.field_reasonCode().field().setValue(reasonCode);
         outMsg.field_properties().setExists();
 
-
         auto& propsField = outMsg.field_properties().field();
         if (!propsHandler.m_authMethod.empty()) {
             auto& propVar = addProp(propsField);
             auto& propBundle = propVar.initField_authMethod();
-            auto& valueField = propBundle.field_value();        
-            valueField.setValue(propsHandler.m_authMethod);        
+            auto& valueField = propBundle.field_value();
+            valueField.setValue(propsHandler.m_authMethod);
         }
 
         if (!propsHandler.m_authData.empty()) {
             auto& propVar = addProp(propsField);
             auto& propBundle = propVar.initField_authData();
-            auto& valueField = propBundle.field_value();        
-            valueField.setValue(propsHandler.m_authData);     
+            auto& valueField = propBundle.field_value();
+            valueField.setValue(propsHandler.m_authData);
             if ((valueField.value().size() & 0x1) != 0) {
                 valueField.value().push_back('1');
             }
-        }    
+        }
     } while (false);
 
     sendMessage(outMsg);
@@ -371,7 +368,7 @@ void Generator::doPublish()
     if (m_nextPubQos > 2) {
         m_nextPubQos = 0;
     }
-} 
+}
 
 void Generator::doNextPublishIfNeeded()
 {

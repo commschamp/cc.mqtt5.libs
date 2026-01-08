@@ -20,7 +20,7 @@ protected:
     {
         std::cerr << "ERROR: Unexpected disconnection from broker" << std::endl;
         failTestInternal();
-    }  
+    }
 
     virtual void integrationTestConnectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response) override
     {
@@ -33,12 +33,12 @@ protected:
         if (response == nullptr) {
             std::cerr << "ERROR: connection response is not provided" << std::endl;
             failTestInternal();
-            return;            
+            return;
         }
 
         if (response->m_reasonCode != CC_Mqtt5ReasonCode_Success) {
             failTestInternal();
-            return; 
+            return;
         }
 
         integrationTestPrintConnectResponse(*response);
@@ -47,7 +47,7 @@ protected:
         if (disconnect == nullptr) {
             std::cerr << "ERROR: Failed to allocate disconnect message" << std::endl;
             failTestInternal();
-            return;                
+            return;
         }
 
         auto config = CC_Mqtt5DisconnectConfig();
@@ -56,31 +56,29 @@ protected:
         if (ec != CC_Mqtt5ErrorCode_Success) {
             std::cerr << "ERROR: Failed to configure disconnect" << std::endl;
             failTestInternal();
-            return;             
+            return;
         }
 
         ec = ::cc_mqtt5_client_disconnect_send(disconnect);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             std::cerr << "ERROR: Failed to send disconnect" << std::endl;
             failTestInternal();
-            return;             
+            return;
         }
 
         io().stop();
     }
-
 
 private:
     void failTestInternal()
     {
         assert(0);
         m_exitCode = -1;
-        io().stop();        
+        io().stop();
     }
 
-    int& m_exitCode;    
+    int& m_exitCode;
 };
-
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
 {
@@ -116,7 +114,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] const char* argv[])
             std::cerr << "ERROR: Failed to configure connect" << std::endl;
             return -1;
         }
-        
+
         ec = test.integrationTestSendConnect(connect);
         if (ec != CC_Mqtt5ErrorCode_Success) {
             std::cerr << "ERROR: Failed to send connect" << std::endl;

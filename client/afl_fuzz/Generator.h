@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ class Generator
 public:
     using RawDataBuf = std::vector<std::uint8_t>;
 
-    using Mqtt5Message = 
+    using Mqtt5Message =
         cc_mqtt5::Message<
             comms::option::app::ReadIterator<const std::uint8_t*>,
             comms::option::app::WriteIterator<std::back_insert_iterator<RawDataBuf>>,
@@ -112,7 +112,7 @@ private:
         void operator()(const TopicAliasMax& field)
         {
             m_topicAliasMax = field.field_value().getValue();
-        } 
+        }
 
         using MaxPacketSize = Property::Field_maxPacketSize;
         unsigned m_maxPacketSize = 0U;
@@ -120,7 +120,7 @@ private:
         void operator()(const MaxPacketSize& field)
         {
             m_maxPacketSize = field.field_value().getValue();
-        }      
+        }
 
     };
 

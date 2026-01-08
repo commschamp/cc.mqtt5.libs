@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ public:
     op::UnsubscribeOp* unsubscribePrepare(CC_Mqtt5ErrorCode* ec);
     op::SendOp* publishPrepare(CC_Mqtt5ErrorCode* ec);
     op::ReauthOp* reauthPrepare(CC_Mqtt5ErrorCode* ec);
-    
+
     CC_Mqtt5ErrorCode allocPubTopicAlias(const char* topic, unsigned qos0RegsCount);
     CC_Mqtt5ErrorCode freePubTopicAlias(const char* topic);
     CC_Mqtt5ErrorCode setPublishOrdering(CC_Mqtt5PublishOrdering ordering);
@@ -127,7 +127,7 @@ public:
     {
         if (cb != nullptr) {
             m_messageReceivedReportCb = cb;
-            m_messageReceivedReportData = data;            
+            m_messageReceivedReportData = data;
         }
     }
 
@@ -142,9 +142,9 @@ public:
     using Base::handle;
     virtual void handle(PublishMsg& msg) override;
 
-#if CC_MQTT5_CLIENT_MAX_QOS >= 1    
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1
     virtual void handle(PubackMsg& msg) override;
-#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1    
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
 #if CC_MQTT5_CLIENT_MAX_QOS >= 2
     virtual void handle(PubrecMsg& msg) override;
@@ -160,8 +160,8 @@ public:
     void opComplete(const op::Op* op);
     void brokerConnected(bool sessionPresent);
     void brokerDisconnected(
-        CC_Mqtt5BrokerDisconnectReason reason = CC_Mqtt5BrokerDisconnectReason_ValuesLimit, 
-        CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected, 
+        CC_Mqtt5BrokerDisconnectReason reason = CC_Mqtt5BrokerDisconnectReason_ValuesLimit,
+        CC_Mqtt5AsyncOpStatus status = CC_Mqtt5AsyncOpStatus_BrokerDisconnected,
         const CC_Mqtt5DisconnectInfo* info = nullptr);
     void reportMsgInfo(const CC_Mqtt5MessageInfo& info);
     bool hasPausedSendsBefore(const op::SendOp* sendOp) const;
@@ -181,17 +181,17 @@ public:
     const ConfigState& configState() const
     {
         return m_configState;
-    }    
+    }
 
     ClientState& clientState()
     {
         return m_clientState;
-    }    
+    }
 
     const ClientState& clientState() const
     {
         return m_clientState;
-    }       
+    }
 
     SessionState& sessionState()
     {
@@ -201,12 +201,12 @@ public:
     const SessionState& sessionState() const
     {
         return m_sessionState;
-    }    
+    }
 
     ReuseState& reuseState()
     {
         return m_reuseState;
-    }    
+    }
 
     inline void errorLog(const char* msg)
     {
@@ -218,8 +218,8 @@ public:
     std::size_t recvsCount() const
     {
         return m_recvOps.size();
-    }    
-    
+    }
+
 private:
     using ConnectOpAlloc = ObjAllocator<op::ConnectOp, ExtConfig::ConnectOpsLimit>;
     using ConnectOpsList = ObjListType<ConnectOpAlloc::Ptr, ExtConfig::ConnectOpsLimit>;
@@ -297,7 +297,7 @@ private:
     void* m_brokerDisconnectReportData = nullptr;
 
     CC_Mqtt5MessageReceivedReportCb m_messageReceivedReportCb = nullptr;
-    void* m_messageReceivedReportData = nullptr;      
+    void* m_messageReceivedReportData = nullptr;
 
     CC_Mqtt5ErrorLogCb m_errorLogCb = nullptr;
     void* m_errorLogData = nullptr;
@@ -339,7 +339,7 @@ private:
     ReauthOpsList m_reauthOps;
 
     OpPtrsList m_ops;
-    TimerMgr::Timer m_sessionExpiryTimer;  
+    TimerMgr::Timer m_sessionExpiryTimer;
     bool m_opsDeleted = false;
     bool m_preparationLocked = false;
 };

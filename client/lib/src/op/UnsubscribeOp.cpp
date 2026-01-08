@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,14 +16,14 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 template <typename TField, bool THasFixedLength>
 struct ReasonCodesCountHeper
 {
     static constexpr unsigned Value = 0U;
-};  
+};
 
 template <typename TField>
 struct ReasonCodesCountHeper<TField, true>
@@ -42,13 +42,13 @@ constexpr unsigned reasonCodesLength()
     return ReasonCodesCountHeper<TField, TField::hasFixedSize()>::Value;
 }
 
-} // namespace     
+} // namespace
 
-UnsubscribeOp::UnsubscribeOp(ClientImpl& client) : 
+UnsubscribeOp::UnsubscribeOp(ClientImpl& client) :
     Base(client),
     m_timer(client.timerMgr().allocTimer())
 {
-}    
+}
 
 UnsubscribeOp::~UnsubscribeOp()
 {
@@ -65,12 +65,12 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
     if (!verifySubFilter(config.m_topic)) {
         errorLog("Bad topic filter format in unsubscribe.");
         return CC_Mqtt5ErrorCode_BadParam;
-    }    
+    }
 
     if constexpr (Config::HasSubTopicVerification) {
         if (client().configState().m_verifySubFilter) {
             auto& filtersMap = client().reuseState().m_subFilters;
-            auto iter = 
+            auto iter =
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), config.m_topic,
                     [](auto& storedTopic, const char* topicParam)
@@ -83,7 +83,7 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
                 return CC_Mqtt5ErrorCode_BadParam;
             }
         }
-    }    
+    }
 
     auto& topicVec = m_unsubMsg.field_list().value();
     if (topicVec.max_size() <= topicVec.size()) {
@@ -99,7 +99,7 @@ CC_Mqtt5ErrorCode UnsubscribeOp::configTopic(const CC_Mqtt5UnsubscribeTopicConfi
         errorLog("Unsubscription topic value is too long");
         topicVec.pop_back();
         return CC_Mqtt5ErrorCode_BadParam;
-    }  
+    }
 
     return CC_Mqtt5ErrorCode_Success;
 }
@@ -110,11 +110,11 @@ CC_Mqtt5ErrorCode UnsubscribeOp::addUserProp(const CC_Mqtt5UserProp& prop)
     return addUserPropToList(propsField, prop);
 }
 
-CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData) 
+CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cbData)
 {
     client().allowNextPrepare();
 
-    auto completeOnError = 
+    auto completeOnError =
         comms::util::makeScopeGuard(
             [this]()
             {
@@ -134,13 +134,13 @@ CC_Mqtt5ErrorCode UnsubscribeOp::send(CC_Mqtt5UnsubscribeCompleteCb cb, void* cb
     if (!m_timer.isValid()) {
         errorLog("The library cannot allocate required number of timers.");
         return CC_Mqtt5ErrorCode_InternalError;
-    }    
+    }
 
     m_cb = cb;
     m_cbData = cbData;
 
     m_unsubMsg.field_packetId().setValue(allocPacketId());
-    auto result = client().sendMessage(m_unsubMsg); 
+    auto result = client().sendMessage(m_unsubMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
     }
@@ -156,7 +156,7 @@ CC_Mqtt5ErrorCode UnsubscribeOp::cancel()
     if (m_cb == nullptr) {
         // hasn't been sent yet
         client().allowNextPrepare();
-    }            
+    }
 
     opComplete();
     return CC_Mqtt5ErrorCode_Success;
@@ -177,22 +177,22 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     auto response = CC_Mqtt5UnsubscribeResponse();
 
     auto terminationReason = DisconnectReason::ProtocolError;
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client(), &terminationReason]()
             {
                 terminationWithReasonStatic(cl, terminationReason);
             }
-        );     
+        );
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
                 auto* responsePtr = &response;
                 if (status != CC_Mqtt5AsyncOpStatus_Complete) {
                     responsePtr = nullptr;
-                }                
+                }
                 completeOpInternal(status, responsePtr);
             });
 
@@ -212,7 +212,7 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     if (propsHandler.isProtocolError()) {
         errorLog("Protocol error in UNSUBACK properties");
         return;
-    }  
+    }
 
     reasonCodes.reserve(std::min(reasonCodesVec.size(), reasonCodesVec.max_size()));
     for (auto idx = 0U; idx < reasonCodesVec.size(); ++idx) {
@@ -235,7 +235,7 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
             // Remove from the subscribed topics record regardless of the client().configState().m_verifySubFilter
             auto& topicStr = m_unsubMsg.field_list().value()[idx].value();
             auto& filtersMap = client().reuseState().m_subFilters;
-            auto iter = 
+            auto iter =
                 std::lower_bound(
                     filtersMap.begin(), filtersMap.end(), topicStr,
                     [](auto& storedTopic, auto& topicParam)
@@ -248,7 +248,7 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
             }
 
             filtersMap.erase(iter);
-        }        
+        }
     }
 
     comms::cast_assign(response.m_reasonCodesCount) = reasonCodes.size();
@@ -259,24 +259,24 @@ void UnsubscribeOp::handle(UnsubackMsg& msg)
     if (propsHandler.m_reasonStr != nullptr) {
         if (!client().sessionState().m_problemInfoAllowed) {
             errorLog("Received reason string in UNSUBACK when \"problem information\" was disabled in CONNECT.");
-            return; 
+            return;
         }
 
         response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
-    }       
+    }
 
     if constexpr (Config::HasUserProps) {
         if (!propsHandler.m_userProps.empty()) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received user properties in UNSUBACK when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             fillUserProps(propsHandler, userProps);
             response.m_userProps = &userProps[0];
             comms::cast_assign(response.m_userPropsCount) = userProps.size();
-        }   
-    } 
+        }
+    }
 
     if (response.m_reasonCodesCount != m_unsubMsg.field_list().value().size()) {
         return;
@@ -303,7 +303,7 @@ void UnsubscribeOp::completeOpInternal(CC_Mqtt5AsyncOpStatus status, const CC_Mq
     auto handle = toHandle();
     opComplete(); // mustn't access data members after destruction
     if (cb != nullptr) {
-        cb(cbData, handle, status, response);    
+        cb(cbData, handle, status, response);
     }
 }
 

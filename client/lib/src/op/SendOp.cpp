@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ namespace cc_mqtt5_client
 namespace op
 {
 
-namespace 
+namespace
 {
 
 inline SendOp* asSendOp(void* data)
@@ -24,43 +24,43 @@ inline SendOp* asSendOp(void* data)
     return reinterpret_cast<SendOp*>(data);
 }
 
-} // namespace     
+} // namespace
 
-SendOp::SendOp(ClientImpl& client) : 
+SendOp::SendOp(ClientImpl& client) :
     Base(client),
     m_responseTimer(client.timerMgr().allocTimer())
 {
     COMMS_ASSERT(m_responseTimer.isValid());
     static_cast<void>(m_reasonCode);
-}    
+}
 
 SendOp::~SendOp()
 {
     releasePacketId(m_pubMsg.field_packetId().field().value());
 }
 
-#if CC_MQTT5_CLIENT_MAX_QOS >= 1 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 1
 void SendOp::handle(PubackMsg& msg)
 {
     static_assert(Config::MaxQos >= 1);
     COMMS_ASSERT(m_pubMsg.field_packetId().field().value() == msg.field_packetId().value());
     COMMS_ASSERT(m_published);
-    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
 
     m_responseTimer.cancel();
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
                 terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
-        );      
+        );
 
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
@@ -69,7 +69,7 @@ void SendOp::handle(PubackMsg& msg)
                     responsePtr = nullptr;
                 }
                 completeWithCb(status, responsePtr);
-            });        
+            });
 
     if (m_pubMsg.transportField_flags().field_qos().value() != Qos::AtLeastOnceDelivery) {
         errorLog("Unexpected PUBACK for Qos2 message");
@@ -93,12 +93,12 @@ void SendOp::handle(PubackMsg& msg)
         if (propsHandler.isProtocolError()) {
             errorLog("Invalid properties in PUBACK message");
             return;
-        }    
+        }
 
         if (propsHandler.m_reasonStr != nullptr) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received reason string in PUBACK when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
@@ -108,22 +108,22 @@ void SendOp::handle(PubackMsg& msg)
             if (!propsHandler.m_userProps.empty()) {
                 if (!client().sessionState().m_problemInfoAllowed) {
                     errorLog("Received user properties in PUBACK when \"problem information\" was disabled in CONNECT.");
-                    return; 
+                    return;
                 }
 
                 fillUserProps(propsHandler, userProps);
                 response.m_userProps = &userProps[0];
                 comms::cast_assign(response.m_userPropsCount) = userProps.size();
-            }        
+            }
         }
     }
 
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
-#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1 
+#endif // #if CC_MQTT5_CLIENT_MAX_QOS >= 1
 
-#if CC_MQTT5_CLIENT_MAX_QOS >= 2 
+#if CC_MQTT5_CLIENT_MAX_QOS >= 2
 void SendOp::handle(PubrecMsg& msg)
 {
     static_assert(Config::MaxQos >= 2);
@@ -132,23 +132,23 @@ void SendOp::handle(PubrecMsg& msg)
     }
 
     COMMS_ASSERT(m_published);
-    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);    
+    COMMS_ASSERT(0U < client().clientState().m_inFlightSends);
 
     m_responseTimer.cancel();
 
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
                 terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
-        );      
+        );
 
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
@@ -158,7 +158,7 @@ void SendOp::handle(PubrecMsg& msg)
                 }
 
                 completeWithCb(status, responsePtr);
-            });    
+            });
 
     if (m_pubMsg.transportField_flags().field_qos().value() != Qos::ExactlyOnceDelivery) {
         errorLog("Unexpected PUBREC for Qos1 message");
@@ -179,12 +179,12 @@ void SendOp::handle(PubrecMsg& msg)
         if (propsHandler.isProtocolError()) {
             errorLog("Invalid properties in PUBREC message");
             return;
-        }    
+        }
 
         if (propsHandler.m_reasonStr != nullptr) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received reason string in PUBREC when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
@@ -194,20 +194,20 @@ void SendOp::handle(PubrecMsg& msg)
             if (!propsHandler.m_userProps.empty()) {
                 if (!client().sessionState().m_problemInfoAllowed) {
                     errorLog("Received user properties in PUBREC when \"problem information\" was disabled in CONNECT.");
-                    return; 
+                    return;
                 }
 
                 fillUserProps(propsHandler, userProps);
                 response.m_userProps = &userProps[0];
                 comms::cast_assign(response.m_userPropsCount) = userProps.size();
-            }       
-        } 
+            }
+        }
     }
-    
+
     // Protocol wise it's all correct, no need to terminate any more
     terminateOnExit.release();
 
-    if ((msg.field_reasonCode().doesExist()) && 
+    if ((msg.field_reasonCode().doesExist()) &&
         (msg.field_reasonCode().field().value() >= PubrecMsg::Field_reasonCode::Field::ValueType::UnspecifiedError)) {
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
         status = CC_Mqtt5AsyncOpStatus_Complete;
@@ -216,13 +216,13 @@ void SendOp::handle(PubrecMsg& msg)
 
     if (m_registeredAlias) {
         confirmRegisteredAlias();
-    }    
+    }
 
     m_acked = true;
     m_sendAttempts = 0U;
     PubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(m_pubMsg.field_packetId().field().value());
-    auto result = client().sendMessage(pubrelMsg); 
+    auto result = client().sendMessage(pubrelMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
         status = CC_Mqtt5AsyncOpStatus_InternalError;
@@ -244,19 +244,19 @@ void SendOp::handle(PubcompMsg& msg)
 
     m_responseTimer.cancel();
 
-    auto terminateOnExit = 
+    auto terminateOnExit =
         comms::util::makeScopeGuard(
             [&cl = client()]()
             {
                 terminationWithReasonStatic(cl, DisconnectReason::ProtocolError);
             }
-        );      
+        );
 
     auto status = CC_Mqtt5AsyncOpStatus_ProtocolError;
     UserPropsList userProps; // Will be referenced in response
     auto response = CC_Mqtt5PublishResponse();
 
-    auto completeOpOnExit = 
+    auto completeOpOnExit =
         comms::util::makeScopeGuard(
             [this, &status, &response]()
             {
@@ -266,7 +266,7 @@ void SendOp::handle(PubcompMsg& msg)
                 }
 
                 completeWithCb(status, responsePtr);
-            });  
+            });
 
     if (m_pubMsg.transportField_flags().field_qos().value() != Qos::ExactlyOnceDelivery) {
         errorLog("Unexpected PUBCOMP for Qos1 message");
@@ -276,13 +276,13 @@ void SendOp::handle(PubcompMsg& msg)
     if (!m_acked) {
         errorLog("Unexpected PUBCOMP without PUBREC");
         return;
-    }    
+    }
 
     response.m_reasonCode = m_reasonCode;
-    if ((msg.field_reasonCode().doesExist()) && 
+    if ((msg.field_reasonCode().doesExist()) &&
         (msg.field_reasonCode().field().value() != PubcompMsg::Field_reasonCode::Field::ValueType::Success)) {
         comms::cast_assign(response.m_reasonCode) = msg.field_reasonCode().field().value();
-    }    
+    }
 
     if (msg.field_properties().doesExist()) {
         PropsHandler propsHandler;
@@ -293,12 +293,12 @@ void SendOp::handle(PubcompMsg& msg)
         if (propsHandler.isProtocolError()) {
             errorLog("Invalid properties in PUBCOMP message");
             return;
-        }    
+        }
 
         if (propsHandler.m_reasonStr != nullptr) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received reason string in PUBCOMP when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             response.m_reasonStr = propsHandler.m_reasonStr->field_value().value().c_str();
@@ -307,15 +307,15 @@ void SendOp::handle(PubcompMsg& msg)
         if (!propsHandler.m_userProps.empty()) {
             if (!client().sessionState().m_problemInfoAllowed) {
                 errorLog("Received user properties in PUBCOMP when \"problem information\" was disabled in CONNECT.");
-                return; 
+                return;
             }
 
             fillUserProps(propsHandler, userProps);
             response.m_userProps = &userProps[0];
             comms::cast_assign(response.m_userPropsCount) = userProps.size();
-        }        
+        }
     }
-    
+
     terminateOnExit.release();
     status = CC_Mqtt5AsyncOpStatus_Complete;
 }
@@ -353,9 +353,9 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
             if (config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicOnly) {
                 break;
             }
-            
+
             auto& clientState = client().clientState();
-            auto iter = 
+            auto iter =
                 std::lower_bound(
                     clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), config.m_topic,
                     [](auto& info, const char* topicParam)
@@ -365,7 +365,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
             bool found = ((iter != clientState.m_sendTopicAliases.end()) && (iter->m_topic == config.m_topic));
             if (!found) {
-                if ((config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias) || 
+                if ((config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceTopicWithAlias) ||
                     (config.m_topicAliasPref == CC_Mqtt5TopicAliasPreference_ForceAliasOnly)) {
                     errorLog("The topic alias for the publish hasn't been allocated");
                     return CC_Mqtt5ErrorCode_BadParam;
@@ -391,16 +391,14 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
                 break;
             }
 
-
             // if (config.m_qos > CC_Mqtt5QoS_AtMostOnceDelivery) {
             //     break;
             // }
 
-    
             --iter->m_lowQosRegRemCount;
         }
         else {
-            if ((config.m_topicAliasPref != CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable) && 
+            if ((config.m_topicAliasPref != CC_Mqtt5TopicAliasPreference_UseAliasIfAvailable) &&
                 (config.m_topicAliasPref != CC_Mqtt5TopicAliasPreference_ForceTopicOnly)) {
                 errorLog("Topic aliases are not supported");
                 return CC_Mqtt5ErrorCode_NotSupported;
@@ -410,7 +408,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
 
     m_pubMsg.transportField_flags().field_retain().setBitValue_bit(config.m_retain);
     m_pubMsg.transportField_flags().field_qos().setValue(config.m_qos);
-    
+
     if (mustAssignTopic) {
         auto& topicStr = m_pubMsg.field_topic().value();
         topicStr = config.m_topic;
@@ -419,7 +417,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
         if (maxStringLen() < topicStr.size()) {
             errorLog("Publish topic value is too long");
             return CC_Mqtt5ErrorCode_BadParam;
-        }          
+        }
     }
 
     auto& propsField = m_pubMsg.field_properties();
@@ -445,7 +443,7 @@ CC_Mqtt5ErrorCode SendOp::configBasic(const CC_Mqtt5PublishBasicConfig& config)
     if (maxStringLen() < dataVec.size()) {
         errorLog("Publish data value is too long");
         return CC_Mqtt5ErrorCode_BadParam;
-    }      
+    }
 
     m_registeredAlias = (alias > 0) && mustAssignTopic;
     return CC_Mqtt5ErrorCode_Success;
@@ -464,13 +462,13 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_contentType();
         auto& valueField = propBundle.field_value();
-        valueField.value() = config.m_contentType;       
+        valueField.value() = config.m_contentType;
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Publish content type value is too long");
             discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
-        }         
+        }
     }
 
     if (config.m_responseTopic != nullptr) {
@@ -482,17 +480,17 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         if (!canAddProp(propsField)) {
             errorLog("Cannot add publish property, reached available limit.");
             return CC_Mqtt5ErrorCode_OutOfMemory;
-        }        
+        }
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_responseTopic();
         auto& valueField = propBundle.field_value();
-        valueField.value() = config.m_responseTopic;        
+        valueField.value() = config.m_responseTopic;
 
         if (maxStringLen() < valueField.value().size()) {
             errorLog("Publish response topic value is too long");
             discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
-        }          
+        }
     }
 
     if ((config.m_correlationDataLen > 0U) && (config.m_correlationData == nullptr)) {
@@ -508,7 +506,7 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
 
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_correlationData();
-        auto& valueField = propBundle.field_value();        
+        auto& valueField = propBundle.field_value();
 
         comms::util::assign(valueField.value(), config.m_correlationData, config.m_correlationData + config.m_correlationDataLen);
 
@@ -516,8 +514,8 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
             errorLog("Publish correlation data value is too long");
             discardLastProp(propsField);
             return CC_Mqtt5ErrorCode_BadParam;
-        }         
-    }    
+        }
+    }
 
     if (config.m_messageExpiryInterval > 0U) {
         if (!canAddProp(propsField)) {
@@ -549,7 +547,7 @@ CC_Mqtt5ErrorCode SendOp::configExtra(const CC_Mqtt5PublishExtraConfig& config)
         auto& propVar = addProp(propsField);
         auto& propBundle = propVar.initField_payloadFormatIndicator();
         propBundle.field_value().setValue(config.m_format);
-    }    
+    }
 
     return CC_Mqtt5ErrorCode_Success;
 }
@@ -579,8 +577,8 @@ unsigned SendOp::getResendAttempts() const
 CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
 {
     client().allowNextPrepare();
-    
-    auto completeOnExit = 
+
+    auto completeOnExit =
         comms::util::makeScopeGuard(
             [this]()
             {
@@ -590,7 +588,7 @@ CC_Mqtt5ErrorCode SendOp::send(CC_Mqtt5PublishCompleteCb cb, void* cbData)
     if (!m_responseTimer.isValid()) {
         errorLog("The library cannot allocate required number of timers.");
         return CC_Mqtt5ErrorCode_InternalError;
-    }    
+    }
 
     if (!m_topicConfigured) {
         errorLog("Topic hasn't been properly configured, cannot publish");
@@ -644,7 +642,7 @@ void SendOp::postReconnectionResend()
     if constexpr (Config::HasTopicAliases) {
         do {
             auto& propsVec = m_pubMsg.field_properties().value();
-            auto iter = 
+            auto iter =
                 std::find_if(
                     propsVec.begin(), propsVec.end(),
                     [](auto& prop) {
@@ -667,7 +665,7 @@ void SendOp::postReconnectionResend()
                 auto topicAliasValue = topicAliasField.field_value().value();
 
                 auto& aliases = client().clientState().m_sendTopicAliases;
-                auto infoIter = 
+                auto infoIter =
                     std::find_if(
                         aliases.begin(), aliases.end(),
                         [topicAliasValue](auto& info)
@@ -692,7 +690,7 @@ void SendOp::postReconnectionResend()
     COMMS_ASSERT(m_sendAttempts > 0U);
     --m_sendAttempts;
     m_responseTimer.cancel();
-    resendDupMsg(); 
+    resendDupMsg();
 }
 
 void SendOp::forceDupResend()
@@ -701,7 +699,7 @@ void SendOp::forceDupResend()
         return;
     }
 
-    resendDupMsg(); 
+    resendDupMsg();
 }
 
 bool SendOp::resume()
@@ -772,7 +770,7 @@ void SendOp::resendDupMsg()
     COMMS_ASSERT(m_published);
     if (!m_acked) {
         m_pubMsg.transportField_flags().field_dup().setBitValue_bit(true);
-        auto result = client().sendMessage(m_pubMsg); 
+        auto result = client().sendMessage(m_pubMsg);
         if (result != CC_Mqtt5ErrorCode_Success) {
             errorLog("Failed to resend PUBLISH message.");
             completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
@@ -787,7 +785,7 @@ void SendOp::resendDupMsg()
     COMMS_ASSERT(m_pubMsg.transportField_flags().field_qos().value() == Qos::ExactlyOnceDelivery);
     PubrelMsg pubrelMsg;
     pubrelMsg.field_packetId().setValue(m_pubMsg.field_packetId().field().value());
-    auto result = client().sendMessage(pubrelMsg); 
+    auto result = client().sendMessage(pubrelMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         errorLog("Failed to resend PUBREL message.");
         completeWithCb(CC_Mqtt5AsyncOpStatus_InternalError);
@@ -819,13 +817,13 @@ void SendOp::confirmRegisteredAlias()
     COMMS_ASSERT(m_registeredAlias);
     auto& clientState = client().clientState();
     auto& topic = m_pubMsg.field_topic().value();
-    auto iter = 
+    auto iter =
         std::lower_bound(
             clientState.m_sendTopicAliases.begin(), clientState.m_sendTopicAliases.end(), topic,
             [](auto& info, auto& topicParam)
             {
                 return info.m_topic < topicParam;
-            });    
+            });
 
     if (iter == clientState.m_sendTopicAliases.end()) {
         errorLog("Topic alias freed before it is acknowledged");
@@ -838,7 +836,7 @@ void SendOp::confirmRegisteredAlias()
 CC_Mqtt5ErrorCode SendOp::doSendInternal()
 {
     m_sendAttempts = 0U;
-    auto result = client().sendMessage(m_pubMsg); 
+    auto result = client().sendMessage(m_pubMsg);
     if (result != CC_Mqtt5ErrorCode_Success) {
         return result;
     }
@@ -866,7 +864,7 @@ bool SendOp::canSend() const
     auto qos = m_pubMsg.transportField_flags().field_qos().value();
 
     if (reachedLimit) {
-        return 
+        return
             (qos == Qos::AtMostOnceDelivery) &&
             (client().configState().m_publishOrdering == CC_Mqtt5PublishOrdering_SameQos);
     }

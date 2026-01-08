@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,12 +11,10 @@
 #include "ObjListType.h"
 #include "ProtocolDefs.h"
 
-
 namespace cc_mqtt5_client
 {
 
 using TopicFilterStr = SubscribeMsg::Field_list::ValueType::value_type::Field_topic::ValueType;
 using SubFiltersMap = ObjListType<TopicFilterStr, Config::SubFiltersLimit, Config::HasSubTopicVerification>;
-
 
 } // namespace cc_mqtt5_client

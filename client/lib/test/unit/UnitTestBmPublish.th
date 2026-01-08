@@ -60,7 +60,7 @@ void UnitTestBmPublish::test1()
     userProp1.m_key = PubUserPropKey1.c_str();
     userProp1.m_value = PubUserPropVal1.c_str();
     ec = apiPublishAddUserProp(publish, &userProp1);
-    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);    
+    TS_ASSERT_EQUALS(ec, CC_Mqtt5ErrorCode_NotSupported);
 
     const std::string ContentType("ContentType");
     const std::string ResponseTopic("ResponseTopic");

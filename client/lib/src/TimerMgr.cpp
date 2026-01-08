@@ -1,5 +1,5 @@
 //
-// Copyright 2023 - 2025 (C). Alex Robenko. All rights reserved.
+// Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace cc_mqtt5_client
 
 TimerMgr::Timer TimerMgr::allocTimer()
 {
-    auto createTimer = 
+    auto createTimer =
         [this](unsigned idx)
         {
             m_timers[idx].m_allocated = true;
@@ -41,11 +41,11 @@ TimerMgr::Timer TimerMgr::allocTimer()
 
         [[maybe_unused]] static constexpr bool Should_not_happen = false;
         COMMS_ASSERT(Should_not_happen);
-    } 
+    }
 
     if (m_timers.max_size() <= m_timers.size()) {
         return Timer(*this);
-    }      
+    }
 
     auto idx = static_cast<unsigned>(m_timers.size());
     m_timers.resize(m_timers.size() + 1U);
@@ -65,7 +65,7 @@ void TimerMgr::tick(unsigned ms)
 
     for (auto idx = 0U; idx < m_timers.size(); ++idx) {
         auto& info = m_timers[idx];
-        if ((!info.m_allocated) || 
+        if ((!info.m_allocated) ||
             (info.m_timeoutCb == nullptr) ||
             (info.m_suspended)) {
             continue;
@@ -95,8 +95,8 @@ unsigned TimerMgr::getMinWait() const
     auto result = Limit;
 
     for (auto& info : m_timers) {
-        if ((!info.m_allocated) || 
-            (info.m_timeoutCb == nullptr) || 
+        if ((!info.m_allocated) ||
+            (info.m_timeoutCb == nullptr) ||
             (info.m_suspended)) {
             continue;
         }
@@ -113,10 +113,10 @@ unsigned TimerMgr::getMinWait() const
 
 unsigned TimerMgr::allocCount() const
 {
-    return 
+    return
         static_cast<unsigned>(
             std::count_if(
-                m_timers.begin(), m_timers.end(), 
+                m_timers.begin(), m_timers.end(),
                 [](auto& info)
                 {
                     return info.m_allocated;
@@ -125,7 +125,7 @@ unsigned TimerMgr::allocCount() const
 
 void TimerMgr::freeTimer(unsigned idx)
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return;
     }
@@ -139,7 +139,7 @@ void TimerMgr::freeTimer(unsigned idx)
 
 void TimerMgr::timerWait(unsigned idx, std::uint64_t timeoutMs, TimeoutCb cb, void* data)
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return;
     }
@@ -154,7 +154,7 @@ void TimerMgr::timerWait(unsigned idx, std::uint64_t timeoutMs, TimeoutCb cb, vo
 
 void TimerMgr::timerCancel(unsigned idx)
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return;
     }
@@ -168,7 +168,7 @@ void TimerMgr::timerCancel(unsigned idx)
 
 bool TimerMgr::timerIsActive(unsigned idx) const
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return false;
     }
@@ -181,7 +181,7 @@ bool TimerMgr::timerIsActive(unsigned idx) const
 
 void TimerMgr::timerSetSuspended(unsigned idx, bool suspended)
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return;
     }
@@ -193,7 +193,7 @@ void TimerMgr::timerSetSuspended(unsigned idx, bool suspended)
 
 bool TimerMgr::timerIsSuspended(unsigned idx) const
 {
-    COMMS_ASSERT(idx < m_timers.size()); 
+    COMMS_ASSERT(idx < m_timers.size());
     if (m_timers.size() <= idx) {
         return false;
     }

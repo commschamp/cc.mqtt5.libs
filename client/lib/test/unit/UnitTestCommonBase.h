@@ -46,7 +46,7 @@ public:
         void (*m_connect_init_auth_info)(CC_Mqtt5AuthInfo*) = nullptr;
         CC_Mqtt5ErrorCode (*m_connect_set_response_timeout)(CC_Mqtt5ConnectHandle, unsigned) = nullptr;
         unsigned (*m_connect_get_response_timeout)(CC_Mqtt5ConnectHandle) = nullptr;
-        CC_Mqtt5ErrorCode (*m_connect_config_basic)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectBasicConfig*) = nullptr;        
+        CC_Mqtt5ErrorCode (*m_connect_config_basic)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectBasicConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_connect_config_will)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectWillConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_connect_config_extra)(CC_Mqtt5ConnectHandle, const CC_Mqtt5ConnectExtraConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_connect_config_auth)(CC_Mqtt5ConnectHandle, const CC_Mqtt5AuthConfig*) = nullptr;
@@ -57,7 +57,7 @@ public:
         CC_Mqtt5ErrorCode (*m_connect_simple)(CC_Mqtt5ClientHandle handle, const CC_Mqtt5ConnectBasicConfig*, CC_Mqtt5ConnectCompleteCb, void*) = nullptr;
         CC_Mqtt5ErrorCode (*m_connect_full)(CC_Mqtt5ClientHandle handle, const CC_Mqtt5ConnectBasicConfig*, const CC_Mqtt5ConnectWillConfig*, const CC_Mqtt5ConnectExtraConfig*, const CC_Mqtt5AuthConfig*, CC_Mqtt5ConnectCompleteCb, void*) = nullptr;
         bool (*m_is_connected)(CC_Mqtt5ClientHandle) = nullptr;
-        CC_Mqtt5DisconnectHandle (*m_disconnect_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr; 
+        CC_Mqtt5DisconnectHandle (*m_disconnect_prepare)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorCode*) = nullptr;
         void (*m_disconnect_init_config)(CC_Mqtt5DisconnectConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_disconnect_config)(CC_Mqtt5DisconnectHandle, const CC_Mqtt5DisconnectConfig*) = nullptr;
         CC_Mqtt5ErrorCode (*m_disconnect_add_user_prop)(CC_Mqtt5DisconnectHandle, const CC_Mqtt5UserProp*) = nullptr;
@@ -114,17 +114,17 @@ public:
         CC_Mqtt5ErrorCode (*m_reauth_cancel)(CC_Mqtt5ReauthHandle) = nullptr;
         CC_Mqtt5ErrorCode (*m_reauth)(CC_Mqtt5ClientHandle, const CC_Mqtt5AuthConfig*, CC_Mqtt5ReauthCompleteCb, void*) = nullptr;
         void (*m_set_next_tick_program_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5NextTickProgramCb, void*) = nullptr;
-        void (*m_set_cancel_next_tick_wait_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5CancelNextTickWaitCb, void*) = nullptr;        
+        void (*m_set_cancel_next_tick_wait_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5CancelNextTickWaitCb, void*) = nullptr;
         void (*m_set_send_output_data_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5SendOutputDataCb, void*) = nullptr;
-        void (*m_set_broker_disconnect_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5BrokerDisconnectReportCb, void*) = nullptr;        
-        void (*m_set_message_received_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5MessageReceivedReportCb, void*) = nullptr;        
-        void (*m_set_error_log_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorLogCb, void*) = nullptr;        
+        void (*m_set_broker_disconnect_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5BrokerDisconnectReportCb, void*) = nullptr;
+        void (*m_set_message_received_report_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5MessageReceivedReportCb, void*) = nullptr;
+        void (*m_set_error_log_callback)(CC_Mqtt5ClientHandle, CC_Mqtt5ErrorLogCb, void*) = nullptr;
     };
 
     struct UnitTestDeleter
     {
         UnitTestDeleter() = default;
-        explicit UnitTestDeleter(const LibFuncs& ops) : 
+        explicit UnitTestDeleter(const LibFuncs& ops) :
             m_free(ops.m_free)
         {
         }
@@ -136,10 +136,9 @@ public:
 
     private:
         void (*m_free)(CC_Mqtt5ClientHandle) = nullptr;
-    }; 
+    };
 
     using UnitTestClientPtr = std::unique_ptr<CC_Mqtt5Client, UnitTestDeleter>;
-
 
 protected:
 
@@ -241,7 +240,7 @@ protected:
 
         UnitTestUnsubscribeResponse& operator=(const UnitTestUnsubscribeResponse&) = default;
         UnitTestUnsubscribeResponse& operator=(const CC_Mqtt5UnsubscribeResponse& response);
-    };    
+    };
 
     struct UnitTestConnectResponseInfo
     {
@@ -253,13 +252,13 @@ protected:
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestSubscribeResponse m_response;
-    };  
+    };
 
     struct UnitTestUnsubscribeResponseInfo
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestUnsubscribeResponse m_response;
-    };          
+    };
 
     struct UnitTestDisconnectInfo
     {
@@ -278,7 +277,7 @@ protected:
 
         UnitTestDisconnectInfo& operator=(const UnitTestDisconnectInfo&) = default;
         UnitTestDisconnectInfo& operator=(const CC_Mqtt5DisconnectInfo& other);
-    };    
+    };
 
     struct UnitTestPublishResponse
     {
@@ -296,7 +295,7 @@ protected:
 
         UnitTestPublishResponse& operator=(const UnitTestPublishResponse&) = default;
         UnitTestPublishResponse& operator=(const CC_Mqtt5PublishResponse& other);
-    };    
+    };
 
     struct UnitTestMessageInfo
     {
@@ -310,7 +309,7 @@ protected:
         unsigned m_messageExpiryInterval = 0U;
         CC_Mqtt5QoS m_qos = CC_Mqtt5QoS_ValuesLimit;
         CC_Mqtt5PayloadFormat m_format = CC_Mqtt5PayloadFormat_Unspecified;
-        bool m_retained = false;     
+        bool m_retained = false;
 
         UnitTestMessageInfo() = default;
         UnitTestMessageInfo(const UnitTestMessageInfo&) = default;
@@ -321,20 +320,20 @@ protected:
         }
 
         UnitTestMessageInfo& operator=(const UnitTestMessageInfo&) = default;
-        UnitTestMessageInfo& operator=(const CC_Mqtt5MessageInfo& other);        
-    };    
+        UnitTestMessageInfo& operator=(const CC_Mqtt5MessageInfo& other);
+    };
 
     struct UnitTestPublishResponseInfo
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestPublishResponse m_response;
-    };         
+    };
 
     struct UnitTestReauthResponseInfo
     {
         CC_Mqtt5AsyncOpStatus m_status = CC_Mqtt5AsyncOpStatus_ValuesLimit;
         UnitTestAuthInfo m_response;
-    };        
+    };
 
     struct UnitTestBrokerDisconnectionReport
     {
@@ -346,7 +345,7 @@ protected:
     {
         unsigned m_requested = 0U;
         unsigned m_elapsed = 0U;
-    };    
+    };
 
     struct UnitTestConnectResponseConfig
     {
@@ -413,9 +412,9 @@ protected:
     void unitTestPopDisconnectInfo();
     bool unitTestHasMessageRecieved();
     const UnitTestMessageInfo& unitTestReceivedMessageInfo();
-    void unitTestPopReceivedMessageInfo();      
+    void unitTestPopReceivedMessageInfo();
     void unitTestPerformConnect(
-        CC_Mqtt5Client* client, 
+        CC_Mqtt5Client* client,
         const CC_Mqtt5ConnectBasicConfig* basicConfig,
         const CC_Mqtt5ConnectWillConfig* willConfig = nullptr,
         const CC_Mqtt5ConnectExtraConfig* extraConfig = nullptr,
@@ -423,32 +422,32 @@ protected:
         const UnitTestConnectResponseConfig* responseConfig = nullptr);
 
     void unitTestPerformBasicConnect(
-        CC_Mqtt5Client* client, 
-        const char* clientId, 
+        CC_Mqtt5Client* client,
+        const char* clientId,
         bool cleanStart = true);
 
     void unitTestPerformPubTopicAliasConnect(
-        CC_Mqtt5Client* client, 
-        const char* clientId, 
+        CC_Mqtt5Client* client,
+        const char* clientId,
         unsigned topicAliasMax,
-        bool cleanStart = true);        
+        bool cleanStart = true);
 
     void unitTestPerformSessionExpiryConnect(
-        CC_Mqtt5Client* client, 
-        const char* clientId, 
+        CC_Mqtt5Client* client,
+        const char* clientId,
         unsigned sessionExpiryInterval,
         bool cleanStart = true);
 
     void unitTestPerformDisconnect(
-        CC_Mqtt5Client* client, 
+        CC_Mqtt5Client* client,
         const CC_Mqtt5DisconnectConfig* config
     );
 
     void unitTestPerformBasicDisconnect(CC_Mqtt5Client* client, CC_Mqtt5ReasonCode reasonCode = CC_Mqtt5ReasonCode_NormalDisconnection);
 
     void unitTestPerformSubscribe(
-        CC_Mqtt5Client* client, 
-        CC_Mqtt5SubscribeTopicConfig* topicConfigs, 
+        CC_Mqtt5Client* client,
+        CC_Mqtt5SubscribeTopicConfig* topicConfigs,
         unsigned topicConfigsCount = 1U,
         const CC_Mqtt5SubscribeExtraConfig* extraConfig = nullptr);
     void unitTestPerformBasicSubscribe(CC_Mqtt5Client* client, const char* topic, unsigned subId = 0U);
@@ -509,11 +508,11 @@ protected:
     CC_Mqtt5ReauthHandle apiReauthPrepare(CC_Mqtt5Client* client, CC_Mqtt5ErrorCode* ec);
     void apiReauthInitConfigAuth(CC_Mqtt5AuthConfig* config);
     CC_Mqtt5ErrorCode apiReauthAddUserProp(CC_Mqtt5ReauthHandle handle, const CC_Mqtt5UserProp* prop);
-    void apiSetNextTickProgramCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5NextTickProgramCb cb, void* data);    
-    void apiSetCancelNextTickWaitCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5CancelNextTickWaitCb cb, void* data);    
-    void apiSetSendOutputDataCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5SendOutputDataCb cb, void* data);    
-    void apiSetBrokerDisconnectReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5BrokerDisconnectReportCb cb, void* data);    
-    void apiSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data);    
+    void apiSetNextTickProgramCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5NextTickProgramCb cb, void* data);
+    void apiSetCancelNextTickWaitCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5CancelNextTickWaitCb cb, void* data);
+    void apiSetSendOutputDataCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5SendOutputDataCb cb, void* data);
+    void apiSetBrokerDisconnectReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5BrokerDisconnectReportCb cb, void* data);
+    void apiSetMessageReceivedReportCb(CC_Mqtt5ClientHandle handle, CC_Mqtt5MessageReceivedReportCb cb, void* data);
 
 private:
 
@@ -530,7 +529,7 @@ private:
     static void unitTestReauthCompleteCb(void* obj, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5AuthInfo* response);
     static CC_Mqtt5AuthErrorCode unitTestAuthCb(void* obj, const CC_Mqtt5AuthInfo* authInfoIn, CC_Mqtt5AuthInfo* authInfoOut);
 
-    LibFuncs m_funcs;  
+    LibFuncs m_funcs;
     std::vector<TickInfo> m_tickReq;
     std::vector<std::uint8_t> m_sentData;
     std::vector<std::uint8_t> m_receivedData;

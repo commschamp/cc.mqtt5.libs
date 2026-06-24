@@ -371,8 +371,9 @@ void AppClient::print(const CC_Mqtt5SubscribeResponse& response)
     std::cout << std::endl;
 }
 
-AppClient::AppClient(boost::asio::io_context& io, int& result) :
+AppClient::AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result) :
     m_io(io),
+    m_opts(opts),
     m_result(result),
     m_timer(io),
     m_client(::cc_mqtt5_client_alloc())

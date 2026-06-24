@@ -54,7 +54,7 @@ protected:
 
     using UserPropInfosList = std::vector<UserPropInfo>;
 
-    explicit AppClient(boost::asio::io_context& io, int& result);
+    explicit AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result);
     ~AppClient() = default;
 
     CC_Mqtt5ClientHandle client()
@@ -108,10 +108,10 @@ private:
     static void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
     boost::asio::io_context& m_io;
+    ProgramOptions& m_opts;
     int& m_result;
     Timer m_timer;
     Timestamp m_lastWaitProgram;
-    ProgramOptions m_opts;
     ClientPtr m_client;
     SessionPtr m_session;
 };

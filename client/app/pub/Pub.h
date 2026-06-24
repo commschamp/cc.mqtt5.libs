@@ -10,7 +10,7 @@
 #pragma once
 
 #include "AppClient.h"
-#include "ProgramOptions.h"
+#include "PubProgramOptions.h"
 
 #include <boost/asio.hpp>
 
@@ -20,8 +20,12 @@ namespace cc_mqtt5_client_app
 class Pub : public AppClient
 {
     using Base = AppClient;
+
 public:
-    Pub(boost::asio::io_context& io, int& result);
+    Pub(boost::asio::io_context& io, PubProgramOptions& opts, int& result) :
+        Base(io, opts, result)
+    {
+    }
 
 protected:
     virtual void brokerConnectedImpl() override;

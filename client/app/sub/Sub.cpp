@@ -24,16 +24,6 @@ Sub* asThis(void* data)
 
 } // namespace
 
-Sub::Sub(boost::asio::io_context& io, int& result) :
-    Base(io, result)
-{
-    opts().addCommon();
-    opts().addNetwork();
-    opts().addTls();
-    opts().addConnect();
-    opts().addSubscribe();
-}
-
 void Sub::brokerConnectedImpl()
 {
     auto topics = opts().subTopics();

@@ -24,16 +24,6 @@ Pub* asThis(void* data)
 
 } // namespace
 
-Pub::Pub(boost::asio::io_context& io, int& result) :
-    Base(io, result)
-{
-    opts().addCommon();
-    opts().addNetwork();
-    opts().addTls();
-    opts().addConnect();
-    opts().addPublish();
-}
-
 void Pub::brokerConnectedImpl()
 {
     auto topic = opts().pubTopic();

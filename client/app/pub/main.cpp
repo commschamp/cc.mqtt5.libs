@@ -8,6 +8,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "Pub.h"
+#include "PubProgramOptions.h"
 
 #include <boost/asio.hpp>
 
@@ -41,7 +42,8 @@ int main(int argc, const char* argv[])
                 io.stop();
             });
 
-        cc_mqtt5_client_app::Pub app(io, result);
+        cc_mqtt5_client_app::PubProgramOptions opts;
+        cc_mqtt5_client_app::Pub app(io, opts, result);
 
         if (!app.start(argc, argv)) {
             return -1;

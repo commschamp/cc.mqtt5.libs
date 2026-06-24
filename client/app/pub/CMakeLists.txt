@@ -2,6 +2,7 @@ set (name "cc_mqtt5_client_pub")
 set (src
     main.cpp
     Pub.cpp
+    PubProgramOptions.cpp
 )
 
 add_executable(${name} ${src})

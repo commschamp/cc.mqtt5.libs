@@ -10,7 +10,7 @@
 #pragma once
 
 #include "AppClient.h"
-#include "ProgramOptions.h"
+#include "SubProgramOptions.h"
 
 #include <boost/asio.hpp>
 
@@ -21,7 +21,10 @@ class Sub : public AppClient
 {
     using Base = AppClient;
 public:
-    Sub(boost::asio::io_context& io, int& result);
+    Sub(boost::asio::io_context& io, SubProgramOptions& opts, int& result) :
+        Base(io, opts, result)
+    {
+    }
 
 protected:
     virtual void brokerConnectedImpl() override;

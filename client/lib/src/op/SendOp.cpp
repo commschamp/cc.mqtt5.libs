@@ -852,7 +852,11 @@ CC_Mqtt5ErrorCode SendOp::doSendInternal()
     ++m_sendAttempts;
 
     if (m_pubMsg.transportField_flags().field_qos().value() == Qos::AtMostOnceDelivery) {
-        completeWithCb(CC_Mqtt5AsyncOpStatus_Complete);
+        if (m_cb != nullptr) {
+            m_cb(m_cbData, toHandle(), CC_Mqtt5AsyncOpStatus_Complete, nullptr);
+        }
+
+        m_responseTimer.wait(0U, &SendOp::deferredCompleteCb, this);
         return CC_Mqtt5ErrorCode_Success;
     }
 
@@ -898,6 +902,11 @@ void SendOp::opCompleteInternal()
 void SendOp::recvTimeoutCb(void* data)
 {
     asSendOp(data)->responseTimeoutInternal();
+}
+
+void SendOp::deferredCompleteCb(void* data)
+{
+    asSendOp(data)->opCompleteInternal();
 }
 
 } // namespace op

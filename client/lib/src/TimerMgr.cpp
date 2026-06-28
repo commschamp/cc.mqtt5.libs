@@ -107,10 +107,10 @@ unsigned TimerMgr::getMinWait() const
     }
 
     if (result == Limit) {
-        return 0U;
+        return NoMoreWaits;
     }
 
-    return static_cast<unsigned>(std::min(result, std::uint64_t(std::numeric_limits<unsigned>::max())));
+    return static_cast<unsigned>(std::min(result, std::uint64_t(NoMoreWaits - 1U)));
 }
 
 unsigned TimerMgr::allocCount() const

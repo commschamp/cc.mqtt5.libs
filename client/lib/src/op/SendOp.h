@@ -106,6 +106,7 @@ private:
     void opCompleteInternal();
 
     static void recvTimeoutCb(void* data);
+    static void deferredCompleteCb(void* data);
 
     TimerMgr::Timer m_responseTimer;
     PublishMsg m_pubMsg;

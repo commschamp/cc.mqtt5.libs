@@ -93,6 +93,8 @@ public:
         static const unsigned InvalidIdx = std::numeric_limits<unsigned>::max();
     };
 
+    static constexpr unsigned NoMoreWaits = std::numeric_limits<unsigned>::max();
+
     Timer allocTimer();
     void tick(unsigned ms);
     unsigned getMinWait() const;

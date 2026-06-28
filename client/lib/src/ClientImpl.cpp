@@ -1047,7 +1047,7 @@ void ClientImpl::doApiEnter()
     }
 
     auto prevWait = m_timerMgr.getMinWait();
-    if (prevWait == 0U) {
+    if (prevWait == TimerMgr::NoMoreWaits) {
         return;
     }
 
@@ -1063,18 +1063,32 @@ void ClientImpl::doApiExit()
         return;
     }
 
-    cleanOps();
+    auto cleanOpsOnExitGuard =
+        comms::util::makeScopeGuard(
+            [this]()
+            {
+                cleanOps();
+            });
 
     if (m_nextTickProgramCb == nullptr) {
         return;
     }
 
-    auto nextWait = m_timerMgr.getMinWait();
-    if (nextWait == 0U) {
-        return;
-    }
+    while (true) {
+        auto nextWait = m_timerMgr.getMinWait();
 
-    m_nextTickProgramCb(m_nextTickProgramData, nextWait);
+        if (nextWait == TimerMgr::NoMoreWaits) {
+            break;
+        }
+
+        if (nextWait == 0U) {
+            m_timerMgr.tick(0U);
+            continue;
+        }
+
+        m_nextTickProgramCb(m_nextTickProgramData, nextWait);
+        break;
+    }
 }
 
 void ClientImpl::createKeepAliveOpIfNeeded()

@@ -143,6 +143,11 @@ bool AppClient::start(int argc, const char* argv[])
         return true;
     }
 
+    return startSession();
+}
+
+bool AppClient::startSession()
+{
     if (!createSession()) {
         return false;
     }
@@ -456,7 +461,7 @@ bool AppClient::startImpl()
         return false;
     }
 
-    auto clientId = m_opts.clientId();
+    auto clientId = clientIdImpl();
     auto username = m_opts.username();
     auto password = parseBinaryData(m_opts.password());
 
@@ -613,6 +618,11 @@ void AppClient::connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5
     } while (false);
 
     doTerminate();
+}
+
+std::string AppClient::clientIdImpl()
+{
+    return m_opts.clientId();
 }
 
 std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)

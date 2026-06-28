@@ -105,6 +105,17 @@ public:
     unsigned subId() const;
     StringsList subUserProps() const;
 
+protected:
+    OptDesc& desc()
+    {
+        return m_desc;
+    }    
+
+    const boost::program_options::variables_map& vm() const
+    {
+        return m_vm;
+    }
+
 private:
     StringsList stringListOpts(const std::string& name) const;
 

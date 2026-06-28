@@ -34,6 +34,7 @@ class AppClient
 
 public:
     bool start(int argc, const char* argv[]);
+    bool startSession();
 
     static std::string toString(CC_Mqtt5ErrorCode val);
     static std::string toString(CC_Mqtt5AsyncOpStatus val);
@@ -54,7 +55,7 @@ protected:
 
     using UserPropInfosList = std::vector<UserPropInfo>;
 
-    explicit AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result);
+    AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result);
     ~AppClient() = default;
 
     CC_Mqtt5ClientHandle client()
@@ -84,6 +85,7 @@ protected:
     virtual void brokerDisconnectedImpl(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info);
     virtual void connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+    virtual std::string clientIdImpl();
 
     static std::vector<std::uint8_t> parseBinaryData(const std::string& val);
     static std::vector<UserPropInfo> parseUserProps(const std::vector<std::string>& props);

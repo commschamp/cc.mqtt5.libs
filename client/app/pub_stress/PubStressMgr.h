@@ -22,14 +22,15 @@ namespace cc_mqtt5_client_app
 class PubStressMgr
 {
 public:
-    PubStressMgr(boost::asio::io_context& io, PubStressProgramOptions& opts, int& result);
+    PubStressMgr(boost::asio::io_context& io, PubStressProgramOptions& opts, int& result, unsigned threadId);
 
-    bool start(int argc, const char* argv[]);
+    bool start();
 
 private:
     boost::asio::io_context& m_io;
     PubStressProgramOptions& m_opts;
     int& m_result;
+    const unsigned m_threadId = 0U;
     std::vector<PubStressClientPtr> m_clients;
 };
 

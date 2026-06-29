@@ -109,7 +109,7 @@ protected:
     OptDesc& desc()
     {
         return m_desc;
-    }    
+    }
 
     const boost::program_options::variables_map& vm() const
     {

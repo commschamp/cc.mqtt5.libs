@@ -12,15 +12,82 @@
 
 #include <boost/asio.hpp>
 
+#include <atomic>
 #include <csignal>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 int main(int argc, const char* argv[])
 {
     int result = 0U;
     try {
+        cc_mqtt5_client_app::PubStressProgramOptions opts;
+        if (!opts.parseArgs(argc, argv)) {
+            std::cerr << "ERROR: Failed to parse arguments." << std::endl;
+            return -1;
+        }
+
+        if (opts.helpRequested()) {
+            std::cout << "Usage: " << argv[0] << " [options...]" << '\n';
+            opts.printHelp();
+            return 0;
+        }
+
         boost::asio::io_context io;
+        std::vector<boost::asio::io_context> workers(opts.threadsCount());
+        std::vector<std::thread> workerThreads(workers.size());
+
+        std::atomic<bool> terminating = false;
+        auto terminateAll =
+            [&io, &workers, &terminating]()
+            {
+                if (terminating) {
+                    return;
+                }
+
+                terminating = true;
+
+                for (auto& w : workers) {
+                    w.stop();
+                }
+
+                io.stop();
+            };
+
+        bool failure = false;
+        for (auto idx = 0U; idx < workerThreads.size(); ++idx) {
+            auto& th = workerThreads[idx];
+
+            std::cout << "INFO: Creating worker thread " << idx << std::endl;
+
+            th = std::thread(
+                [&workers, &opts, &result, &terminateAll, &failure, idx]()
+                {
+                    auto& workerIo = workers[idx];
+                    cc_mqtt5_client_app::PubStressMgr app(workerIo, opts, result, idx);
+                    if (!app.start()) {
+                        failure = true;
+                        return;
+                    }
+
+                    std::cout << "INFO: Starting worker " << idx << std::endl;
+                    workerIo.run();
+                    std::cout << "INFO: Worker complete " << idx << std::endl;
+                    terminateAll();
+                });
+        }
+
+        if (failure) {
+            terminateAll();
+            for (auto& th : workerThreads) {
+                if (th.joinable()) {
+                    th.join();
+                }
+            }
+
+            return -2;
+        }
 
         boost::asio::signal_set signals(io, SIGINT, SIGTERM);
         signals.async_wait(
@@ -42,14 +109,13 @@ int main(int argc, const char* argv[])
                 io.stop();
             });
 
-        cc_mqtt5_client_app::PubStressProgramOptions opts;
-        cc_mqtt5_client_app::PubStressMgr app(io, opts, result);
-
-        if (!app.start(argc, argv)) {
-            return -1;
-        }
-
         io.run();
+        terminateAll();
+        for (auto& th : workerThreads) {
+            if (th.joinable()) {
+                th.join();
+            }
+        }
     }
     catch (const std::exception& ec)
     {

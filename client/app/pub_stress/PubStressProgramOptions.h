@@ -21,7 +21,9 @@ class PubStressProgramOptions : public ProgramOptions
 public:
     PubStressProgramOptions();
 
+    unsigned threadsCount() const;
     unsigned clientCount() const;
+    unsigned wait() const;
 };
 
 } // namespace cc_mqtt5_client_app

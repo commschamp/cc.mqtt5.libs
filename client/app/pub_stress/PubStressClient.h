@@ -24,24 +24,31 @@ class PubStressClient : public AppClient
     using Base = AppClient;
 
 public:
-    PubStressClient(boost::asio::io_context& io, PubStressProgramOptions& opts, int& result, unsigned idCnt) :
-        Base(io, opts, result),
-        m_idCnt(idCnt)
-    {
-    }
-
+    PubStressClient(boost::asio::io_context& io, PubStressProgramOptions& opts, int& result, unsigned threadId, unsigned clientId);
     virtual ~PubStressClient() = default;
 
 protected:
     virtual void brokerConnectedImpl() override;
-    virtual std::string clientIdImpl() override;
+    virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info) override;
+    virtual std::string clientIdImpl() const override;
+    virtual std::string logPrefixImpl() const override;
 
 private:
-    void publishCompleteInternal(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+    using Timer = boost::asio::steady_timer;
 
+    void subscribeCompleteInternal(CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
+    void publishCompleteInternal(CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
+    std::string clientLogInternal() const;
+    void doPublishInternal();
+    void publishMsgInternal();
+
+    static void subscribeCompleteCb(void* data, CC_Mqtt5SubscribeHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5SubscribeResponse* response);
     static void publishCompleteCb(void* data, CC_Mqtt5PublishHandle handle, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5PublishResponse* response);
 
-    const unsigned m_idCnt = 0U;
+    Timer m_timer;
+    const unsigned m_threadId = 0U;
+    const unsigned m_clientId = 0U;
+    bool m_verbose = false;
 };
 
 using PubStressClientPtr = std::unique_ptr<PubStressClient>;

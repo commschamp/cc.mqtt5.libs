@@ -27,16 +27,27 @@ PubStressProgramOptions::PubStressProgramOptions()
 
     po::options_description opts("Stress Options");
     opts.add_options()
-        ("threads,j", po::value<unsigned>()->default_value(0), "Number of execution threads. 0 means available hardware cores.")
-        ("client-count,c", po::value<unsigned>()->default_value(100), "Number of sepearate client allocations.")
+        ("threads,j", po::value<unsigned>()->default_value(1), "Number of execution threads.")
+        ("client-count,c", po::value<unsigned>()->default_value(100), "Number of sepearate client allocations per execution threads.")
+        ("wait,w", po::value<unsigned>()->default_value(3000), "Number of milliseconds to wait between publishes.")
     ;
 
-    desc().add(opts);    
+    desc().add(opts);
+}
+
+unsigned PubStressProgramOptions::threadsCount() const
+{
+    return vm()["threads"].as<unsigned>();
 }
 
 unsigned PubStressProgramOptions::clientCount() const
 {
     return vm()["client-count"].as<unsigned>();
+}
+
+unsigned PubStressProgramOptions::wait() const
+{
+    return vm()["wait"].as<unsigned>();
 }
 
 } // namespace cc_mqtt5_client_app

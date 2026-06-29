@@ -103,7 +103,7 @@ void ProgramOptions::addPublish()
 {
     po::options_description opts("Publish Options");
     opts.add_options()
-        ("pub-topic,t", po::value<std::string>()->default_value(std::string()), "Publish topic")
+        ("pub-topic,T", po::value<std::string>()->default_value(std::string()), "Publish topic")
         ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify hexadecimal value of a single byte, "
             "such as \"\\x01\\xb9\\xaf\".")
         ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")

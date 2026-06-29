@@ -300,19 +300,19 @@ std::string AppClient::toString(const std::uint8_t* data, unsigned dataLen, bool
     return stream.str();
 }
 
-void AppClient::print(const CC_Mqtt5DisconnectInfo& info)
+void AppClient::print(const CC_Mqtt5DisconnectInfo& info) const
 {
-    std::cout << "[INFO]: Disconnect Info:\n";
+    auto& out = logInfo() << "Disconnect Info:\n";
     printReasonCode(info.m_reasonCode);
     printReasonString(info.m_reasonStr);
     printString("Server Reference", info.m_serverRef);
     printUserProperties(info.m_userProps, info.m_userPropsCount);
-    std::cout << std::endl;
+    out << std::endl;
 }
 
-void AppClient::print(const CC_Mqtt5MessageInfo& info, bool printMessage)
+void AppClient::print(const CC_Mqtt5MessageInfo& info, bool printMessage) const
 {
-    std::cout << "[INFO]: Message Info:\n";
+    auto& out = logInfo() << "Message Info:\n";
     if (printMessage) {
         std::cout <<
             "\tTopic: " << info.m_topic << '\n' <<
@@ -330,12 +330,12 @@ void AppClient::print(const CC_Mqtt5MessageInfo& info, bool printMessage)
     printQos("QoS", info.m_qos);
     printPayloadFormat("Payload Format", info.m_format);
     printBool("Retained", info.m_retained);
-    std::cout << std::endl;
+    out << std::endl;
 }
 
-void AppClient::print(const CC_Mqtt5ConnectResponse& response)
+void AppClient::print(const CC_Mqtt5ConnectResponse& response) const
 {
-    std::cout << "[INFO]: Connection Response:\n";
+    auto& out = logInfo() << "Connection Response:\n";
     printReasonCode(response.m_reasonCode);
     printString("Assinged Client ID" , response.m_assignedClientId);
     printResponseInfo(response.m_responseInfo);
@@ -353,27 +353,27 @@ void AppClient::print(const CC_Mqtt5ConnectResponse& response)
     printBool("Wildcard Subscriptions Available", response.m_wildcardSubAvailable);
     printBool("Subscription IDs Available", response.m_subIdsAvailable);
     printBool("Shared Subscription Available", response.m_sharedSubsAvailable);
-    std::cout << std::endl;
+    out << std::endl;
 }
 
-void AppClient::print(const CC_Mqtt5PublishResponse& response)
+void AppClient::print(const CC_Mqtt5PublishResponse& response) const
 {
-    std::cout << "[INFO]: Publish Response:\n";
+    auto& out = logInfo() << "Publish Response:\n";
     printReasonCode(response.m_reasonCode);
     printReasonString(response.m_reasonStr);
     printUserProperties(response.m_userProps, response.m_userPropsCount);
-    std::cout << std::endl;
+    out << std::endl;
 }
 
-void AppClient::print(const CC_Mqtt5SubscribeResponse& response)
+void AppClient::print(const CC_Mqtt5SubscribeResponse& response) const
 {
-    std::cout << "[INFO]: Subscribe Response:\n";
+    auto& out = logInfo() << "Subscribe Response:\n";
     for (auto idx = 0U; idx < response.m_reasonCodesCount; ++idx) {
         printReasonCode(response.m_reasonCodes[idx]);
     }
     printReasonString(response.m_reasonStr);
     printUserProperties(response.m_userProps, response.m_userPropsCount);
-    std::cout << std::endl;
+    out << std::endl;
 }
 
 AppClient::AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result) :
@@ -402,9 +402,14 @@ bool AppClient::sendConnect(CC_Mqtt5ConnectHandle connect)
     return true;
 }
 
-std::ostream& AppClient::logError()
+std::ostream& AppClient::logError() const
 {
-    return std::cerr << "ERROR: ";
+    return std::cerr << "[ERROR]: " << logPrefixImpl();
+}
+
+std::ostream& AppClient::logInfo() const
+{
+    return std::cout << "[INFO]: "<< logPrefixImpl();
 }
 
 void AppClient::doTerminate(int result)
@@ -620,9 +625,14 @@ void AppClient::connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5
     doTerminate();
 }
 
-std::string AppClient::clientIdImpl()
+std::string AppClient::clientIdImpl() const
 {
     return m_opts.clientId();
+}
+
+std::string AppClient::logPrefixImpl() const
+{
+    return std::string();
 }
 
 std::vector<std::uint8_t> AppClient::parseBinaryData(const std::string& val)
@@ -792,9 +802,9 @@ void AppClient::messageReceivedCb(void* data, const CC_Mqtt5MessageInfo* info)
     asThis(data)->messageReceivedImpl(info);
 }
 
-void AppClient::logMessageCb([[maybe_unused]] void* data, const char* msg)
+void AppClient::logMessageCb(void* data, const char* msg)
 {
-    logError() << msg << std::endl;
+    asThis(data)->logError() << msg << std::endl;
 }
 
 void AppClient::nextTickProgramCb(void* data, unsigned duration)

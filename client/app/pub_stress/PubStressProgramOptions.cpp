@@ -28,8 +28,8 @@ PubStressProgramOptions::PubStressProgramOptions()
     po::options_description opts("Stress Options");
     opts.add_options()
         ("threads,j", po::value<unsigned>()->default_value(1), "Number of execution threads.")
-        ("client-count,c", po::value<unsigned>()->default_value(100), "Number of sepearate client allocations per execution threads.")
-        ("wait,w", po::value<unsigned>()->default_value(3000), "Number of milliseconds to wait between publishes.")
+        ("client-count,c", po::value<unsigned>()->default_value(50), "Number of sepearate client allocations per execution threads.")
+        ("wait,w", po::value<unsigned>()->default_value(100), "Number of milliseconds to wait between publishes.")
     ;
 
     desc().add(opts);

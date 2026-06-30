@@ -49,6 +49,7 @@ public:
     bool helpRequested() const;
     bool verbose() const;
     ConnectionType connectionType() const;
+    unsigned responseTimeout() const;
 
     // Network Options
     std::string networkAddress() const;

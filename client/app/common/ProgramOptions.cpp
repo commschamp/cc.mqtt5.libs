@@ -22,6 +22,7 @@ void ProgramOptions::addCommon()
     opts.add_options()
         ("help,h", "Display help message")
         ("verbose,v", "Verbose output")
+        ("response-timeout,r", po::value<unsigned>()->default_value(0), "Response timeout in ms. 0 means library default.")
     ;
 
     m_desc.add(opts);
@@ -168,6 +169,11 @@ ProgramOptions::ConnectionType ProgramOptions::connectionType() const
 #endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
 
     return ConnectionType_Tcp;
+}
+
+unsigned ProgramOptions::responseTimeout() const
+{
+    return m_vm["response-timeout"].as<unsigned>();
 }
 
 std::string ProgramOptions::networkAddress() const

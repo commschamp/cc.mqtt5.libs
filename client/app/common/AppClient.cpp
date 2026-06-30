@@ -460,6 +460,16 @@ void AppClient::doComplete()
 bool AppClient::startImpl()
 {
     auto ec = CC_Mqtt5ErrorCode_Success;
+
+    auto respTimeout = m_opts.responseTimeout();
+    if (respTimeout != 0U) {
+        ec = cc_mqtt5_client_set_default_response_timeout(m_client.get(), respTimeout);
+        if (ec != CC_Mqtt5ErrorCode_Success) {
+            logError() << "Failed to set response timeout configuration: " << toString(ec) << std::endl;
+            return false;
+        }
+    }
+
     auto connect = ::cc_mqtt5_client_connect_prepare(m_client.get(), &ec);
     if (connect == nullptr) {
         logError() << "Failed to prepare connect: " << toString(ec) << std::endl;
@@ -467,6 +477,10 @@ bool AppClient::startImpl()
     }
 
     auto clientId = clientIdImpl();
+    if (m_opts.verbose()) {
+        logInfo() << "Connecting to brocker as: " << clientId << std::endl;
+    }
+
     auto username = m_opts.username();
     auto password = parseBinaryData(m_opts.password());
 

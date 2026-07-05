@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -13,6 +15,7 @@
 #include "comms/cast.h"
 
 #include <algorithm>
+#include <iterator>
 #include <type_traits>
 
 namespace cc_mqtt5_client
@@ -155,7 +158,9 @@ void Op::fillUserProps(const PropsHandler& propsHandler, UserPropsList& userProp
         userProps.reserve(std::min(propsHandler.m_userProps.size() + userProps.size(), userProps.max_size()));
         auto endIter = propsHandler.m_userProps.end();
         if constexpr (Config::UserPropsLimit > 0U) {
-            endIter = propsHandler.m_userProps.begin() + std::min(propsHandler.m_userProps.size(), std::size_t(Config::UserPropsLimit));
+            using IterType = std::decay_t<decltype(propsHandler.m_userProps.begin())>;
+            using DiffType = typename std::iterator_traits<IterType>::difference_type;
+            endIter = propsHandler.m_userProps.begin() + static_cast<DiffType>(std::min(propsHandler.m_userProps.size(), std::size_t(Config::UserPropsLimit)));
         }
 
         std::transform(

@@ -11,6 +11,7 @@ option (CC_MQTT5_WARN_AS_ERR "Treat warning as error" ON)
 option (CC_MQTT5_USE_CCACHE "Use ccache" OFF)
 option (CC_MQTT5_BUILD_UNIT_TESTS "Build unit tests" OFF)
 option (CC_MQTT5_BUILD_INTEGRATION_TESTS "Build integration tests which require MQTT broker on local port 1883." OFF)
+option (CC_MQTT5_BUILD_STRESS_TESTS "Build stress test applications" OFF)
 option (CC_MQTT5_WITH_DEFAULT_SANITIZERS "Build with sanitizers" OFF)
 
 # CMake built-in options

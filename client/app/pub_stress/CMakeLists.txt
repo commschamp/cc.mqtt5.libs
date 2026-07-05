@@ -1,8 +1,13 @@
-set (name "cc_mqtt5_client_pub")
+if (NOT CC_MQTT5_BUILD_STRESS_TESTS)
+    return ()
+endif ()
+
+set (name "cc_mqtt5_client_pub_stress")
 set (src
     main.cpp
-    Pub.cpp
-    PubProgramOptions.cpp
+    PubStressClient.cpp
+    PubStressMgr.cpp
+    PubStressProgramOptions.cpp
 )
 
 add_executable(${name} ${src})

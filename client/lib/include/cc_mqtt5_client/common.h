@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -26,7 +28,7 @@ extern "C" {
 
 /// @brief Patch level of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_PATCH_VERSION 7U
+#define CC_MQTT5_CLIENT_PATCH_VERSION 8U
 
 /// @brief Macro to create numeric version as single unsigned number
 /// @ingroup global

@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -8,7 +10,7 @@
 #pragma once
 
 #include "AppClient.h"
-#include "ProgramOptions.h"
+#include "PubProgramOptions.h"
 
 #include <boost/asio.hpp>
 
@@ -18,8 +20,12 @@ namespace cc_mqtt5_client_app
 class Pub : public AppClient
 {
     using Base = AppClient;
+
 public:
-    Pub(boost::asio::io_context& io, int& result);
+    Pub(boost::asio::io_context& io, PubProgramOptions& opts, int& result) :
+        Base(io, opts, result)
+    {
+    }
 
 protected:
     virtual void brokerConnectedImpl() override;

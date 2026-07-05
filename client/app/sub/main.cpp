@@ -1,11 +1,14 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "Sub.h"
+#include "SubProgramOptions.h"
 
 #include <boost/asio.hpp>
 
@@ -39,7 +42,8 @@ int main(int argc, const char* argv[])
                 io.stop();
             });
 
-        cc_mqtt5_client_app::Sub app(io, result);
+        cc_mqtt5_client_app::SubProgramOptions opts;
+        cc_mqtt5_client_app::Sub app(io, opts, result);
 
         if (!app.start(argc, argv)) {
             return -1;

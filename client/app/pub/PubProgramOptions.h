@@ -9,25 +9,17 @@
 
 #pragma once
 
-#include "Logger.h"
 #include "ProgramOptions.h"
 
-#include <memory>
-
-namespace cc_mqtt5_client_afl_fuzz
+namespace cc_mqtt5_client_app
 {
 
-class AflFuzzImpl;
-class AflFuzz
+class PubProgramOptions : public ProgramOptions
 {
+    using Base = ProgramOptions;
+
 public:
-    AflFuzz(const ProgramOptions& opts, Logger& logger);
-    ~AflFuzz();
-
-    bool init();
-    void run();
-private:
-    std::unique_ptr<AflFuzzImpl> m_impl;
+    PubProgramOptions();
 };
 
-} // namespace cc_mqtt5_client_afl_fuzz
+} // namespace cc_mqtt5_client_app

@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -105,10 +107,10 @@ unsigned TimerMgr::getMinWait() const
     }
 
     if (result == Limit) {
-        return 0U;
+        return NoMoreWaits;
     }
 
-    return static_cast<unsigned>(std::min(result, std::uint64_t(std::numeric_limits<unsigned>::max())));
+    return static_cast<unsigned>(std::min(result, std::uint64_t(NoMoreWaits - 1U)));
 }
 
 unsigned TimerMgr::allocCount() const

@@ -7,16 +7,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#pragma once
+#include "PubProgramOptions.h"
 
-#include "TopicFilterDefs.h"
-
-namespace cc_mqtt5_client
+namespace cc_mqtt5_client_app
 {
 
-struct ReuseState
+PubProgramOptions::PubProgramOptions()
 {
-    SubFiltersMap m_subFilters;
-};
+    addCommon();
+    addNetwork();
+    addTls();
+    addConnect();
+    addPublish();
+}
 
-} // namespace cc_mqtt5_client
+} // namespace cc_mqtt5_client_app

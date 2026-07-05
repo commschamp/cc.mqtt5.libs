@@ -8,11 +8,11 @@ on:
       - '**'
 
 env:
-  COMMS_TAG: v5.5
-  CC_MQTT5_TAG: v3.0.5
+  COMMS_TAG: v5.5.2
+  CC_MQTT5_TAG: v3.0.6
   WIN_BOOST_VERSION: "1.87.0"
   WIN_BOOST_DIR: "C:/local/boost_1_87_0"
-  WIN_OPENSSL_VERSION: "3.6.0"
+  WIN_OPENSSL_VERSION: "4.0.1"
 
 jobs:
   build_gcc_ubuntu_24_04:
@@ -297,7 +297,7 @@ jobs:
       shell: cmd
       run: ctest -V
 
-  build_msvc_2025:
+  build_msvc_2026:
     runs-on: windows-2025
     strategy:
       fail-fast: false

@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -47,6 +49,7 @@ public:
     bool helpRequested() const;
     bool verbose() const;
     ConnectionType connectionType() const;
+    unsigned responseTimeout() const;
 
     // Network Options
     std::string networkAddress() const;
@@ -102,6 +105,17 @@ public:
     bool subBinary() const;
     unsigned subId() const;
     StringsList subUserProps() const;
+
+protected:
+    OptDesc& desc()
+    {
+        return m_desc;
+    }
+
+    const boost::program_options::variables_map& vm() const
+    {
+        return m_vm;
+    }
 
 private:
     StringsList stringListOpts(const std::string& name) const;

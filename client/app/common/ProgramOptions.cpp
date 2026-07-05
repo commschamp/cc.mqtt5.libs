@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -20,6 +22,7 @@ void ProgramOptions::addCommon()
     opts.add_options()
         ("help,h", "Display help message")
         ("verbose,v", "Verbose output")
+        ("response-timeout,r", po::value<unsigned>()->default_value(0), "Response timeout in ms. 0 means library default.")
     ;
 
     m_desc.add(opts);
@@ -101,7 +104,7 @@ void ProgramOptions::addPublish()
 {
     po::options_description opts("Publish Options");
     opts.add_options()
-        ("pub-topic,t", po::value<std::string>()->default_value(std::string()), "Publish topic")
+        ("pub-topic,T", po::value<std::string>()->default_value(std::string()), "Publish topic")
         ("pub-msg,m", po::value<std::string>()->default_value(std::string()), "Publish message, use \"\\x\" prefix to specify hexadecimal value of a single byte, "
             "such as \"\\x01\\xb9\\xaf\".")
         ("pub-qos,q", po::value<unsigned>()->default_value(0U), "Publish QoS: 0, 1, or 2")
@@ -166,6 +169,11 @@ ProgramOptions::ConnectionType ProgramOptions::connectionType() const
 #endif // #ifdef CC_MQTT5_CLIENT_APP_HAS_OPENSSL
 
     return ConnectionType_Tcp;
+}
+
+unsigned ProgramOptions::responseTimeout() const
+{
+    return m_vm["response-timeout"].as<unsigned>();
 }
 
 std::string ProgramOptions::networkAddress() const

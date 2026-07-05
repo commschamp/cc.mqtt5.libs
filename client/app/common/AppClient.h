@@ -1,6 +1,8 @@
 //
 // Copyright 2023 - 2026 (C). Alex Robenko. All rights reserved.
 //
+// SPDX-License-Identifier: MPL-2.0
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -32,16 +34,17 @@ class AppClient
 
 public:
     bool start(int argc, const char* argv[]);
+    bool startSession();
 
     static std::string toString(CC_Mqtt5ErrorCode val);
     static std::string toString(CC_Mqtt5AsyncOpStatus val);
     static std::string toString(CC_Mqtt5ReasonCode val);
     static std::string toString(const std::uint8_t* data, unsigned dataLen, bool forceBinary = false);
-    static void print(const CC_Mqtt5DisconnectInfo& info);
-    void print(const CC_Mqtt5MessageInfo& info, bool printMessage = true);
-    static void print(const CC_Mqtt5ConnectResponse& response);
-    static void print(const CC_Mqtt5PublishResponse& response);
-    static void print(const CC_Mqtt5SubscribeResponse& response);
+    void print(const CC_Mqtt5DisconnectInfo& info) const;
+    void print(const CC_Mqtt5MessageInfo& info, bool printMessage = true) const;
+    void print(const CC_Mqtt5ConnectResponse& response) const;
+    void print(const CC_Mqtt5PublishResponse& response) const;
+    void print(const CC_Mqtt5SubscribeResponse& response) const;
 
 protected:
     struct UserPropInfo
@@ -52,7 +55,7 @@ protected:
 
     using UserPropInfosList = std::vector<UserPropInfo>;
 
-    explicit AppClient(boost::asio::io_context& io, int& result);
+    AppClient(boost::asio::io_context& io, ProgramOptions& opts, int& result);
     ~AppClient() = default;
 
     CC_Mqtt5ClientHandle client()
@@ -72,7 +75,8 @@ protected:
 
     bool sendConnect(CC_Mqtt5ConnectHandle connect);
 
-    static std::ostream& logError();
+    std::ostream& logError() const;
+    std::ostream& logInfo() const;
 
     void doTerminate(int result = 1);
     void doComplete();
@@ -82,6 +86,8 @@ protected:
     virtual void brokerDisconnectedImpl(CC_Mqtt5BrokerDisconnectReason reason, const CC_Mqtt5DisconnectInfo* info);
     virtual void messageReceivedImpl(const CC_Mqtt5MessageInfo* info);
     virtual void connectCompleteImpl(CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
+    virtual std::string clientIdImpl() const;
+    virtual std::string logPrefixImpl() const;
 
     static std::vector<std::uint8_t> parseBinaryData(const std::string& val);
     static std::vector<UserPropInfo> parseUserProps(const std::vector<std::string>& props);
@@ -106,10 +112,10 @@ private:
     static void connectCompleteCb(void* data, CC_Mqtt5AsyncOpStatus status, const CC_Mqtt5ConnectResponse* response);
 
     boost::asio::io_context& m_io;
+    ProgramOptions& m_opts;
     int& m_result;
     Timer m_timer;
     Timestamp m_lastWaitProgram;
-    ProgramOptions m_opts;
     ClientPtr m_client;
     SessionPtr m_session;
 };

@@ -482,9 +482,8 @@ unsigned IntegrationTestCommonBase::integrationTestCancelTickWaitCb(void* data)
     auto now = TimestampClock::now();
     auto elapsed = static_cast<unsigned>(std::chrono::duration_cast<std::chrono::milliseconds>(now - ts).count());
     ts = Timestamp();
-    boost::system::error_code ec;
     auto& timer = asObj(data)->m_tickTimer;
-    timer.cancel(ec);
+    timer.cancel();
     return elapsed;
 }
 

@@ -161,6 +161,8 @@ jobs:
             sanitize: OFF
           - cc_ver: 14
             cpp: 20
+          - cc_ver: 15
+            cpp: 20
 
     steps:
     - uses: actions/checkout@v4

@@ -2,7 +2,7 @@ if (NOT CC_MQTT5_BUILD_INTEGRATION_TESTS)
     return ()
 endif ()
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 set (COMMON_BASE_LIB_NAME "IntegrationTestCommonBase")
 set (COMMON_BASE_SRC "IntegrationTestCommonBase.cpp")

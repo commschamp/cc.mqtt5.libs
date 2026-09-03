@@ -207,6 +207,12 @@ function (gen_lib_mqtt5_client config_file)
     set (patch_ver ${CMAKE_MATCH_1})
     set (CC_MQTT5_CLIENT_VERSION "${major_ver}.${minor_ver}.${patch_ver}")
 
+    set_target_properties(
+        ${lib_name} PROPERTIES
+        VERSION "${CC_MQTT5_CLIENT_VERSION}"
+        SOVERSION "${major_ver}.${minor_ver}"
+    )    
+
     write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/${lib_name}ConfigVersion.cmake
         VERSION ${CC_MQTT5_CLIENT_VERSION}

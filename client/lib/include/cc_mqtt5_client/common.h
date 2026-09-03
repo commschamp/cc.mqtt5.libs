@@ -28,7 +28,7 @@ extern "C" {
 
 /// @brief Patch level of the library
 /// @ingroup global
-#define CC_MQTT5_CLIENT_PATCH_VERSION 9U
+#define CC_MQTT5_CLIENT_PATCH_VERSION 10U
 
 /// @brief Macro to create numeric version as single unsigned number
 /// @ingroup global
